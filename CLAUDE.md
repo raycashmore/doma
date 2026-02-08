@@ -30,7 +30,3 @@ Convex real-time backend. Requires `VITE_CONVEX_URL` env var.
 ## Before Committing
 
 Run `pnpm format` and ensure `pnpm lint` and `pnpm test` passes.
-
-## Topic Guides
-
-- [Sentry instrumentation](docs/SENTRY.md)

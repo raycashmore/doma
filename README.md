@@ -18,14 +18,14 @@ doma/
 │   ├── eslint-config/
 │   └── typescript-config/
 ├── data/             Convex schema, queries, mutations, seed scripts
-└── docs/             Topic guides (Sentry, etc.)
+└── docs/             Topic guides
 ```
 
 **Turborepo monorepo** with **pnpm** as the package manager.
 
 ### Frontend
 
-**TanStack Start** with React 19, file-based routing, and server-side rendering. Styled with Tailwind CSS v4. Observability via Sentry.
+**TanStack Start** with React 19, file-based routing, and server-side rendering. Styled with Tailwind CSS v4.
 
 ### Backend
 
@@ -59,6 +59,5 @@ The web app requires a `VITE_CONVEX_URL` environment variable pointing to the Co
 | Backend | Convex (real-time, schema-first) |
 | Validation | Zod v4 |
 | Monorepo | Turborepo, pnpm workspaces |
-| Observability | Sentry |
 | Docs | Next.js |
 | Testing | Vitest |
