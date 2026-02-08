@@ -1,11 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router';
 import {
-  Zap,
-  Server,
   Route as RouteIcon,
+  Server,
   Shield,
+  Sparkles,
   Waves,
-  Sparkles
+  Zap
 } from 'lucide-react';
 
 export const Route = createFileRoute('/')({ component: App });

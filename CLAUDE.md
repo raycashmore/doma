@@ -29,7 +29,7 @@ Convex real-time backend. Requires `VITE_CONVEX_URL` env var.
 
 ## Before Committing
 
-Run `pnpm format` and ensure `pnpm lint` passes.
+Run `pnpm format` and ensure `pnpm lint` and `pnpm test` passes.
 
 ## Topic Guides
 
