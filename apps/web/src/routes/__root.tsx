@@ -8,8 +8,6 @@ import ConvexProvider from '../integrations/convex/provider'
 
 import AiDevtools from '../lib/ai-devtools'
 
-import StoreDevtools from '../lib/demo-store-devtools'
-
 import appCss from '../styles.css?url'
 
 export const Route = createRootRoute({
@@ -56,8 +54,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                 name: 'Tanstack Router',
                 render: <TanStackRouterDevtoolsPanel />,
               },
-              AiDevtools,
-              StoreDevtools,
+              AiDevtools
             ]}
           />
         </ConvexProvider>
