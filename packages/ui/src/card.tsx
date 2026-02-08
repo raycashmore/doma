@@ -1,10 +1,10 @@
-import { type JSX } from "react";
+import { type JSX } from 'react';
 
 export function Card({
   className,
   title,
   children,
-  href,
+  href
 }: {
   className?: string;
   title: string;

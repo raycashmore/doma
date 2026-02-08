@@ -25,19 +25,23 @@ pnpm check            # Format + lint fix
 This is a Turborepo monorepo with pnpm workspaces.
 
 ### Apps
+
 - **apps/web**: Main application built with TanStack Start (Vite + React 19 + TanStack Router). Uses file-based routing in `src/routes/`. Runs on port 3000.
 - **apps/docs**: Next.js 16 documentation site. Runs on port 3001.
 
 ### Packages
+
 - **packages/ui**: Shared React component library (`@repo/ui`). Import components as `@repo/ui/button`.
 - **packages/eslint-config**: Shared ESLint configurations (`@repo/eslint-config`)
 - **packages/typescript-config**: Shared TypeScript configs (`@repo/typescript-config`)
 
 ### Backend
+
 - **Convex**: Real-time backend. Schema in `apps/web/convex/schema.ts`. Root `convex/` directory exists but is empty (setup pending).
 - Requires `VITE_CONVEX_URL` environment variable
 
 ### Key Technologies in apps/web
+
 - TanStack Start with Nitro server
 - TanStack AI (Anthropic integration) for AI features
 - React Compiler (babel-plugin-react-compiler)
@@ -48,6 +52,7 @@ This is a Turborepo monorepo with pnpm workspaces.
 ## Convex Guidelines
 
 When defining Convex schemas:
+
 - Use `v.id("tableName")` for foreign keys
 - System fields `_id` and `_creationTime` are automatic
 - Define indexes with `.index("indexName", ["field1", "field2"])`
@@ -57,12 +62,13 @@ When defining Convex schemas:
 ## Sentry Instrumentation
 
 Wrap server functions with Sentry spans:
+
 ```tsx
-import * as Sentry from '@sentry/tanstackstart-react'
+import * as Sentry from '@sentry/tanstackstart-react';
 
 Sentry.startSpan({ name: 'Operation name' }, async () => {
   // async operation
-})
+});
 ```
 
 ## Adding shadcn Components

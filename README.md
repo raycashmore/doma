@@ -13,4 +13,3 @@ Start local Convex
 ```
 pnpm convex
 ```
-
