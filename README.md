@@ -4,7 +4,7 @@ Domestic management system
 
 ## What This Does
 
-Doma automates manual domestic tasks like financial tracking, shared calendars, and chore management. 
+Doma automates manual domestic tasks like financial tracking, shared calendars, and chore management.
 
 ## Architecture
 
@@ -29,7 +29,7 @@ doma/
 
 ### Backend
 
-**Convex** real-time backend 
+**Convex** real-time backend
 
 ### Data Model
 
@@ -52,12 +52,12 @@ The web app requires a `VITE_CONVEX_URL` environment variable pointing to the Co
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|------------|
-| Framework | TanStack Start, TanStack Router |
-| UI | React 19, Tailwind CSS v4, Lucide icons |
-| Backend | Convex (real-time, schema-first) |
-| Validation | Zod v4 |
-| Monorepo | Turborepo, pnpm workspaces |
-| Docs | Next.js |
-| Testing | Vitest |
+| Layer      | Technology                              |
+| ---------- | --------------------------------------- |
+| Framework  | TanStack Start, TanStack Router         |
+| UI         | React 19, Tailwind CSS v4, Lucide icons |
+| Backend    | Convex (real-time, schema-first)        |
+| Validation | Zod v4                                  |
+| Monorepo   | Turborepo, pnpm workspaces              |
+| Docs       | Next.js                                 |
+| Testing    | Vitest                                  |
