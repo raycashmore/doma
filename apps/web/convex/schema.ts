@@ -98,7 +98,6 @@ export default defineSchema({
     credit3: v.number(),
     oneOffs: v.number(),
     shared: v.number(),
-    sinkOrSwim: v.number(),
     variable: v.number(),
     fixed: v.number(),
     rent: v.number(),

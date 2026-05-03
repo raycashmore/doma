@@ -8,12 +8,14 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
     "test": "turbo run test",
-    "convex": "npx convex dev"
+    "convex": "pnpm --filter web convex"
   },
   "devDependencies": {
     "prettier": "^3.7.4",
+    "tsx": "^4.21.0",
     "turbo": "^2.8.3",
-    "typescript": "5.9.2"
+    "typescript": "5.9.2",
+    "xlsx": "^0.18.5"
   },
   "packageManager": "pnpm@9.0.0",
   "engines": {

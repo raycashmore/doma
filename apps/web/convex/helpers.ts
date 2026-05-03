@@ -88,6 +88,23 @@ export function budgetNetGainLoss(row: Doc<'budget'>) {
 }
 
 // ============================================================
+// BUDGET — chart-specific derived fields
+// ============================================================
+export function budgetSpend(row: Doc<'budget'>) {
+  return row.credit2 + row.credit1 + row.credit3 + row.oneOffs;
+}
+
+export function budgetSinkOrSwim(row: Doc<'budget'>) {
+  return (
+    row.incomePrimary +
+    row.incomeSecondary +
+    (row.rateVar ?? 0) +
+    (row.rateFix ?? 0) +
+    row.rent
+  );
+}
+
+// ============================================================
 // CRYPTO SUMMARIES — derived net
 // ============================================================
 export function cryptoNet(row: Doc<'cryptoSummaries'>) {

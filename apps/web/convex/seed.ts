@@ -2,6 +2,32 @@ import { v } from 'convex/values';
 import { mutation } from './_generated/server';
 
 // ============================================================
+// CLEAR: Delete all rows from a table
+// ============================================================
+export const clearTable = mutation({
+  args: {
+    table: v.union(
+      v.literal('currentAccounts'),
+      v.literal('cashAccounts'),
+      v.literal('ukAccounts'),
+      v.literal('superAccounts'),
+      v.literal('investmentAccounts'),
+      v.literal('mortgage'),
+      v.literal('budget'),
+      v.literal('cryptoTransactions'),
+      v.literal('cryptoSummaries')
+    )
+  },
+  handler: async (ctx, args) => {
+    const rows = await ctx.db.query(args.table).collect();
+    for (const row of rows) {
+      await ctx.db.delete(row._id);
+    }
+    return { deleted: rows.length };
+  }
+});
+
+// ============================================================
 // SEED: Current Accounts
 // ============================================================
 export const seedCurrentAccounts = mutation({
@@ -221,7 +247,6 @@ export const seedBudget = mutation({
         credit3: v.number(),
         oneOffs: v.number(),
         shared: v.number(),
-        sinkOrSwim: v.number(),
         variable: v.number(),
         fixed: v.number(),
         rent: v.number(),
@@ -242,7 +267,6 @@ export const seedBudget = mutation({
         credit3: row.credit3,
         oneOffs: row.oneOffs,
         shared: row.shared,
-        sinkOrSwim: row.sinkOrSwim,
         variable: row.variable,
         fixed: row.fixed,
         rent: row.rent,

@@ -2,6 +2,8 @@ import { v } from 'convex/values';
 import { query } from './_generated/server';
 import {
   budgetNetGainLoss,
+  budgetSinkOrSwim,
+  budgetSpend,
   budgetTotalIn,
   budgetTotalOut,
   cashAccountTotal,
@@ -211,6 +213,25 @@ export const listCryptoSummaries = query({
     return rows.map((row) => ({
       ...row,
       net: cryptoNet(row)
+    }));
+  }
+});
+
+// ============================================================
+// BUDGET CHART — Time series for Spend vs Sink or Swim chart
+// ============================================================
+export const listBudgetChart = query({
+  handler: async (ctx) => {
+    const rows = await ctx.db
+      .query('budget')
+      .withIndex('by_date')
+      .order('asc')
+      .collect();
+
+    return rows.map((row) => ({
+      date: row.date,
+      spend: budgetSpend(row),
+      sinkOrSwim: budgetSinkOrSwim(row)
     }));
   }
 });
