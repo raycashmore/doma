@@ -16,6 +16,7 @@
   "dependencies": {
     "@convex-dev/react-query": "0.1.0",
     "@repo/convex": "workspace:*",
+    "convex": "^1.27.3",
     "@repo/ui": "workspace:*",
     "@tailwindcss/vite": "^4.0.6",
     "@tanstack/ai": "latest",
