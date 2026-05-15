@@ -251,6 +251,25 @@ importers:
         specifier: 5.9.2
         version: 5.9.2
 
+  packages/convex:
+    dependencies:
+      convex:
+        specifier: ^1.27.3
+        version: 1.31.7(react@19.2.0)
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      dotenv-cli:
+        specifier: ^11.0.0
+        version: 11.0.0
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.2
+
   packages/eslint-config:
     devDependencies:
       '@eslint/js':
