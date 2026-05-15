@@ -1,0 +1,50 @@
+import {
+  HeadContent,
+  Scripts,
+  createRootRoute,
+  Outlet
+} from '@tanstack/react-router';
+import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
+import { TanStackDevtools } from '@tanstack/react-devtools';
+
+import { AppFrame, AuthGate } from '@repo/shell';
+import appCss from '../styles.css?url';
+
+export const Route = createRootRoute({
+  head: () => ({
+    meta: [
+      { charSet: 'utf-8' },
+      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+      { title: 'Doma' }
+    ],
+    links: [{ rel: 'stylesheet', href: appCss }]
+  }),
+  shellComponent: RootDocument
+});
+
+function RootDocument() {
+  return (
+    <html lang="en">
+      <head>
+        <HeadContent />
+      </head>
+      <body>
+        <AuthGate>
+          <AppFrame appId="home" title="Home">
+            <Outlet />
+          </AppFrame>
+          <TanStackDevtools
+            config={{ position: 'bottom-right' }}
+            plugins={[
+              {
+                name: 'Tanstack Router',
+                render: <TanStackRouterDevtoolsPanel />
+              }
+            ]}
+          />
+        </AuthGate>
+        <Scripts />
+      </body>
+    </html>
+  );
+}
