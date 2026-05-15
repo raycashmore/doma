@@ -1,63 +1,48 @@
 # Doma
 
-Domestic management system
+Personal finance dashboard — Turborepo monorepo deployed as Vercel Multi-Zones.
 
-## What This Does
+## Apps
 
-Doma automates manual domestic tasks like financial tracking, shared calendars, and chore management.
+- `apps/home` — apex zone, summary/landing (port 3001)
+- `apps/budget` — Budget app at `/budget` (port 3000)
+- `apps/api-*` — convention for non-Convex backend experiments (none scaffolded)
 
-## Architecture
+## Packages
 
-```
-doma/
-├── apps/
-│   ├── budget/       TanStack Start — main app (port 3000)
-│   └── docs/         Next.js — documentation (port 3001)
-├── packages/
-│   ├── ui/           Shared React components (@repo/ui)
-│   ├── eslint-config/
-│   └── typescript-config/
-├── data/             Convex schema, queries, mutations, seed scripts
-└── docs/             Topic guides
-```
+- `@repo/convex` — shared Convex schema/functions
+- `@repo/tokens` — design tokens (Tailwind v4)
+- `@repo/shell` — shared React sidebar + AppFrame + AuthGate
+- `@repo/ui` — shared React primitives
 
-**Turborepo monorepo** with **pnpm** as the package manager.
-
-### Frontend
-
-**TanStack Start** with React 19, file-based routing, and server-side rendering. Styled with Tailwind CSS v4.
-
-### Backend
-
-**Convex** real-time backend
-
-### Data Model
-
-Replacing manual spreadsheet tracking
-
-## Getting Started
+## Commands
 
 ```bash
-pnpm install
+pnpm dev           # Start all apps (turbo)
+pnpm build         # Build all apps
+pnpm lint          # Lint everywhere
+pnpm check-types   # TypeScript across the workspace
+pnpm format        # Prettier
+pnpm convex        # Convex dev (regenerates packages/convex/convex/_generated)
 ```
 
-Start the Convex dev server and all apps:
+## Per-app commands
 
 ```bash
-pnpm convex   # local Convex backend
-pnpm dev      # all apps via Turbo
+pnpm --filter budget dev      # Budget on :3000/budget
+pnpm --filter budget test     # Vitest
+pnpm --filter home dev        # Home on :3001
 ```
 
-The web app requires a `VITE_CONVEX_URL` environment variable pointing to the Convex instance.
+## Before committing
 
-## Tech Stack
+Run `pnpm format`, `pnpm lint`, `pnpm check-types`, `pnpm test`.
 
-| Layer      | Technology                              |
-| ---------- | --------------------------------------- |
-| Framework  | TanStack Start, TanStack Router         |
-| UI         | React 19, Tailwind CSS v4, Lucide icons |
-| Backend    | Convex (real-time, schema-first)        |
-| Validation | Zod v4                                  |
-| Monorepo   | Turborepo, pnpm workspaces              |
-| Docs       | Next.js                                 |
-| Testing    | Vitest                                  |
+## Deep dives
+
+- [Architecture](docs/architecture.md) — monorepo layout, multi-zones, PWA scope
+- [Auth](docs/auth.md) — Clerk setup
+- [Convex backend](docs/convex-backend.md) — data model, derivation pattern
+- [Frontend](docs/frontend.md) — TanStack Start, routing, styling
+- [Offline strategy](docs/offline.md) — what the PWA shell does and doesn't cover
+- [Testing & CI](docs/testing-and-ci.md) — test setup, CI stages
