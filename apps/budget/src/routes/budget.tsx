@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
-import { api } from '../../convex/_generated/api';
+import { api } from '@repo/convex';
 import BudgetChart from '@/components/budget/BudgetChart';
 
 export const Route = createFileRoute('/budget')({
