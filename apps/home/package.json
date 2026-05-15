@@ -48,6 +48,7 @@
     "eslint": "^9.39.1",
     "prettier": "^3.5.3",
     "typescript": "^5.7.2",
-    "vite": "^7.1.7"
+    "vite": "^7.1.7",
+    "vite-plugin-pwa": "^0.21.2"
   }
 }
