@@ -8,7 +8,7 @@ export const getRouter = () => {
   const router = createRouter({
     routeTree,
     context: {},
-
+    basepath: '/budget',
     scrollRestoration: true,
     defaultPreloadStaleTime: 0
   });

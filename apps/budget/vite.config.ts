@@ -9,6 +9,7 @@ import tailwindcss from '@tailwindcss/vite';
 import { nitro } from 'nitro/vite';
 
 const config = defineConfig({
+  base: '/budget/',
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
