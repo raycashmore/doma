@@ -8,7 +8,7 @@ const CONVEX_URL = env.VITE_CONVEX_URL;
 const CLERK_KEY = env.VITE_CLERK_PUBLISHABLE_KEY;
 
 if (!CONVEX_URL) {
-  // eslint-disable-next-line no-console
+   
   console.error('missing envar VITE_CONVEX_URL');
 }
 

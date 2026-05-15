@@ -1,14 +1,14 @@
 import {
   HeadContent,
+  Outlet,
   Scripts,
-  createRootRoute,
-  Outlet
+  createRootRoute
 } from '@tanstack/react-router';
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
 import { TanStackDevtools } from '@tanstack/react-devtools';
 
-import ConvexProvider from '../integrations/convex/provider';
 import { AppFrame, AuthGate } from '@repo/shell';
+import ConvexProvider from '../integrations/convex/provider';
 
 import appCss from '../styles.css?url';
 

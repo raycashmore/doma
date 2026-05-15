@@ -16,7 +16,7 @@ export default defineConfig({
     }
   },
   plugins: [
-    devtools(),
+    devtools({ eventBusConfig: { port: 42070 } }),
     nitro(),
     viteTsConfigPaths({ projects: ['./tsconfig.json'] }),
     tailwindcss(),

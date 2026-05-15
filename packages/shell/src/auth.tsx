@@ -17,7 +17,7 @@ export function AuthGate({ publishableKey, children }: AuthGateProps) {
 
   if (!publishableKey) {
     if (typeof window !== 'undefined' && !warned.current) {
-      // eslint-disable-next-line no-console
+       
       console.warn(
         '[doma] AuthGate is bypassed: VITE_CLERK_PUBLISHABLE_KEY is not set. ' +
           'See docs/auth.md to enable sign-in.'
