@@ -9,8 +9,12 @@ import tailwindcss from '@tailwindcss/vite';
 import { nitro } from 'nitro/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
-const config = defineConfig({
-  base: '/budget/',
+const config = defineConfig(({ command }) => ({
+  // Only apply the /budget/ base in production builds. In dev, Vite serves
+  // the app at root on its own port (3000); setting base in dev breaks the
+  // React Refresh HMR runtime URL (Vite prefixes it but the dev server
+  // doesn't register it under the prefix → 404 on /budget/@react-refresh).
+  base: command === 'build' ? '/budget/' : '/',
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
@@ -63,6 +67,6 @@ const config = defineConfig({
       }
     })
   ]
-});
+}));
 
 export default config;
