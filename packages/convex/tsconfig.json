@@ -8,7 +8,9 @@
     "lib": ["ESNext", "DOM"],
     "allowJs": true,
     "skipLibCheck": true,
-    "noEmit": true
+    "noEmit": true,
+    "declaration": false,
+    "declarationMap": false
   },
   "include": ["convex/**/*"]
 }
