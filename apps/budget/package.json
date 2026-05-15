@@ -16,6 +16,7 @@
   "dependencies": {
     "@convex-dev/react-query": "0.1.0",
     "@repo/convex": "workspace:*",
+    "@repo/shell": "workspace:*",
     "@repo/tokens": "workspace:*",
     "convex": "^1.27.3",
     "@repo/ui": "workspace:*",
