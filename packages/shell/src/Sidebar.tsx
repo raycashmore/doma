@@ -1,6 +1,8 @@
 import { LogOut } from 'lucide-react';
 import clsx from 'clsx';
-import { APPS, type AppId } from './apps';
+import { APPS, getAppHref, type AppId } from './apps';
+
+const homeApp = APPS.find((a) => a.id === 'home')!;
 
 export interface SidebarProps {
   activeAppId: AppId;
@@ -19,7 +21,7 @@ export function Sidebar({
       className="flex flex-col items-center gap-2 w-16 bg-neutral-900 text-neutral-100 py-4 h-full"
     >
       <a
-        href="/"
+        href={getAppHref(homeApp)}
         className="flex items-center justify-center w-10 h-10 rounded-md bg-orange-500 text-white font-bold text-lg mb-4"
         aria-label="Home"
       >
@@ -33,7 +35,7 @@ export function Sidebar({
           return (
             <li key={app.id}>
               <a
-                href={app.href}
+                href={getAppHref(app)}
                 aria-label={app.label}
                 aria-current={isActive ? 'page' : undefined}
                 className={clsx(
