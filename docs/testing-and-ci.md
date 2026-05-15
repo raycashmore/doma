@@ -3,9 +3,9 @@
 ## Test Setup
 
 - **Runner:** Vitest with jsdom environment
-- **Location:** `apps/web/src/**/*.{test,spec}.{ts,tsx}`
+- **Location:** `apps/budget/src/**/*.{test,spec}.{ts,tsx}`
 - **Libraries:** `@testing-library/react` and `@testing-library/dom`
-- **Workspace run:** `pnpm --filter web test`
+- **Workspace run:** `pnpm --filter budget test`
 - **Caching:** Tests are not cached in Turbo (`"cache": false`)
 
 ## CI Pipeline

@@ -12,7 +12,7 @@ pnpm check-types   # TypeScript type checking
 pnpm format        # Format with Prettier
 pnpm convex        # Convex dev server
 
-# apps/web only
+# apps/budget only
 pnpm test          # Vitest
 pnpm check         # Format + lint fix
 ```

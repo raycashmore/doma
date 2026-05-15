@@ -11,7 +11,7 @@ Doma automates manual domestic tasks like financial tracking, shared calendars, 
 ```
 doma/
 ├── apps/
-│   ├── web/          TanStack Start — main app (port 3000)
+│   ├── budget/       TanStack Start — main app (port 3000)
 │   └── docs/         Next.js — documentation (port 3001)
 ├── packages/
 │   ├── ui/           Shared React components (@repo/ui)
