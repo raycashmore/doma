@@ -32,6 +32,9 @@ importers:
       '@repo/convex':
         specifier: workspace:*
         version: link:../../packages/convex
+      '@repo/tokens':
+        specifier: workspace:*
+        version: link:../../packages/tokens
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
