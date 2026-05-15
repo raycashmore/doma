@@ -10,6 +10,9 @@ import { TanStackDevtools } from '@tanstack/react-devtools';
 import { AppFrame, AuthGate } from '@repo/shell';
 import appCss from '../styles.css?url';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const CLERK_KEY = (import.meta as any).env.VITE_CLERK_PUBLISHABLE_KEY;
+
 export const Route = createRootRoute({
   head: () => ({
     meta: [
@@ -29,7 +32,7 @@ function RootDocument() {
         <HeadContent />
       </head>
       <body>
-        <AuthGate>
+        <AuthGate publishableKey={CLERK_KEY}>
           <AppFrame appId="home" title="Home">
             <Outlet />
           </AppFrame>

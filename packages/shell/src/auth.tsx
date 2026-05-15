@@ -1,12 +1,40 @@
-import type { ReactNode } from 'react';
+import { type ReactNode, useRef } from 'react';
+import { ClerkProvider, SignedIn, SignedOut, SignIn } from '@clerk/clerk-react';
 
 export interface AuthGateProps {
+  /**
+   * Clerk publishable key. When undefined or empty, AuthGate is a passthrough
+   * and the app boots without sign-in (useful during initial scaffold).
+   * Once Clerk is set up per docs/auth.md, the key becomes a string and the
+   * gate activates.
+   */
+  publishableKey: string | undefined;
   children: ReactNode;
 }
 
-// Phase 6 replaces the body of this component to use Clerk's <SignedIn> /
-// <SignedOut>. Until then it's a passthrough so the app boots while we
-// scaffold the rest of the multi-zones plumbing.
-export function AuthGate({ children }: AuthGateProps) {
-  return <>{children}</>;
+export function AuthGate({ publishableKey, children }: AuthGateProps) {
+  const warned = useRef(false);
+
+  if (!publishableKey) {
+    if (typeof window !== 'undefined' && !warned.current) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        '[doma] AuthGate is bypassed: VITE_CLERK_PUBLISHABLE_KEY is not set. ' +
+          'See docs/auth.md to enable sign-in.'
+      );
+      warned.current = true;
+    }
+    return <>{children}</>;
+  }
+
+  return (
+    <ClerkProvider publishableKey={publishableKey}>
+      <SignedIn>{children}</SignedIn>
+      <SignedOut>
+        <div className="flex items-center justify-center min-h-screen bg-neutral-50">
+          <SignIn routing="hash" />
+        </div>
+      </SignedOut>
+    </ClerkProvider>
+  );
 }

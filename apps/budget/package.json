@@ -14,6 +14,7 @@
     "convex": "dotenv -e ../../.env.local -- convex dev"
   },
   "dependencies": {
+    "@clerk/clerk-react": "^5.30.0",
     "@convex-dev/react-query": "0.1.0",
     "@repo/convex": "workspace:*",
     "@repo/shell": "workspace:*",

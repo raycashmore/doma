@@ -12,6 +12,7 @@
     "start": "node .output/server/index.mjs"
   },
   "dependencies": {
+    "@clerk/clerk-react": "^5.30.0",
     "@repo/shell": "workspace:*",
     "@repo/tokens": "workspace:*",
     "@repo/ui": "workspace:*",
