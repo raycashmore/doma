@@ -1,6 +1,12 @@
 import { LogOut } from 'lucide-react';
 import clsx from 'clsx';
-import { APPS, getAppHref, type AppId } from './apps';
+import {
+  APPS,
+  getAppHref,
+  type AppDescriptor,
+  type AppId
+} from './apps';
+import { useUrlAuth } from './auth';
 
 const homeApp = APPS.find((a) => a.id === 'home')!;
 
@@ -15,13 +21,22 @@ export function Sidebar({
   onSignOut,
   brandLabel = 'D'
 }: SidebarProps) {
+  // When signed-in via Clerk, append the dev session token to cross-origin
+  // URLs so the destination port auto-rehydrates the session. In production
+  // (same origin) and pre-Clerk dev (no provider), this is the identity.
+  const urlAuth = useUrlAuth();
+  const buildHref = (app: AppDescriptor) => {
+    const href = getAppHref(app);
+    return urlAuth && href.startsWith('http') ? urlAuth(href) : href;
+  };
+
   return (
     <nav
       aria-label="App navigation"
       className="flex flex-col items-center gap-2 w-16 bg-neutral-900 text-neutral-100 py-4 h-full"
     >
       <a
-        href={getAppHref(homeApp)}
+        href={buildHref(homeApp)}
         className="flex items-center justify-center w-10 h-10 rounded-md bg-orange-500 text-white font-bold text-lg mb-4"
         aria-label="Home"
       >
@@ -35,7 +50,7 @@ export function Sidebar({
           return (
             <li key={app.id}>
               <a
-                href={getAppHref(app)}
+                href={buildHref(app)}
                 aria-label={app.label}
                 aria-current={isActive ? 'page' : undefined}
                 className={clsx(

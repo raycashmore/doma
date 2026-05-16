@@ -10,10 +10,10 @@ import { nitro } from 'nitro/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 const config = defineConfig(({ command }) => ({
-  // Only apply the /budget/ base in production builds. In dev, Vite serves
-  // the app at root on its own port (3000); setting base in dev breaks the
-  // React Refresh HMR runtime URL (Vite prefixes it but the dev server
-  // doesn't register it under the prefix → 404 on /budget/@react-refresh).
+  // /budget/ base only in production builds. In dev, Vite serves at root on
+  // its own port; setting base in dev breaks several TanStack Start + Vite
+  // internal handlers (/budget/@react-refresh, /budget/@vite/client, etc.
+  // 404 because those endpoints don't honor base in this combo).
   base: command === 'build' ? '/budget/' : '/',
   resolve: {
     alias: {
@@ -23,7 +23,6 @@ const config = defineConfig(({ command }) => ({
   plugins: [
     devtools(),
     nitro(),
-    // this is the plugin that enables path aliases
     viteTsConfigPaths({
       projects: ['./tsconfig.json']
     }),
