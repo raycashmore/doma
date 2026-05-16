@@ -136,7 +136,7 @@ importers:
         version: 0.561.0(react@19.2.0)
       nitro:
         specifier: npm:nitro-nightly@latest
-        version: nitro-nightly@3.0.1-20260512-093145-0498ce70(chokidar@5.0.0)(dotenv@17.2.4)(jiti@2.6.1)(lru-cache@11.2.5)(rollup@4.57.1)(vite@7.3.1(@types/node@22.15.3)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.47.1)(tsx@4.21.0))
+        version: nitro-nightly@3.0.1-20260512-093145-0498ce70(chokidar@5.0.0)(dotenv@16.6.1)(jiti@2.6.1)(lru-cache@11.2.5)(rollup@4.57.1)(vite@7.3.1(@types/node@22.15.3)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.47.1)(tsx@4.21.0))
       react:
         specifier: ^19.2.0
         version: 19.2.0
@@ -275,7 +275,7 @@ importers:
         version: 0.561.0(react@19.2.0)
       nitro:
         specifier: npm:nitro-nightly@latest
-        version: nitro-nightly@3.0.1-20260512-093145-0498ce70(chokidar@5.0.0)(dotenv@17.2.4)(jiti@2.6.1)(lru-cache@11.2.5)(rollup@4.57.1)(vite@7.3.1(@types/node@22.15.3)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.47.1)(tsx@4.21.0))
+        version: nitro-nightly@3.0.1-20260512-093145-0498ce70(chokidar@5.0.0)(dotenv@16.6.1)(jiti@2.6.1)(lru-cache@11.2.5)(rollup@4.57.1)(vite@7.3.1(@types/node@22.15.3)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.47.1)(tsx@4.21.0))
       react:
         specifier: ^19.2.0
         version: 19.2.0
@@ -346,6 +346,12 @@ importers:
       convex:
         specifier: ^1.27.3
         version: 1.31.7(@clerk/clerk-react@5.61.3(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.6.1
+      xlsx:
+        specifier: ^0.18.5
+        version: 0.18.5
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -359,6 +365,9 @@ importers:
       dotenv-cli:
         specifier: ^11.0.0
         version: 11.0.0
+      tsx:
+        specifier: ^4.21.0
+        version: 4.21.0
       typescript:
         specifier: ^5.7.2
         version: 5.9.2
@@ -11224,7 +11233,7 @@ snapshots:
 
   nf3@0.3.17: {}
 
-  nitro-nightly@3.0.1-20260512-093145-0498ce70(chokidar@5.0.0)(dotenv@17.2.4)(jiti@2.6.1)(lru-cache@11.2.5)(rollup@4.57.1)(vite@7.3.1(@types/node@22.15.3)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.47.1)(tsx@4.21.0)):
+  nitro-nightly@3.0.1-20260512-093145-0498ce70(chokidar@5.0.0)(dotenv@16.6.1)(jiti@2.6.1)(lru-cache@11.2.5)(rollup@4.57.1)(vite@7.3.1(@types/node@22.15.3)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.47.1)(tsx@4.21.0)):
     dependencies:
       consola: 3.4.2
       crossws: 0.4.5(srvx@0.11.15)
@@ -11241,7 +11250,7 @@ snapshots:
       unenv: 2.0.0-rc.24
       unstorage: 2.0.0-alpha.7(chokidar@5.0.0)(db0@0.3.4)(lru-cache@11.2.5)(ofetch@2.0.0-alpha.3)
     optionalDependencies:
-      dotenv: 17.2.4
+      dotenv: 16.6.1
       jiti: 2.6.1
       rollup: 4.57.1
       vite: 7.3.1(@types/node@22.15.3)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.47.1)(tsx@4.21.0)

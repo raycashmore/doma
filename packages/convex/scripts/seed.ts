@@ -1,20 +1,40 @@
 /**
- * seedScript.ts
+ * Seed @repo/convex from CREAM.xlsx.
  *
- * Run with: npx tsx seedScript.ts
+ * Run with: pnpm --filter @repo/convex seed
+ *       or: pnpm seed   (root convenience alias)
  *
- * Reads CREAM.xlsx and calls the Convex seed mutations to populate
- * all tables. Requires: npm install convex xlsx
- *
- * Set CONVEX_URL env var or it defaults to local dev.
+ * Loads env from ../../.env.local (CONVEX_URL or NEXT_PUBLIC_CONVEX_URL or VITE_CONVEX_URL).
+ * Every money column is converted to integer cents via toCents().
  */
 
-import { ConvexHttpClient } from "convex/browser";
-import { api } from "@repo/convex";
-import * as XLSX from "xlsx";
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import * as dotenv from 'dotenv';
+import { ConvexHttpClient } from 'convex/browser';
+import { api } from '@repo/convex';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- used in Task 0.10 cents migration
+import { toCents } from '@repo/convex/helpers';
+import * as XLSX from 'xlsx';
 
-const CONVEX_URL = process.env.CONVEX_URL ?? "http://localhost:3210";
+// Load monorepo root .env.local (must run before reading process.env)
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.resolve(__dirname, '../../../.env.local') });
+
+const CONVEX_URL =
+  process.env.CONVEX_URL ??
+  process.env.NEXT_PUBLIC_CONVEX_URL ??
+  process.env.VITE_CONVEX_URL;
+
+if (!CONVEX_URL) {
+  console.error(
+    'No CONVEX_URL found. Set CONVEX_URL or NEXT_PUBLIC_CONVEX_URL in .env.local.'
+  );
+  process.exit(1);
+}
+
 const client = new ConvexHttpClient(CONVEX_URL);
+const XLSX_PATH = path.resolve(__dirname, 'CREAM.xlsx');
 
 function excelDateToTimestamp(excelDate: number): number {
   const MS_PER_DAY = 86400000;
@@ -36,7 +56,7 @@ function optNum(val: unknown): number | undefined {
 
 async function main() {
   console.log("Reading CREAM.xlsx...");
-  const wb = XLSX.readFile("CREAM.xlsx");
+  const wb = XLSX.readFile(XLSX_PATH);
 
   // ── Current Accounts ──────────────────────────────────────
   {
