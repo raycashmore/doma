@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap');
 
 :root {
   --background: oklch(1 0 0);
@@ -52,7 +52,7 @@
   --warm-section-spend: #FFDFC7;
   --warm-section-mortgage: #F2E4C9;
   --warm-positive: #5F9466;
-  --warm-negative: #D85A36;
+  --warm-negative: var(--warm-accent); /* matches accent for now; can diverge later */
 
   --warm-font-display: 'DM Serif Display', 'Times New Roman', serif;
   --warm-font-body: 'DM Sans', system-ui, -apple-system, sans-serif;
