@@ -10,6 +10,7 @@
 
 import type * as budgetSummary from "../budgetSummary.js";
 import type * as helpers from "../helpers.js";
+import type * as monthlyBreakdown from "../monthlyBreakdown.js";
 import type * as mutations from "../mutations.js";
 import type * as queries from "../queries.js";
 import type * as seed from "../seed.js";
@@ -23,6 +24,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   budgetSummary: typeof budgetSummary;
   helpers: typeof helpers;
+  monthlyBreakdown: typeof monthlyBreakdown;
   mutations: typeof mutations;
   queries: typeof queries;
   seed: typeof seed;
