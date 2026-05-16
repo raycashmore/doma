@@ -1,7 +1,7 @@
-import {  useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
-import type {ReactNode} from 'react';
+import type { ReactNode } from 'react';
 
 interface Props {
   open: boolean;
@@ -58,7 +58,7 @@ export default function MonthlyDetailOverlay({
               </span>
             </div>
             <div>
-              <h2 className="text-2xl font-warm-display text-warm-text-primary">
+              <h2 className="text-[26px] leading-tight font-warm-display text-warm-text-primary">
                 {monthLabel}
               </h2>
               {subtitle ? (
