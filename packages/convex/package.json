@@ -12,7 +12,8 @@
     },
     "./schema": "./convex/schema.ts",
     "./auth": "./convex/auth.config.ts",
-    "./helpers": "./convex/helpers.ts"
+    "./helpers": "./convex/helpers.ts",
+    "./budgetSummary": "./convex/budgetSummary.ts"
   },
   "scripts": {
     "dev": "dotenv -e ../../.env.local -- convex dev",
