@@ -36,7 +36,7 @@ export const APPS: AppDescriptor[] = [
     href: '/',
     icon: Home,
     enabled: true,
-    devPort: 3001
+    devPort: 3000
   },
   {
     id: 'budget',
@@ -44,7 +44,7 @@ export const APPS: AppDescriptor[] = [
     href: '/budget',
     icon: PiggyBank,
     enabled: true,
-    devPort: 3000
+    devPort: 3001
   },
   {
     id: 'mortgage',

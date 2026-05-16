@@ -4,8 +4,8 @@ Personal finance dashboard — Turborepo monorepo deployed as Vercel Multi-Zones
 
 ## Apps
 
-- `apps/home` — apex zone, summary/landing (port 3001)
-- `apps/budget` — Budget app at `/budget` (port 3000)
+- `apps/home` — apex zone, summary/landing (port 3000)
+- `apps/budget` — Budget app at `/budget` (port 3001)
 - `apps/api-*` — convention for non-Convex backend experiments (none scaffolded)
 
 ## Packages
@@ -29,9 +29,9 @@ pnpm convex        # Convex dev (regenerates packages/convex/convex/_generated)
 ## Per-app commands
 
 ```bash
-pnpm --filter budget dev      # Budget on :3000/budget
+pnpm --filter home dev        # Home on :3000
+pnpm --filter budget dev      # Budget on :3001
 pnpm --filter budget test     # Vitest
-pnpm --filter home dev        # Home on :3001
 ```
 
 ## Before committing

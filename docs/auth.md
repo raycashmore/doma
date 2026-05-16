@@ -30,7 +30,7 @@ We use Clerk for sign-in across all zones. One Clerk application; the cookie is 
 
 ## What to do after Clerk is wired
 
-1. Verify on `localhost:3000/budget` you see Clerk's sign-in screen (signed-out state).
+1. Verify on `localhost:3001/` (Budget) you see Clerk's sign-in screen (signed-out state).
 2. Sign in with an allowlisted account; the Budget page renders.
-3. Open `localhost:3001/` — already authenticated (cookies on localhost are shared across ports).
+3. Open `localhost:3000/` (Home) — clicking links from one to the other goes through the shell's `useUrlAuth` helper, which appends Clerk's `__clerk_db_jwt` so the destination port auto-rehydrates the session.
 4. Reload the Convex dev process if Convex queries return 401: `pnpm convex` (it picks up the new issuer config).

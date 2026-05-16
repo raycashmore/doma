@@ -16,9 +16,9 @@ pnpm convex        # Convex dev (regenerates packages/convex/convex/_generated)
 ## App-specific commands
 
 ```bash
-pnpm --filter budget dev      # Budget on :3000/budget
+pnpm --filter home dev        # Home on :3000
+pnpm --filter budget dev      # Budget on :3001
 pnpm --filter budget test     # Vitest
-pnpm --filter home dev        # Home on :3001
 ```
 
 ## Before Committing

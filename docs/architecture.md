@@ -6,8 +6,8 @@ Doma is a Vercel Multi-Zones monorepo. `apps/home` owns the apex domain and rewr
 
 | Path | Framework | Notes |
 | --- | --- | --- |
-| `apps/home` | TanStack Start | Apex zone, port 3001; owns `vercel.json` rewrites |
-| `apps/budget` | TanStack Start | Mounts at `/budget`, port 3000 |
+| `apps/home` | TanStack Start | Apex zone, port 3000; owns `vercel.json` rewrites |
+| `apps/budget` | TanStack Start | Mounts at `/budget`, port 3001 |
 | `apps/api-*` | (per-experiment) | Convention for non-Convex backends — none scaffolded yet |
 | `packages/convex` | — | Shared Convex schema/functions (`@repo/convex`) |
 | `packages/tokens` | — | Tailwind v4 design tokens (`@repo/tokens`) |
@@ -20,7 +20,7 @@ Doma is a Vercel Multi-Zones monorepo. `apps/home` owns the apex domain and rewr
 
 `apps/home/vercel.json` rewrites paths to other Vercel projects. Each sub-app builds with `base: '/<path>/'` (Vite) plus `basepath: '/<path>'` (TanStack Router) so asset URLs and route matching agree. Cross-app navigation is real browser navigation; same apex domain means a single Clerk cookie covers every zone.
 
-**Local dev does not apply the rewrites.** Each app runs on its own port (Home 3001, Budget 3000). Visit each port directly. Vercel rewrites are a production-only mechanism.
+**Local dev does not apply the rewrites.** Each app runs on its own port (Home 3000, Budget 3001). Visit each port directly. Vercel rewrites are a production-only mechanism.
 
 ### Cross-origin Clerk session sync in dev
 
