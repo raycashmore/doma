@@ -161,3 +161,16 @@ export function timestampToExcelDate(timestamp: number): number {
   const EXCEL_EPOCH = new Date(Date.UTC(1899, 11, 30)).getTime();
   return (timestamp - EXCEL_EPOCH) / MS_PER_DAY;
 }
+
+// ============================================================
+// Money: integer minor units (cents/pence) conversion
+// All money fields in this schema are stored as integer minor
+// units. Rates (gbpAud, usdAud, rateVar, rateFix) stay as floats.
+// ============================================================
+export function toCents(value: number): number {
+  return Math.round(value * 100);
+}
+
+export function fromCents(cents: number): number {
+  return cents / 100;
+}

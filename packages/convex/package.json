@@ -17,7 +17,8 @@
     "dev": "dotenv -e ../../.env.local -- convex dev",
     "deploy": "dotenv -e ../../.env.local -- convex deploy",
     "lint": "eslint --fix",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "convex": "^1.27.3"
@@ -27,6 +28,7 @@
     "@repo/typescript-config": "workspace:*",
     "@types/node": "^22.10.2",
     "dotenv-cli": "^11.0.0",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^3.0.5"
   }
 }
