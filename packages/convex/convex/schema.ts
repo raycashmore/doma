@@ -1,3 +1,11 @@
+/**
+ * MONEY CONVENTION
+ * ----------------
+ * All monetary fields in this schema are stored as integer minor units
+ * (cents for AUD/USD, pence for GBP). Use toCents() / fromCents() in
+ * helpers.ts to convert. Rates (gbpAud, usdAud, rateVar, rateFix) remain
+ * floats.
+ */
 import { defineSchema, defineTable } from 'convex/server';
 import { v } from 'convex/values';
 
