@@ -70,7 +70,9 @@ describe('summarizeBudgetForPeriod', () => {
     const rows: BudgetRow[] = [];
     // 24 months of synthetic data, income doubling in second 12
     for (let i = 0; i < 24; i++) {
-      rows.push(row(month(i + 1), i < 12 ? 100_000 : 200_000, 0, 0, 0, 0, 0, 0, 0));
+      rows.push(
+        row(month(i + 1), i < 12 ? 100_000 : 200_000, 0, 0, 0, 0, 0, 0, 0)
+      );
     }
     const r = summarizeBudgetForPeriod(rows, '12M', month(24));
     expect(r.avgIncome.value).toBe(200_000);
@@ -79,7 +81,9 @@ describe('summarizeBudgetForPeriod', () => {
   });
 
   it('periodLabel reflects window choice', () => {
-    expect(summarizeBudgetForPeriod([], '12M', 0).periodLabel).toBe('12 months');
+    expect(summarizeBudgetForPeriod([], '12M', 0).periodLabel).toBe(
+      '12 months'
+    );
     expect(summarizeBudgetForPeriod([], '6M', 0).periodLabel).toBe('6 months');
     expect(summarizeBudgetForPeriod([], '3M', 0).periodLabel).toBe('3 months');
     expect(summarizeBudgetForPeriod([], 'ALL', 0).periodLabel).toBe('All time');

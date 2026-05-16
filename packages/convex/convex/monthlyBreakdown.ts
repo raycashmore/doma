@@ -1,9 +1,5 @@
 import type { Doc } from './_generated/dataModel';
-import {
-  budgetTotalIn,
-  budgetTotalOut,
-  budgetNetGainLoss
-} from './helpers';
+import { budgetTotalIn, budgetTotalOut, budgetNetGainLoss } from './helpers';
 
 export type BudgetRow = Doc<'budget'>;
 export type MortgageRow = Doc<'mortgage'>;
