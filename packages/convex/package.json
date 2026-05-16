@@ -11,23 +11,29 @@
       "default": "./convex/_generated/api.js"
     },
     "./schema": "./convex/schema.ts",
-    "./auth": "./convex/auth.config.ts"
+    "./auth": "./convex/auth.config.ts",
+    "./helpers": "./convex/helpers.ts"
   },
   "scripts": {
     "dev": "dotenv -e ../../.env.local -- convex dev",
     "deploy": "dotenv -e ../../.env.local -- convex deploy",
     "lint": "eslint --fix",
     "check-types": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "seed": "tsx scripts/seed.ts",
+    "seed:clear": "tsx scripts/clearAll.ts"
   },
   "dependencies": {
-    "convex": "^1.27.3"
+    "convex": "^1.27.3",
+    "dotenv": "^16.4.5",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "^22.10.2",
     "dotenv-cli": "^11.0.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.7.2",
     "vitest": "^3.0.5"
   }

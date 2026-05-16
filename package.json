@@ -8,7 +8,9 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
     "test": "turbo run test",
-    "convex": "pnpm --filter @repo/convex dev"
+    "convex": "pnpm --filter @repo/convex dev",
+    "seed": "pnpm --filter @repo/convex seed",
+    "seed:clear": "pnpm --filter @repo/convex seed:clear"
   },
   "devDependencies": {
     "prettier": "^3.7.4",
