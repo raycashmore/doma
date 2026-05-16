@@ -44,47 +44,49 @@ export default function BudgetBreakdownTable({ rows, onRowClick }: Props) {
       ) : rows.length === 0 ? (
         <p className="text-sm text-warm-text-secondary">No budget rows.</p>
       ) : (
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-warm-text-tertiary text-[11px] uppercase tracking-wide">
-              <th className="text-left font-medium py-2">Month</th>
-              <th className="text-right font-medium py-2">Income</th>
-              <th className="text-right font-medium py-2">Spend</th>
-              <th className="text-right font-medium py-2">Mortgage</th>
-              <th className="text-right font-medium py-2">Net</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr
-                key={r.date}
-                onClick={() => onRowClick(r.date)}
-                className="cursor-pointer border-t border-warm-border hover:bg-warm-bg-card transition-colors"
-              >
-                <td className="py-2 text-warm-text-primary font-medium">
-                  {monthLabel(r.date)}
-                </td>
-                <td className="py-2 text-right text-warm-text-primary">
-                  {formatCurrency(r.income)}
-                </td>
-                <td className="py-2 text-right text-warm-text-primary">
-                  {formatCurrency(r.spend)}
-                </td>
-                <td className="py-2 text-right text-warm-text-secondary">
-                  {r.mortgage === null ? '—' : formatCurrency(r.mortgage)}
-                </td>
-                <td
-                  className={`py-2 text-right font-medium ${
-                    r.net >= 0 ? 'text-warm-positive' : 'text-warm-negative'
-                  }`}
-                >
-                  {r.net >= 0 ? '+' : ''}
-                  {formatCurrency(r.net)}
-                </td>
+        <div className="-mx-5 overflow-x-auto px-5">
+          <table className="w-full min-w-[460px] text-sm">
+            <thead>
+              <tr className="text-warm-text-tertiary text-[11px] uppercase tracking-wide">
+                <th className="text-left font-medium py-2 pr-3">Month</th>
+                <th className="text-right font-medium py-2 px-3">Income</th>
+                <th className="text-right font-medium py-2 px-3">Spend</th>
+                <th className="text-right font-medium py-2 px-3">Mortgage</th>
+                <th className="text-right font-medium py-2 pl-3">Net</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr
+                  key={r.date}
+                  onClick={() => onRowClick(r.date)}
+                  className="cursor-pointer border-t border-warm-border hover:bg-warm-bg-card transition-colors"
+                >
+                  <td className="py-2 pr-3 text-warm-text-primary font-medium whitespace-nowrap">
+                    {monthLabel(r.date)}
+                  </td>
+                  <td className="py-2 px-3 text-right text-warm-text-primary whitespace-nowrap">
+                    {formatCurrency(r.income)}
+                  </td>
+                  <td className="py-2 px-3 text-right text-warm-text-primary whitespace-nowrap">
+                    {formatCurrency(r.spend)}
+                  </td>
+                  <td className="py-2 px-3 text-right text-warm-text-secondary whitespace-nowrap">
+                    {r.mortgage === null ? '—' : formatCurrency(r.mortgage)}
+                  </td>
+                  <td
+                    className={`py-2 pl-3 text-right font-medium whitespace-nowrap ${
+                      r.net >= 0 ? 'text-warm-positive' : 'text-warm-negative'
+                    }`}
+                  >
+                    {r.net >= 0 ? '+' : ''}
+                    {formatCurrency(r.net)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
