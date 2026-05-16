@@ -8,7 +8,6 @@ const CONVEX_URL = env.VITE_CONVEX_URL;
 const CLERK_KEY = env.VITE_CLERK_PUBLISHABLE_KEY;
 
 if (!CONVEX_URL) {
-   
   console.error('missing envar VITE_CONVEX_URL');
 }
 
