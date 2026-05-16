@@ -1,6 +1,6 @@
 # Convex Backend
 
-Backend code lives at `apps/web/convex/`, NOT root `/convex/`.
+Backend code lives at `apps/budget/convex/`, NOT root `/convex/`.
 
 ## Core Pattern: Derive at Read Time
 
