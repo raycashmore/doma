@@ -12,7 +12,7 @@ import MonthlyDetailOverlay from '@/components/budget/MonthlyDetailOverlay';
 import MonthIncomeSection from '@/components/budget/MonthIncomeSection';
 import MonthSpendSection from '@/components/budget/MonthSpendSection';
 import MonthMortgageSection from '@/components/budget/MonthMortgageSection';
-import { formatCurrency } from '@/lib/budget';
+import SummaryMini from '@/components/budget/SummaryMini';
 
 export const Route = createFileRoute('/')({
   component: BudgetPage
@@ -82,16 +82,19 @@ function BudgetPage() {
                 label="Income"
                 value={detail.income.total}
                 fill="bg-warm-section-income"
+                trend={detail.trends.income}
               />
               <SummaryMini
                 label="Spend"
                 value={detail.spend.total}
                 fill="bg-warm-section-spend"
+                trend={detail.trends.spend}
               />
               <SummaryMini
                 label="Mortgage"
                 value={detail.mortgage?.contribTotal ?? 0}
                 fill="bg-warm-section-mortgage"
+                trend={detail.trends.mortgage}
               />
             </div>
             <div className="flex flex-col md:flex-row gap-4">
@@ -121,26 +124,5 @@ function BudgetPage() {
         ) : null}
       </MonthlyDetailOverlay>
     </>
-  );
-}
-
-function SummaryMini({
-  label,
-  value,
-  fill
-}: {
-  label: string;
-  value: number;
-  fill: string;
-}) {
-  return (
-    <div className={`${fill} rounded-2xl px-4 py-3`}>
-      <div className="text-[11px] uppercase tracking-wide text-warm-text-secondary font-semibold">
-        {label}
-      </div>
-      <div className="mt-1 text-2xl font-warm-display text-warm-text-primary">
-        {formatCurrency(value)}
-      </div>
-    </div>
   );
 }
