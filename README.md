@@ -42,6 +42,7 @@ Run `pnpm format`, `pnpm lint`, `pnpm check-types`, `pnpm test`.
 
 - [Architecture](docs/architecture.md) — monorepo layout, multi-zones, PWA scope
 - [Auth](docs/auth.md) — Clerk setup
+- [Deployment](docs/deployment.md) — Vercel Multi-Zones step-by-step
 - [Convex backend](docs/convex-backend.md) — data model, derivation pattern
 - [Frontend](docs/frontend.md) — TanStack Start, routing, styling
 - [Offline strategy](docs/offline.md) — what the PWA shell does and doesn't cover

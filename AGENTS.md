@@ -29,6 +29,7 @@ Run `pnpm format` and ensure `pnpm lint`, `pnpm check-types`, and `pnpm test` pa
 
 - [Architecture](docs/architecture.md) — multi-zones layout, packages, deploy
 - [Auth](docs/auth.md) — Clerk setup
+- [Deployment](docs/deployment.md) — Vercel Multi-Zones step-by-step
 - [Convex Backend](docs/convex-backend.md) — schema, queries, derivation pattern
 - [Frontend](docs/frontend.md) — TanStack Start, routing, components, styling
 - [Offline strategy](docs/offline.md) — what the PWA shell does and doesn't cover
