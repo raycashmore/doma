@@ -18,16 +18,14 @@ export function AppFrame({
   children,
   onSignOut
 }: AppFrameProps) {
-  // Each app declares its own appId — that's authoritative for sidebar
-  // active state. We used to derive it from window.location.pathname, but
-  // that breaks in dev where each app serves at `/` on its own port (and
-  // would always look like "home").
   return (
-    <div className="flex h-screen bg-neutral-50">
-      <Sidebar activeAppId={appId} onSignOut={onSignOut} />
-      <div className="flex flex-col flex-1 min-w-0">
-        <Header title={title} actions={actions} />
-        <main className="flex-1 overflow-auto">{children}</main>
+    <div className="min-h-screen bg-warm-bg p-0 md:p-8 font-warm-body text-warm-text-primary">
+      <div className="flex h-[calc(100vh-0px)] md:h-[calc(100vh-4rem)] overflow-hidden rounded-none md:rounded-[32px] bg-warm-bg-dark">
+        <Sidebar activeAppId={appId} onSignOut={onSignOut} />
+        <div className="flex flex-col flex-1 min-w-0">
+          <Header title={title} actions={actions} />
+          <main className="flex-1 overflow-auto px-7 pb-7">{children}</main>
+        </div>
       </div>
     </div>
   );
