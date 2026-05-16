@@ -28,7 +28,7 @@ export default function BudgetChartLines({
         data={sinkOrSwimTrend}
         x={(d) => (xScale(d.date) ?? 0) + halfBand}
         y={(d) => yScale(d.value)}
-        stroke="rgb(65, 105, 225)"
+        stroke="#5F9466"
         strokeWidth={2}
         curve={curveMonotoneX}
       />
@@ -36,7 +36,7 @@ export default function BudgetChartLines({
         data={spendTrend}
         x={(d) => (xScale(d.date) ?? 0) + halfBand}
         y={(d) => yScale(d.value)}
-        stroke="rgb(220, 50, 50)"
+        stroke="#D85A36"
         strokeWidth={2}
         curve={curveMonotoneX}
       />
