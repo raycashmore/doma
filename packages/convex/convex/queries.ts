@@ -20,6 +20,10 @@ import {
   ukTotalAud,
   ukTotalGbp
 } from './helpers';
+import {
+  summarizeBudgetForPeriod,
+  type SummaryPeriod
+} from './budgetSummary';
 
 // ============================================================
 // CURRENT ACCOUNTS
@@ -383,5 +387,31 @@ export const getTotalsHistory = query({
 
     results.reverse(); // desc order
     return args.limit ? results.slice(0, args.limit) : results;
+  }
+});
+
+// ============================================================
+// BUDGET PAGE SUMMARY — KPI cards with period comparisons
+// ============================================================
+export const getBudgetPageSummary = query({
+  args: {
+    period: v.union(
+      v.literal('3M'),
+      v.literal('6M'),
+      v.literal('12M'),
+      v.literal('ALL')
+    )
+  },
+  handler: async (ctx, args) => {
+    const rows = await ctx.db
+      .query('budget')
+      .withIndex('by_date')
+      .order('asc')
+      .collect();
+    return summarizeBudgetForPeriod(
+      rows,
+      args.period as SummaryPeriod,
+      Date.now()
+    );
   }
 });

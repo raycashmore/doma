@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as budgetSummary from "../budgetSummary.js";
 import type * as helpers from "../helpers.js";
 import type * as mutations from "../mutations.js";
 import type * as queries from "../queries.js";
@@ -20,6 +21,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  budgetSummary: typeof budgetSummary;
   helpers: typeof helpers;
   mutations: typeof mutations;
   queries: typeof queries;
