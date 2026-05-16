@@ -21,9 +21,6 @@ export function Sidebar({
   onSignOut,
   brandLabel = 'D'
 }: SidebarProps) {
-  // When signed-in via Clerk, append the dev session token to cross-origin
-  // URLs so the destination port auto-rehydrates the session. In production
-  // (same origin) and pre-Clerk dev (no provider), this is the identity.
   const urlAuth = useUrlAuth();
   const buildHref = (app: AppDescriptor) => {
     const href = getAppHref(app);
@@ -33,17 +30,19 @@ export function Sidebar({
   return (
     <nav
       aria-label="App navigation"
-      className="flex flex-col items-center gap-2 w-16 bg-neutral-900 text-neutral-100 py-4 h-full"
+      className="hidden md:flex flex-col items-center w-24 py-6 text-warm-text-on-dark"
     >
       <a
         href={buildHref(homeApp)}
-        className="flex items-center justify-center w-10 h-10 rounded-md bg-orange-500 text-white font-bold text-lg mb-4"
         aria-label="Home"
+        className="flex items-center justify-center w-12 h-12 rounded-xl bg-warm-accent text-warm-bg font-warm-display text-2xl font-bold"
       >
         {brandLabel}
       </a>
 
-      <ul className="flex flex-col gap-2 flex-1 w-full items-center">
+      <div className="h-6" aria-hidden />
+
+      <ul className="flex flex-col items-center gap-[18px] flex-1 w-full px-4">
         {APPS.filter((app) => app.id !== 'home' && app.enabled).map((app) => {
           const Icon = app.icon;
           const isActive = activeAppId === app.id;
@@ -54,10 +53,10 @@ export function Sidebar({
                 aria-label={app.label}
                 aria-current={isActive ? 'page' : undefined}
                 className={clsx(
-                  'flex items-center justify-center w-10 h-10 rounded-md transition-colors',
+                  'flex items-center justify-center w-12 h-12 rounded-[14px] transition-colors',
                   isActive
-                    ? 'bg-orange-500 text-white'
-                    : 'text-neutral-400 hover:bg-neutral-800 hover:text-neutral-100'
+                    ? 'bg-warm-accent text-warm-bg'
+                    : 'text-warm-text-tertiary hover:bg-warm-bg-dark-muted hover:text-warm-text-on-dark'
                 )}
               >
                 <Icon size={20} aria-hidden="true" />
@@ -72,9 +71,12 @@ export function Sidebar({
           type="button"
           onClick={onSignOut}
           aria-label="Log out"
-          className="flex items-center justify-center w-10 h-10 rounded-md text-neutral-400 hover:bg-neutral-800 hover:text-neutral-100"
+          className="flex flex-col items-center gap-1.5 mt-4 text-warm-text-tertiary hover:text-warm-text-on-dark"
         >
-          <LogOut size={20} aria-hidden="true" />
+          <span className="flex items-center justify-center w-10 h-10 rounded-xl bg-warm-bg-dark-muted">
+            <LogOut size={18} aria-hidden="true" />
+          </span>
+          <span className="text-[11px]">Log Out</span>
         </button>
       ) : null}
     </nav>
