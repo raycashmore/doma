@@ -39,7 +39,7 @@ export default function BudgetChartBars({
             y={y}
             width={bandwidth}
             height={Math.max(0, barHeight)}
-            fill="rgba(100, 149, 237, 0.5)"
+            fill="#D8E9D2"
             onMouseMove={(e) =>
               onMouseMove(e as React.MouseEvent<SVGRectElement>, d)
             }
@@ -61,7 +61,7 @@ export default function BudgetChartBars({
             y={y}
             width={bandwidth}
             height={Math.max(0, barHeight)}
-            fill="rgba(250, 128, 114, 0.5)"
+            fill="#FFDFC7"
             onMouseMove={(e) =>
               onMouseMove(e as React.MouseEvent<SVGRectElement>, d)
             }
