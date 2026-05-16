@@ -22,6 +22,22 @@ Doma is a Vercel Multi-Zones monorepo. `apps/home` owns the apex domain and rewr
 
 **Local dev does not apply the rewrites.** Each app runs on its own port (Home 3001, Budget 3000). Visit each port directly. Vercel rewrites are a production-only mechanism.
 
+### Optional dev proxy
+
+If signing in to Clerk separately per port is annoying, run the Caddy proxy:
+
+```bash
+brew install caddy           # one time
+pnpm dev                     # apps on their native ports (terminal 1)
+pnpm dev:proxy               # Caddy on :5173 (terminal 2)
+```
+
+Then everything lives at `http://localhost:5173`. Caddy reverse-routes `/budget/*` to Budget's dev server (stripping the prefix); `/*` falls through to Home. Single origin → one Clerk cookie → no double sign-in.
+
+The sidebar detects the proxy at runtime (`window.location.host` is `localhost:5173`, not a direct dev port) and switches its links to relative paths so cross-zone nav stays on the proxy origin.
+
+**Known limitation while we have one route per app:** Caddy strips `/budget` before forwarding, so Budget's dev server sees requests at `/`. When Budget adds internal routes (e.g. `/transactions`), the browser URL becomes `localhost:5173/transactions` and Caddy routes it to Home (404). When that lands, either: keep `/budget` in the URL by reverting Vite's dev `base` + adding a middleware to fix the @react-refresh 404, or add explicit `handle` blocks per route in the Caddyfile.
+
 When new sub-apps land, add rewrite entries to `apps/home/vercel.json`:
 
 ```json

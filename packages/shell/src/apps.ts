@@ -93,13 +93,23 @@ export const APPS: AppDescriptor[] = [
  *
  * - **Production:** returns the app's path (`/budget`). Vercel rewrites route
  *   it from the apex domain to the correct zone.
- * - **Local dev:** Vercel rewrites don't run and each app serves at the root
- *   of its own port. Build an absolute URL to the app's dev port.
+ * - **Dev behind the Caddy proxy** (see /Caddyfile): also returns the path —
+ *   the proxy reverse-routes /budget/* to the Budget zone, so a single origin
+ *   serves everything. This is what lets Clerk's cookie cover all zones in
+ *   dev. Detected at runtime by checking that the browser host isn't one of
+ *   the direct dev ports.
+ * - **Dev without the proxy:** each app serves at the root of its own port,
+ *   so build an absolute URL to the app's dev port.
  */
 export function getAppHref(app: AppDescriptor): string {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const isDev = (import.meta as any).env?.DEV === true;
   if (!isDev) return app.href;
+  if (typeof window !== 'undefined') {
+    const directDevHosts = APPS.map((a) => `localhost:${a.devPort}`);
+    const isBehindProxy = !directDevHosts.includes(window.location.host);
+    if (isBehindProxy) return app.href;
+  }
   return `http://localhost:${app.devPort}/`;
 }
 
