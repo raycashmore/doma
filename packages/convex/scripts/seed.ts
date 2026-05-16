@@ -13,7 +13,6 @@ import { fileURLToPath } from 'node:url';
 import * as dotenv from 'dotenv';
 import { ConvexHttpClient } from 'convex/browser';
 import { api } from '@repo/convex';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- used in Task 0.10 cents migration
 import { toCents } from '@repo/convex/helpers';
 import * as XLSX from 'xlsx';
 
@@ -55,7 +54,22 @@ function optNum(val: unknown): number | undefined {
 }
 
 async function main() {
-  console.log("Reading CREAM.xlsx...");
+  console.log('Clearing existing tables...');
+  for (const table of [
+    'currentAccounts',
+    'cashAccounts',
+    'ukAccounts',
+    'superAccounts',
+    'investmentAccounts',
+    'mortgage',
+    'budget',
+    'cryptoTransactions',
+    'cryptoSummaries'
+  ] as const) {
+    const { deleted } = await client.mutation(api.seed.clearTable, { table });
+    console.log(`  cleared ${table}: ${deleted}`);
+  }
+  console.log('Reading CREAM.xlsx...');
   const wb = XLSX.readFile(XLSX_PATH);
 
   // ── Current Accounts ──────────────────────────────────────
@@ -66,10 +80,10 @@ async function main() {
       .filter((r: any[]) => r[0] && typeof r[0] === "number")
       .map((r: any[]) => ({
         date: excelDateToTimestamp(num(r[0])),
-        currentSecondary: num(r[1]),
-        shared: num(r[2]),
-        currentPrimary: num(r[3]),
-        other: num(r[4]),
+        currentSecondary: toCents(num(r[1])),
+        shared: toCents(num(r[2])),
+        currentPrimary: toCents(num(r[3])),
+        other: toCents(num(r[4])),
         // r[5] = TOTAL (derived, skip)
       }));
 
@@ -89,8 +103,8 @@ async function main() {
       .filter((r: any[]) => r[0] && typeof r[0] === "number")
       .map((r: any[]) => ({
         date: excelDateToTimestamp(num(r[0])),
-        saver: num(r[1]),
-        highInterest: num(r[2]),
+        saver: toCents(num(r[1])),
+        highInterest: toCents(num(r[2])),
         // r[3] = TOTAL (derived, skip)
       }));
 
@@ -110,10 +124,10 @@ async function main() {
       .filter((r: any[]) => r[0] && typeof r[0] === "number")
       .map((r: any[]) => ({
         date: excelDateToTimestamp(num(r[0])),
-        currentGbp: num(r[1]),
-        saverGbp: num(r[2]),
-        cashIsaGbp: num(r[3]),
-        sharesIsaGbp: num(r[4]),
+        currentGbp: toCents(num(r[1])),
+        saverGbp: toCents(num(r[2])),
+        cashIsaGbp: toCents(num(r[3])),
+        sharesIsaGbp: toCents(num(r[4])),
         // r[5] = TOTAL GBP (derived)
         // r[6] = TOTAL AUD (derived)
         gbpAud: num(r[7]),
@@ -136,11 +150,11 @@ async function main() {
       .filter((r: any[]) => r[0] && typeof r[0] === "number")
       .map((r: any[]) => ({
         date: excelDateToTimestamp(num(r[0])),
-        pension: num(r[1]),
+        pension: toCents(num(r[1])),
         // r[2] = Pension AUD (derived)
-        super1: num(r[3]),
-        super2: num(r[4]),
-        super3: num(r[5]),
+        super1: toCents(num(r[3])),
+        super2: toCents(num(r[4])),
+        super3: toCents(num(r[5])),
         gbpAud: num(r[6]),
         // r[7] = TOTAL (derived)
       }));
@@ -161,18 +175,18 @@ async function main() {
       .filter((r: any[]) => r[0] && typeof r[0] === "number")
       .map((r: any[]) => ({
         date: excelDateToTimestamp(num(r[0])),
-        managedFund1: num(r[1]),
-        investmentLoan: num(r[2]),
+        managedFund1: toCents(num(r[1])),
+        investmentLoan: toCents(num(r[2])),
         // r[3] = Managed Fund NET (derived)
-        tradingAus1: num(r[4]),
-        tradingInt1: num(r[5]),
-        tradingInt2: num(r[6]),
+        tradingAus1: toCents(num(r[4])),
+        tradingInt1: toCents(num(r[5])),
+        tradingInt2: toCents(num(r[6])),
         usdAud: num(r[7]),
-        managedFund2: num(r[8]),
-        tradingAus2: num(r[9]),
-        managedFund3: num(r[10]),
-        crypto1: num(r[11]),
-        crypto2: num(r[12]),
+        managedFund2: toCents(num(r[8])),
+        tradingAus2: toCents(num(r[9])),
+        managedFund3: toCents(num(r[10])),
+        crypto1: toCents(num(r[11])),
+        crypto2: toCents(num(r[12])),
         // r[13] = TOTAL (derived)
       }));
 
@@ -192,19 +206,19 @@ async function main() {
       .filter((r: any[]) => r[0] && typeof r[0] === "number")
       .map((r: any[]) => ({
         date: excelDateToTimestamp(num(r[0])),
-        deposit: num(r[1]),
-        familyContrib: num(r[2]),
-        debt1: num(r[3]),
-        debt2: num(r[4]),
-        interestCharged: num(r[5]),
-        principalPaid: num(r[6]),
-        contrib1: num(r[7]),
-        contrib2: num(r[8]),
-        contrib3: num(r[9]),
+        deposit: toCents(num(r[1])),
+        familyContrib: toCents(num(r[2])),
+        debt1: toCents(num(r[3])),
+        debt2: toCents(num(r[4])),
+        interestCharged: toCents(num(r[5])),
+        principalPaid: toCents(num(r[6])),
+        contrib1: toCents(num(r[7])),
+        contrib2: toCents(num(r[8])),
+        contrib3: toCents(num(r[9])),
         // r[10..15] = Available/My available/Liquid/Equity (derived)
-        price: num(r[16]),
-        landValue: num(r[17]),
-        capitalGrowth: num(r[18]),
+        price: toCents(num(r[16])),
+        landValue: toCents(num(r[17])),
+        capitalGrowth: toCents(num(r[18])),
       }));
 
     for (let i = 0; i < rows.length; i += 100) {
@@ -228,17 +242,17 @@ async function main() {
       .filter((r: any[]) => r[0] && typeof r[0] === "number")
       .map((r: any[]) => ({
         date: excelDateToTimestamp(num(r[0])),
-        incomePrimary: num(r[5]),
-        incomeSecondary: num(r[6]),
-        billContrib: num(r[16]),
-        credit2: num(r[1]),
-        credit1: num(r[2]),
-        credit3: num(r[13]),
-        oneOffs: num(r[14]),
-        shared: num(r[15]),
-        variable: num(r[7]),
-        fixed: num(r[8]),
-        rent: num(r[9]),
+        incomePrimary: toCents(num(r[5])),
+        incomeSecondary: toCents(num(r[6])),
+        billContrib: toCents(num(r[16])),
+        credit2: toCents(num(r[1])),
+        credit1: toCents(num(r[2])),
+        credit3: toCents(num(r[13])),
+        oneOffs: toCents(num(r[14])),
+        shared: toCents(num(r[15])),
+        variable: toCents(num(r[7])),
+        fixed: toCents(num(r[8])),
+        rent: toCents(num(r[9])),
         rateVar: optNum(r[10]),
         rateFix: optNum(r[11]),
       }));
@@ -275,7 +289,7 @@ async function main() {
           platform: "platform_a",
           date: excelDateToTimestamp(num(r[0])),
           type: "deposit",
-          amount: num(r[1]),
+          amount: toCents(num(r[1])),
         });
       }
       if (typeof r[0] === "number" && num(r[2]) > 0) {
@@ -283,7 +297,7 @@ async function main() {
           platform: "platform_a",
           date: excelDateToTimestamp(num(r[0])),
           type: "withdrawal",
-          amount: num(r[2]),
+          amount: toCents(num(r[2])),
         });
       }
     }
@@ -320,20 +334,20 @@ async function main() {
       const target = inPlatformB ? summaries[1] : summaries[0];
 
       if (r[0] === "Total" && !inPlatformB) {
-        target.totalDeposited = num(r[1]);
-        target.totalWithdrawn = num(r[2]);
+        target.totalDeposited = toCents(num(r[1]));
+        target.totalWithdrawn = toCents(num(r[2]));
       }
       if (r[0] === "Value" && !inPlatformB && i > 20) {
-        target.currentValue = num(r[2]);
+        target.currentValue = toCents(num(r[2]));
       }
       if (r[0] === "Deposited Fiat") {
-        target.totalDeposited = num(r[2]);
+        target.totalDeposited = toCents(num(r[2]));
       }
       if (r[0] === "Withdrawn Fiat") {
-        target.totalWithdrawn = num(r[2]);
+        target.totalWithdrawn = toCents(num(r[2]));
       }
       if (r[0] === "Value" && inPlatformB) {
-        target.currentValue = num(r[2]);
+        target.currentValue = toCents(num(r[2]));
       }
     }
 
