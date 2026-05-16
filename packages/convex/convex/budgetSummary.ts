@@ -53,7 +53,8 @@ function computeWindow(rows: BudgetRow[]) {
   const totalIn = ins.reduce((s, x) => s + x, 0);
   const totalNet = nets.reduce((s, x) => s + x, 0);
   // basis points: 12.34% -> 1234
-  const savingsBp = totalIn === 0 ? 0 : Math.round((totalNet / totalIn) * 10_000);
+  const savingsBp =
+    totalIn === 0 ? 0 : Math.round((totalNet / totalIn) * 10_000);
   return {
     avgSpend: avgOut,
     avgIncome: avgIn,

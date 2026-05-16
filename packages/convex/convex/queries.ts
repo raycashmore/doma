@@ -20,10 +20,7 @@ import {
   ukTotalAud,
   ukTotalGbp
 } from './helpers';
-import {
-  summarizeBudgetForPeriod,
-  type SummaryPeriod
-} from './budgetSummary';
+import { summarizeBudgetForPeriod, type SummaryPeriod } from './budgetSummary';
 import { joinBudgetWithMortgage } from './monthlyBreakdown';
 import { shapeMonthDetail } from './monthDetail';
 

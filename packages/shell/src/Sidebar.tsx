@@ -1,11 +1,6 @@
 import { LogOut } from 'lucide-react';
 import clsx from 'clsx';
-import {
-  APPS,
-  getAppHref,
-  type AppDescriptor,
-  type AppId
-} from './apps';
+import { APPS, getAppHref, type AppDescriptor, type AppId } from './apps';
 import { useUrlAuth } from './auth';
 
 const homeApp = APPS.find((a) => a.id === 'home')!;

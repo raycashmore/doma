@@ -116,11 +116,17 @@ function BudgetChartInner({
         </h2>
         <div className="flex items-center gap-4 text-xs text-warm-text-secondary">
           <div className="flex items-center gap-2">
-            <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: '#D85A36' }} />
+            <span
+              className="inline-block w-3 h-3 rounded-sm"
+              style={{ backgroundColor: '#D85A36' }}
+            />
             Spend
           </div>
           <div className="flex items-center gap-2">
-            <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: '#5F9466' }} />
+            <span
+              className="inline-block w-3 h-3 rounded-sm"
+              style={{ backgroundColor: '#5F9466' }}
+            />
             Sink or Swim
           </div>
         </div>
@@ -208,5 +214,12 @@ function BudgetChartInner({
 }
 
 export default function BudgetChart({ data, period }: BudgetChartProps) {
-  return <BudgetChartInner data={data} period={period} width={CHART_WIDTH} height={CHART_HEIGHT} />;
+  return (
+    <BudgetChartInner
+      data={data}
+      period={period}
+      width={CHART_WIDTH}
+      height={CHART_HEIGHT}
+    />
+  );
 }

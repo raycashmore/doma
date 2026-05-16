@@ -66,18 +66,20 @@ describe('rate-boundary rounding (returns integer cents)', () => {
         gbpAud: 1.234
       })
     ).toBe(123);
-    expect(Number.isInteger(
-      superPensionAud({
-        _id: 'x' as any,
-        _creationTime: 0,
-        date: 0,
-        pension: 99,
-        super1: 0,
-        super2: 0,
-        super3: 0,
-        gbpAud: 1.987
-      })
-    )).toBe(true);
+    expect(
+      Number.isInteger(
+        superPensionAud({
+          _id: 'x' as any,
+          _creationTime: 0,
+          date: 0,
+          pension: 99,
+          super1: 0,
+          super2: 0,
+          super3: 0,
+          gbpAud: 1.987
+        })
+      )
+    ).toBe(true);
   });
 
   it('ukTotalAud returns integer cents', () => {
