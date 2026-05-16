@@ -25,6 +25,7 @@ import {
   type SummaryPeriod
 } from './budgetSummary';
 import { joinBudgetWithMortgage } from './monthlyBreakdown';
+import { shapeMonthDetail } from './monthDetail';
 
 // ============================================================
 // CURRENT ACCOUNTS
@@ -402,6 +403,28 @@ export const getMonthlyBreakdown = query({
       ctx.db.query('mortgage').withIndex('by_date').order('asc').collect()
     ]);
     return joinBudgetWithMortgage(budgetRows, mortgageRows, args.limit);
+  }
+});
+
+// ============================================================
+// MONTHLY DETAIL — single month overlay data (budget + mortgage carry-forward)
+// ============================================================
+export const getMonthlyDetail = query({
+  args: { date: v.number() },
+  handler: async (ctx, args) => {
+    const budget = await ctx.db
+      .query('budget')
+      .withIndex('by_date', (q) => q.eq('date', args.date))
+      .first();
+
+    // Carry-forward mortgage lookup: most recent at-or-before args.date
+    const mortgage = await ctx.db
+      .query('mortgage')
+      .withIndex('by_date', (q) => q.lte('date', args.date))
+      .order('desc')
+      .first();
+
+    return shapeMonthDetail(budget, mortgage);
   }
 });
 
