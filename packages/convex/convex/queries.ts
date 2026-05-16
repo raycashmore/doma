@@ -24,6 +24,7 @@ import {
   summarizeBudgetForPeriod,
   type SummaryPeriod
 } from './budgetSummary';
+import { joinBudgetWithMortgage } from './monthlyBreakdown';
 
 // ============================================================
 // CURRENT ACCOUNTS
@@ -387,6 +388,20 @@ export const getTotalsHistory = query({
 
     results.reverse(); // desc order
     return args.limit ? results.slice(0, args.limit) : results;
+  }
+});
+
+// ============================================================
+// MONTHLY BREAKDOWN — budget rows joined with mortgage contrib
+// ============================================================
+export const getMonthlyBreakdown = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const [budgetRows, mortgageRows] = await Promise.all([
+      ctx.db.query('budget').withIndex('by_date').order('asc').collect(),
+      ctx.db.query('mortgage').withIndex('by_date').order('asc').collect()
+    ]);
+    return joinBudgetWithMortgage(budgetRows, mortgageRows, args.limit);
   }
 });
 
