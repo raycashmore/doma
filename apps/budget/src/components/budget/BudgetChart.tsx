@@ -4,8 +4,6 @@ import { scaleBand, scaleLinear } from '@visx/scale';
 import { AxisBottom, AxisLeft } from '@visx/axis';
 import { GridRows } from '@visx/grid';
 import { useTooltip } from '@visx/tooltip';
-import { ParentSize } from '@visx/responsive';
-
 
 import BudgetChartBars from './BudgetChartBars';
 import BudgetChartLines from './BudgetChartLines';
@@ -21,6 +19,8 @@ import {
 
 const MARGIN = { top: 20, right: 30, bottom: 80, left: 80 };
 const MA_WINDOW = 6;
+const CHART_WIDTH = 1200;
+const CHART_HEIGHT = 520;
 
 interface BudgetChartProps {
   data: Array<BudgetDataPoint>;
@@ -43,6 +43,17 @@ function BudgetChartInner({
   } = useTooltip<BudgetDataPoint>();
 
   const filtered = filterByTimePeriod(data, period);
+
+  if (filtered.length === 0) {
+    return (
+      <div className="flex min-h-[500px] flex-col items-center justify-center gap-2 text-center">
+        <p className="text-sm font-medium text-neutral-700">No budget data</p>
+        <p className="text-sm text-neutral-500">
+          Seed the budget table to render the chart.
+        </p>
+      </div>
+    );
+  }
 
   const innerWidth = width - MARGIN.left - MARGIN.right;
   const innerHeight = height - MARGIN.top - MARGIN.bottom;
@@ -121,7 +132,11 @@ function BudgetChartInner({
         <BudgetChartFilters selected={period} onChange={setPeriod} />
       </div>
 
-      <svg width={width} height={height}>
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        preserveAspectRatio="none"
+        className="h-[28rem] min-w-[720px] w-full sm:h-[32rem]"
+      >
         <Group left={MARGIN.left} top={MARGIN.top}>
           <GridRows
             scale={yScale}
@@ -197,11 +212,5 @@ function BudgetChartInner({
 }
 
 export default function BudgetChart({ data }: BudgetChartProps) {
-  return (
-    <ParentSize>
-      {({ width }) => (
-        <BudgetChartInner data={data} width={width} height={500} />
-      )}
-    </ParentSize>
-  );
+  return <BudgetChartInner data={data} width={CHART_WIDTH} height={CHART_HEIGHT} />;
 }
