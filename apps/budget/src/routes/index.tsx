@@ -138,7 +138,7 @@ function SummaryMini({
       <div className="text-[11px] uppercase tracking-wide text-warm-text-secondary font-semibold">
         {label}
       </div>
-      <div className="mt-1 text-xl font-warm-display text-warm-text-primary">
+      <div className="mt-1 text-2xl font-warm-display text-warm-text-primary">
         {formatCurrency(value)}
       </div>
     </div>
