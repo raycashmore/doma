@@ -47,6 +47,10 @@ export function formatDateLabel(timestamp: number): string {
   return `${day}/${month}/${year}`;
 }
 
-export function formatCurrency(value: number): string {
-  return `$${Math.round(value).toLocaleString('en-AU')}`;
+export function formatCurrency(cents: number): string {
+  const dollars = Math.round(cents / 100);
+  if (dollars < 0) {
+    return `-$${Math.abs(dollars).toLocaleString('en-AU')}`;
+  }
+  return `$${dollars.toLocaleString('en-AU')}`;
 }

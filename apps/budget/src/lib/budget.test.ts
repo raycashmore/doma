@@ -78,15 +78,19 @@ describe('formatDateLabel', () => {
 });
 
 describe('formatCurrency', () => {
-  it('formats positive values with dollar sign', () => {
-    expect(formatCurrency(1234)).toBe('$1,234');
+  it('formats cents as whole AUD with thousands separators', () => {
+    expect(formatCurrency(123400)).toBe('$1,234');
   });
 
-  it('rounds to nearest integer', () => {
-    expect(formatCurrency(1234.56)).toBe('$1,235');
+  it('rounds half-cents to nearest dollar', () => {
+    expect(formatCurrency(123456)).toBe('$1,235');
   });
 
-  it('formats zero', () => {
+  it('handles zero', () => {
     expect(formatCurrency(0)).toBe('$0');
+  });
+
+  it('handles negatives', () => {
+    expect(formatCurrency(-50000)).toBe('-$500');
   });
 });
