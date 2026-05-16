@@ -31,7 +31,17 @@ function BudgetPage() {
 
   const summary = useQuery(api.queries.getBudgetPageSummary, { period });
   const chartData = useQuery(api.queries.listBudgetChart);
-  const rows = useQuery(api.queries.getMonthlyBreakdown, {});
+  const periodLimit =
+    period === '3M'
+      ? 3
+      : period === '6M'
+        ? 6
+        : period === '12M'
+          ? 12
+          : undefined;
+  const rows = useQuery(api.queries.getMonthlyBreakdown, {
+    limit: periodLimit
+  });
   const detail = useQuery(
     api.queries.getMonthlyDetail,
     openMonth !== null ? { date: openMonth } : 'skip'
