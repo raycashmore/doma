@@ -1,7 +1,7 @@
 import type { TimePeriod } from '@/lib/budget';
 import { cn } from '@/lib/utils';
 
-const periods: Array<TimePeriod> = ['1Y', '3Y', '5Y', 'ALL'];
+const periods: Array<TimePeriod> = ['3M', '6M', '12M', 'ALL'];
 
 interface BudgetChartFiltersProps {
   selected: TimePeriod;
