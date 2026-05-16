@@ -1,0 +1,32 @@
+{
+  "name": "@repo/convex",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./convex/_generated/api.js",
+  "types": "./convex/_generated/api.d.ts",
+  "exports": {
+    ".": {
+      "types": "./convex/_generated/api.d.ts",
+      "default": "./convex/_generated/api.js"
+    },
+    "./schema": "./convex/schema.ts",
+    "./auth": "./convex/auth.config.ts"
+  },
+  "scripts": {
+    "dev": "dotenv -e ../../.env.local -- convex dev",
+    "deploy": "dotenv -e ../../.env.local -- convex deploy",
+    "lint": "eslint --fix",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "convex": "^1.27.3"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^22.10.2",
+    "dotenv-cli": "^11.0.0",
+    "typescript": "^5.7.2"
+  }
+}
