@@ -11,7 +11,9 @@ export function Header({ title, actions }: HeaderProps) {
       <h1 className="text-3xl font-warm-display text-warm-text-on-dark">
         {title}
       </h1>
-      {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
+      {actions ? (
+        <div className="flex items-center gap-2">{actions}</div>
+      ) : null}
     </header>
   );
 }
