@@ -2,11 +2,11 @@ import { Sparkles } from 'lucide-react';
 
 export default function InsightsPanel() {
   return (
-    <aside className="hidden md:flex md:w-[380px] md:shrink-0 flex-col gap-3">
+    <aside className="hidden min-h-0 flex-col gap-3 md:flex md:w-[380px] md:shrink-0">
       <h2 className="text-base font-warm-display text-warm-text-primary px-1">
         Insights
       </h2>
-      <div className="flex-1 flex flex-col items-center justify-center gap-3 rounded-3xl bg-warm-bg-card-soft p-8 text-center">
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 overflow-hidden rounded-3xl bg-warm-bg-card-soft p-8 text-center">
         <div className="flex items-center justify-center w-12 h-12 rounded-full bg-warm-bg-card text-warm-accent">
           <Sparkles size={22} />
         </div>

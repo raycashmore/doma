@@ -44,11 +44,18 @@ function BudgetChartInner({
 
   if (filtered.length === 0) {
     return (
-      <div className="flex min-h-[400px] flex-col items-center justify-center gap-2 text-center text-warm-text-secondary">
-        <p className="text-sm font-medium">No budget data</p>
-        <p className="text-sm text-warm-text-tertiary">
-          Seed the budget table to render the chart.
-        </p>
+      <div className="flex h-[340px] min-h-0 flex-col rounded-3xl bg-warm-bg-card-soft p-5">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-base font-warm-display text-warm-text-primary">
+            Income vs Spending
+          </h2>
+        </div>
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 text-center text-warm-text-secondary">
+          <p className="text-sm font-medium">No budget data</p>
+          <p className="text-sm text-warm-text-tertiary">
+            Seed the budget table to render the chart.
+          </p>
+        </div>
       </div>
     );
   }
@@ -109,8 +116,8 @@ function BudgetChartInner({
   if (innerWidth <= 0 || innerHeight <= 0) return null;
 
   return (
-    <div className="rounded-3xl bg-warm-bg-card-soft p-5">
-      <div className="flex items-center justify-between mb-4">
+    <div className="flex h-[340px] min-h-0 flex-col rounded-3xl bg-warm-bg-card-soft p-5">
+      <div className="mb-4 flex items-center justify-between">
         <h2 className="text-base font-warm-display text-warm-text-primary">
           Income vs Spending
         </h2>
@@ -132,11 +139,11 @@ function BudgetChartInner({
         </div>
       </div>
 
-      <div className="relative">
+      <div className="relative min-h-0 flex-1">
         <svg
           viewBox={`0 0 ${width} ${height}`}
           preserveAspectRatio="none"
-          className="h-[28rem] min-w-[720px] w-full sm:h-[32rem]"
+          className="h-full w-full"
         >
           <Group left={MARGIN.left} top={MARGIN.top}>
             <GridRows
