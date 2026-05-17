@@ -112,9 +112,11 @@ export function budgetSinkOrSwim(row: Doc<'budget'>) {
 }
 
 // Per-month mortgage spend, derived from the budget table.
-// Clamped at zero so a negative entry never subtracts from totals.
+// `variable` and `fixed` are stored as negative numbers (expenses);
+// take the magnitude of each so a missing month doesn't cancel out a
+// charged one.
 export function budgetMortgagePortion(row: Doc<'budget'>): number {
-  return Math.max(0, row.variable + row.fixed);
+  return Math.abs(row.variable) + Math.abs(row.fixed);
 }
 
 // ============================================================
