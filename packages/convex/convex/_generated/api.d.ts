@@ -8,19 +8,19 @@
  * @module
  */
 
-import type * as budgetSummary from "../budgetSummary.js";
-import type * as helpers from "../helpers.js";
-import type * as monthDetail from "../monthDetail.js";
-import type * as monthlyBreakdown from "../monthlyBreakdown.js";
-import type * as mutations from "../mutations.js";
-import type * as queries from "../queries.js";
-import type * as seed from "../seed.js";
+import type * as budgetSummary from '../budgetSummary.js';
+import type * as helpers from '../helpers.js';
+import type * as monthDetail from '../monthDetail.js';
+import type * as monthlyBreakdown from '../monthlyBreakdown.js';
+import type * as mutations from '../mutations.js';
+import type * as queries from '../queries.js';
+import type * as seed from '../seed.js';
 
 import type {
   ApiFromModules,
   FilterApi,
-  FunctionReference,
-} from "convex/server";
+  FunctionReference
+} from 'convex/server';
 
 declare const fullApi: ApiFromModules<{
   budgetSummary: typeof budgetSummary;
@@ -42,7 +42,7 @@ declare const fullApi: ApiFromModules<{
  */
 export declare const api: FilterApi<
   typeof fullApi,
-  FunctionReference<any, "public">
+  FunctionReference<any, 'public'>
 >;
 
 /**
@@ -55,7 +55,7 @@ export declare const api: FilterApi<
  */
 export declare const internal: FilterApi<
   typeof fullApi,
-  FunctionReference<any, "internal">
+  FunctionReference<any, 'internal'>
 >;
 
 export declare const components: {};

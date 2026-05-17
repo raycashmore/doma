@@ -35,7 +35,10 @@ describe('BudgetBreakdownTable', () => {
     const mayDate = row(4).date;
 
     const { container } = render(
-      <BudgetBreakdownTable rows={[row(4), row(3), row(2)]} onRowClick={onRowClick} />
+      <BudgetBreakdownTable
+        rows={[row(4), row(3), row(2)]}
+        onRowClick={onRowClick}
+      />
     );
 
     fireEvent.click(within(container).getByText('May 2026'));
