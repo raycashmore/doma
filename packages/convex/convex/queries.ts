@@ -232,13 +232,12 @@ export const listBudgetChart = query({
       ctx.db.query('mortgage').withIndex('by_date').order('asc').collect()
     ]);
 
-    const sortedMortgage = [...mortgageRows].sort((a, b) => a.date - b.date);
     let mIdx = 0;
     let lastMortgage: Doc<'mortgage'> | null = null;
 
     return budgetRows.map((row) => {
-      while (mIdx < sortedMortgage.length) {
-        const candidate = sortedMortgage[mIdx];
+      while (mIdx < mortgageRows.length) {
+        const candidate = mortgageRows[mIdx];
         if (candidate === undefined || candidate.date > row.date) break;
         lastMortgage = candidate;
         mIdx += 1;
