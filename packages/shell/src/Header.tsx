@@ -11,7 +11,7 @@ export function Header({ title, actions, className }: HeaderProps) {
     <header
       className={`flex items-center justify-between gap-4 px-4 pt-2 pb-4 ${className ?? ''}`}
     >
-      <h1 className="text-3xl font-warm-display text-warm-text-on-dark">
+      <h1 className="text-[36px] leading-[1.1] font-warm-display text-warm-text-on-dark">
         {title}
       </h1>
       {actions ? (
