@@ -11,8 +11,7 @@ import type { BudgetDataPoint, TimePeriod } from '@/lib/budget';
 import {
   computeMovingAverage,
   filterByTimePeriod,
-  formatCurrency,
-  formatDateLabel
+  formatCurrency
 } from '@/lib/budget';
 
 const MARGIN = { top: 20, right: 28, bottom: 72, left: 68 };
@@ -23,6 +22,19 @@ const CHART_HEIGHT = 600;
 interface BudgetChartProps {
   data: Array<BudgetDataPoint>;
   period: TimePeriod;
+}
+
+function LegendDot({ color, label }: { color: string; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span
+        aria-hidden
+        className="inline-block h-2.5 w-2.5 rounded-[3px]"
+        style={{ backgroundColor: color }}
+      />
+      {label}
+    </span>
+  );
 }
 
 function BudgetChartInner({
@@ -44,9 +56,9 @@ function BudgetChartInner({
 
   if (filtered.length === 0) {
     return (
-      <div className="flex h-[23rem] min-h-0 shrink-0 flex-col rounded-3xl bg-warm-bg-card-soft p-4 md:h-[24.5rem]">
+      <div className="flex min-h-0 flex-1 flex-col rounded-3xl bg-warm-bg-card-soft border border-warm-border p-5 md:p-6">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-base font-warm-display text-warm-text-primary">
+          <h2 className="text-[20px] leading-tight font-warm-display text-warm-text-primary tracking-[-0.3px]">
             Income vs Spending
           </h2>
         </div>
@@ -66,11 +78,11 @@ function BudgetChartInner({
   const xScale = scaleBand<number>({
     domain: filtered.map((d) => d.date),
     range: [0, innerWidth],
-    padding: 0.1
+    padding: 0.04
   });
 
   const maxVal = Math.max(
-    ...filtered.map((d) => Math.max(d.spend, d.sinkOrSwim))
+    ...filtered.map((d) => Math.max(d.sinkOrSwim, d.spend + d.mortgage))
   );
 
   const yScale = scaleLinear<number>({
@@ -110,32 +122,27 @@ function BudgetChartInner({
     });
   };
 
-  // Show every Nth label to prevent overlap
-  const labelInterval = Math.max(1, Math.ceil(filtered.length / 20));
+  const tickCount = Math.min(6, filtered.length);
+  const tickValues =
+    tickCount <= 1
+      ? filtered.map((d) => d.date)
+      : Array.from({ length: tickCount }, (_, i) => {
+          const idx = Math.round((i * (filtered.length - 1)) / (tickCount - 1));
+          return filtered[idx].date;
+        });
 
   if (innerWidth <= 0 || innerHeight <= 0) return null;
 
   return (
-    <div className="flex h-[23rem] min-h-0 shrink-0 flex-col rounded-3xl bg-warm-bg-card-soft p-4 md:h-[24.5rem]">
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-base font-warm-display text-warm-text-primary">
+    <div className="flex min-h-0 flex-1 flex-col rounded-3xl bg-warm-bg-card-soft border border-warm-border p-5 md:p-6">
+      <div className="mb-3 flex items-center justify-between gap-4">
+        <h2 className="text-[20px] leading-tight font-warm-display text-warm-text-primary tracking-[-0.3px]">
           Income vs Spending
         </h2>
-        <div className="flex items-center gap-3 text-[11px] text-warm-text-secondary">
-          <div className="flex items-center gap-2">
-            <span
-              className="inline-block w-3 h-3 rounded-sm"
-              style={{ backgroundColor: '#D85A36' }}
-            />
-            Spend
-          </div>
-          <div className="flex items-center gap-2">
-            <span
-              className="inline-block w-3 h-3 rounded-sm"
-              style={{ backgroundColor: '#5F9466' }}
-            />
-            Sink or Swim
-          </div>
+        <div className="flex items-center gap-3.5 text-[11px] font-medium text-warm-text-secondary">
+          <LegendDot color="#3D2E22" label="Mortgage" />
+          <LegendDot color="#D85A36" label="Discretionary" />
+          <LegendDot color="#5F9466" label="Income" />
         </div>
       </div>
 
@@ -172,29 +179,29 @@ function BudgetChartInner({
             <AxisBottom
               top={innerHeight}
               scale={xScale}
-              tickFormat={(date) => formatDateLabel(date)}
-              tickValues={filtered
-                .map((d) => d.date)
-                .filter((_, i) => i % labelInterval === 0)}
+              tickFormat={(date) =>
+                new Date(date).toLocaleString('en-AU', { month: 'short' })
+              }
+              tickValues={tickValues}
               tickLabelProps={() => ({
-                fill: '#7C6755',
+                fill: '#B5A595',
                 fontSize: 10,
-                textAnchor: 'end',
-                dy: '0.25em',
-                dx: '-0.5em',
-                angle: -45
+                fontWeight: 500,
+                textAnchor: 'middle',
+                dy: '0.75em'
               })}
               stroke="#EFE3D2"
               tickStroke="#EFE3D2"
-              hideTicks={false}
+              hideTicks
             />
 
             <AxisLeft
               scale={yScale}
               tickFormat={(v) => formatCurrency(v as number)}
               tickLabelProps={() => ({
-                fill: '#7C6755',
+                fill: '#B5A595',
                 fontSize: 10,
+                fontWeight: 500,
                 textAnchor: 'end',
                 dx: '-0.5em',
                 dy: '0.33em'
