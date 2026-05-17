@@ -121,9 +121,9 @@ function BudgetChartSvg({
     });
   };
 
-  const tickCount = Math.min(6, filtered.length);
+  const tickCount = filtered.length <= 12 ? filtered.length : 12;
   const tickValues =
-    tickCount <= 1
+    tickCount === filtered.length
       ? filtered.map((d) => d.date)
       : Array.from({ length: tickCount }, (_, i) => {
           const idx = Math.round((i * (filtered.length - 1)) / (tickCount - 1));
