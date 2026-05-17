@@ -29,16 +29,16 @@ function b(
 }
 
 describe('buildMonthlyBreakdown', () => {
-  it('derives mortgage from variable + fixed in the budget row', () => {
-    const out = buildMonthlyBreakdown([b(MS, 100, 30, 1500, 2400)]);
+  it('derives mortgage from |variable| + |fixed| (expenses stored as negatives)', () => {
+    const out = buildMonthlyBreakdown([b(MS, 100, 30, -1500, -2400)]);
     expect(out).toEqual([
       { date: MS, income: 100, spend: 30, mortgage: 3900, net: 70 }
     ]);
   });
 
-  it('clamps a negative variable+fixed sum to zero', () => {
-    const out = buildMonthlyBreakdown([b(MS, 100, 30, -500, -1000)]);
-    expect(out[0]!.mortgage).toBe(0);
+  it('also handles positive variable / fixed values', () => {
+    const out = buildMonthlyBreakdown([b(MS, 100, 30, 500, 1000)]);
+    expect(out[0]!.mortgage).toBe(1500);
   });
 
   it('returns zero mortgage when variable and fixed are zero', () => {
