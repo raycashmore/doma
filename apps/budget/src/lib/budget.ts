@@ -2,9 +2,9 @@ export type TimePeriod = '3M' | '6M' | '12M' | 'ALL';
 
 export interface BudgetDataPoint {
   date: number;
-  spend: number;       // discretionary spend (excludes mortgage)
-  sinkOrSwim: number;  // income proxy used for the income trend
-  mortgage: number;    // monthly mortgage contribution (carry-forward from latest mortgage row)
+  spend: number; // discretionary spend (excludes mortgage)
+  sinkOrSwim: number; // income proxy used for the income trend
+  mortgage: number; // monthly mortgage contribution (carry-forward from latest mortgage row)
 }
 
 export function computeMovingAverage(

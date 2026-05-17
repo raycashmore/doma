@@ -3,8 +3,8 @@ import { formatCurrency } from '@/lib/budget';
 
 interface BudgetChartTooltipProps {
   date: number;
-  spend: number;       // discretionary
-  sinkOrSwim: number;  // income proxy
+  spend: number; // discretionary
+  sinkOrSwim: number; // income proxy
   mortgage: number;
   top: number;
   left: number;
@@ -44,17 +44,27 @@ export default function BudgetChartTooltip({
       }}
     >
       <div className="font-bold text-[12px] mb-1">{monthYear(date)}</div>
-      <div className="flex items-center justify-between gap-3 font-semibold" style={{ color: '#5F9466' }}>
-        <span>Income</span><span>{formatCurrency(sinkOrSwim)}</span>
+      <div
+        className="flex items-center justify-between gap-3 font-semibold"
+        style={{ color: '#5F9466' }}
+      >
+        <span>Income</span>
+        <span>{formatCurrency(sinkOrSwim)}</span>
       </div>
       <div className="flex items-center justify-between gap-3 font-semibold">
-        <span>Mortgage</span><span>{formatCurrency(mortgage)}</span>
+        <span>Mortgage</span>
+        <span>{formatCurrency(mortgage)}</span>
       </div>
-      <div className="flex items-center justify-between gap-3 font-semibold" style={{ color: '#D85A36' }}>
-        <span>Discretionary</span><span>{formatCurrency(spend)}</span>
+      <div
+        className="flex items-center justify-between gap-3 font-semibold"
+        style={{ color: '#D85A36' }}
+      >
+        <span>Discretionary</span>
+        <span>{formatCurrency(spend)}</span>
       </div>
       <div className="flex items-center justify-between gap-3 font-semibold text-warm-text-secondary">
-        <span>Total spend</span><span>{formatCurrency(spend + mortgage)}</span>
+        <span>Total spend</span>
+        <span>{formatCurrency(spend + mortgage)}</span>
       </div>
     </TooltipWithBounds>
   );

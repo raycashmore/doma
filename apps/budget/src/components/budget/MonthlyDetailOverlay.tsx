@@ -77,9 +77,7 @@ export default function MonthlyDetailOverlay({
             <X size={18} aria-hidden />
           </button>
         </div>
-        <div className="min-h-0 flex-1 overflow-auto px-7 py-6">
-          {children}
-        </div>
+        <div className="min-h-0 flex-1 overflow-auto px-7 py-6">{children}</div>
       </div>
     </div>,
     document.body
