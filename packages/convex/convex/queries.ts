@@ -421,7 +421,23 @@ export const getMonthlyDetail = query({
       .order('desc')
       .first();
 
-    return shapeMonthDetail(budget, mortgage);
+    // Prior-month budget row (most recent strictly before args.date)
+    const priorBudget = await ctx.db
+      .query('budget')
+      .withIndex('by_date', (q) => q.lt('date', args.date))
+      .order('desc')
+      .first();
+
+    // Prior mortgage carry-forward: most recent at-or-before priorBudget.date
+    const priorMortgage = priorBudget
+      ? await ctx.db
+          .query('mortgage')
+          .withIndex('by_date', (q) => q.lte('date', priorBudget.date))
+          .order('desc')
+          .first()
+      : null;
+
+    return shapeMonthDetail(budget, mortgage, priorBudget, priorMortgage);
   }
 });
 
