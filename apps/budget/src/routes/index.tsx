@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
 import { api } from '@repo/convex';
@@ -13,6 +13,7 @@ import MonthIncomeSection from '@/components/budget/MonthIncomeSection';
 import MonthSpendSection from '@/components/budget/MonthSpendSection';
 import MonthMortgageSection from '@/components/budget/MonthMortgageSection';
 import SummaryMini from '@/components/budget/SummaryMini';
+import { useBudgetHeaderActions } from '@/components/budget/BudgetHeaderActionsContext';
 
 export const Route = createFileRoute('/')({
   component: BudgetPage
@@ -28,6 +29,12 @@ function monthLabel(date: number) {
 function BudgetPage() {
   const [period, setPeriod] = useState<TimePeriod>('12M');
   const [openMonth, setOpenMonth] = useState<number | null>(null);
+  const headerActions = useMemo(
+    () => <BudgetChartFilters selected={period} onChange={setPeriod} />,
+    [period]
+  );
+
+  useBudgetHeaderActions(headerActions);
 
   const summary = useQuery(api.queries.getBudgetPageSummary, { period });
   const chartData = useQuery(api.queries.listBudgetChart);
@@ -49,13 +56,9 @@ function BudgetPage() {
 
   return (
     <>
-      <div className="flex h-full min-h-0 flex-col gap-5 overflow-hidden rounded-[28px] bg-warm-bg-card p-6 md:flex-row md:gap-5">
-        <div className="flex min-h-0 flex-1 flex-col gap-5">
-          <div className="flex items-center justify-between">
-            <h2 className="sr-only">Budget overview</h2>
-            <BudgetChartFilters selected={period} onChange={setPeriod} />
-          </div>
-
+      <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden rounded-[28px] bg-warm-bg-card p-5 md:flex-row md:gap-4">
+        <div className="flex min-h-0 flex-1 flex-col gap-4">
+          <h2 className="sr-only">Budget overview</h2>
           <BudgetKpiCards summary={summary} />
 
           <BudgetChart data={chartData ?? []} period={period} />

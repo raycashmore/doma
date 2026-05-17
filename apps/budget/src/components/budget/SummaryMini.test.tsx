@@ -15,7 +15,7 @@ describe('SummaryMini', () => {
       <SummaryMini label="Income" value={1000} fill="bg-x" trend={null} />
     );
     expect(container.querySelector('svg')).toBeNull();
-    expect(screen.queryByText(/vs prior month/)).toBeNull();
+    expect(screen.queryByText(/MoM/)).toBeNull();
   });
 
   it('omits trend row when trend is undefined', () => {
@@ -34,7 +34,7 @@ describe('SummaryMini', () => {
         trend={{ pct: 2.4, direction: 'up' }}
       />
     );
-    const row = screen.getByText(/\+2\.4% vs prior month/).parentElement!;
+    const row = screen.getByText(/\+2\.4% MoM/).parentElement!;
     expect(row.className).toContain('text-warm-positive');
     expect(row.querySelector('svg')).toBeTruthy();
   });
@@ -48,7 +48,7 @@ describe('SummaryMini', () => {
         trend={{ pct: -5.7, direction: 'down' }}
       />
     );
-    const row = screen.getByText(/-5\.7% vs prior month/).parentElement!;
+    const row = screen.getByText(/-5\.7% MoM/).parentElement!;
     expect(row.className).toContain('text-warm-accent');
     expect(row.querySelector('svg')).toBeTruthy();
   });
@@ -62,7 +62,7 @@ describe('SummaryMini', () => {
         trend={{ pct: 0, direction: 'flat' }}
       />
     );
-    const row = screen.getByText(/0\.0% vs prior month/).parentElement!;
+    const row = screen.getByText(/Flat MoM/).parentElement!;
     expect(row.className).toContain('text-warm-text-secondary');
   });
 });
