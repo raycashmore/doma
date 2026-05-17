@@ -14,13 +14,13 @@ Why this shape:
 
 What you'll create:
 
-| Piece | Where | One per |
-| --- | --- | --- |
-| Convex deployment (production) | Convex cloud | All apps share one |
-| Clerk application (production env) | Clerk dashboard | All apps share one |
-| Vercel project for Home | Vercel | Owns the apex domain + rewrites |
-| Vercel project for Budget | Vercel | Lives behind a Vercel-assigned URL |
-| Vercel project for each future app | Vercel | One per app |
+| Piece                              | Where           | One per                            |
+| ---------------------------------- | --------------- | ---------------------------------- |
+| Convex deployment (production)     | Convex cloud    | All apps share one                 |
+| Clerk application (production env) | Clerk dashboard | All apps share one                 |
+| Vercel project for Home            | Vercel          | Owns the apex domain + rewrites    |
+| Vercel project for Budget          | Vercel          | Lives behind a Vercel-assigned URL |
+| Vercel project for each future app | Vercel          | One per app                        |
 
 ## Prerequisites
 
@@ -41,6 +41,7 @@ pnpm --filter @repo/convex exec convex deploy --cmd 'echo "deployed"'
 This creates a production deployment in your Convex project and prints the production deployment URL (something like `https://<name>.convex.cloud`). Save it — you'll set this as `VITE_CONVEX_URL` on Vercel.
 
 In the Convex dashboard for the **production** deployment specifically:
+
 - **Settings → Environment Variables**: set `CLERK_JWT_ISSUER_DOMAIN` to your **production** Clerk Frontend API URL (different from dev — see Step 2).
 
 ## Step 2 — Clerk production environment
@@ -79,12 +80,12 @@ Or via the dashboard:
    - **Install Command**: leave default; Vercel detects pnpm workspaces and runs install from the repo root.
 3. **Environment Variables** (Production, Preview, Development as appropriate — at minimum Production):
 
-   | Name | Value |
-   | --- | --- |
-   | `VITE_CONVEX_URL` | Convex production URL from Step 1 |
-   | `VITE_CLERK_PUBLISHABLE_KEY` | Clerk production publishable key (Step 2) |
-   | `CLERK_SECRET_KEY` | Clerk production secret key (Step 2) |
-   | `VITE_CLERK_FRONTEND_API_URL` | Clerk Frontend API URL (Step 2) |
+   | Name                          | Value                                     |
+   | ----------------------------- | ----------------------------------------- |
+   | `VITE_CONVEX_URL`             | Convex production URL from Step 1         |
+   | `VITE_CLERK_PUBLISHABLE_KEY`  | Clerk production publishable key (Step 2) |
+   | `CLERK_SECRET_KEY`            | Clerk production secret key (Step 2)      |
+   | `VITE_CLERK_FRONTEND_API_URL` | Clerk Frontend API URL (Step 2)           |
 
 4. **Deploy**. When it succeeds, copy the deployment URL — it'll look like `https://doma-budget-<hash>.vercel.app`. You'll use this in Step 4.
 
@@ -126,11 +127,11 @@ Home owns the apex. Before deploying, point its rewrites at Budget's real URL.
 
 4. **Environment Variables** on the Home project (Home doesn't talk to Convex yet, but wire the Clerk vars so the auth gate works):
 
-   | Name | Value |
-   | --- | --- |
-   | `VITE_CLERK_PUBLISHABLE_KEY` | Clerk production publishable key |
-   | `CLERK_SECRET_KEY` | Clerk production secret key |
-   | `VITE_CLERK_FRONTEND_API_URL` | Clerk Frontend API URL |
+   | Name                          | Value                            |
+   | ----------------------------- | -------------------------------- |
+   | `VITE_CLERK_PUBLISHABLE_KEY`  | Clerk production publishable key |
+   | `CLERK_SECRET_KEY`            | Clerk production secret key      |
+   | `VITE_CLERK_FRONTEND_API_URL` | Clerk Frontend API URL           |
 
 ## Step 5 — Attach your apex domain to Home
 
@@ -156,7 +157,10 @@ The pattern repeats:
 3. Add a rewrite to `apps/home/vercel.json`:
 
    ```json
-   { "source": "/<name>/:path*", "destination": "https://doma-<name>.vercel.app/<name>/:path*" }
+   {
+     "source": "/<name>/:path*",
+     "destination": "https://doma-<name>.vercel.app/<name>/:path*"
+   }
    ```
 
 4. Redeploy Home.
@@ -165,13 +169,13 @@ The pattern repeats:
 
 ## Environment-variable reference
 
-| Variable | Where it lives | Used by | Notes |
-| --- | --- | --- | --- |
-| `VITE_CONVEX_URL` | Vercel (per consumer app), `.env.local` | Browser-side Convex client | Different value in dev vs production |
-| `VITE_CLERK_PUBLISHABLE_KEY` | Vercel (every app), `.env.local` | Browser-side Clerk SDK | `pk_test_…` in dev, `pk_live_…` in prod |
-| `CLERK_SECRET_KEY` | Vercel (every app), `.env.local` | Server-side Clerk operations | Never expose to the browser |
-| `VITE_CLERK_FRONTEND_API_URL` | Vercel (every app), `.env.local` | Clerk JWT issuer URL | Same in every app; one per Clerk env |
-| `CLERK_JWT_ISSUER_DOMAIN` | Convex dashboard (per deployment) | Convex auth.config.ts | Same value as `VITE_CLERK_FRONTEND_API_URL` |
+| Variable                      | Where it lives                          | Used by                      | Notes                                       |
+| ----------------------------- | --------------------------------------- | ---------------------------- | ------------------------------------------- |
+| `VITE_CONVEX_URL`             | Vercel (per consumer app), `.env.local` | Browser-side Convex client   | Different value in dev vs production        |
+| `VITE_CLERK_PUBLISHABLE_KEY`  | Vercel (every app), `.env.local`        | Browser-side Clerk SDK       | `pk_test_…` in dev, `pk_live_…` in prod     |
+| `CLERK_SECRET_KEY`            | Vercel (every app), `.env.local`        | Server-side Clerk operations | Never expose to the browser                 |
+| `VITE_CLERK_FRONTEND_API_URL` | Vercel (every app), `.env.local`        | Clerk JWT issuer URL         | Same in every app; one per Clerk env        |
+| `CLERK_JWT_ISSUER_DOMAIN`     | Convex dashboard (per deployment)       | Convex auth.config.ts        | Same value as `VITE_CLERK_FRONTEND_API_URL` |
 
 ## Common pitfalls
 

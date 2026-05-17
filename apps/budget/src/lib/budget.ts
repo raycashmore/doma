@@ -1,4 +1,4 @@
-export type TimePeriod = '1Y' | '3Y' | '5Y' | 'ALL';
+export type TimePeriod = '3M' | '6M' | '12M' | 'ALL';
 
 export interface BudgetDataPoint {
   date: number;
@@ -31,11 +31,8 @@ export function filterByTimePeriod<T extends { date: number }>(
   period: TimePeriod
 ): Array<T> {
   if (period === 'ALL') return data;
-
-  const now = Date.now();
-  const years = period === '1Y' ? 1 : period === '3Y' ? 3 : 5;
-  const cutoff = now - years * 365.25 * 24 * 60 * 60 * 1000;
-
+  const months = period === '3M' ? 3 : period === '6M' ? 6 : 12;
+  const cutoff = Date.now() - months * 30 * 24 * 60 * 60 * 1000;
   return data.filter((d) => d.date >= cutoff);
 }
 
@@ -47,6 +44,10 @@ export function formatDateLabel(timestamp: number): string {
   return `${day}/${month}/${year}`;
 }
 
-export function formatCurrency(value: number): string {
-  return `$${Math.round(value).toLocaleString('en-AU')}`;
+export function formatCurrency(cents: number): string {
+  const dollars = Math.round(cents / 100);
+  if (dollars < 0) {
+    return `-$${Math.abs(dollars).toLocaleString('en-AU')}`;
+  }
+  return `$${dollars.toLocaleString('en-AU')}`;
 }

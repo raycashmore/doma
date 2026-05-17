@@ -20,6 +20,9 @@ import {
   ukTotalAud,
   ukTotalGbp
 } from './helpers';
+import { summarizeBudgetForPeriod, type SummaryPeriod } from './budgetSummary';
+import { joinBudgetWithMortgage } from './monthlyBreakdown';
+import { shapeMonthDetail } from './monthDetail';
 
 // ============================================================
 // CURRENT ACCOUNTS
@@ -383,5 +386,83 @@ export const getTotalsHistory = query({
 
     results.reverse(); // desc order
     return args.limit ? results.slice(0, args.limit) : results;
+  }
+});
+
+// ============================================================
+// MONTHLY BREAKDOWN — budget rows joined with mortgage contrib
+// ============================================================
+export const getMonthlyBreakdown = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const [budgetRows, mortgageRows] = await Promise.all([
+      ctx.db.query('budget').withIndex('by_date').order('asc').collect(),
+      ctx.db.query('mortgage').withIndex('by_date').order('asc').collect()
+    ]);
+    return joinBudgetWithMortgage(budgetRows, mortgageRows, args.limit);
+  }
+});
+
+// ============================================================
+// MONTHLY DETAIL — single month overlay data (budget + mortgage carry-forward)
+// ============================================================
+export const getMonthlyDetail = query({
+  args: { date: v.number() },
+  handler: async (ctx, args) => {
+    const budget = await ctx.db
+      .query('budget')
+      .withIndex('by_date', (q) => q.eq('date', args.date))
+      .first();
+
+    // Carry-forward mortgage lookup: most recent at-or-before args.date
+    const mortgage = await ctx.db
+      .query('mortgage')
+      .withIndex('by_date', (q) => q.lte('date', args.date))
+      .order('desc')
+      .first();
+
+    // Prior-month budget row (most recent strictly before args.date)
+    const priorBudget = await ctx.db
+      .query('budget')
+      .withIndex('by_date', (q) => q.lt('date', args.date))
+      .order('desc')
+      .first();
+
+    // Prior mortgage carry-forward: most recent at-or-before priorBudget.date
+    const priorMortgage = priorBudget
+      ? await ctx.db
+          .query('mortgage')
+          .withIndex('by_date', (q) => q.lte('date', priorBudget.date))
+          .order('desc')
+          .first()
+      : null;
+
+    return shapeMonthDetail(budget, mortgage, priorBudget, priorMortgage);
+  }
+});
+
+// ============================================================
+// BUDGET PAGE SUMMARY — KPI cards with period comparisons
+// ============================================================
+export const getBudgetPageSummary = query({
+  args: {
+    period: v.union(
+      v.literal('3M'),
+      v.literal('6M'),
+      v.literal('12M'),
+      v.literal('ALL')
+    )
+  },
+  handler: async (ctx, args) => {
+    const rows = await ctx.db
+      .query('budget')
+      .withIndex('by_date')
+      .order('asc')
+      .collect();
+    return summarizeBudgetForPeriod(
+      rows,
+      args.period as SummaryPeriod,
+      Date.now()
+    );
   }
 });

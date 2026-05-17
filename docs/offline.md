@@ -14,18 +14,18 @@ Picking a layer is a per-app decision: not every sub-app needs it.
 
 ## Per-app likelihood
 
-| App | Likely needs offline data? |
-| --- | --- |
-| Budget | No — analytics over server data, online is fine |
-| Mortgage | No |
-| Schedule | Maybe — viewing yes, mutating no |
-| Todo list | Yes — quick captures from anywhere |
-| Shopping list | Yes — supermarket, no signal |
-| Recipes | Yes — kitchen, sometimes no signal |
+| App           | Likely needs offline data?                      |
+| ------------- | ----------------------------------------------- |
+| Budget        | No — analytics over server data, online is fine |
+| Mortgage      | No                                              |
+| Schedule      | Maybe — viewing yes, mutating no                |
+| Todo list     | Yes — quick captures from anywhere              |
+| Shopping list | Yes — supermarket, no signal                    |
+| Recipes       | Yes — kitchen, sometimes no signal              |
 
 When the first offline-needing app is built, choose the layer in that PR — not earlier.
 
-## What the PWA shell *does* give you
+## What the PWA shell _does_ give you
 
 - The app launches from the home screen (Add to Home Screen on iOS, Install on Chrome).
 - The static shell loads offline; users see the loading state instead of a connection error.

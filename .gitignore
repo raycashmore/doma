@@ -41,4 +41,6 @@ yarn-error.log*
 # Local only
 /data
 /docs/superpowers
+packages/convex/scripts/*.xlsx
 .playwright-mcp
+.claude
