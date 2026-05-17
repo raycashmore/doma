@@ -56,7 +56,7 @@ function BudgetChartInner({
 
   if (filtered.length === 0) {
     return (
-      <div className="flex min-h-0 flex-1 flex-col rounded-3xl bg-warm-bg-card-soft border border-warm-border p-5 md:p-6">
+      <div className="flex min-h-[16rem] min-w-0 flex-1 flex-col rounded-3xl bg-warm-bg-card-soft border border-warm-border p-5 md:min-h-0 md:p-6">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-[20px] leading-tight font-warm-display text-warm-text-primary tracking-[-0.3px]">
             Income vs Spending
@@ -135,11 +135,11 @@ function BudgetChartInner({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col rounded-3xl bg-warm-bg-card-soft border border-warm-border p-5 md:p-6">
-      <div className="mb-3 flex items-center justify-between gap-4">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <h2 className="text-[20px] leading-tight font-warm-display text-warm-text-primary tracking-[-0.3px]">
           Income vs Spending
         </h2>
-        <div className="flex items-center gap-3.5 text-[11px] font-medium text-warm-text-secondary">
+        <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[11px] font-medium text-warm-text-secondary">
           <LegendDot color="#3D2E22" label="Mortgage" />
           <LegendDot color="#D85A36" label="Discretionary" />
           <LegendDot color="#5F9466" label="Income" />

@@ -56,8 +56,8 @@ function BudgetPage() {
 
   return (
     <>
-      <div className="flex h-full min-h-0 flex-col gap-5 overflow-hidden rounded-[28px] bg-warm-bg-card p-6 md:flex-row md:gap-5">
-        <div className="flex min-h-0 flex-1 flex-col gap-4">
+      <div className="flex flex-col gap-5 rounded-[28px] bg-warm-bg-card p-5 md:h-full md:min-h-0 md:flex-row md:gap-5 md:overflow-hidden md:p-6">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
           <h2 className="sr-only">Budget overview</h2>
           <BudgetKpiCards summary={summary} />
           <BudgetChart data={chartData ?? []} period={period} />
