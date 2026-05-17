@@ -111,6 +111,12 @@ export function budgetSinkOrSwim(row: Doc<'budget'>) {
   );
 }
 
+// Per-month mortgage spend, derived from the budget table.
+// Clamped at zero so a negative entry never subtracts from totals.
+export function budgetMortgagePortion(row: Doc<'budget'>): number {
+  return Math.max(0, row.variable + row.fixed);
+}
+
 // ============================================================
 // CRYPTO SUMMARIES — derived net
 // ============================================================

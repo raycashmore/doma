@@ -4,7 +4,7 @@ export interface BreakdownRowData {
   date: number;
   income: number;
   spend: number;
-  mortgage: number | null;
+  mortgage: number;
   net: number;
 }
 
@@ -44,7 +44,7 @@ export default function BudgetBreakdownTable({ rows, onRowClick }: Props) {
       ) : rows.length === 0 ? (
         <p className="text-sm text-warm-text-secondary">No budget rows.</p>
       ) : (
-        <div className="-mx-4 min-h-0 flex-1 overflow-x-auto overflow-y-auto px-4">
+        <div className="-mx-4 min-h-0 flex-1 overflow-auto px-4">
           <table className="w-full min-w-[420px] text-sm">
             <thead>
               <tr className="text-warm-text-tertiary text-[11px] uppercase tracking-wide">
@@ -72,7 +72,7 @@ export default function BudgetBreakdownTable({ rows, onRowClick }: Props) {
                     {formatCurrency(r.spend)}
                   </td>
                   <td className="py-1.5 px-3 text-right text-warm-text-secondary whitespace-nowrap">
-                    {r.mortgage === null ? '—' : formatCurrency(r.mortgage)}
+                    {formatCurrency(r.mortgage)}
                   </td>
                   <td
                     className={`py-1.5 pl-3 text-right font-medium whitespace-nowrap ${

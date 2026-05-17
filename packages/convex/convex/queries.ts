@@ -1,7 +1,7 @@
 import { v } from 'convex/values';
 import { query } from './_generated/server';
-import type { Doc } from './_generated/dataModel';
 import {
+  budgetMortgagePortion,
   budgetNetGainLoss,
   budgetSinkOrSwim,
   budgetSpend,
@@ -13,7 +13,6 @@ import {
   currentAccountTotal,
   investmentManagedFundNet,
   investmentTotal,
-  mortgageContrib,
   mortgageEquity,
   mortgageTotalDebt,
   superPensionAud,
@@ -23,7 +22,7 @@ import {
   ukTotalGbp
 } from './helpers';
 import { summarizeBudgetForPeriod, type SummaryPeriod } from './budgetSummary';
-import { joinBudgetWithMortgage } from './monthlyBreakdown';
+import { buildMonthlyBreakdown } from './monthlyBreakdown';
 import { shapeMonthDetail } from './monthDetail';
 
 // ============================================================
@@ -227,28 +226,18 @@ export const listCryptoSummaries = query({
 // ============================================================
 export const listBudgetChart = query({
   handler: async (ctx) => {
-    const [budgetRows, mortgageRows] = await Promise.all([
-      ctx.db.query('budget').withIndex('by_date').order('asc').collect(),
-      ctx.db.query('mortgage').withIndex('by_date').order('asc').collect()
-    ]);
+    const budgetRows = await ctx.db
+      .query('budget')
+      .withIndex('by_date')
+      .order('asc')
+      .collect();
 
-    let mIdx = 0;
-    let lastMortgage: Doc<'mortgage'> | null = null;
-
-    return budgetRows.map((row) => {
-      while (mIdx < mortgageRows.length) {
-        const candidate = mortgageRows[mIdx];
-        if (candidate === undefined || candidate.date > row.date) break;
-        lastMortgage = candidate;
-        mIdx += 1;
-      }
-      return {
-        date: row.date,
-        spend: budgetSpend(row),
-        sinkOrSwim: budgetSinkOrSwim(row),
-        mortgage: lastMortgage ? mortgageContrib(lastMortgage) : 0
-      };
-    });
+    return budgetRows.map((row) => ({
+      date: row.date,
+      spend: budgetSpend(row),
+      sinkOrSwim: budgetSinkOrSwim(row),
+      mortgage: budgetMortgagePortion(row)
+    }));
   }
 });
 
@@ -403,16 +392,18 @@ export const getTotalsHistory = query({
 });
 
 // ============================================================
-// MONTHLY BREAKDOWN — budget rows joined with mortgage contrib
+// MONTHLY BREAKDOWN — per-month income, spend, mortgage, net
+// Mortgage is derived from the budget table (variable + fixed).
 // ============================================================
 export const getMonthlyBreakdown = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
-    const [budgetRows, mortgageRows] = await Promise.all([
-      ctx.db.query('budget').withIndex('by_date').order('asc').collect(),
-      ctx.db.query('mortgage').withIndex('by_date').order('asc').collect()
-    ]);
-    return joinBudgetWithMortgage(budgetRows, mortgageRows, args.limit);
+    const budgetRows = await ctx.db
+      .query('budget')
+      .withIndex('by_date')
+      .order('asc')
+      .collect();
+    return buildMonthlyBreakdown(budgetRows, args.limit);
   }
 });
 
