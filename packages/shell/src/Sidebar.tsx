@@ -37,7 +37,7 @@ export function Sidebar({
 
       <div className="h-6" aria-hidden />
 
-      <ul className="flex flex-col items-center gap-[18px] flex-1 w-full px-4">
+      <ul className="flex flex-col items-center gap-[18px] flex-1 w-full">
         {APPS.filter((app) => app.id !== 'home' && app.enabled).map((app) => {
           const Icon = app.icon;
           const isActive = activeAppId === app.id;
@@ -66,7 +66,7 @@ export function Sidebar({
           type="button"
           onClick={onSignOut}
           aria-label="Log out"
-          className="flex flex-col items-center gap-1.5 mt-4 text-warm-text-tertiary hover:text-warm-text-on-dark"
+          className="flex flex-col items-center gap-1.5 mt-2 text-warm-text-tertiary hover:text-warm-text-on-dark"
         >
           <span className="flex items-center justify-center w-10 h-10 rounded-xl bg-warm-bg-dark-muted">
             <LogOut size={18} aria-hidden="true" />
