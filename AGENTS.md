@@ -17,9 +17,18 @@ pnpm convex        # Convex dev (regenerates packages/convex/convex/_generated)
 
 ```bash
 pnpm --filter home dev        # Home on :3000
+pnpm --filter home dev:no-auth # Home on :3000 without Clerk auth
 pnpm --filter budget dev      # Budget on :3001
+pnpm --filter budget dev:no-auth # Budget on :3001 without Clerk auth
 pnpm --filter budget test     # Vitest
 ```
+
+## Local auth bypass for browser verification
+
+If local Playwright/browser verification is blocked by Clerk sign-in, use the
+`dev:no-auth` scripts above. They start the app with
+`VITE_CLERK_PUBLISHABLE_KEY` unset, which makes `@repo/shell`'s `AuthGate`
+become a passthrough for local dev.
 
 ## Before Committing
 

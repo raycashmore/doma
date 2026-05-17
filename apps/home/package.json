@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "dotenv -e ../../.env.local -- vite dev --port 3000",
+    "dev:no-auth": "dotenv -e ../../.env.local -- sh -c 'VITE_CLERK_PUBLISHABLE_KEY= vite dev --port 3000'",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint --fix",
