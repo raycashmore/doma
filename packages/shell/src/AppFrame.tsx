@@ -9,6 +9,8 @@ export interface AppFrameProps {
   actions?: ReactNode;
   children: ReactNode;
   onSignOut?: () => void;
+  headerClassName?: string;
+  mainClassName?: string;
 }
 
 export function AppFrame({
@@ -16,15 +18,19 @@ export function AppFrame({
   title,
   actions,
   children,
-  onSignOut
+  onSignOut,
+  headerClassName,
+  mainClassName
 }: AppFrameProps) {
   return (
     <div className="min-h-screen bg-warm-bg-dark font-warm-body text-warm-text-primary md:h-screen md:overflow-hidden">
       <div className="flex h-screen overflow-hidden bg-warm-bg-dark md:h-full">
         <Sidebar activeAppId={appId} onSignOut={onSignOut} />
         <div className="flex min-h-0 flex-1 flex-col">
-          <Header title={title} actions={actions} />
-          <main className="min-h-0 flex-1 overflow-auto px-7 pb-7 md:overflow-hidden">
+          <Header title={title} actions={actions} className={headerClassName} />
+          <main
+            className={`min-h-0 flex-1 overflow-auto px-4 pb-4 md:overflow-hidden ${mainClassName ?? ''}`}
+          >
             {children}
           </main>
         </div>

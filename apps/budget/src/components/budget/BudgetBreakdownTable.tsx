@@ -35,8 +35,8 @@ function SkeletonRows() {
 
 export default function BudgetBreakdownTable({ rows, onRowClick }: Props) {
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl bg-warm-bg-card-soft p-5 md:min-h-[40vh]">
-      <h2 className="mb-3 text-base font-warm-display text-warm-text-primary">
+    <div className="flex min-h-0 flex-col overflow-hidden rounded-3xl bg-warm-bg-card-soft p-4 md:h-[19.75rem] md:flex-none">
+      <h2 className="mb-2 text-base font-warm-display text-warm-text-primary">
         Monthly breakdown
       </h2>
       {!rows ? (
@@ -44,15 +44,15 @@ export default function BudgetBreakdownTable({ rows, onRowClick }: Props) {
       ) : rows.length === 0 ? (
         <p className="text-sm text-warm-text-secondary">No budget rows.</p>
       ) : (
-        <div className="-mx-5 min-h-0 flex-1 overflow-auto px-5">
+        <div className="-mx-4 min-h-0 flex-1 overflow-auto px-4">
           <table className="w-full min-w-[460px] text-sm">
             <thead>
               <tr className="text-warm-text-tertiary text-[11px] uppercase tracking-wide">
-                <th className="text-left font-medium py-2 pr-3">Month</th>
-                <th className="text-right font-medium py-2 px-3">Income</th>
-                <th className="text-right font-medium py-2 px-3">Spend</th>
-                <th className="text-right font-medium py-2 px-3">Mortgage</th>
-                <th className="text-right font-medium py-2 pl-3">Net</th>
+                <th className="py-1.5 pr-3 text-left font-medium">Month</th>
+                <th className="py-1.5 px-3 text-right font-medium">Income</th>
+                <th className="py-1.5 px-3 text-right font-medium">Spend</th>
+                <th className="py-1.5 px-3 text-right font-medium">Mortgage</th>
+                <th className="py-1.5 pl-3 text-right font-medium">Net</th>
               </tr>
             </thead>
             <tbody>
@@ -62,20 +62,20 @@ export default function BudgetBreakdownTable({ rows, onRowClick }: Props) {
                   onClick={() => onRowClick(r.date)}
                   className="cursor-pointer border-t border-warm-border hover:bg-warm-bg-card transition-colors"
                 >
-                  <td className="py-2 pr-3 text-warm-text-primary font-medium whitespace-nowrap">
+                  <td className="py-1.5 pr-3 text-warm-text-primary font-medium whitespace-nowrap">
                     {monthLabel(r.date)}
                   </td>
-                  <td className="py-2 px-3 text-right text-warm-text-primary whitespace-nowrap">
+                  <td className="py-1.5 px-3 text-right text-warm-text-primary whitespace-nowrap">
                     {formatCurrency(r.income)}
                   </td>
-                  <td className="py-2 px-3 text-right text-warm-text-primary whitespace-nowrap">
+                  <td className="py-1.5 px-3 text-right text-warm-text-primary whitespace-nowrap">
                     {formatCurrency(r.spend)}
                   </td>
-                  <td className="py-2 px-3 text-right text-warm-text-secondary whitespace-nowrap">
+                  <td className="py-1.5 px-3 text-right text-warm-text-secondary whitespace-nowrap">
                     {r.mortgage === null ? '—' : formatCurrency(r.mortgage)}
                   </td>
                   <td
-                    className={`py-2 pl-3 text-right font-medium whitespace-nowrap ${
+                    className={`py-1.5 pl-3 text-right font-medium whitespace-nowrap ${
                       r.net >= 0 ? 'text-warm-positive' : 'text-warm-negative'
                     }`}
                   >

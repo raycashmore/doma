@@ -20,7 +20,7 @@ export default function BudgetChartFilters({
   return (
     <div
       role="tablist"
-      className="inline-flex rounded-full bg-warm-bg-card-soft p-1"
+      className="inline-flex rounded-full border border-white/10 bg-white/8 p-1 backdrop-blur-sm"
     >
       {PERIODS.map((p) => {
         const active = selected === p.id;
@@ -31,10 +31,10 @@ export default function BudgetChartFilters({
             aria-selected={active}
             onClick={() => onChange(p.id)}
             className={cn(
-              'px-3 py-1 text-xs font-medium rounded-full transition-colors',
+              'rounded-full px-3 py-1 text-xs font-medium transition-colors whitespace-nowrap',
               active
-                ? 'bg-warm-bg-dark text-warm-text-on-dark'
-                : 'text-warm-text-secondary hover:text-warm-text-primary'
+                ? 'bg-white/14 text-warm-text-on-dark'
+                : 'text-white/72 hover:text-warm-text-on-dark'
             )}
           >
             {p.label}

@@ -15,10 +15,10 @@ import {
   formatDateLabel
 } from '@/lib/budget';
 
-const MARGIN = { top: 20, right: 30, bottom: 80, left: 80 };
+const MARGIN = { top: 20, right: 28, bottom: 72, left: 68 };
 const MA_WINDOW = 6;
 const CHART_WIDTH = 1200;
-const CHART_HEIGHT = 520;
+const CHART_HEIGHT = 600;
 
 interface BudgetChartProps {
   data: Array<BudgetDataPoint>;
@@ -44,8 +44,8 @@ function BudgetChartInner({
 
   if (filtered.length === 0) {
     return (
-      <div className="flex h-[340px] min-h-0 flex-col rounded-3xl bg-warm-bg-card-soft p-5">
-        <div className="mb-4 flex items-center justify-between">
+      <div className="flex h-[23rem] min-h-0 shrink-0 flex-col rounded-3xl bg-warm-bg-card-soft p-4 md:h-[24.5rem]">
+        <div className="mb-3 flex items-center justify-between">
           <h2 className="text-base font-warm-display text-warm-text-primary">
             Income vs Spending
           </h2>
@@ -116,12 +116,12 @@ function BudgetChartInner({
   if (innerWidth <= 0 || innerHeight <= 0) return null;
 
   return (
-    <div className="flex h-[340px] min-h-0 flex-col rounded-3xl bg-warm-bg-card-soft p-5">
-      <div className="mb-4 flex items-center justify-between">
+    <div className="flex h-[23rem] min-h-0 shrink-0 flex-col rounded-3xl bg-warm-bg-card-soft p-4 md:h-[24.5rem]">
+      <div className="mb-3 flex items-center justify-between">
         <h2 className="text-base font-warm-display text-warm-text-primary">
           Income vs Spending
         </h2>
-        <div className="flex items-center gap-4 text-xs text-warm-text-secondary">
+        <div className="flex items-center gap-3 text-[11px] text-warm-text-secondary">
           <div className="flex items-center gap-2">
             <span
               className="inline-block w-3 h-3 rounded-sm"
@@ -178,7 +178,7 @@ function BudgetChartInner({
                 .filter((_, i) => i % labelInterval === 0)}
               tickLabelProps={() => ({
                 fill: '#7C6755',
-                fontSize: 11,
+                fontSize: 10,
                 textAnchor: 'end',
                 dy: '0.25em',
                 dx: '-0.5em',
@@ -194,7 +194,7 @@ function BudgetChartInner({
               tickFormat={(v) => formatCurrency(v as number)}
               tickLabelProps={() => ({
                 fill: '#7C6755',
-                fontSize: 11,
+                fontSize: 10,
                 textAnchor: 'end',
                 dx: '-0.5em',
                 dy: '0.33em'

@@ -39,15 +39,16 @@ function TrendRow({ trend }: { trend: Trend }) {
         ? 'text-warm-accent'
         : 'text-warm-text-secondary';
   const sign = trend.pct > 0 ? '+' : '';
+  const label =
+    trend.direction === 'flat'
+      ? 'Flat MoM'
+      : `${sign}${trend.pct.toFixed(1)}% MoM`;
   return (
     <div
-      className={`mt-1 flex items-center gap-1 text-[11px] font-medium ${color}`}
+      className={`mt-1 flex items-center gap-1 whitespace-nowrap text-[11px] font-medium ${color}`}
     >
       <Icon size={12} aria-hidden />
-      <span>
-        {sign}
-        {trend.pct.toFixed(1)}% vs prior month
-      </span>
+      <span>{label}</span>
     </div>
   );
 }

@@ -44,16 +44,16 @@ export function KpiCard({
   const positive = (delta ?? 0) >= 0;
 
   return (
-    <div className="flex-1 rounded-2xl bg-warm-bg-card-soft px-5 py-4 min-w-[160px]">
+    <div className="min-w-[160px] flex-1 rounded-2xl bg-warm-bg-card-soft px-4 py-3.5">
       <div className="text-[11px] uppercase tracking-wide font-semibold text-warm-text-secondary">
         {label}
       </div>
-      <div className="mt-1.5 text-3xl font-warm-display text-warm-text-primary">
+      <div className="mt-1 text-[2rem] leading-none font-warm-display text-warm-text-primary">
         {formatValue(value, kind)}
       </div>
       {deltaLabel ? (
         <div
-          className={`mt-1 flex items-center gap-1 text-xs font-medium ${
+          className={`mt-1 flex items-center gap-1 text-[11px] font-medium ${
             positive ? 'text-warm-positive' : 'text-warm-negative'
           }`}
         >
@@ -64,7 +64,7 @@ export function KpiCard({
           </span>
         </div>
       ) : (
-        <div className="mt-1 text-xs text-warm-text-tertiary">
+        <div className="mt-1 text-[11px] text-warm-text-tertiary">
           vs prior {periodLabel}
         </div>
       )}
