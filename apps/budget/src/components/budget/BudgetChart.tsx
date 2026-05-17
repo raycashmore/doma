@@ -218,6 +218,7 @@ function BudgetChartInner({
             date={tooltipData.date}
             spend={tooltipData.spend}
             sinkOrSwim={tooltipData.sinkOrSwim}
+            mortgage={tooltipData.mortgage}
             top={tooltipTop ?? 0}
             left={tooltipLeft ?? 0}
           />
