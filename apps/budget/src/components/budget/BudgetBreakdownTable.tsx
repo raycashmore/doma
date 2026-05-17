@@ -35,8 +35,8 @@ function SkeletonRows() {
 
 export default function BudgetBreakdownTable({ rows, onRowClick }: Props) {
   return (
-    <div className="flex min-h-0 flex-col overflow-hidden rounded-3xl bg-warm-bg-card-soft p-4 md:h-[19.75rem] md:flex-none">
-      <h2 className="mb-2 text-base font-warm-display text-warm-text-primary">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-warm-border bg-warm-bg-card-soft p-5 md:p-6">
+      <h2 className="mb-3 text-[18px] leading-tight font-warm-display text-warm-text-primary">
         Monthly breakdown
       </h2>
       {!rows ? (
