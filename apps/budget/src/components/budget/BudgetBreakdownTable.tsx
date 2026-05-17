@@ -35,7 +35,7 @@ function SkeletonRows() {
 
 export default function BudgetBreakdownTable({ rows, onRowClick }: Props) {
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-warm-border bg-warm-bg-card-soft p-5 md:p-6">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-3xl border border-warm-border bg-warm-bg-card-soft p-5 md:p-6">
       <h2 className="mb-3 text-[18px] leading-tight font-warm-display text-warm-text-primary">
         Monthly breakdown
       </h2>
@@ -44,8 +44,8 @@ export default function BudgetBreakdownTable({ rows, onRowClick }: Props) {
       ) : rows.length === 0 ? (
         <p className="text-sm text-warm-text-secondary">No budget rows.</p>
       ) : (
-        <div className="-mx-4 min-h-0 flex-1 overflow-auto px-4">
-          <table className="w-full min-w-[460px] text-sm">
+        <div className="-mx-4 min-h-0 flex-1 overflow-x-auto overflow-y-auto px-4">
+          <table className="w-full min-w-[420px] text-sm">
             <thead>
               <tr className="text-warm-text-tertiary text-[11px] uppercase tracking-wide">
                 <th className="py-1.5 pr-3 text-left font-medium">Month</th>
