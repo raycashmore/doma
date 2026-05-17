@@ -68,6 +68,13 @@ export function mortgageTotalDebt(row: Doc<'mortgage'>) {
   return row.debt1 + row.debt2;
 }
 
+// ============================================================
+// MORTGAGE — monthly contribution
+// ============================================================
+export function mortgageContrib(row: Doc<'mortgage'>): number {
+  return row.contrib1 + row.contrib2 + row.contrib3;
+}
+
 export function mortgageEquity(row: Doc<'mortgage'>) {
   return row.price - mortgageTotalDebt(row);
 }

@@ -1,5 +1,6 @@
 import { v } from 'convex/values';
 import { query } from './_generated/server';
+import type { Doc } from './_generated/dataModel';
 import {
   budgetNetGainLoss,
   budgetSinkOrSwim,
@@ -12,6 +13,7 @@ import {
   currentAccountTotal,
   investmentManagedFundNet,
   investmentTotal,
+  mortgageContrib,
   mortgageEquity,
   mortgageTotalDebt,
   superPensionAud,
@@ -225,17 +227,29 @@ export const listCryptoSummaries = query({
 // ============================================================
 export const listBudgetChart = query({
   handler: async (ctx) => {
-    const rows = await ctx.db
-      .query('budget')
-      .withIndex('by_date')
-      .order('asc')
-      .collect();
+    const [budgetRows, mortgageRows] = await Promise.all([
+      ctx.db.query('budget').withIndex('by_date').order('asc').collect(),
+      ctx.db.query('mortgage').withIndex('by_date').order('asc').collect()
+    ]);
 
-    return rows.map((row) => ({
-      date: row.date,
-      spend: budgetSpend(row),
-      sinkOrSwim: budgetSinkOrSwim(row)
-    }));
+    const sortedMortgage = [...mortgageRows].sort((a, b) => a.date - b.date);
+    let mIdx = 0;
+    let lastMortgage: Doc<'mortgage'> | null = null;
+
+    return budgetRows.map((row) => {
+      while (mIdx < sortedMortgage.length) {
+        const candidate = sortedMortgage[mIdx];
+        if (candidate === undefined || candidate.date > row.date) break;
+        lastMortgage = candidate;
+        mIdx += 1;
+      }
+      return {
+        date: row.date,
+        spend: budgetSpend(row),
+        sinkOrSwim: budgetSinkOrSwim(row),
+        mortgage: lastMortgage ? mortgageContrib(lastMortgage) : 0
+      };
+    });
   }
 });
 

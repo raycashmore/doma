@@ -1,5 +1,10 @@
 import type { Doc } from './_generated/dataModel';
-import { budgetTotalIn, budgetTotalOut, budgetNetGainLoss } from './helpers';
+import {
+  budgetTotalIn,
+  budgetTotalOut,
+  budgetNetGainLoss,
+  mortgageContrib
+} from './helpers';
 
 export type BudgetRow = Doc<'budget'>;
 export type MortgageRow = Doc<'mortgage'>;
@@ -10,10 +15,6 @@ export interface BreakdownRow {
   spend: number;
   mortgage: number | null;
   net: number;
-}
-
-function mortgageContrib(m: MortgageRow): number {
-  return m.contrib1 + m.contrib2 + m.contrib3;
 }
 
 export function joinBudgetWithMortgage(
