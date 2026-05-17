@@ -22,7 +22,7 @@ function monthLabel(date: number): string {
 
 function SkeletonRows() {
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2 overflow-hidden">
       {Array.from({ length: 6 }).map((_, i) => (
         <div
           key={i}
@@ -35,8 +35,8 @@ function SkeletonRows() {
 
 export default function BudgetBreakdownTable({ rows, onRowClick }: Props) {
   return (
-    <div className="rounded-3xl bg-warm-bg-card-soft p-5">
-      <h2 className="text-base font-warm-display text-warm-text-primary mb-3">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl bg-warm-bg-card-soft p-5 md:min-h-[40vh]">
+      <h2 className="mb-3 text-base font-warm-display text-warm-text-primary">
         Monthly breakdown
       </h2>
       {!rows ? (
@@ -44,7 +44,7 @@ export default function BudgetBreakdownTable({ rows, onRowClick }: Props) {
       ) : rows.length === 0 ? (
         <p className="text-sm text-warm-text-secondary">No budget rows.</p>
       ) : (
-        <div className="-mx-5 overflow-x-auto px-5">
+        <div className="-mx-5 min-h-0 flex-1 overflow-auto px-5">
           <table className="w-full min-w-[460px] text-sm">
             <thead>
               <tr className="text-warm-text-tertiary text-[11px] uppercase tracking-wide">

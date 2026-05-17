@@ -49,8 +49,8 @@ function BudgetPage() {
 
   return (
     <>
-      <div className="bg-warm-bg-card rounded-[28px] p-6 flex flex-col gap-5 md:flex-row md:gap-5">
-        <div className="flex-1 min-w-0 flex flex-col gap-5">
+      <div className="flex h-full min-h-0 flex-col gap-5 overflow-hidden rounded-[28px] bg-warm-bg-card p-6 md:flex-row md:gap-5">
+        <div className="flex min-h-0 flex-1 flex-col gap-5">
           <div className="flex items-center justify-between">
             <h2 className="sr-only">Budget overview</h2>
             <BudgetChartFilters selected={period} onChange={setPeriod} />
