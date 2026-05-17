@@ -48,9 +48,9 @@ export default function MonthlyDetailOverlay({
         aria-label={`${monthLabel} detail`}
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-5xl max-h-[90vh] overflow-auto rounded-[28px] bg-warm-bg-card p-7 shadow-[0_24px_60px_rgba(61,46,34,0.25)] border border-warm-border outline-none"
+        className="relative flex h-[85vh] w-full max-w-5xl flex-col overflow-hidden rounded-[28px] border border-warm-border bg-warm-bg-card shadow-[0_24px_60px_rgba(61,46,34,0.25)] outline-none"
       >
-        <div className="flex items-start justify-between mb-5">
+        <div className="flex flex-none items-start justify-between gap-4 border-b border-warm-border px-7 pt-6 pb-5">
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-11 h-11 rounded-[14px] bg-warm-section-spend text-warm-accent">
               <span aria-hidden className="text-base font-warm-display">
@@ -77,7 +77,7 @@ export default function MonthlyDetailOverlay({
             <X size={18} aria-hidden />
           </button>
         </div>
-        {children}
+        <div className="min-h-0 flex-1 overflow-auto px-7 py-6">{children}</div>
       </div>
     </div>,
     document.body

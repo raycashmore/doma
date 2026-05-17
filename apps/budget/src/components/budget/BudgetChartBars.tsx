@@ -14,6 +14,10 @@ interface BudgetChartBarsProps {
   onMouseLeave: () => void;
 }
 
+const INCOME_FILL = '#5F946666';
+const MORTGAGE_FILL = '#3D2E227A';
+const DISCRETIONARY_FILL = '#D85A3670';
+
 export default function BudgetChartBars({
   data,
   xScale,
@@ -23,23 +27,25 @@ export default function BudgetChartBars({
   onMouseLeave
 }: BudgetChartBarsProps) {
   const bandwidth = xScale.bandwidth();
+  const incomeWidth = bandwidth * 0.78;
+  const spendWidth = bandwidth * 0.52;
 
   return (
     <>
-      {/* Sink or Swim bars — behind */}
+      {/* Income — wide background bar, sage @ 40% */}
       {data.map((d) => {
         const x = xScale(d.date);
         if (x === undefined) return null;
-        const barHeight = height - yScale(d.sinkOrSwim);
         const y = yScale(d.sinkOrSwim);
         return (
           <Bar
-            key={`sos-${d.date}`}
-            x={x}
+            key={`income-${d.date}`}
+            x={x + (bandwidth - incomeWidth) / 2}
             y={y}
-            width={bandwidth}
-            height={Math.max(0, barHeight)}
-            fill="#D8E9D2"
+            width={incomeWidth}
+            height={Math.max(0, height - y)}
+            fill={INCOME_FILL}
+            rx={4}
             onMouseMove={(e) =>
               onMouseMove(e as React.MouseEvent<SVGRectElement>, d)
             }
@@ -48,20 +54,43 @@ export default function BudgetChartBars({
         );
       })}
 
-      {/* Spend bars — in front */}
+      {/* Mortgage — narrow base layer */}
       {data.map((d) => {
         const x = xScale(d.date);
         if (x === undefined) return null;
-        const barHeight = height - yScale(d.spend);
-        const y = yScale(d.spend);
+        const y = yScale(d.mortgage);
         return (
           <Bar
-            key={`spend-${d.date}`}
-            x={x}
+            key={`mortgage-${d.date}`}
+            x={x + (bandwidth - spendWidth) / 2}
             y={y}
-            width={bandwidth}
-            height={Math.max(0, barHeight)}
-            fill="#FFDFC7"
+            width={spendWidth}
+            height={Math.max(0, height - y)}
+            fill={MORTGAGE_FILL}
+            rx={3}
+            onMouseMove={(e) =>
+              onMouseMove(e as React.MouseEvent<SVGRectElement>, d)
+            }
+            onMouseLeave={onMouseLeave}
+          />
+        );
+      })}
+
+      {/* Discretionary — stacked on top of mortgage, tops out at (mortgage + spend) */}
+      {data.map((d) => {
+        const x = xScale(d.date);
+        if (x === undefined) return null;
+        const yTop = yScale(d.mortgage + d.spend);
+        const yMortgageTop = yScale(d.mortgage);
+        return (
+          <Bar
+            key={`disc-${d.date}`}
+            x={x + (bandwidth - spendWidth) / 2}
+            y={yTop}
+            width={spendWidth}
+            height={Math.max(0, yMortgageTop - yTop)}
+            fill={DISCRETIONARY_FILL}
+            rx={3}
             onMouseMove={(e) =>
               onMouseMove(e as React.MouseEvent<SVGRectElement>, d)
             }

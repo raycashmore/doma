@@ -7,11 +7,11 @@ interface Props {
 
 function SkeletonRow() {
   return (
-    <div className="flex gap-4">
+    <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4 md:gap-3.5">
       {[0, 1, 2, 3].map((i) => (
         <div
           key={i}
-          className="flex-1 h-[96px] rounded-2xl bg-warm-bg-card-soft animate-pulse"
+          className="h-[88px] animate-pulse rounded-2xl bg-warm-bg-card-soft"
         />
       ))}
     </div>
@@ -22,7 +22,7 @@ export default function BudgetKpiCards({ summary }: Props) {
   if (!summary) return <SkeletonRow />;
 
   return (
-    <div className="flex gap-4">
+    <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4 md:gap-3.5">
       <KpiCard
         label="Avg spend"
         value={summary.avgSpend.value}

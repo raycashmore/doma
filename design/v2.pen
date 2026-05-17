@@ -10598,7 +10598,6 @@
       "width": 390,
       "height": 844,
       "fill": "$bg-dark",
-      "cornerRadius": 40,
       "layout": "vertical",
       "children": [
         {
@@ -11743,9 +11742,8 @@
       "name": "Budget V3",
       "width": 1440,
       "height": 1024,
-      "fill": "$warm-bg",
+      "fill": "$bg-dark",
       "layout": "vertical",
-      "padding": 32,
       "children": [
         {
           "type": "frame",
@@ -11755,7 +11753,6 @@
           "width": "fill_container",
           "height": "fill_container",
           "fill": "$bg-dark",
-          "cornerRadius": 32,
           "children": [
             {
               "type": "frame",
@@ -13872,21 +13869,20 @@
       "name": "Budget V3 · Monthly Detail Overlay",
       "width": 1440,
       "height": 1024,
-      "fill": "$warm-bg",
+      "fill": "$bg-dark",
       "layout": "none",
       "children": [
         {
           "type": "frame",
           "id": "Iwodl",
           "layoutPosition": "absolute",
-          "x": 32,
-          "y": 32,
+          "x": 0,
+          "y": 0,
           "name": "shell",
           "clip": true,
-          "width": 1376,
-          "height": 960,
+          "width": 1440,
+          "height": 1024,
           "fill": "$bg-dark",
-          "cornerRadius": 32,
           "children": [
             {
               "type": "frame",
@@ -15996,13 +15992,12 @@
         {
           "type": "frame",
           "id": "c4Gm79",
-          "x": 32,
-          "y": 32,
+          "x": 0,
+          "y": 0,
           "name": "overlayScrim",
-          "width": 1376,
-          "height": 960,
+          "width": 1440,
+          "height": 1024,
           "fill": "#2D2D2D99",
-          "cornerRadius": 32,
           "layout": "none"
         },
         {
@@ -16134,8 +16129,11 @@
             {
               "type": "frame",
               "id": "Thi5A",
+              "x": 28,
+              "y": 101,
               "name": "sectionSummary",
-              "width": "fill_container",
+              "enabled": false,
+              "width": "fill_container(984)",
               "gap": 12,
               "children": [
                 {
@@ -16357,21 +16355,83 @@
                   "children": [
                     {
                       "type": "frame",
-                      "id": "iw6MM",
+                      "id": "atXfx",
                       "name": "incomeHead",
                       "width": "fill_container",
                       "justifyContent": "space_between",
-                      "alignItems": "center",
                       "children": [
                         {
-                          "type": "text",
-                          "id": "S7Iff",
-                          "name": "incomeTitle",
-                          "fill": "#3D2E22",
-                          "content": "Income",
-                          "fontFamily": "DM Serif Display",
-                          "fontSize": 22,
-                          "fontWeight": "700"
+                          "type": "frame",
+                          "id": "lzXOn",
+                          "name": "incomeTitleStack",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "ULVrb",
+                              "fill": "$warm-text",
+                              "content": "Income",
+                              "fontFamily": "$warm-font-display",
+                              "fontSize": 22,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "M9aKy",
+                              "fill": "$warm-text-secondary",
+                              "content": "Monthly total",
+                              "fontFamily": "$warm-font-body",
+                              "fontSize": 10,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "Fn8uz",
+                          "name": "incomeMetricStack",
+                          "layout": "vertical",
+                          "gap": 3,
+                          "alignItems": "end",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "G4HQ8",
+                              "fill": "$warm-text",
+                              "content": "$8,700",
+                              "fontFamily": "$warm-font-display",
+                              "fontSize": 22,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "DDLeH",
+                              "name": "incomeTrend",
+                              "gap": 3,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon_font",
+                                  "id": "NSoF7",
+                                  "width": 10,
+                                  "height": 10,
+                                  "iconFontName": "trending-up",
+                                  "iconFontFamily": "lucide",
+                                  "fill": "$warm-success"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "fCr3w",
+                                  "fill": "$warm-success",
+                                  "content": "+2.4%",
+                                  "fontFamily": "$warm-font-body",
+                                  "fontSize": 10,
+                                  "fontWeight": "700"
+                                }
+                              ]
+                            }
+                          ]
                         }
                       ]
                     },
@@ -16515,21 +16575,83 @@
                   "children": [
                     {
                       "type": "frame",
-                      "id": "LMzkI",
+                      "id": "MZp5F",
                       "name": "spendHead",
                       "width": "fill_container",
                       "justifyContent": "space_between",
-                      "alignItems": "center",
                       "children": [
                         {
-                          "type": "text",
-                          "id": "JY91D",
-                          "name": "spendTitle",
-                          "fill": "#3D2E22",
-                          "content": "Spend",
-                          "fontFamily": "DM Serif Display",
-                          "fontSize": 22,
-                          "fontWeight": "700"
+                          "type": "frame",
+                          "id": "Y4DzlX",
+                          "name": "spendTitleStack",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "EkR4N",
+                              "fill": "$warm-text",
+                              "content": "Spend",
+                              "fontFamily": "$warm-font-display",
+                              "fontSize": 22,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "ZmGj2",
+                              "fill": "$warm-text-secondary",
+                              "content": "Card + one-offs",
+                              "fontFamily": "$warm-font-body",
+                              "fontSize": 10,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "dLr5G",
+                          "name": "spendMetricStack",
+                          "layout": "vertical",
+                          "gap": 3,
+                          "alignItems": "end",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "qCUpb",
+                              "fill": "$warm-text",
+                              "content": "$2,280",
+                              "fontFamily": "$warm-font-display",
+                              "fontSize": 22,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "CWGJp",
+                              "name": "spendTrend",
+                              "gap": 3,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon_font",
+                                  "id": "h00Cl",
+                                  "width": 10,
+                                  "height": 10,
+                                  "iconFontName": "trending-down",
+                                  "iconFontFamily": "lucide",
+                                  "fill": "$warm-success"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "eyFWb",
+                                  "fill": "$warm-success",
+                                  "content": "-11.6%",
+                                  "fontFamily": "$warm-font-body",
+                                  "fontSize": 10,
+                                  "fontWeight": "700"
+                                }
+                              ]
+                            }
+                          ]
                         }
                       ]
                     },
@@ -16962,21 +17084,83 @@
                   "children": [
                     {
                       "type": "frame",
-                      "id": "ENKCW",
+                      "id": "YYPxW",
                       "name": "mortgageHead",
                       "width": "fill_container",
                       "justifyContent": "space_between",
-                      "alignItems": "center",
                       "children": [
                         {
-                          "type": "text",
-                          "id": "xHJl2",
-                          "name": "mortTitle",
-                          "fill": "#3D2E22",
-                          "content": "Mortgage",
-                          "fontFamily": "DM Serif Display",
-                          "fontSize": 22,
-                          "fontWeight": "700"
+                          "type": "frame",
+                          "id": "o4YaL",
+                          "name": "mortgageTitleStack",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "GzQnx",
+                              "fill": "$warm-text",
+                              "content": "Mortgage",
+                              "fontFamily": "$warm-font-display",
+                              "fontSize": 22,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "YNwSn",
+                              "fill": "$warm-text-secondary",
+                              "content": "Payment split",
+                              "fontFamily": "$warm-font-body",
+                              "fontSize": 10,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "kCTVJ",
+                          "name": "mortgageMetricStack",
+                          "layout": "vertical",
+                          "gap": 3,
+                          "alignItems": "end",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "IYybQ",
+                              "fill": "$warm-text",
+                              "content": "$2,920",
+                              "fontFamily": "$warm-font-display",
+                              "fontSize": 22,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "LIpm5",
+                              "name": "mortgageTrend",
+                              "gap": 3,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon_font",
+                                  "id": "I55OQ",
+                                  "width": 10,
+                                  "height": 10,
+                                  "iconFontName": "minus",
+                                  "iconFontFamily": "lucide",
+                                  "fill": "$warm-text-secondary"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "N0NqG",
+                                  "fill": "$warm-text-secondary",
+                                  "content": "Flat",
+                                  "fontFamily": "$warm-font-body",
+                                  "fontSize": 10,
+                                  "fontWeight": "700"
+                                }
+                              ]
+                            }
+                          ]
                         }
                       ]
                     },
@@ -17231,7 +17415,6 @@
       "width": 390,
       "height": 844,
       "fill": "$bg-dark",
-      "cornerRadius": 40,
       "layout": "none",
       "children": [
         {
@@ -18387,7 +18570,6 @@
           "width": 390,
           "height": 844,
           "fill": "#2D2D2D99",
-          "cornerRadius": 40,
           "layout": "none"
         },
         {
@@ -18515,8 +18697,11 @@
             {
               "type": "frame",
               "id": "knSN3",
+              "x": 12,
+              "y": 85,
               "name": "mobileSummary",
-              "width": "fill_container",
+              "enabled": false,
+              "width": "fill_container(346)",
               "gap": 8,
               "children": [
                 {
@@ -18681,30 +18866,65 @@
                   "children": [
                     {
                       "type": "frame",
-                      "id": "FPmPP",
+                      "id": "U1mn8b",
                       "name": "mobileIncomeHead",
                       "width": "fill_container",
                       "justifyContent": "space_between",
                       "children": [
                         {
-                          "type": "text",
-                          "id": "Y04JkM",
-                          "name": "incomeTitle",
-                          "fill": "#3D2E22",
-                          "content": "Income",
-                          "fontFamily": "DM Serif Display",
-                          "fontSize": 18,
-                          "fontWeight": "700"
+                          "type": "frame",
+                          "id": "pU93o",
+                          "name": "mobileIncomeTitleStack",
+                          "layout": "vertical",
+                          "gap": 1,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "b9NLN7",
+                              "fill": "$warm-text",
+                              "content": "Income",
+                              "fontFamily": "$warm-font-display",
+                              "fontSize": 18,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "qOu0V",
+                              "fill": "$warm-text-secondary",
+                              "content": "Monthly total",
+                              "fontFamily": "$warm-font-body",
+                              "fontSize": 9,
+                              "fontWeight": "700"
+                            }
+                          ]
                         },
                         {
-                          "type": "text",
-                          "id": "q2epK",
-                          "name": "incomeTotal",
-                          "fill": "#3D2E22",
-                          "content": "$8,700",
-                          "fontFamily": "DM Sans",
-                          "fontSize": 13,
-                          "fontWeight": "700"
+                          "type": "frame",
+                          "id": "UI0dq",
+                          "name": "mobileIncomeMetricStack",
+                          "layout": "vertical",
+                          "gap": 1,
+                          "alignItems": "end",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "aaDRi",
+                              "fill": "$warm-text",
+                              "content": "$8,700",
+                              "fontFamily": "$warm-font-body",
+                              "fontSize": 13,
+                              "fontWeight": "800"
+                            },
+                            {
+                              "type": "text",
+                              "id": "BDMeA",
+                              "fill": "$warm-success",
+                              "content": "+2.4%",
+                              "fontFamily": "$warm-font-body",
+                              "fontSize": 10,
+                              "fontWeight": "700"
+                            }
+                          ]
                         }
                       ]
                     },
@@ -18823,30 +19043,65 @@
                   "children": [
                     {
                       "type": "frame",
-                      "id": "ziauM",
+                      "id": "UbT97",
                       "name": "mobileSpendHead",
                       "width": "fill_container",
                       "justifyContent": "space_between",
                       "children": [
                         {
-                          "type": "text",
-                          "id": "rXNSH",
-                          "name": "spendTitle",
-                          "fill": "#3D2E22",
-                          "content": "Spend",
-                          "fontFamily": "DM Serif Display",
-                          "fontSize": 18,
-                          "fontWeight": "700"
+                          "type": "frame",
+                          "id": "DaODZ",
+                          "name": "mobileSpendTitleStack",
+                          "layout": "vertical",
+                          "gap": 1,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "MWmOr",
+                              "fill": "$warm-text",
+                              "content": "Spend",
+                              "fontFamily": "$warm-font-display",
+                              "fontSize": 18,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "niWCf",
+                              "fill": "$warm-text-secondary",
+                              "content": "Card + one-offs",
+                              "fontFamily": "$warm-font-body",
+                              "fontSize": 9,
+                              "fontWeight": "700"
+                            }
+                          ]
                         },
                         {
-                          "type": "text",
-                          "id": "EXu5H",
-                          "name": "spendTotal",
-                          "fill": "#D85A36",
-                          "content": "$2,280",
-                          "fontFamily": "DM Sans",
-                          "fontSize": 13,
-                          "fontWeight": "700"
+                          "type": "frame",
+                          "id": "d3z6i",
+                          "name": "mobileSpendMetricStack",
+                          "layout": "vertical",
+                          "gap": 1,
+                          "alignItems": "end",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "MIvg7",
+                              "fill": "$warm-accent-deep",
+                              "content": "$2,280",
+                              "fontFamily": "$warm-font-body",
+                              "fontSize": 13,
+                              "fontWeight": "800"
+                            },
+                            {
+                              "type": "text",
+                              "id": "uwNkw",
+                              "fill": "$warm-success",
+                              "content": "-11.6%",
+                              "fontFamily": "$warm-font-body",
+                              "fontSize": 10,
+                              "fontWeight": "700"
+                            }
+                          ]
                         }
                       ]
                     },
@@ -19034,30 +19289,65 @@
                   "children": [
                     {
                       "type": "frame",
-                      "id": "bxMbW",
+                      "id": "cYArE",
                       "name": "mobileMortgageHead",
                       "width": "fill_container",
                       "justifyContent": "space_between",
                       "children": [
                         {
-                          "type": "text",
-                          "id": "h896tA",
-                          "name": "mortTitle",
-                          "fill": "#3D2E22",
-                          "content": "Mortgage",
-                          "fontFamily": "DM Serif Display",
-                          "fontSize": 18,
-                          "fontWeight": "700"
+                          "type": "frame",
+                          "id": "wM96l",
+                          "name": "mobileMortgageTitleStack",
+                          "layout": "vertical",
+                          "gap": 1,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "JGCzX",
+                              "fill": "$warm-text",
+                              "content": "Mortgage",
+                              "fontFamily": "$warm-font-display",
+                              "fontSize": 18,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "pHC2N",
+                              "fill": "$warm-text-secondary",
+                              "content": "Payment split",
+                              "fontFamily": "$warm-font-body",
+                              "fontSize": 9,
+                              "fontWeight": "700"
+                            }
+                          ]
                         },
                         {
-                          "type": "text",
-                          "id": "K16VS",
-                          "name": "mortTotal",
-                          "fill": "#3D2E22",
-                          "content": "$2,920",
-                          "fontFamily": "DM Sans",
-                          "fontSize": 13,
-                          "fontWeight": "700"
+                          "type": "frame",
+                          "id": "MQkr2",
+                          "name": "mobileMortgageMetricStack",
+                          "layout": "vertical",
+                          "gap": 1,
+                          "alignItems": "end",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "h5xrMS",
+                              "fill": "$warm-text",
+                              "content": "$2,920",
+                              "fontFamily": "$warm-font-body",
+                              "fontSize": 13,
+                              "fontWeight": "800"
+                            },
+                            {
+                              "type": "text",
+                              "id": "qSqQe",
+                              "fill": "$warm-text-secondary",
+                              "content": "Flat",
+                              "fontFamily": "$warm-font-body",
+                              "fontSize": 10,
+                              "fontWeight": "700"
+                            }
+                          ]
                         }
                       ]
                     },

@@ -27,7 +27,7 @@ function windowMs(period: SummaryPeriod): number | null {
 }
 
 function labelFor(period: SummaryPeriod): string {
-  return period === 'ALL' ? 'All time' : `${period.replace('M', '')} months`;
+  return period === 'ALL' ? 'All time' : `${period.replace('M', '')} mo`;
 }
 
 function avg(values: number[]): number {

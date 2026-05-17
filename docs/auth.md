@@ -16,14 +16,16 @@ We use Clerk for sign-in across all zones. One Clerk application; the cookie is 
    ```
 
 5. **Convex env var.** Convex reads `CLERK_JWT_ISSUER_DOMAIN` at runtime to validate JWTs. Set it in the Convex dashboard (Project → Settings → Environment Variables) to the same value as `VITE_CLERK_FRONTEND_API_URL`. Restart `pnpm convex` after changes.
-6. **Local dev.** Run `pnpm dev` — both Home and Budget pick up the env vars via `dotenv-cli`. Sign in once on either; the session covers both.
-7. **Production.** Add the same env vars to each Vercel project. The cookie domain should be the apex (e.g. `doma.example.com`); Clerk handles this automatically when the deployment URL matches.
+6. **Local dev with auth.** Run `pnpm dev` — both Home and Budget pick up the env vars via `dotenv-cli`. Sign in once on either; the session covers both.
+7. **Local dev without auth.** For browser automation, Playwright checks, or any local visual verification where signing in is just friction, run `pnpm --filter home dev:no-auth` or `pnpm --filter budget dev:no-auth`. These scripts unset `VITE_CLERK_PUBLISHABLE_KEY` for that process so `AuthGate` becomes a passthrough and Budget falls back to a plain `ConvexProvider`.
+8. **Production.** Add the same env vars to each Vercel project. The cookie domain should be the apex (e.g. `doma.example.com`); Clerk handles this automatically when the deployment URL matches.
 
 ## How it flows
 
 - Each app passes `import.meta.env.VITE_CLERK_PUBLISHABLE_KEY` to `<AuthGate>` from `@repo/shell`.
 - When the key is set, `<AuthGate>` mounts `<ClerkProvider>` and uses `<SignedIn>` / `<SignedOut>` to gate children. Unauthed users see Clerk's sign-in.
 - When the key is **not** set, `<AuthGate>` is a passthrough so the app still boots during scaffold/dev. A one-time console warning fires. This makes initial scaffold work usable without immediately requiring you to create the Clerk app.
+- The repo exposes that bypass explicitly as `pnpm --filter home dev:no-auth` and `pnpm --filter budget dev:no-auth` so agents and browser tests can render the apps without going through Clerk first.
 - `apps/budget/src/integrations/convex/provider.tsx` uses `ConvexProviderWithClerk` (forwarding the Clerk JWT) when the key is set, and a plain `ConvexProvider` otherwise.
 - `packages/convex/convex/auth.config.ts` declares the JWT issuer so Convex can verify the token server-side. The issuer comes from `CLERK_JWT_ISSUER_DOMAIN` on the Convex side.
 - Sensitive Convex queries should call `ctx.auth.getUserIdentity()` and reject when null.

@@ -1,4 +1,5 @@
 import { Group } from '@visx/group';
+import { ParentSize } from '@visx/responsive';
 import { scaleBand, scaleLinear } from '@visx/scale';
 import { AxisBottom, AxisLeft } from '@visx/axis';
 import { GridRows } from '@visx/grid';
@@ -11,21 +12,47 @@ import type { BudgetDataPoint, TimePeriod } from '@/lib/budget';
 import {
   computeMovingAverage,
   filterByTimePeriod,
-  formatCurrency,
-  formatDateLabel
+  formatCurrency
 } from '@/lib/budget';
 
-const MARGIN = { top: 20, right: 30, bottom: 80, left: 80 };
+const MARGIN = { top: 14, right: 16, bottom: 28, left: 66 };
 const MA_WINDOW = 6;
-const CHART_WIDTH = 1200;
-const CHART_HEIGHT = 520;
+const AXIS_FONT_SIZE = 11;
 
 interface BudgetChartProps {
   data: Array<BudgetDataPoint>;
   period: TimePeriod;
 }
 
-function BudgetChartInner({
+function LegendDot({ color, label }: { color: string; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span
+        aria-hidden
+        className="inline-block h-2.5 w-2.5 rounded-[3px]"
+        style={{ backgroundColor: color }}
+      />
+      {label}
+    </span>
+  );
+}
+
+function ChartHeader() {
+  return (
+    <div className="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+      <h2 className="text-[20px] leading-tight font-warm-display text-warm-text-primary tracking-[-0.3px]">
+        Income vs Spending
+      </h2>
+      <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[11px] font-medium text-warm-text-secondary">
+        <LegendDot color="#3D2E22" label="Mortgage" />
+        <LegendDot color="#D85A36" label="Discretionary" />
+        <LegendDot color="#5F9466" label="Income" />
+      </div>
+    </div>
+  );
+}
+
+function BudgetChartSvg({
   data,
   period,
   width,
@@ -42,28 +69,19 @@ function BudgetChartInner({
 
   const filtered = filterByTimePeriod(data, period);
 
-  if (filtered.length === 0) {
-    return (
-      <div className="flex min-h-[400px] flex-col items-center justify-center gap-2 text-center text-warm-text-secondary">
-        <p className="text-sm font-medium">No budget data</p>
-        <p className="text-sm text-warm-text-tertiary">
-          Seed the budget table to render the chart.
-        </p>
-      </div>
-    );
-  }
-
   const innerWidth = width - MARGIN.left - MARGIN.right;
   const innerHeight = height - MARGIN.top - MARGIN.bottom;
+
+  if (filtered.length === 0 || innerWidth <= 0 || innerHeight <= 0) return null;
 
   const xScale = scaleBand<number>({
     domain: filtered.map((d) => d.date),
     range: [0, innerWidth],
-    padding: 0.1
+    padding: 0.04
   });
 
   const maxVal = Math.max(
-    ...filtered.map((d) => Math.max(d.spend, d.sinkOrSwim))
+    ...filtered.map((d) => Math.max(d.sinkOrSwim, d.spend + d.mortgage))
   );
 
   const yScale = scaleLinear<number>({
@@ -103,123 +121,126 @@ function BudgetChartInner({
     });
   };
 
-  // Show every Nth label to prevent overlap
-  const labelInterval = Math.max(1, Math.ceil(filtered.length / 20));
-
-  if (innerWidth <= 0 || innerHeight <= 0) return null;
+  const tickCount = filtered.length <= 12 ? filtered.length : 12;
+  const tickValues =
+    tickCount === filtered.length
+      ? filtered.map((d) => d.date)
+      : Array.from({ length: tickCount }, (_, i) => {
+          const idx = Math.round((i * (filtered.length - 1)) / (tickCount - 1));
+          return filtered[idx].date;
+        });
 
   return (
-    <div className="rounded-3xl bg-warm-bg-card-soft p-5">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-base font-warm-display text-warm-text-primary">
-          Income vs Spending
-        </h2>
-        <div className="flex items-center gap-4 text-xs text-warm-text-secondary">
-          <div className="flex items-center gap-2">
-            <span
-              className="inline-block w-3 h-3 rounded-sm"
-              style={{ backgroundColor: '#D85A36' }}
-            />
-            Spend
-          </div>
-          <div className="flex items-center gap-2">
-            <span
-              className="inline-block w-3 h-3 rounded-sm"
-              style={{ backgroundColor: '#5F9466' }}
-            />
-            Sink or Swim
-          </div>
-        </div>
-      </div>
-
-      <div className="relative">
-        <svg
-          viewBox={`0 0 ${width} ${height}`}
-          preserveAspectRatio="none"
-          className="h-[28rem] min-w-[720px] w-full sm:h-[32rem]"
-        >
-          <Group left={MARGIN.left} top={MARGIN.top}>
-            <GridRows
-              scale={yScale}
-              width={innerWidth}
-              stroke="#EFE3D2"
-              strokeOpacity={0.6}
-            />
-
-            <BudgetChartBars
-              data={filtered}
-              xScale={xScale}
-              yScale={yScale}
-              height={innerHeight}
-              onMouseMove={handleMouseMove}
-              onMouseLeave={hideTooltip}
-            />
-
-            <BudgetChartLines
-              spendTrend={spendTrend}
-              sinkOrSwimTrend={sinkOrSwimTrend}
-              xScale={xScale}
-              yScale={yScale}
-            />
-
-            <AxisBottom
-              top={innerHeight}
-              scale={xScale}
-              tickFormat={(date) => formatDateLabel(date)}
-              tickValues={filtered
-                .map((d) => d.date)
-                .filter((_, i) => i % labelInterval === 0)}
-              tickLabelProps={() => ({
-                fill: '#7C6755',
-                fontSize: 11,
-                textAnchor: 'end',
-                dy: '0.25em',
-                dx: '-0.5em',
-                angle: -45
-              })}
-              stroke="#EFE3D2"
-              tickStroke="#EFE3D2"
-              hideTicks={false}
-            />
-
-            <AxisLeft
-              scale={yScale}
-              tickFormat={(v) => formatCurrency(v as number)}
-              tickLabelProps={() => ({
-                fill: '#7C6755',
-                fontSize: 11,
-                textAnchor: 'end',
-                dx: '-0.5em',
-                dy: '0.33em'
-              })}
-              stroke="#EFE3D2"
-              tickStroke="#EFE3D2"
-              numTicks={6}
-            />
-          </Group>
-        </svg>
-
-        {tooltipOpen && tooltipData && (
-          <BudgetChartTooltip
-            date={tooltipData.date}
-            spend={tooltipData.spend}
-            sinkOrSwim={tooltipData.sinkOrSwim}
-            top={tooltipTop ?? 0}
-            left={tooltipLeft ?? 0}
+    <>
+      <svg width={width} height={height} className="block">
+        <Group left={MARGIN.left} top={MARGIN.top}>
+          <GridRows
+            scale={yScale}
+            width={innerWidth}
+            stroke="#EFE3D2"
+            strokeOpacity={0.6}
           />
-        )}
-      </div>
-    </div>
+
+          <BudgetChartBars
+            data={filtered}
+            xScale={xScale}
+            yScale={yScale}
+            height={innerHeight}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={hideTooltip}
+          />
+
+          <BudgetChartLines
+            spendTrend={spendTrend}
+            sinkOrSwimTrend={sinkOrSwimTrend}
+            xScale={xScale}
+            yScale={yScale}
+          />
+
+          <AxisBottom
+            top={innerHeight}
+            scale={xScale}
+            tickFormat={(date) =>
+              new Date(date).toLocaleString('en-AU', { month: 'short' })
+            }
+            tickValues={tickValues}
+            tickLabelProps={() => ({
+              fill: '#7C6755',
+              fontSize: AXIS_FONT_SIZE,
+              fontWeight: 500,
+              fontFamily: 'DM Sans, system-ui, sans-serif',
+              textAnchor: 'middle',
+              dy: '0.6em'
+            })}
+            stroke="#EFE3D2"
+            tickStroke="#EFE3D2"
+            hideTicks
+          />
+
+          <AxisLeft
+            scale={yScale}
+            tickFormat={(v) => formatCurrency(v as number)}
+            tickLabelProps={() => ({
+              fill: '#7C6755',
+              fontSize: AXIS_FONT_SIZE,
+              fontWeight: 500,
+              fontFamily: 'DM Sans, system-ui, sans-serif',
+              textAnchor: 'end',
+              dx: '-0.4em',
+              dy: '0.32em'
+            })}
+            stroke="#EFE3D2"
+            tickStroke="#EFE3D2"
+            numTicks={5}
+            hideAxisLine
+          />
+        </Group>
+      </svg>
+
+      {tooltipOpen && tooltipData && (
+        <BudgetChartTooltip
+          date={tooltipData.date}
+          spend={tooltipData.spend}
+          sinkOrSwim={tooltipData.sinkOrSwim}
+          mortgage={tooltipData.mortgage}
+          top={tooltipTop ?? 0}
+          left={tooltipLeft ?? 0}
+        />
+      )}
+    </>
   );
 }
 
 export default function BudgetChart({ data, period }: BudgetChartProps) {
+  const filtered = filterByTimePeriod(data, period);
+  const isEmpty = filtered.length === 0;
+
   return (
-    <BudgetChartInner
-      data={data}
-      period={period}
-      width={CHART_WIDTH}
-      height={CHART_HEIGHT}
-    />
+    <div className="flex min-h-[16rem] min-w-0 flex-1 flex-col rounded-3xl bg-warm-bg-card-soft border border-warm-border p-5 md:min-h-0 md:p-6">
+      <ChartHeader />
+      <div className="relative min-h-0 flex-1">
+        {isEmpty ? (
+          <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-warm-text-secondary">
+            <p className="text-sm font-medium">No budget data</p>
+            <p className="text-sm text-warm-text-tertiary">
+              Seed the budget table to render the chart.
+            </p>
+          </div>
+        ) : (
+          <ParentSize debounceTime={50}>
+            {({ width, height }) =>
+              width > 0 && height > 0 ? (
+                <BudgetChartSvg
+                  data={data}
+                  period={period}
+                  width={width}
+                  height={height}
+                />
+              ) : null
+            }
+          </ParentSize>
+        )}
+      </div>
+    </div>
   );
 }

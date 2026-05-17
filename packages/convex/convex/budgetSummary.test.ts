@@ -81,11 +81,9 @@ describe('summarizeBudgetForPeriod', () => {
   });
 
   it('periodLabel reflects window choice', () => {
-    expect(summarizeBudgetForPeriod([], '12M', 0).periodLabel).toBe(
-      '12 months'
-    );
-    expect(summarizeBudgetForPeriod([], '6M', 0).periodLabel).toBe('6 months');
-    expect(summarizeBudgetForPeriod([], '3M', 0).periodLabel).toBe('3 months');
+    expect(summarizeBudgetForPeriod([], '12M', 0).periodLabel).toBe('12 mo');
+    expect(summarizeBudgetForPeriod([], '6M', 0).periodLabel).toBe('6 mo');
+    expect(summarizeBudgetForPeriod([], '3M', 0).periodLabel).toBe('3 mo');
     expect(summarizeBudgetForPeriod([], 'ALL', 0).periodLabel).toBe('All time');
   });
 });

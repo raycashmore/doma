@@ -1,6 +1,7 @@
 import { v } from 'convex/values';
 import { query } from './_generated/server';
 import {
+  budgetMortgagePortion,
   budgetNetGainLoss,
   budgetSinkOrSwim,
   budgetSpend,
@@ -21,7 +22,7 @@ import {
   ukTotalGbp
 } from './helpers';
 import { summarizeBudgetForPeriod, type SummaryPeriod } from './budgetSummary';
-import { joinBudgetWithMortgage } from './monthlyBreakdown';
+import { buildMonthlyBreakdown } from './monthlyBreakdown';
 import { shapeMonthDetail } from './monthDetail';
 
 // ============================================================
@@ -225,16 +226,17 @@ export const listCryptoSummaries = query({
 // ============================================================
 export const listBudgetChart = query({
   handler: async (ctx) => {
-    const rows = await ctx.db
+    const budgetRows = await ctx.db
       .query('budget')
       .withIndex('by_date')
       .order('asc')
       .collect();
 
-    return rows.map((row) => ({
+    return budgetRows.map((row) => ({
       date: row.date,
       spend: budgetSpend(row),
-      sinkOrSwim: budgetSinkOrSwim(row)
+      sinkOrSwim: budgetSinkOrSwim(row),
+      mortgage: budgetMortgagePortion(row)
     }));
   }
 });
@@ -390,16 +392,18 @@ export const getTotalsHistory = query({
 });
 
 // ============================================================
-// MONTHLY BREAKDOWN — budget rows joined with mortgage contrib
+// MONTHLY BREAKDOWN — per-month income, spend, mortgage, net
+// Mortgage is derived from the budget table (variable + fixed).
 // ============================================================
 export const getMonthlyBreakdown = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
-    const [budgetRows, mortgageRows] = await Promise.all([
-      ctx.db.query('budget').withIndex('by_date').order('asc').collect(),
-      ctx.db.query('mortgage').withIndex('by_date').order('asc').collect()
-    ]);
-    return joinBudgetWithMortgage(budgetRows, mortgageRows, args.limit);
+    const budgetRows = await ctx.db
+      .query('budget')
+      .withIndex('by_date')
+      .order('asc')
+      .collect();
+    return buildMonthlyBreakdown(budgetRows, args.limit);
   }
 });
 

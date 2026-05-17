@@ -4,13 +4,15 @@ import {
   Scripts,
   createRootRoute
 } from '@tanstack/react-router';
+import { useState } from 'react';
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
 import { TanStackDevtools } from '@tanstack/react-devtools';
 
 import { AppFrame, AuthGate } from '@repo/shell';
 import ConvexProvider from '../integrations/convex/provider';
-
 import appCss from '../styles.css?url';
+import type { ReactNode } from 'react';
+import { BudgetHeaderActionsProvider } from '@/components/budget/BudgetHeaderActionsContext';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CLERK_KEY = (import.meta as any).env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -28,6 +30,8 @@ export const Route = createRootRoute({
 });
 
 function RootDocument() {
+  const [headerActions, setHeaderActions] = useState<ReactNode>(null);
+
   return (
     <html lang="en">
       <head>
@@ -36,9 +40,17 @@ function RootDocument() {
       <body>
         <AuthGate publishableKey={CLERK_KEY}>
           <ConvexProvider>
-            <AppFrame appId="budget" title="Budget">
-              <Outlet />
-            </AppFrame>
+            <BudgetHeaderActionsProvider setActions={setHeaderActions}>
+              <AppFrame
+                appId="budget"
+                title="Budget"
+                actions={headerActions}
+                headerClassName="px-4 pt-2 pb-3"
+                mainClassName="px-4 pb-4"
+              >
+                <Outlet />
+              </AppFrame>
+            </BudgetHeaderActionsProvider>
             <TanStackDevtools
               config={{ position: 'bottom-right' }}
               plugins={[
