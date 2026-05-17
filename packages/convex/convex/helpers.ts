@@ -22,7 +22,7 @@ export function ukTotalGbp(row: Doc<'ukAccounts'>) {
 }
 
 export function ukTotalAud(row: Doc<'ukAccounts'>) {
-  return ukTotalGbp(row) * row.gbpAud;
+  return Math.round(ukTotalGbp(row) * row.gbpAud);
 }
 
 export function ukAudGbp(row: Doc<'ukAccounts'>) {
@@ -33,7 +33,7 @@ export function ukAudGbp(row: Doc<'ukAccounts'>) {
 // SUPER ACCOUNTS — derived fields
 // ============================================================
 export function superPensionAud(row: Doc<'superAccounts'>) {
-  return row.pension * row.gbpAud;
+  return Math.round(row.pension * row.gbpAud);
 }
 
 export function superTotal(row: Doc<'superAccounts'>) {
@@ -52,7 +52,7 @@ export function investmentTotal(row: Doc<'investmentAccounts'>) {
     investmentManagedFundNet(row) +
     row.tradingAus1 +
     row.tradingInt1 +
-    row.tradingInt2 * row.usdAud +
+    Math.round(row.tradingInt2 * row.usdAud) +
     row.managedFund2 +
     row.tradingAus2 +
     row.managedFund3 +
@@ -160,4 +160,17 @@ export function timestampToExcelDate(timestamp: number): number {
   const MS_PER_DAY = 86400000;
   const EXCEL_EPOCH = new Date(Date.UTC(1899, 11, 30)).getTime();
   return (timestamp - EXCEL_EPOCH) / MS_PER_DAY;
+}
+
+// ============================================================
+// Money: integer minor units (cents/pence) conversion
+// All money fields in this schema are stored as integer minor
+// units. Rates (gbpAud, usdAud, rateVar, rateFix) stay as floats.
+// ============================================================
+export function toCents(value: number): number {
+  return Math.round(value * 100);
+}
+
+export function fromCents(cents: number): number {
+  return cents / 100;
 }

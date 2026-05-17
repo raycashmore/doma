@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap');
+
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.141 0.005 285.823);
@@ -32,6 +34,28 @@
   --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
   --sidebar-border: oklch(0.92 0.004 286.32);
   --sidebar-ring: oklch(0.871 0.006 286.286);
+
+  /* Warm theme — Budget v3 design */
+  --warm-bg: #FAF9F7;
+  --warm-bg-card: #FFFCF6;
+  --warm-bg-card-soft: #FFF8EE;
+  --warm-border: #EFE3D2;
+  --warm-bg-dark: #2D2D2D;
+  --warm-bg-dark-muted: #44403C;
+  --warm-accent: #D85A36;
+  --warm-accent-soft: #F4744A;
+  --warm-text-primary: #3D2E22;
+  --warm-text-secondary: #7C6755;
+  --warm-text-tertiary: #A8A29E;
+  --warm-text-on-dark: #FAF9F7;
+  --warm-section-income: #D8E9D2;
+  --warm-section-spend: #FFDFC7;
+  --warm-section-mortgage: #F2E4C9;
+  --warm-positive: #5F9466;
+  --warm-negative: var(--warm-accent); /* matches accent for now; can diverge later */
+
+  --warm-font-display: 'DM Serif Display', 'Times New Roman', serif;
+  --warm-font-body: 'DM Sans', system-ui, -apple-system, sans-serif;
 }
 
 .dark {

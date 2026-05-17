@@ -32,33 +32,33 @@ describe('computeMovingAverage', () => {
 
 describe('filterByTimePeriod', () => {
   const now = Date.now();
-  const msPerYear = 365.25 * 24 * 60 * 60 * 1000;
+  const msPerMonth = 30 * 24 * 60 * 60 * 1000;
 
   const data = [
-    { date: now - 6 * msPerYear, value: 1 },
-    { date: now - 4 * msPerYear, value: 2 },
-    { date: now - 2 * msPerYear, value: 3 },
-    { date: now - 0.5 * msPerYear, value: 4 }
+    { date: now - 24 * msPerMonth, value: 1 },
+    { date: now - 9 * msPerMonth, value: 2 },
+    { date: now - 4 * msPerMonth, value: 3 },
+    { date: now - 1 * msPerMonth, value: 4 }
   ];
 
   it('returns all data for ALL', () => {
     expect(filterByTimePeriod(data, 'ALL')).toHaveLength(4);
   });
 
-  it('filters to last 1 year', () => {
-    const result = filterByTimePeriod(data, '1Y');
-    expect(result).toHaveLength(1);
-    expect(result[0].value).toBe(4);
+  it('filters to last 3 months', () => {
+    const r = filterByTimePeriod(data, '3M');
+    expect(r).toHaveLength(1);
+    expect(r[0].value).toBe(4);
   });
 
-  it('filters to last 3 years', () => {
-    const result = filterByTimePeriod(data, '3Y');
-    expect(result).toHaveLength(2);
+  it('filters to last 6 months', () => {
+    const r = filterByTimePeriod(data, '6M');
+    expect(r).toHaveLength(2);
   });
 
-  it('filters to last 5 years', () => {
-    const result = filterByTimePeriod(data, '5Y');
-    expect(result).toHaveLength(3);
+  it('filters to last 12 months', () => {
+    const r = filterByTimePeriod(data, '12M');
+    expect(r).toHaveLength(3);
   });
 });
 
@@ -78,15 +78,19 @@ describe('formatDateLabel', () => {
 });
 
 describe('formatCurrency', () => {
-  it('formats positive values with dollar sign', () => {
-    expect(formatCurrency(1234)).toBe('$1,234');
+  it('formats cents as whole AUD with thousands separators', () => {
+    expect(formatCurrency(123400)).toBe('$1,234');
   });
 
-  it('rounds to nearest integer', () => {
-    expect(formatCurrency(1234.56)).toBe('$1,235');
+  it('rounds half-cents to nearest dollar', () => {
+    expect(formatCurrency(123456)).toBe('$1,235');
   });
 
-  it('formats zero', () => {
+  it('handles zero', () => {
     expect(formatCurrency(0)).toBe('$0');
+  });
+
+  it('handles negatives', () => {
+    expect(formatCurrency(-50000)).toBe('-$500');
   });
 });

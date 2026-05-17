@@ -4,17 +4,17 @@ Doma is a Vercel Multi-Zones monorepo. `apps/home` owns the apex domain and rewr
 
 ## Monorepo layout
 
-| Path | Framework | Notes |
-| --- | --- | --- |
-| `apps/home` | TanStack Start | Apex zone, port 3000; owns `vercel.json` rewrites |
-| `apps/budget` | TanStack Start | Mounts at `/budget`, port 3001 |
-| `apps/api-*` | (per-experiment) | Convention for non-Convex backends — none scaffolded yet |
-| `packages/convex` | — | Shared Convex schema/functions (`@repo/convex`) |
-| `packages/tokens` | — | Tailwind v4 design tokens (`@repo/tokens`) |
-| `packages/shell` | React | Shared sidebar + AppFrame + AuthGate (`@repo/shell`) |
-| `packages/ui` | React | Shadcn primitives (`@repo/ui`) |
-| `packages/eslint-config` | — | Shared ESLint configs |
-| `packages/typescript-config` | — | Shared TypeScript configs |
+| Path                         | Framework        | Notes                                                    |
+| ---------------------------- | ---------------- | -------------------------------------------------------- |
+| `apps/home`                  | TanStack Start   | Apex zone, port 3000; owns `vercel.json` rewrites        |
+| `apps/budget`                | TanStack Start   | Mounts at `/budget`, port 3001                           |
+| `apps/api-*`                 | (per-experiment) | Convention for non-Convex backends — none scaffolded yet |
+| `packages/convex`            | —                | Shared Convex schema/functions (`@repo/convex`)          |
+| `packages/tokens`            | —                | Tailwind v4 design tokens (`@repo/tokens`)               |
+| `packages/shell`             | React            | Shared sidebar + AppFrame + AuthGate (`@repo/shell`)     |
+| `packages/ui`                | React            | Shadcn primitives (`@repo/ui`)                           |
+| `packages/eslint-config`     | —                | Shared ESLint configs                                    |
+| `packages/typescript-config` | —                | Shared TypeScript configs                                |
 
 ## Multi-Zones
 
@@ -26,12 +26,15 @@ Doma is a Vercel Multi-Zones monorepo. `apps/home` owns the apex domain and rewr
 
 Each dev port is a separate browser origin, so Clerk's session cookie doesn't carry across them. The Sidebar uses Clerk's `buildUrlWithAuth` to append a short-lived `__clerk_db_jwt` to cross-origin links — clicking the Budget icon while signed in on Home lands you on Budget already authed. Implementation lives in `packages/shell/src/auth.tsx` (`UrlAuthContext`) and `Sidebar.tsx` (`useUrlAuth()` consumer). In production all zones share the apex cookie and the URL builder is a no-op for same-origin paths.
 
-*A Caddy reverse-proxy was explored as an alternative (single origin → one cookie), but TanStack Start + Nitro + Vite's `base` option don't play well together: `/<base>/@react-refresh`, `/<base>/@vite/client`, `/<base>/@id/...` all 404 in dev even with `base` set, breaking the proxy approach. The `clerk.buildUrlWithAuth` route is simpler and doesn't fight the framework.*
+_A Caddy reverse-proxy was explored as an alternative (single origin → one cookie), but TanStack Start + Nitro + Vite's `base` option don't play well together: `/<base>/@react-refresh`, `/<base>/@vite/client`, `/<base>/@id/...` all 404 in dev even with `base` set, breaking the proxy approach. The `clerk.buildUrlWithAuth` route is simpler and doesn't fight the framework._
 
 When new sub-apps land, add rewrite entries to `apps/home/vercel.json`:
 
 ```json
-{ "source": "/<app>/:path*", "destination": "https://doma-<app>.vercel.app/<app>/:path*" }
+{
+  "source": "/<app>/:path*",
+  "destination": "https://doma-<app>.vercel.app/<app>/:path*"
+}
 ```
 
 ## Backend services convention
@@ -39,7 +42,10 @@ When new sub-apps land, add rewrite entries to `apps/home/vercel.json`:
 Non-Convex backend experiments live at `apps/api-<name>` (e.g. `apps/api-recipes-import`). Each is its own Vercel project. To expose one to the frontend, add a rewrite under `apps/home/vercel.json`:
 
 ```json
-{ "source": "/api/<name>/:path*", "destination": "https://doma-api-<name>.vercel.app/:path*" }
+{
+  "source": "/api/<name>/:path*",
+  "destination": "https://doma-api-<name>.vercel.app/:path*"
+}
 ```
 
 Convex remains the primary backend — most data and business logic belong there. `apps/api-*` is for experiments that don't fit Convex's model (long-running jobs, webhook receivers, framework playgrounds).
