@@ -41,11 +41,6 @@ function excelDateToTimestamp(excelDate: number): number {
   return EXCEL_EPOCH + excelDate * MS_PER_DAY;
 }
 
-function monthKey(timestamp: number): string {
-  const d = new Date(timestamp);
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
-}
-
 function num(val: unknown): number {
   if (val === '' || val === null || val === undefined) return 0;
   const n = Number(val);
@@ -72,6 +67,7 @@ interface BudgetRow {
 }
 
 interface MortgageFields {
+  date: number;
   fixed: number;
   variable: number;
   rateVar?: number;
@@ -80,7 +76,7 @@ interface MortgageFields {
 
 function readBudgetRows(wb: XLSX.WorkBook): {
   budgetRows: BudgetRow[];
-  mortgageFieldsByMonth: Map<string, MortgageFields>;
+  mortgageFieldsByDate: MortgageFields[];
 } {
   const ws = wb.Sheets['Sink or Swim'];
   const data = XLSX.utils.sheet_to_json<any[]>(ws, { header: 1 });
@@ -90,7 +86,7 @@ function readBudgetRows(wb: XLSX.WorkBook): {
   //          One-offs(14) | Shared Out(15) | Bill Contrib(16) |
   //          IN(17=derived) | OUT(18=derived) | NET(19=derived)
   const budgetRows: BudgetRow[] = [];
-  const mortgageFieldsByMonth = new Map<string, MortgageFields>();
+  const mortgageFieldsByDate: MortgageFields[] = [];
 
   for (const r of data.slice(1)) {
     if (!r[0] || typeof r[0] !== 'number') continue;
@@ -107,7 +103,8 @@ function readBudgetRows(wb: XLSX.WorkBook): {
       sharedOut: toCents(num(r[15])),
       rent: toCents(num(r[9]))
     });
-    mortgageFieldsByMonth.set(monthKey(date), {
+    mortgageFieldsByDate.push({
+      date,
       fixed: Math.abs(toCents(num(r[8]))),
       variable: Math.abs(toCents(num(r[7]))),
       rateVar: optNum(r[10]),
@@ -115,7 +112,20 @@ function readBudgetRows(wb: XLSX.WorkBook): {
     });
   }
 
-  return { budgetRows, mortgageFieldsByMonth };
+  mortgageFieldsByDate.sort((a, b) => a.date - b.date);
+  return { budgetRows, mortgageFieldsByDate };
+}
+
+function findMortgageFieldsAtOrBefore(
+  mortgageFields: MortgageFields[],
+  date: number
+): MortgageFields | undefined {
+  let match: MortgageFields | undefined;
+  for (const fields of mortgageFields) {
+    if (fields.date > date) break;
+    match = fields;
+  }
+  return match;
 }
 
 async function main() {
@@ -137,7 +147,7 @@ async function main() {
   }
   console.log('Reading CREAM.xlsx...');
   const wb = XLSX.readFile(XLSX_PATH);
-  const { budgetRows, mortgageFieldsByMonth } = readBudgetRows(wb);
+  const { budgetRows, mortgageFieldsByDate } = readBudgetRows(wb);
 
   // ── Current Accounts ──────────────────────────────────────
   {
@@ -320,11 +330,13 @@ async function main() {
 
     const rows = datedRows.map((r: any[]) => {
       const date = excelDateToTimestamp(num(r[0]));
-      const key = monthKey(date);
-      const mortgageFields = mortgageFieldsByMonth.get(key);
+      const mortgageFields = findMortgageFieldsAtOrBefore(
+        mortgageFieldsByDate,
+        date
+      );
       if (!mortgageFields) {
         throw new Error(
-          `Missing Sink or Swim mortgage fields for Mortgage row ${new Date(date).toISOString()} (Excel date ${r[0]})`
+          `Missing Sink or Swim mortgage fields at or before Mortgage row ${new Date(date).toISOString()} (Excel date ${r[0]})`
         );
       }
       return {
@@ -484,4 +496,7 @@ async function main() {
   console.log('\nSeed complete!');
 }
 
-main().catch(console.error);
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

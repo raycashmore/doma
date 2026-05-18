@@ -1,6 +1,6 @@
 # Convex Backend
 
-Backend code lives at `apps/budget/convex/`, NOT root `/convex/`.
+Backend code lives in `packages/convex/convex/`.
 
 ## Core Pattern: Derive at Read Time
 
@@ -16,6 +16,20 @@ Store only raw inputs in the database. All computed values are calculated at rea
 - **Date field:** All tables indexed by `date` (Unix timestamp in milliseconds) with a `by_date` index
 - **Crypto tables:** Use `by_platform` indexing in addition to date
 - **Derived field comments:** Schema marks derived fields with `// DERIVED: ...` comments
+
+### Mortgage/Budget Split
+
+Budget rows store monthly income and non-mortgage outflows only. Mortgage-owned monthly values live on `mortgage`: `fixed`, `variable`, `rateVar`, `rateFixed`, `offset1`, and `offset2`.
+
+Static property assumptions live in the single-row `mortgageConfig` table keyed by `"default"`. These values are still used by derived calculations such as equity and totals, but they no longer repeat on every monthly mortgage row.
+
+Removed stored fields:
+
+- `interestCharged` is no longer stored; existing UI now shows fixed/variable/total payment instead.
+- `principalPaid` is no longer stored because it is derived.
+- `capitalGrowth` is no longer stored because it is derived.
+
+All monetary values remain integer cents. Rate fields remain floats.
 
 ## Helper Functions (`helpers.ts`)
 
