@@ -17,21 +17,46 @@ export interface BreakdownRow {
   net: number;
 }
 
+export function utcYearMonthKey(timestamp: number): string {
+  const date = new Date(timestamp);
+  return `${date.getUTCFullYear()}-${date.getUTCMonth()}`;
+}
+
+export function buildMortgageByMonth(
+  mortgageRows: MortgageRow[]
+): Map<string, MortgageRow> {
+  const mortgageByMonth = new Map<string, MortgageRow>();
+
+  for (const row of mortgageRows) {
+    const key = utcYearMonthKey(row.date);
+    const existing = mortgageByMonth.get(key);
+    // Prefer the latest row in the month; creation time breaks same-date ties.
+    if (
+      !existing ||
+      row.date > existing.date ||
+      (row.date === existing.date && row._creationTime > existing._creationTime)
+    ) {
+      mortgageByMonth.set(key, row);
+    }
+  }
+
+  return mortgageByMonth;
+}
+
 export function buildMonthlyBreakdown(
   budgetRows: BudgetRow[],
   mortgageRows: MortgageRow[],
   limit?: number
 ): BreakdownRow[] {
-  // Exact-date join; missing mortgage rows intentionally render as 0 spend.
-  const mortgageByDate = new Map(
-    mortgageRows.map((row) => [row.date, row] as const)
-  );
+  const mortgageByMonth = buildMortgageByMonth(mortgageRows);
   const sortedBudget = [...budgetRows].sort((a, b) => b.date - a.date);
   const out = sortedBudget.map((row) => ({
     date: row.date,
     income: budgetTotalIn(row),
     spend: budgetTotalOut(row),
-    mortgage: budgetMortgagePortion(mortgageByDate.get(row.date) ?? null),
+    mortgage: budgetMortgagePortion(
+      mortgageByMonth.get(utcYearMonthKey(row.date)) ?? null
+    ),
     net: budgetNetGainLoss(row)
   }));
   return typeof limit === 'number' ? out.slice(0, limit) : out;

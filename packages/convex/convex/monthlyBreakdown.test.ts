@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildMortgageByMonth,
   buildMonthlyBreakdown,
+  utcYearMonthKey,
   type BudgetRow,
   type MortgageRow
 } from './monthlyBreakdown';
@@ -24,10 +26,15 @@ function b(date: number, inP: number, credit: number): BudgetRow {
   } as any;
 }
 
-function m(date: number, variable = 0, fixed = 0): MortgageRow {
+function m(
+  date: number,
+  variable = 0,
+  fixed = 0,
+  creationTime = 0
+): MortgageRow {
   return {
     _id: 'm' as any,
-    _creationTime: 0,
+    _creationTime: creationTime,
     date,
     debt1: 0,
     debt2: 0,
@@ -54,6 +61,35 @@ describe('buildMonthlyBreakdown', () => {
   it('returns zero mortgage when no matching mortgage row exists', () => {
     const out = buildMonthlyBreakdown([b(MS, 100, 30)], []);
     expect(out[0]!.mortgage).toBe(0);
+  });
+
+  it('joins mortgage by UTC year-month when dates differ within the month', () => {
+    const budgetDate = Date.UTC(2025, 0, 31);
+    const mortgageDate = Date.UTC(2025, 0, 1);
+
+    const out = buildMonthlyBreakdown(
+      [b(budgetDate, 100, 30)],
+      [m(mortgageDate, 1500, 2400)]
+    );
+
+    expect(out[0]!.mortgage).toBe(3900);
+  });
+
+  it('keeps the latest mortgage row in a UTC month', () => {
+    const monthKey = utcYearMonthKey(Date.UTC(2025, 0, 1));
+    const sameMonthEarlierDate = m(Date.UTC(2025, 0, 1), 100, 0, 1);
+    const sameMonthLaterDate = m(Date.UTC(2025, 0, 31), 200, 0, 1);
+    const sameDateEarlierCreation = m(Date.UTC(2025, 0, 31), 300, 0, 1);
+    const sameDateLaterCreation = m(Date.UTC(2025, 0, 31), 400, 0, 2);
+
+    const mortgageByMonth = buildMortgageByMonth([
+      sameMonthEarlierDate,
+      sameMonthLaterDate,
+      sameDateEarlierCreation,
+      sameDateLaterCreation
+    ]);
+
+    expect(mortgageByMonth.get(monthKey)).toBe(sameDateLaterCreation);
   });
 
   it('returns rows in descending date order', () => {

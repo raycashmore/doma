@@ -1,5 +1,5 @@
 import { v } from 'convex/values';
-import { query } from './_generated/server';
+import { query, type QueryCtx } from './_generated/server';
 import {
   budgetMortgagePortion,
   budgetNetGainLoss,
@@ -13,7 +13,9 @@ import {
   currentAccountTotal,
   investmentManagedFundNet,
   investmentTotal,
+  mortgageConfigForTotals,
   mortgageEquity,
+  mortgagePaymentTotal,
   mortgageTotalDebt,
   superPensionAud,
   superTotal,
@@ -22,8 +24,19 @@ import {
   ukTotalGbp
 } from './helpers';
 import { summarizeBudgetForPeriod, type SummaryPeriod } from './budgetSummary';
-import { buildMonthlyBreakdown } from './monthlyBreakdown';
+import {
+  buildMonthlyBreakdown,
+  buildMortgageByMonth,
+  utcYearMonthKey
+} from './monthlyBreakdown';
 import { shapeMonthDetail } from './monthDetail';
+
+async function getDefaultMortgageConfig(ctx: QueryCtx) {
+  return ctx.db
+    .query('mortgageConfig')
+    .withIndex('by_key', (q) => q.eq('key', 'default'))
+    .first();
+}
 
 // ============================================================
 // CURRENT ACCOUNTS
@@ -154,16 +167,21 @@ export const listMortgage = query({
     limit: v.optional(v.number())
   },
   handler: async (ctx, args) => {
-    const rows = await ctx.db
-      .query('mortgage')
-      .withIndex('by_date')
-      .order('desc')
-      .take(args.limit ?? 100);
+    const [rows, configRow] = await Promise.all([
+      ctx.db
+        .query('mortgage')
+        .withIndex('by_date')
+        .order('desc')
+        .take(args.limit ?? 100),
+      getDefaultMortgageConfig(ctx)
+    ]);
+    const config = mortgageConfigForTotals(configRow);
 
     return rows.map((row) => ({
       ...row,
+      paymentTotal: mortgagePaymentTotal(row),
       totalDebt: mortgageTotalDebt(row),
-      equity: mortgageEquity(row)
+      equity: mortgageEquity(row, config)
     }));
   }
 });
@@ -226,18 +244,21 @@ export const listCryptoSummaries = query({
 // ============================================================
 export const listBudgetChart = query({
   handler: async (ctx) => {
-    const budgetRows = await ctx.db
-      .query('budget')
-      .withIndex('by_date')
-      .order('asc')
-      .collect();
+    const [budgetRows, mortgageRows] = await Promise.all([
+      ctx.db.query('budget').withIndex('by_date').order('asc').collect(),
+      ctx.db.query('mortgage').withIndex('by_date').order('asc').collect()
+    ]);
+    const mortgageByMonth = buildMortgageByMonth(mortgageRows);
 
-    return budgetRows.map((row) => ({
-      date: row.date,
-      spend: budgetSpend(row),
-      sinkOrSwim: budgetSinkOrSwim(row),
-      mortgage: budgetMortgagePortion(row)
-    }));
+    return budgetRows.map((row) => {
+      const mortgage = mortgageByMonth.get(utcYearMonthKey(row.date)) ?? null;
+      return {
+        date: row.date,
+        spend: budgetSpend(row),
+        sinkOrSwim: budgetSinkOrSwim(row, mortgage),
+        mortgage: budgetMortgagePortion(mortgage)
+      };
+    });
   }
 });
 
@@ -247,33 +268,34 @@ export const listBudgetChart = query({
 // ============================================================
 export const getLatestTotals = query({
   handler: async (ctx) => {
-    const [superRow, ukRow, investRow, mortgageRow, cashRow, currentRow] =
-      await Promise.all([
-        ctx.db
-          .query('superAccounts')
-          .withIndex('by_date')
-          .order('desc')
-          .first(),
-        ctx.db.query('ukAccounts').withIndex('by_date').order('desc').first(),
-        ctx.db
-          .query('investmentAccounts')
-          .withIndex('by_date')
-          .order('desc')
-          .first(),
-        ctx.db.query('mortgage').withIndex('by_date').order('desc').first(),
-        ctx.db.query('cashAccounts').withIndex('by_date').order('desc').first(),
-        ctx.db
-          .query('currentAccounts')
-          .withIndex('by_date')
-          .order('desc')
-          .first()
-      ]);
+    const [
+      superRow,
+      ukRow,
+      investRow,
+      mortgageRow,
+      mortgageConfig,
+      cashRow,
+      currentRow
+    ] = await Promise.all([
+      ctx.db.query('superAccounts').withIndex('by_date').order('desc').first(),
+      ctx.db.query('ukAccounts').withIndex('by_date').order('desc').first(),
+      ctx.db
+        .query('investmentAccounts')
+        .withIndex('by_date')
+        .order('desc')
+        .first(),
+      ctx.db.query('mortgage').withIndex('by_date').order('desc').first(),
+      getDefaultMortgageConfig(ctx),
+      ctx.db.query('cashAccounts').withIndex('by_date').order('desc').first(),
+      ctx.db.query('currentAccounts').withIndex('by_date').order('desc').first()
+    ]);
 
     if (
       !superRow ||
       !ukRow ||
       !investRow ||
       !mortgageRow ||
+      !mortgageConfig ||
       !cashRow ||
       !currentRow
     ) {
@@ -285,6 +307,7 @@ export const getLatestTotals = query({
       uk: ukRow,
       investments: investRow,
       mortgage: mortgageRow,
+      mortgageConfig,
       cash: cashRow,
       current: currentRow
     });
@@ -300,31 +323,33 @@ export const getTotalsHistory = query({
     limit: v.optional(v.number())
   },
   handler: async (ctx, args) => {
-    const [superRows, ukRows, investRows, mortgageRows, cashRows, currentRows] =
-      await Promise.all([
-        ctx.db
-          .query('superAccounts')
-          .withIndex('by_date')
-          .order('asc')
-          .collect(),
-        ctx.db.query('ukAccounts').withIndex('by_date').order('asc').collect(),
-        ctx.db
-          .query('investmentAccounts')
-          .withIndex('by_date')
-          .order('asc')
-          .collect(),
-        ctx.db.query('mortgage').withIndex('by_date').order('asc').collect(),
-        ctx.db
-          .query('cashAccounts')
-          .withIndex('by_date')
-          .order('asc')
-          .collect(),
-        ctx.db
-          .query('currentAccounts')
-          .withIndex('by_date')
-          .order('asc')
-          .collect()
-      ]);
+    const [
+      superRows,
+      ukRows,
+      investRows,
+      mortgageRows,
+      mortgageConfig,
+      cashRows,
+      currentRows
+    ] = await Promise.all([
+      ctx.db.query('superAccounts').withIndex('by_date').order('asc').collect(),
+      ctx.db.query('ukAccounts').withIndex('by_date').order('asc').collect(),
+      ctx.db
+        .query('investmentAccounts')
+        .withIndex('by_date')
+        .order('asc')
+        .collect(),
+      ctx.db.query('mortgage').withIndex('by_date').order('asc').collect(),
+      getDefaultMortgageConfig(ctx),
+      ctx.db.query('cashAccounts').withIndex('by_date').order('asc').collect(),
+      ctx.db
+        .query('currentAccounts')
+        .withIndex('by_date')
+        .order('asc')
+        .collect()
+    ]);
+
+    if (!mortgageConfig) return [];
 
     // Build maps by date
     const superMap = new Map(superRows.map((r) => [r.date, r]));
@@ -379,6 +404,7 @@ export const getTotalsHistory = query({
             uk: lastUk,
             investments: lastInvest,
             mortgage: lastMortgage,
+            mortgageConfig,
             cash: lastCash,
             current: lastCurrent
           })
@@ -393,17 +419,15 @@ export const getTotalsHistory = query({
 
 // ============================================================
 // MONTHLY BREAKDOWN — per-month income, spend, mortgage, net
-// Mortgage is derived from the budget table (variable + fixed).
 // ============================================================
 export const getMonthlyBreakdown = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
-    const budgetRows = await ctx.db
-      .query('budget')
-      .withIndex('by_date')
-      .order('asc')
-      .collect();
-    return buildMonthlyBreakdown(budgetRows, args.limit);
+    const [budgetRows, mortgageRows] = await Promise.all([
+      ctx.db.query('budget').withIndex('by_date').order('asc').collect(),
+      ctx.db.query('mortgage').withIndex('by_date').order('asc').collect()
+    ]);
+    return buildMonthlyBreakdown(budgetRows, mortgageRows, args.limit);
   }
 });
 
@@ -413,10 +437,13 @@ export const getMonthlyBreakdown = query({
 export const getMonthlyDetail = query({
   args: { date: v.number() },
   handler: async (ctx, args) => {
-    const budget = await ctx.db
-      .query('budget')
-      .withIndex('by_date', (q) => q.eq('date', args.date))
-      .first();
+    const [budget, mortgageConfig] = await Promise.all([
+      ctx.db
+        .query('budget')
+        .withIndex('by_date', (q) => q.eq('date', args.date))
+        .first(),
+      getDefaultMortgageConfig(ctx)
+    ]);
 
     // Carry-forward mortgage lookup: most recent at-or-before args.date
     const mortgage = await ctx.db
@@ -441,7 +468,13 @@ export const getMonthlyDetail = query({
           .first()
       : null;
 
-    return shapeMonthDetail(budget, mortgage, priorBudget, priorMortgage);
+    return shapeMonthDetail(
+      budget,
+      mortgage,
+      mortgageConfig,
+      priorBudget,
+      priorMortgage
+    );
   }
 });
 
