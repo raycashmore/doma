@@ -41,6 +41,11 @@ function excelDateToTimestamp(excelDate: number): number {
   return EXCEL_EPOCH + excelDate * MS_PER_DAY;
 }
 
+function monthKey(timestamp: number): string {
+  const d = new Date(timestamp);
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
 function num(val: unknown): number {
   if (val === '' || val === null || val === undefined) return 0;
   const n = Number(val);
@@ -53,6 +58,66 @@ function optNum(val: unknown): number | undefined {
   return isNaN(n) ? undefined : n;
 }
 
+interface BudgetRow {
+  date: number;
+  incomePrimary: number;
+  incomeSecondary: number;
+  billContrib: number;
+  credit2: number;
+  credit1: number;
+  credit3: number;
+  oneOffs: number;
+  sharedOut: number;
+  rent: number;
+}
+
+interface MortgageFields {
+  fixed: number;
+  variable: number;
+  rateVar?: number;
+  rateFixed?: number;
+}
+
+function readBudgetRows(wb: XLSX.WorkBook): {
+  budgetRows: BudgetRow[];
+  mortgageFieldsByMonth: Map<string, MortgageFields>;
+} {
+  const ws = wb.Sheets['Sink or Swim'];
+  const data = XLSX.utils.sheet_to_json<any[]>(ws, { header: 1 });
+  // Columns: Date(0) | Credit 2(1) | Credit 1(2) | Spend(3=derived) | Sink or swim(4) |
+  //          Income Primary(5) | Income Secondary(6) | Variable(7) | Fixed(8) | Rent(9) |
+  //          Rate Var(10) | Rate Fixed(11) | blank(12) | Credit 3(13) |
+  //          One-offs(14) | Shared Out(15) | Bill Contrib(16) |
+  //          IN(17=derived) | OUT(18=derived) | NET(19=derived)
+  const budgetRows: BudgetRow[] = [];
+  const mortgageFieldsByMonth = new Map<string, MortgageFields>();
+
+  for (const r of data.slice(1)) {
+    if (!r[0] || typeof r[0] !== 'number') continue;
+    const date = excelDateToTimestamp(num(r[0]));
+    budgetRows.push({
+      date,
+      incomePrimary: toCents(num(r[5])),
+      incomeSecondary: toCents(num(r[6])),
+      billContrib: toCents(num(r[16])),
+      credit2: toCents(num(r[1])),
+      credit1: toCents(num(r[2])),
+      credit3: toCents(num(r[13])),
+      oneOffs: toCents(num(r[14])),
+      sharedOut: toCents(num(r[15])),
+      rent: toCents(num(r[9]))
+    });
+    mortgageFieldsByMonth.set(monthKey(date), {
+      fixed: Math.abs(toCents(num(r[8]))),
+      variable: Math.abs(toCents(num(r[7]))),
+      rateVar: optNum(r[10]),
+      rateFixed: optNum(r[11])
+    });
+  }
+
+  return { budgetRows, mortgageFieldsByMonth };
+}
+
 async function main() {
   console.log('Clearing existing tables...');
   for (const table of [
@@ -62,6 +127,7 @@ async function main() {
     'superAccounts',
     'investmentAccounts',
     'mortgage',
+    'mortgageConfig',
     'budget',
     'cryptoTransactions',
     'cryptoSummaries'
@@ -71,6 +137,7 @@ async function main() {
   }
   console.log('Reading CREAM.xlsx...');
   const wb = XLSX.readFile(XLSX_PATH);
+  const { budgetRows, mortgageFieldsByMonth } = readBudgetRows(wb);
 
   // ── Current Accounts ──────────────────────────────────────
   {
@@ -227,25 +294,54 @@ async function main() {
   {
     const ws = wb.Sheets['Mortgage'];
     const data = XLSX.utils.sheet_to_json<any[]>(ws, { header: 1 });
-    const rows = data
+    const datedRows = data
       .slice(1)
-      .filter((r: any[]) => r[0] && typeof r[0] === 'number')
-      .map((r: any[]) => ({
-        date: excelDateToTimestamp(num(r[0])),
-        deposit: toCents(num(r[1])),
-        familyContrib: toCents(num(r[2])),
+      .filter((r: any[]) => r[0] && typeof r[0] === 'number');
+    const latestRow = datedRows.reduce<any[] | undefined>((latest, r) => {
+      if (!latest) return r;
+      return num(r[0]) > num(latest[0]) ? r : latest;
+    }, undefined);
+
+    if (latestRow) {
+      const result = await client.mutation(api.seed.seedMortgageConfig, {
+        config: {
+          key: 'default',
+          price: toCents(num(latestRow[16])),
+          deposit: toCents(num(latestRow[1])),
+          familyContrib: toCents(num(latestRow[2])),
+          contrib1: toCents(num(latestRow[7])),
+          contrib2: toCents(num(latestRow[8])),
+          contrib3: toCents(num(latestRow[9])),
+          loanValue: 90_000_000
+        }
+      });
+      console.log(`  mortgageConfig: upserted ${result.upserted}`);
+    }
+
+    const rows = datedRows.map((r: any[]) => {
+      const date = excelDateToTimestamp(num(r[0]));
+      const key = monthKey(date);
+      const mortgageFields = mortgageFieldsByMonth.get(key);
+      if (!mortgageFields) {
+        throw new Error(
+          `Missing Sink or Swim mortgage fields for Mortgage row ${new Date(date).toISOString()} (Excel date ${r[0]})`
+        );
+      }
+      return {
+        date,
         debt1: toCents(num(r[3])),
         debt2: toCents(num(r[4])),
-        interestCharged: toCents(num(r[5])),
-        principalPaid: toCents(num(r[6])),
         contrib1: toCents(num(r[7])),
         contrib2: toCents(num(r[8])),
         contrib3: toCents(num(r[9])),
-        // r[10..15] = Available/My available/Liquid/Equity (derived)
-        price: toCents(num(r[16])),
-        landValue: toCents(num(r[17])),
-        capitalGrowth: toCents(num(r[18]))
-      }));
+        fixed: mortgageFields.fixed,
+        variable: mortgageFields.variable,
+        rateVar: mortgageFields.rateVar,
+        rateFixed: mortgageFields.rateFixed,
+        offset1: toCents(num(r[10])),
+        offset2: toCents(num(r[11]))
+      };
+    });
 
     for (let i = 0; i < rows.length; i += 100) {
       const batch = rows.slice(i, i + 100);
@@ -261,32 +357,7 @@ async function main() {
 
   // ── Budget (Sink or Swim) ─────────────────────────────────
   {
-    const ws = wb.Sheets['Sink or Swim'];
-    const data = XLSX.utils.sheet_to_json<any[]>(ws, { header: 1 });
-    // Columns: Date(0) | Credit 2(1) | Credit 1(2) | Spend(3=derived) | Sink or swim(4) |
-    //          Income Primary(5) | Income Secondary(6) | Variable(7) | Fixed(8) | Rent(9) |
-    //          Rate Var(10) | Rate Fix(11) | blank(12) | Credit 3(13) |
-    //          One-offs(14) | Shared(15) | Bill Contrib(16) |
-    //          IN(17=derived) | OUT(18=derived) | NET(19=derived)
-    const rows = data
-      .slice(1)
-      .filter((r: any[]) => r[0] && typeof r[0] === 'number')
-      .map((r: any[]) => ({
-        date: excelDateToTimestamp(num(r[0])),
-        incomePrimary: toCents(num(r[5])),
-        incomeSecondary: toCents(num(r[6])),
-        billContrib: toCents(num(r[16])),
-        credit2: toCents(num(r[1])),
-        credit1: toCents(num(r[2])),
-        credit3: toCents(num(r[13])),
-        oneOffs: toCents(num(r[14])),
-        shared: toCents(num(r[15])),
-        variable: toCents(num(r[7])),
-        fixed: toCents(num(r[8])),
-        rent: toCents(num(r[9])),
-        rateVar: optNum(r[10]),
-        rateFix: optNum(r[11])
-      }));
+    const rows = budgetRows;
 
     for (let i = 0; i < rows.length; i += 100) {
       const batch = rows.slice(i, i + 100);
