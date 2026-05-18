@@ -2,8 +2,8 @@ import { formatCurrency } from '@/lib/budget';
 
 interface Props {
   contribTotal: number;
-  fixed: number;
-  variable: number;
+  fixedPayment: number;
+  variablePayment: number;
   paymentTotal: number;
   offset1: number;
   offset2: number;
@@ -14,8 +14,8 @@ interface Props {
 
 export default function MonthMortgageSection({
   contribTotal,
-  fixed,
-  variable,
+  fixedPayment,
+  variablePayment,
   paymentTotal,
   offset1,
   offset2,
@@ -42,13 +42,13 @@ export default function MonthMortgageSection({
           <li className="flex justify-between">
             <span className="text-warm-text-secondary">Fixed payment</span>
             <span className="text-warm-text-primary">
-              {formatCurrency(fixed)}
+              {formatCurrency(fixedPayment)}
             </span>
           </li>
           <li className="flex justify-between">
             <span className="text-warm-text-secondary">Variable payment</span>
             <span className="text-warm-text-primary">
-              {formatCurrency(variable)}
+              {formatCurrency(variablePayment)}
             </span>
           </li>
           <li className="flex justify-between font-medium">

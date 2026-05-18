@@ -38,8 +38,8 @@ export interface MonthDetail {
     contrib2: number;
     contrib3: number;
     contribTotal: number;
-    fixed: number;
-    variable: number;
+    fixedPayment: number;
+    variablePayment: number;
     paymentTotal: number;
     rateVar: number | undefined;
     rateFixed: number | undefined;
@@ -91,12 +91,12 @@ export function shapeMonthDetail(
   const config = mortgageConfigForTotals(mortgageConfig);
   const curIncome = incomeTotal(budget);
   const curSpend = spendTotal(budget);
-  const curMortgageContrib = mortgage ? mortgageContrib(mortgage) : null;
+  const curMortgagePayment = mortgage ? mortgagePaymentTotal(mortgage) : null;
 
   const priorIncome = priorBudget ? incomeTotal(priorBudget) : null;
   const priorSpend = priorBudget ? spendTotal(priorBudget) : null;
-  const priorMortgageContrib = priorMortgage
-    ? mortgageContrib(priorMortgage)
+  const priorMortgagePayment = priorMortgage
+    ? mortgagePaymentTotal(priorMortgage)
     : null;
 
   return {
@@ -116,12 +116,12 @@ export function shapeMonthDetail(
     },
     mortgage: mortgage
       ? {
-          contrib1: mortgage.contrib1,
-          contrib2: mortgage.contrib2,
-          contrib3: mortgage.contrib3,
-          contribTotal: mortgageContrib(mortgage),
-          fixed: mortgage.fixed,
-          variable: mortgage.variable,
+          contrib1: config.contrib1,
+          contrib2: config.contrib2,
+          contrib3: config.contrib3,
+          contribTotal: mortgageContrib(config),
+          fixedPayment: mortgage.fixedPayment,
+          variablePayment: mortgage.variablePayment,
           paymentTotal: mortgagePaymentTotal(mortgage),
           rateVar: mortgage.rateVar,
           rateFixed: mortgage.rateFixed,
@@ -137,8 +137,8 @@ export function shapeMonthDetail(
       income: computeTrend(curIncome, priorIncome),
       spend: computeTrend(curSpend, priorSpend),
       mortgage:
-        curMortgageContrib != null
-          ? computeTrend(curMortgageContrib, priorMortgageContrib)
+        curMortgagePayment != null
+          ? computeTrend(curMortgagePayment, priorMortgagePayment)
           : null
     }
   };

@@ -28,8 +28,8 @@ function b(date: number, inP: number, credit: number): BudgetRow {
 
 function m(
   date: number,
-  variable = 0,
-  fixed = 0,
+  variablePayment = 0,
+  fixedPayment = 0,
   creationTime = 0
 ): MortgageRow {
   return {
@@ -38,11 +38,8 @@ function m(
     date,
     debt1: 0,
     debt2: 0,
-    contrib1: 0,
-    contrib2: 0,
-    contrib3: 0,
-    variable,
-    fixed,
+    variablePayment,
+    fixedPayment,
     rateVar: undefined,
     rateFixed: undefined,
     offset1: 0,
@@ -51,7 +48,7 @@ function m(
 }
 
 describe('buildMonthlyBreakdown', () => {
-  it('derives mortgage from mortgage.variable + mortgage.fixed', () => {
+  it('derives mortgage from mortgage.variablePayment + mortgage.fixedPayment', () => {
     const out = buildMonthlyBreakdown([b(MS, 100, 30)], [m(MS, 1500, 2400)]);
     expect(out).toEqual([
       { date: MS, income: 100, spend: 30, mortgage: 3900, net: 70 }

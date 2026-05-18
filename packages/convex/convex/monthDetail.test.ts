@@ -42,11 +42,8 @@ const mortgageRow: MortgageRow = {
   date: MS * 100,
   debt1: 30_000_000,
   debt2: 10_000_000,
-  contrib1: 100_000,
-  contrib2: 120_000,
-  contrib3: 72_000,
-  fixed: 240_000,
-  variable: 150_000,
+  fixedPayment: 240_000,
+  variablePayment: 150_000,
   rateVar: 6.12,
   rateFixed: 5.49,
   offset1: 25_000_000,
@@ -60,9 +57,9 @@ const mortgageConfig = {
   price: 80_000_000,
   deposit: 0,
   familyContrib: 0,
-  contrib1: 0,
-  contrib2: 0,
-  contrib3: 0,
+  contrib1: 100_000,
+  contrib2: 120_000,
+  contrib3: 72_000,
   loanValue: 90_000_000
 };
 
@@ -70,9 +67,8 @@ const priorMortgageRow: MortgageRow = {
   ...mortgageRow,
   _id: 'm-prior' as any,
   date: MS * 70,
-  contrib1: 100_000,
-  contrib2: 120_000,
-  contrib3: 72_000 // identical contrib → flat
+  fixedPayment: 240_000,
+  variablePayment: 150_000
 };
 
 describe('shapeMonthDetail', () => {
@@ -100,6 +96,8 @@ describe('shapeMonthDetail', () => {
     const r = shapeMonthDetail(budgetRow, mortgageRow, mortgageConfig)!;
     expect(r.mortgage).not.toBeNull();
     expect(r.mortgage!.contribTotal).toBe(292_000); // 100+120+72
+    expect(r.mortgage!.fixedPayment).toBe(240_000);
+    expect(r.mortgage!.variablePayment).toBe(150_000);
     expect(r.mortgage!.paymentTotal).toBe(390_000);
     expect(r.mortgage!.totalDebt).toBe(40_000_000);
     expect(r.mortgage!.equity).toBe(40_000_000); // 80M - 40M

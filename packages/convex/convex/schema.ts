@@ -75,17 +75,14 @@ export default defineSchema({
   }).index('by_date', ['date']),
 
   // ============================================================
-  // MORTGAGE — Property debt, equity & contributions
+  // MORTGAGE — Monthly property debt, payments & offsets
   // ============================================================
   mortgage: defineTable({
     date: v.number(),
     debt1: v.number(),
     debt2: v.number(),
-    contrib1: v.number(),
-    contrib2: v.number(),
-    contrib3: v.number(),
-    fixed: v.number(),
-    variable: v.number(),
+    fixedPayment: v.number(),
+    variablePayment: v.number(),
     rateVar: v.optional(v.number()),
     rateFixed: v.optional(v.number()),
     offset1: v.number(),

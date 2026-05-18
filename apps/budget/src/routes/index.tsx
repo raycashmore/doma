@@ -113,8 +113,8 @@ function BudgetPage() {
               {detail.mortgage ? (
                 <MonthMortgageSection
                   contribTotal={detail.mortgage.contribTotal}
-                  fixed={detail.mortgage.fixed}
-                  variable={detail.mortgage.variable}
+                  fixedPayment={detail.mortgage.fixedPayment}
+                  variablePayment={detail.mortgage.variablePayment}
                   paymentTotal={detail.mortgage.paymentTotal}
                   offset1={detail.mortgage.offset1}
                   offset2={detail.mortgage.offset2}

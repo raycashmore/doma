@@ -134,11 +134,8 @@ describe('refactored mortgage and budget helpers', () => {
     date: 0,
     debt1: 30_000_000,
     debt2: 10_000_000,
-    contrib1: 100_000,
-    contrib2: 120_000,
-    contrib3: 72_000,
-    fixed: 240_000,
-    variable: 150_000,
+    fixedPayment: 240_000,
+    variablePayment: 150_000,
     rateVar: 6.12,
     rateFixed: 5.49,
     offset1: 25_000_000,
@@ -177,7 +174,7 @@ describe('refactored mortgage and budget helpers', () => {
     ).toBe(150_000);
   });
 
-  it('derives mortgage payment total from mortgage fixed and variable fields', () => {
+  it('derives mortgage payment total from mortgage fixed and variable payment fields', () => {
     expect(mortgagePaymentTotal(mortgage as any)).toBe(390_000);
     expect(budgetMortgagePortion(mortgage as any)).toBe(390_000);
   });

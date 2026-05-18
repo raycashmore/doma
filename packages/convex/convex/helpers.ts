@@ -96,14 +96,14 @@ export function mortgageTotalDebt(row: Doc<'mortgage'>) {
 }
 
 // ============================================================
-// MORTGAGE — monthly contribution
+// MORTGAGE — static contribution
 // ============================================================
-export function mortgageContrib(row: Doc<'mortgage'>): number {
-  return row.contrib1 + row.contrib2 + row.contrib3;
+export function mortgageContrib(config: MortgageConfigInput): number {
+  return config.contrib1 + config.contrib2 + config.contrib3;
 }
 
 export function mortgagePaymentTotal(row: Doc<'mortgage'>): number {
-  return row.fixed + row.variable;
+  return row.fixedPayment + row.variablePayment;
 }
 
 // Stored interest/principal fields were removed. Until a real amortization

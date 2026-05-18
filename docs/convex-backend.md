@@ -19,13 +19,13 @@ Store only raw inputs in the database. All computed values are calculated at rea
 
 ### Mortgage/Budget Split
 
-Budget rows store monthly income and non-mortgage outflows only. Mortgage-owned monthly values live on `mortgage`: `fixed`, `variable`, `rateVar`, `rateFixed`, `offset1`, and `offset2`.
+Budget rows store monthly income and non-mortgage outflows only. Mortgage-owned monthly values live on `mortgage`: `fixedPayment`, `variablePayment`, `rateVar`, `rateFixed`, `offset1`, and `offset2`.
 
 Static property assumptions live in the single-row `mortgageConfig` table keyed by `"default"`. These values are still used by derived calculations such as equity and totals, but they no longer repeat on every monthly mortgage row.
 
 Removed stored fields:
 
-- `interestCharged` is no longer stored; existing UI now shows fixed/variable/total payment instead.
+- `interestCharged` is no longer stored; existing UI now shows `fixedPayment`, `variablePayment`, and total payment instead.
 - `principalPaid` is no longer stored because it is derived.
 - `capitalGrowth` is no longer stored because it is derived.
 

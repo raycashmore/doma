@@ -68,8 +68,8 @@ interface BudgetRow {
 
 interface MortgageFields {
   date: number;
-  fixed: number;
-  variable: number;
+  fixedPayment: number;
+  variablePayment: number;
   rateVar?: number;
   rateFixed?: number;
 }
@@ -105,8 +105,8 @@ function readBudgetRows(wb: XLSX.WorkBook): {
     });
     mortgageFieldsByDate.push({
       date,
-      fixed: Math.abs(toCents(num(r[8]))),
-      variable: Math.abs(toCents(num(r[7]))),
+      fixedPayment: Math.abs(toCents(num(r[8]))),
+      variablePayment: Math.abs(toCents(num(r[7]))),
       rateVar: optNum(r[10]),
       rateFixed: optNum(r[11])
     });
@@ -343,11 +343,8 @@ async function main() {
         date,
         debt1: toCents(num(r[3])),
         debt2: toCents(num(r[4])),
-        contrib1: toCents(num(r[7])),
-        contrib2: toCents(num(r[8])),
-        contrib3: toCents(num(r[9])),
-        fixed: mortgageFields.fixed,
-        variable: mortgageFields.variable,
+        fixedPayment: mortgageFields.fixedPayment,
+        variablePayment: mortgageFields.variablePayment,
         rateVar: mortgageFields.rateVar,
         rateFixed: mortgageFields.rateFixed,
         offset1: toCents(num(r[10])),
