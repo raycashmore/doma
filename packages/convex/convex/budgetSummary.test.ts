@@ -14,7 +14,7 @@ function row(
   credit2: number,
   credit3: number,
   oneOffs: number,
-  shared: number
+  sharedOut: number
 ): BudgetRow {
   return {
     _id: 'x' as any,
@@ -27,9 +27,7 @@ function row(
     credit2,
     credit3,
     oneOffs,
-    shared,
-    variable: 0,
-    fixed: 0,
+    sharedOut,
     rent: 0
   };
 }
