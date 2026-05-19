@@ -491,13 +491,13 @@ export const getBudgetPageSummary = query({
     )
   },
   handler: async (ctx, args) => {
-    const rows = await ctx.db
-      .query('budget')
-      .withIndex('by_date')
-      .order('asc')
-      .collect();
+    const [rows, mortgageRows] = await Promise.all([
+      ctx.db.query('budget').withIndex('by_date').order('asc').collect(),
+      ctx.db.query('mortgage').withIndex('by_date').order('asc').collect()
+    ]);
     return summarizeBudgetForPeriod(
       rows,
+      mortgageRows,
       args.period as SummaryPeriod,
       Date.now()
     );

@@ -51,7 +51,7 @@ describe('buildMonthlyBreakdown', () => {
   it('derives mortgage from mortgage.variablePayment + mortgage.fixedPayment', () => {
     const out = buildMonthlyBreakdown([b(MS, 100, 30)], [m(MS, 1500, 2400)]);
     expect(out).toEqual([
-      { date: MS, income: 100, spend: 30, mortgage: 3900, net: 70 }
+      { date: MS, income: 100, spend: 30, mortgage: 3900, net: -3830 }
     ]);
   });
 

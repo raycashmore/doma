@@ -9028,9 +9028,10 @@
       "x": -340,
       "y": 2037,
       "name": "Shopping Lists",
-      "width": 1100,
-      "height": 900,
-      "layout": "none",
+      "width": 1440,
+      "height": 1024,
+      "fill": "$bg-dark",
+      "layout": "vertical",
       "children": [
         {
           "id": "E8jtS",
@@ -9038,13 +9039,20 @@
           "ref": "TrB8r",
           "x": 0,
           "y": 0,
-          "width": 1100,
-          "height": 900,
+          "width": "fill_container",
+          "height": "fill_container",
           "name": "shell",
+          "cornerRadius": 0,
           "descendants": {
+            "d0WsGR": {
+              "height": "fill_container"
+            },
+            "d0WsGR/ESpfC": {
+              "fill": "$warm-accent"
+            },
             "d0WsGR/ESpfC/JNG53": {
               "iconFontName": "list-checks",
-              "fill": "#FFF8EE"
+              "fill": "$warm-bg"
             },
             "d0WsGR/dKJzW/JNG53": {
               "iconFontName": "users"
@@ -9077,14 +9085,14 @@
               "name": "Shopping List Workspace",
               "width": "fill_container",
               "height": "fill_container",
-              "fill": "#FFFCF6",
+              "fill": "$warm-bg-card",
               "cornerRadius": 28,
               "stroke": {
                 "thickness": 1,
-                "fill": "#EFE3D2"
+                "fill": "$warm-border"
               },
               "gap": 20,
-              "padding": 20,
+              "padding": 24,
               "children": [
                 {
                   "type": "frame",
@@ -9092,11 +9100,11 @@
                   "name": "List Navigator",
                   "width": 244,
                   "height": "fill_container",
-                  "fill": "#FFF8EE",
+                  "fill": "$warm-bg",
                   "cornerRadius": 20,
                   "stroke": {
                     "thickness": 1,
-                    "fill": "#EFE3D2"
+                    "fill": "$warm-border"
                   },
                   "layout": "vertical",
                   "gap": 16,
@@ -9114,7 +9122,7 @@
                           "type": "text",
                           "id": "e6fwVN",
                           "name": "leftTitle",
-                          "fill": "#3D2E22",
+                          "fill": "$warm-text",
                           "content": "My Lists",
                           "fontFamily": "DM Sans",
                           "fontSize": 16,
@@ -9127,12 +9135,13 @@
                           "width": 34,
                           "height": 34,
                           "name": "leftAdd",
+                          "fill": "$bg-dark-muted",
                           "descendants": {
                             "x7P29": {
                               "iconFontName": "plus",
                               "width": 14,
                               "height": 14,
-                              "fill": "#FAF9F7"
+                              "fill": "$text-on-dark"
                             }
                           }
                         }
@@ -9143,7 +9152,7 @@
                       "id": "pKxhg",
                       "name": "Personal Shared Toggle",
                       "width": "fill_container",
-                      "fill": "#F2E4C9",
+                      "fill": "$warm-card-sand",
                       "cornerRadius": 999,
                       "gap": 6,
                       "padding": 4,
@@ -9153,7 +9162,7 @@
                           "id": "n83euI",
                           "name": "personal",
                           "width": "fill_container",
-                          "fill": "#3D2E22",
+                          "fill": "$warm-text",
                           "cornerRadius": 999,
                           "padding": [
                             8,
@@ -9165,7 +9174,7 @@
                               "type": "text",
                               "id": "iz7Du",
                               "name": "personalTxt",
-                              "fill": "#FAF9F7",
+                              "fill": "$text-on-dark",
                               "content": "Personal",
                               "fontFamily": "DM Sans",
                               "fontSize": 11,
@@ -9189,7 +9198,7 @@
                               "type": "text",
                               "id": "szryc",
                               "name": "sharedTxt",
-                              "fill": "#7C6755",
+                              "fill": "$warm-text-secondary",
                               "content": "Shared",
                               "fontFamily": "DM Sans",
                               "fontSize": 11,
@@ -9212,11 +9221,11 @@
                           "id": "AGoBf",
                           "name": "list1",
                           "width": "fill_container",
-                          "fill": "#FFDFC7",
+                          "fill": "$warm-card-peach",
                           "cornerRadius": 16,
                           "stroke": {
                             "thickness": 1,
-                            "fill": "#F4744A"
+                            "fill": "$warm-accent"
                           },
                           "layout": "vertical",
                           "gap": 8,
@@ -9238,13 +9247,13 @@
                                   "height": 18,
                                   "iconFontName": "shopping-cart",
                                   "iconFontFamily": "lucide",
-                                  "fill": "#3D2E22"
+                                  "fill": "$warm-text"
                                 },
                                 {
                                   "type": "text",
                                   "id": "riV1n",
                                   "name": "list1Name",
-                                  "fill": "#3D2E22",
+                                  "fill": "$warm-text",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
                                   "content": "Weekly shop",
@@ -9256,7 +9265,7 @@
                                   "type": "text",
                                   "id": "R3uT3",
                                   "name": "list1Count",
-                                  "fill": "#D85A36",
+                                  "fill": "$warm-accent-deep",
                                   "content": "18",
                                   "fontFamily": "DM Sans",
                                   "fontSize": 12,
@@ -9268,7 +9277,7 @@
                               "type": "text",
                               "id": "Lm5ab",
                               "name": "list1Meta",
-                              "fill": "#7C6755",
+                              "fill": "$warm-text-secondary",
                               "textGrowth": "fixed-width",
                               "width": "fill_container",
                               "content": "Shared with Ray + 2 - Due Fri",
@@ -9283,11 +9292,11 @@
                           "id": "M8Tdl",
                           "name": "list2",
                           "width": "fill_container",
-                          "fill": "#FFFCF6",
+                          "fill": "$warm-bg-card",
                           "cornerRadius": 16,
                           "stroke": {
                             "thickness": 1,
-                            "fill": "#EFE3D2"
+                            "fill": "$warm-border"
                           },
                           "layout": "vertical",
                           "gap": 6,
@@ -9309,13 +9318,13 @@
                                   "height": 18,
                                   "iconFontName": "house",
                                   "iconFontFamily": "lucide",
-                                  "fill": "#7C6755"
+                                  "fill": "$warm-text-secondary"
                                 },
                                 {
                                   "type": "text",
                                   "id": "d9tag",
                                   "name": "list2Name",
-                                  "fill": "#3D2E22",
+                                  "fill": "$warm-text",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
                                   "content": "House errands",
@@ -9327,7 +9336,7 @@
                                   "type": "text",
                                   "id": "KhiGB",
                                   "name": "list2Count",
-                                  "fill": "#B5A595",
+                                  "fill": "$warm-text-tertiary",
                                   "content": "7",
                                   "fontFamily": "DM Sans",
                                   "fontSize": 12,
@@ -9339,7 +9348,7 @@
                               "type": "text",
                               "id": "Bf8Vs",
                               "name": "list2Meta",
-                              "fill": "#7C6755",
+                              "fill": "$warm-text-secondary",
                               "textGrowth": "fixed-width",
                               "width": "fill_container",
                               "content": "Personal - 2 overdue",
@@ -9354,11 +9363,11 @@
                           "id": "W1Glz8",
                           "name": "list3",
                           "width": "fill_container",
-                          "fill": "#FFFCF6",
+                          "fill": "$warm-bg-card",
                           "cornerRadius": 16,
                           "stroke": {
                             "thickness": 1,
-                            "fill": "#EFE3D2"
+                            "fill": "$warm-border"
                           },
                           "layout": "vertical",
                           "gap": 6,
@@ -9380,13 +9389,13 @@
                                   "height": 18,
                                   "iconFontName": "party-popper",
                                   "iconFontFamily": "lucide",
-                                  "fill": "#7C6755"
+                                  "fill": "$warm-text-secondary"
                                 },
                                 {
                                   "type": "text",
                                   "id": "RBale",
                                   "name": "list3Name",
-                                  "fill": "#3D2E22",
+                                  "fill": "$warm-text",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
                                   "content": "Dinner party",
@@ -9398,7 +9407,7 @@
                                   "type": "text",
                                   "id": "cQVpf",
                                   "name": "list3Count",
-                                  "fill": "#B5A595",
+                                  "fill": "$warm-text-tertiary",
                                   "content": "12",
                                   "fontFamily": "DM Sans",
                                   "fontSize": 12,
@@ -9410,7 +9419,7 @@
                               "type": "text",
                               "id": "np9g3",
                               "name": "list3Meta",
-                              "fill": "#7C6755",
+                              "fill": "$warm-text-secondary",
                               "textGrowth": "fixed-width",
                               "width": "fill_container",
                               "content": "Shared - One-off",
@@ -9427,7 +9436,7 @@
                       "id": "DHxDC",
                       "name": "invite",
                       "width": "fill_container",
-                      "fill": "#D8E9D2",
+                      "fill": "$warm-card-sage",
                       "cornerRadius": 16,
                       "layout": "vertical",
                       "gap": 8,
@@ -9437,7 +9446,7 @@
                           "type": "text",
                           "id": "fdhNh",
                           "name": "inviteTitle",
-                          "fill": "#3D2E22",
+                          "fill": "$warm-text",
                           "content": "Shared access",
                           "fontFamily": "DM Sans",
                           "fontSize": 13,
@@ -9447,7 +9456,7 @@
                           "type": "text",
                           "id": "ZVm89",
                           "name": "inviteText",
-                          "fill": "#7C6755",
+                          "fill": "$warm-text-secondary",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
                           "content": "Maya added 3 produce items. Auto-sync is on.",
@@ -9487,7 +9496,7 @@
                               "type": "text",
                               "id": "ZioU7",
                               "name": "mainTitle",
-                              "fill": "#3D2E22",
+                              "fill": "$warm-text",
                               "content": "Weekly shop",
                               "fontFamily": "DM Serif Display",
                               "fontSize": 30,
@@ -9497,7 +9506,7 @@
                               "type": "text",
                               "id": "GYT4M",
                               "name": "mainMeta",
-                              "fill": "#7C6755",
+                              "fill": "$warm-text-secondary",
                               "content": "18 items - 4 categories - shared with Maya and Jon",
                               "fontFamily": "DM Sans",
                               "fontSize": 12,
@@ -9516,7 +9525,7 @@
                               "type": "frame",
                               "id": "YIiRt",
                               "name": "autoBtn",
-                              "fill": "#3D2E22",
+                              "fill": "$warm-text",
                               "cornerRadius": 999,
                               "gap": 8,
                               "padding": [
@@ -9533,13 +9542,13 @@
                                   "height": 14,
                                   "iconFontName": "sparkles",
                                   "iconFontFamily": "lucide",
-                                  "fill": "#FAF9F7"
+                                  "fill": "$text-on-dark"
                                 },
                                 {
                                   "type": "text",
                                   "id": "y8EC4",
                                   "name": "autoText",
-                                  "fill": "#FAF9F7",
+                                  "fill": "$text-on-dark",
                                   "content": "Auto-categorise",
                                   "fontFamily": "DM Sans",
                                   "fontSize": 12,
@@ -9554,11 +9563,13 @@
                               "width": 38,
                               "height": 38,
                               "name": "filterBtn",
+                              "fill": "$bg-dark-muted",
                               "descendants": {
                                 "x7P29": {
                                   "iconFontName": "sliders-horizontal",
                                   "width": 15,
-                                  "height": 15
+                                  "height": 15,
+                                  "fill": "$text-on-dark"
                                 }
                               }
                             }
@@ -9571,11 +9582,11 @@
                       "id": "f9ouOq",
                       "name": "quickAdd",
                       "width": "fill_container",
-                      "fill": "#FFF8EE",
+                      "fill": "$warm-bg",
                       "cornerRadius": 16,
                       "stroke": {
                         "thickness": 1,
-                        "fill": "#EFE3D2"
+                        "fill": "$warm-border"
                       },
                       "gap": 10,
                       "padding": [
@@ -9592,13 +9603,13 @@
                           "height": 18,
                           "iconFontName": "plus",
                           "iconFontFamily": "lucide",
-                          "fill": "#F4744A"
+                          "fill": "$warm-accent"
                         },
                         {
                           "type": "text",
                           "id": "HZeBU",
                           "name": "quickText",
-                          "fill": "#B5A595",
+                          "fill": "$warm-text-tertiary",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
                           "content": "Add milk, bread, or paste a recipe...",
@@ -9610,7 +9621,7 @@
                           "type": "frame",
                           "id": "q4tcsi",
                           "name": "quickDue",
-                          "fill": "#FFE8A8",
+                          "fill": "$warm-card-butter",
                           "cornerRadius": 999,
                           "gap": 6,
                           "padding": [
@@ -9627,13 +9638,13 @@
                               "height": 13,
                               "iconFontName": "calendar",
                               "iconFontFamily": "lucide",
-                              "fill": "#D9893A"
+                              "fill": "$warm-warning"
                             },
                             {
                               "type": "text",
                               "id": "YvjiF",
                               "name": "quickDueTxt",
-                              "fill": "#D9893A",
+                              "fill": "$warm-warning",
                               "content": "Due date",
                               "fontFamily": "DM Sans",
                               "fontSize": 11,
@@ -9657,11 +9668,11 @@
                           "id": "hiDcB",
                           "name": "produce",
                           "width": "fill_container",
-                          "fill": "#FFFCF6",
+                          "fill": "$warm-bg-card",
                           "cornerRadius": 18,
                           "stroke": {
                             "thickness": 1,
-                            "fill": "#EFE3D2"
+                            "fill": "$warm-border"
                           },
                           "layout": "vertical",
                           "gap": 8,
@@ -9683,13 +9694,13 @@
                                   "height": 16,
                                   "iconFontName": "chevron-down",
                                   "iconFontFamily": "lucide",
-                                  "fill": "#7C6755"
+                                  "fill": "$warm-text-secondary"
                                 },
                                 {
                                   "type": "text",
                                   "id": "i0T0P",
                                   "name": "produceTitle",
-                                  "fill": "#3D2E22",
+                                  "fill": "$warm-text",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
                                   "content": "Produce",
@@ -9701,12 +9712,12 @@
                                   "id": "Yo6Ir",
                                   "type": "ref",
                                   "ref": "TZRcR",
-                                  "fill": "#D8E9D2",
+                                  "fill": "$warm-card-sage",
                                   "name": "producePill",
                                   "descendants": {
                                     "OO9GJ": {
                                       "content": "Auto",
-                                      "fill": "#5F9466"
+                                      "fill": "$warm-success"
                                     }
                                   }
                                 },
@@ -9714,7 +9725,7 @@
                                   "type": "text",
                                   "id": "xRL8Z",
                                   "name": "produceCount",
-                                  "fill": "#7C6755",
+                                  "fill": "$warm-text-secondary",
                                   "content": "6 items",
                                   "fontFamily": "DM Sans",
                                   "fontSize": 12,
@@ -9743,7 +9754,7 @@
                                   "cornerRadius": 6,
                                   "stroke": {
                                     "thickness": 2,
-                                    "fill": "#D8E9D2"
+                                    "fill": "$warm-card-sage"
                                   },
                                   "justifyContent": "center",
                                   "alignItems": "center"
@@ -9752,7 +9763,7 @@
                                   "type": "text",
                                   "id": "DuNh0",
                                   "name": "name1",
-                                  "fill": "#3D2E22",
+                                  "fill": "$warm-text",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
                                   "content": "Bananas",
@@ -9764,12 +9775,12 @@
                                   "id": "mbFVq",
                                   "type": "ref",
                                   "ref": "TZRcR",
-                                  "fill": "#FFE8A8",
+                                  "fill": "$warm-card-butter",
                                   "name": "rec1",
                                   "descendants": {
                                     "OO9GJ": {
                                       "content": "Recurring",
-                                      "fill": "#D9893A"
+                                      "fill": "$warm-warning"
                                     }
                                   }
                                 },
@@ -9777,7 +9788,7 @@
                                   "type": "text",
                                   "id": "DWU7f",
                                   "name": "due1",
-                                  "fill": "#7C6755",
+                                  "fill": "$warm-text-secondary",
                                   "textGrowth": "fixed-width",
                                   "width": 82,
                                   "content": "Fri 22 May",
@@ -9793,7 +9804,7 @@
                                   "height": 17,
                                   "iconFontName": "panel-right-open",
                                   "iconFontFamily": "lucide",
-                                  "fill": "#B5A595"
+                                  "fill": "$warm-text-tertiary"
                                 }
                               ]
                             },
@@ -9802,7 +9813,7 @@
                               "id": "B79qyP",
                               "name": "row2",
                               "width": "fill_container",
-                              "fill": "#FFF8EE",
+                              "fill": "$warm-bg",
                               "cornerRadius": 12,
                               "gap": 12,
                               "padding": [
@@ -9820,7 +9831,7 @@
                                   "cornerRadius": 6,
                                   "stroke": {
                                     "thickness": 2,
-                                    "fill": "#F4744A"
+                                    "fill": "$warm-accent"
                                   },
                                   "justifyContent": "center",
                                   "alignItems": "center"
@@ -9829,7 +9840,7 @@
                                   "type": "text",
                                   "id": "fK01s",
                                   "name": "name2",
-                                  "fill": "#3D2E22",
+                                  "fill": "$warm-text",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
                                   "content": "Avocados",
@@ -9841,12 +9852,12 @@
                                   "id": "EpSfs",
                                   "type": "ref",
                                   "ref": "TZRcR",
-                                  "fill": "#F2E4C9",
+                                  "fill": "$warm-card-sand",
                                   "name": "once2",
                                   "descendants": {
                                     "OO9GJ": {
                                       "content": "One-off",
-                                      "fill": "#7C6755"
+                                      "fill": "$warm-text-secondary"
                                     }
                                   }
                                 },
@@ -9854,7 +9865,7 @@
                                   "type": "text",
                                   "id": "T5EAU",
                                   "name": "due2",
-                                  "fill": "#D85A36",
+                                  "fill": "$warm-accent-deep",
                                   "textGrowth": "fixed-width",
                                   "width": 82,
                                   "content": "Today",
@@ -9870,7 +9881,7 @@
                                   "height": 17,
                                   "iconFontName": "panel-right-open",
                                   "iconFontFamily": "lucide",
-                                  "fill": "#F4744A"
+                                  "fill": "$warm-accent"
                                 }
                               ]
                             },
@@ -9895,14 +9906,14 @@
                                   "cornerRadius": 6,
                                   "stroke": {
                                     "thickness": 2,
-                                    "fill": "#D8E9D2"
+                                    "fill": "$warm-card-sage"
                                   }
                                 },
                                 {
                                   "type": "text",
                                   "id": "yjKF3",
                                   "name": "name3",
-                                  "fill": "#3D2E22",
+                                  "fill": "$warm-text",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
                                   "content": "Baby spinach",
@@ -9914,12 +9925,12 @@
                                   "id": "Go1mS",
                                   "type": "ref",
                                   "ref": "TZRcR",
-                                  "fill": "#FFE8A8",
+                                  "fill": "$warm-card-butter",
                                   "name": "rec3",
                                   "descendants": {
                                     "OO9GJ": {
                                       "content": "Recurring",
-                                      "fill": "#D9893A"
+                                      "fill": "$warm-warning"
                                     }
                                   }
                                 },
@@ -9927,7 +9938,7 @@
                                   "type": "text",
                                   "id": "H6dYA",
                                   "name": "due3",
-                                  "fill": "#7C6755",
+                                  "fill": "$warm-text-secondary",
                                   "textGrowth": "fixed-width",
                                   "width": 82,
                                   "content": "Mon 25 May",
@@ -9943,7 +9954,7 @@
                                   "height": 17,
                                   "iconFontName": "panel-right-open",
                                   "iconFontFamily": "lucide",
-                                  "fill": "#B5A595"
+                                  "fill": "$warm-text-tertiary"
                                 }
                               ]
                             }
@@ -9954,11 +9965,11 @@
                           "id": "W5MllI",
                           "name": "pantry",
                           "width": "fill_container",
-                          "fill": "#FFFCF6",
+                          "fill": "$warm-bg-card",
                           "cornerRadius": 18,
                           "stroke": {
                             "thickness": 1,
-                            "fill": "#EFE3D2"
+                            "fill": "$warm-border"
                           },
                           "layout": "vertical",
                           "gap": 8,
@@ -9980,13 +9991,13 @@
                                   "height": 16,
                                   "iconFontName": "chevron-down",
                                   "iconFontFamily": "lucide",
-                                  "fill": "#7C6755"
+                                  "fill": "$warm-text-secondary"
                                 },
                                 {
                                   "type": "text",
                                   "id": "jMqAo",
                                   "name": "pantryTitle",
-                                  "fill": "#3D2E22",
+                                  "fill": "$warm-text",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
                                   "content": "Pantry",
@@ -9998,12 +10009,12 @@
                                   "id": "mh8GN",
                                   "type": "ref",
                                   "ref": "TZRcR",
-                                  "fill": "#F2E4C9",
+                                  "fill": "$warm-card-sand",
                                   "name": "pantryPill",
                                   "descendants": {
                                     "OO9GJ": {
                                       "content": "Manual",
-                                      "fill": "#7C6755"
+                                      "fill": "$warm-text-secondary"
                                     }
                                   }
                                 },
@@ -10011,7 +10022,7 @@
                                   "type": "text",
                                   "id": "TZNWk",
                                   "name": "pantryCount",
-                                  "fill": "#7C6755",
+                                  "fill": "$warm-text-secondary",
                                   "content": "5 items",
                                   "fontFamily": "DM Sans",
                                   "fontSize": 12,
@@ -10040,14 +10051,14 @@
                                   "cornerRadius": 6,
                                   "stroke": {
                                     "thickness": 2,
-                                    "fill": "#D8E9D2"
+                                    "fill": "$warm-card-sage"
                                   }
                                 },
                                 {
                                   "type": "text",
                                   "id": "B1xAGt",
                                   "name": "name4",
-                                  "fill": "#3D2E22",
+                                  "fill": "$warm-text",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
                                   "content": "Sourdough loaf",
@@ -10059,12 +10070,12 @@
                                   "id": "iCRo8",
                                   "type": "ref",
                                   "ref": "TZRcR",
-                                  "fill": "#F2E4C9",
+                                  "fill": "$warm-card-sand",
                                   "name": "once4",
                                   "descendants": {
                                     "OO9GJ": {
                                       "content": "One-off",
-                                      "fill": "#7C6755"
+                                      "fill": "$warm-text-secondary"
                                     }
                                   }
                                 },
@@ -10072,7 +10083,7 @@
                                   "type": "text",
                                   "id": "VddEG",
                                   "name": "due4",
-                                  "fill": "#7C6755",
+                                  "fill": "$warm-text-secondary",
                                   "textGrowth": "fixed-width",
                                   "width": 82,
                                   "content": "Sat 23 May",
@@ -10088,7 +10099,7 @@
                                   "height": 17,
                                   "iconFontName": "panel-right-open",
                                   "iconFontFamily": "lucide",
-                                  "fill": "#B5A595"
+                                  "fill": "$warm-text-tertiary"
                                 }
                               ]
                             },
@@ -10113,14 +10124,14 @@
                                   "cornerRadius": 6,
                                   "stroke": {
                                     "thickness": 2,
-                                    "fill": "#D8E9D2"
+                                    "fill": "$warm-card-sage"
                                   }
                                 },
                                 {
                                   "type": "text",
                                   "id": "nvooP",
                                   "name": "name5",
-                                  "fill": "#3D2E22",
+                                  "fill": "$warm-text",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
                                   "content": "Rolled oats",
@@ -10132,12 +10143,12 @@
                                   "id": "WwYuU",
                                   "type": "ref",
                                   "ref": "TZRcR",
-                                  "fill": "#FFE8A8",
+                                  "fill": "$warm-card-butter",
                                   "name": "rec5",
                                   "descendants": {
                                     "OO9GJ": {
                                       "content": "Recurring",
-                                      "fill": "#D9893A"
+                                      "fill": "$warm-warning"
                                     }
                                   }
                                 },
@@ -10145,7 +10156,7 @@
                                   "type": "text",
                                   "id": "lDE8Z",
                                   "name": "due5",
-                                  "fill": "#7C6755",
+                                  "fill": "$warm-text-secondary",
                                   "textGrowth": "fixed-width",
                                   "width": 82,
                                   "content": "Fri 29 May",
@@ -10161,7 +10172,7 @@
                                   "height": 17,
                                   "iconFontName": "panel-right-open",
                                   "iconFontFamily": "lucide",
-                                  "fill": "#B5A595"
+                                  "fill": "$warm-text-tertiary"
                                 }
                               ]
                             }
@@ -10172,7 +10183,7 @@
                           "id": "Pn9Np",
                           "name": "collapsed",
                           "width": "fill_container",
-                          "fill": "#F2E4C9",
+                          "fill": "$warm-card-sand",
                           "cornerRadius": 18,
                           "gap": 10,
                           "padding": 14,
@@ -10186,13 +10197,13 @@
                               "height": 16,
                               "iconFontName": "chevron-right",
                               "iconFontFamily": "lucide",
-                              "fill": "#7C6755"
+                              "fill": "$warm-text-secondary"
                             },
                             {
                               "type": "text",
                               "id": "M4XQ2",
                               "name": "collapsedTitle",
-                              "fill": "#3D2E22",
+                              "fill": "$warm-text",
                               "textGrowth": "fixed-width",
                               "width": "fill_container",
                               "content": "Cleaning supplies",
@@ -10204,7 +10215,7 @@
                               "type": "text",
                               "id": "xg3NO",
                               "name": "collapsedMeta",
-                              "fill": "#7C6755",
+                              "fill": "$warm-text-secondary",
                               "content": "4 hidden",
                               "fontFamily": "DM Sans",
                               "fontSize": 12,
@@ -10222,11 +10233,11 @@
                   "name": "Item Detail",
                   "width": 274,
                   "height": "fill_container",
-                  "fill": "#FFF8EE",
+                  "fill": "$warm-bg",
                   "cornerRadius": 20,
                   "stroke": {
                     "thickness": 1,
-                    "fill": "#EFE3D2"
+                    "fill": "$warm-border"
                   },
                   "layout": "vertical",
                   "gap": 16,
@@ -10244,7 +10255,7 @@
                           "type": "text",
                           "id": "v3tOt",
                           "name": "detailLabel",
-                          "fill": "#3D2E22",
+                          "fill": "$warm-text",
                           "content": "Item details",
                           "fontFamily": "DM Sans",
                           "fontSize": 14,
@@ -10258,7 +10269,7 @@
                           "height": 18,
                           "iconFontName": "x",
                           "iconFontFamily": "lucide",
-                          "fill": "#7C6755"
+                          "fill": "$warm-text-secondary"
                         }
                       ]
                     },
@@ -10267,7 +10278,7 @@
                       "id": "v85KR",
                       "name": "detailHero",
                       "width": "fill_container",
-                      "fill": "#FFDFC7",
+                      "fill": "$warm-card-peach",
                       "cornerRadius": 18,
                       "layout": "vertical",
                       "gap": 12,
@@ -10281,13 +10292,13 @@
                           "height": 28,
                           "iconFontName": "apple",
                           "iconFontFamily": "lucide",
-                          "fill": "#D85A36"
+                          "fill": "$warm-accent-deep"
                         },
                         {
                           "type": "text",
                           "id": "O0krb",
                           "name": "detailName",
-                          "fill": "#3D2E22",
+                          "fill": "$warm-text",
                           "content": "Avocados",
                           "fontFamily": "DM Serif Display",
                           "fontSize": 28,
@@ -10297,7 +10308,7 @@
                           "type": "text",
                           "id": "NPf03",
                           "name": "detailMeta",
-                          "fill": "#7C6755",
+                          "fill": "$warm-text-secondary",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
                           "content": "Produce - one-off - assigned to Maya",
@@ -10331,7 +10342,7 @@
                               "type": "text",
                               "id": "tXK0J",
                               "name": "f1l",
-                              "fill": "#7C6755",
+                              "fill": "$warm-text-secondary",
                               "content": "Due",
                               "fontFamily": "DM Sans",
                               "fontSize": 12,
@@ -10341,7 +10352,7 @@
                               "type": "text",
                               "id": "ppz9M",
                               "name": "f1v",
-                              "fill": "#D85A36",
+                              "fill": "$warm-accent-deep",
                               "content": "Today",
                               "fontFamily": "DM Sans",
                               "fontSize": 12,
@@ -10365,7 +10376,7 @@
                               "type": "text",
                               "id": "ocS8Y",
                               "name": "f2l",
-                              "fill": "#7C6755",
+                              "fill": "$warm-text-secondary",
                               "content": "Quantity",
                               "fontFamily": "DM Sans",
                               "fontSize": 12,
@@ -10375,7 +10386,7 @@
                               "type": "text",
                               "id": "MlXoQ",
                               "name": "f2v",
-                              "fill": "#3D2E22",
+                              "fill": "$warm-text",
                               "content": "4 ripe",
                               "fontFamily": "DM Sans",
                               "fontSize": 12,
@@ -10399,7 +10410,7 @@
                               "type": "text",
                               "id": "y1odRh",
                               "name": "f3l",
-                              "fill": "#7C6755",
+                              "fill": "$warm-text-secondary",
                               "content": "Repeats",
                               "fontFamily": "DM Sans",
                               "fontSize": 12,
@@ -10409,7 +10420,7 @@
                               "type": "text",
                               "id": "yQwn9",
                               "name": "f3v",
-                              "fill": "#3D2E22",
+                              "fill": "$warm-text",
                               "content": "Never",
                               "fontFamily": "DM Sans",
                               "fontSize": 12,
@@ -10424,11 +10435,11 @@
                       "id": "a0dIX",
                       "name": "note",
                       "width": "fill_container",
-                      "fill": "#FFFCF6",
+                      "fill": "$warm-bg-card",
                       "cornerRadius": 16,
                       "stroke": {
                         "thickness": 1,
-                        "fill": "#EFE3D2"
+                        "fill": "$warm-border"
                       },
                       "layout": "vertical",
                       "gap": 8,
@@ -10438,7 +10449,7 @@
                           "type": "text",
                           "id": "Ow7Ni",
                           "name": "noteLabel",
-                          "fill": "#3D2E22",
+                          "fill": "$warm-text",
                           "content": "Notes",
                           "fontFamily": "DM Sans",
                           "fontSize": 12,
@@ -10448,7 +10459,7 @@
                           "type": "text",
                           "id": "EjMVL",
                           "name": "noteText",
-                          "fill": "#7C6755",
+                          "fill": "$warm-text-secondary",
                           "textGrowth": "fixed-width",
                           "width": "fill_container",
                           "content": "Buy firm ones if they need to last until the weekend. Auto-categorised from recipe import.",
@@ -10471,7 +10482,7 @@
                           "type": "text",
                           "id": "oEjfG",
                           "name": "activityTitle",
-                          "fill": "#3D2E22",
+                          "fill": "$warm-text",
                           "content": "Activity",
                           "fontFamily": "DM Sans",
                           "fontSize": 12,
@@ -10493,13 +10504,13 @@
                               "height": 14,
                               "iconFontName": "sparkles",
                               "iconFontFamily": "lucide",
-                              "fill": "#5F9466"
+                              "fill": "$warm-success"
                             },
                             {
                               "type": "text",
                               "id": "k8zws",
                               "name": "act1Text",
-                              "fill": "#7C6755",
+                              "fill": "$warm-text-secondary",
                               "textGrowth": "fixed-width",
                               "width": "fill_container",
                               "content": "Categorised as Produce",
@@ -10525,13 +10536,13 @@
                               "height": 14,
                               "iconFontName": "message-circle",
                               "iconFontFamily": "lucide",
-                              "fill": "#D9893A"
+                              "fill": "$warm-warning"
                             },
                             {
                               "type": "text",
                               "id": "jrww7",
                               "name": "act2Text",
-                              "fill": "#7C6755",
+                              "fill": "$warm-text-secondary",
                               "textGrowth": "fixed-width",
                               "width": "fill_container",
                               "content": "Maya asked for ripe ones",
@@ -10548,7 +10559,7 @@
                       "id": "BG50C",
                       "name": "doneBtn",
                       "width": "fill_container",
-                      "fill": "#3D2E22",
+                      "fill": "$warm-text",
                       "cornerRadius": 999,
                       "gap": 8,
                       "padding": [
@@ -10566,13 +10577,13 @@
                           "height": 15,
                           "iconFontName": "check",
                           "iconFontFamily": "lucide",
-                          "fill": "#FAF9F7"
+                          "fill": "$text-on-dark"
                         },
                         {
                           "type": "text",
                           "id": "c8aZAi",
                           "name": "doneText",
-                          "fill": "#FAF9F7",
+                          "fill": "$text-on-dark",
                           "content": "Mark as bought",
                           "fontFamily": "DM Sans",
                           "fontSize": 12,

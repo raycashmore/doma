@@ -2,7 +2,6 @@ import type { Doc } from './_generated/dataModel';
 import {
   budgetTotalIn,
   budgetTotalOut,
-  budgetNetGainLoss,
   budgetMortgagePortion
 } from './helpers';
 
@@ -50,14 +49,19 @@ export function buildMonthlyBreakdown(
 ): BreakdownRow[] {
   const mortgageByMonth = buildMortgageByMonth(mortgageRows);
   const sortedBudget = [...budgetRows].sort((a, b) => b.date - a.date);
-  const out = sortedBudget.map((row) => ({
-    date: row.date,
-    income: budgetTotalIn(row),
-    spend: budgetTotalOut(row),
-    mortgage: budgetMortgagePortion(
+  const out = sortedBudget.map((row) => {
+    const income = budgetTotalIn(row);
+    const spend = budgetTotalOut(row);
+    const mortgage = budgetMortgagePortion(
       mortgageByMonth.get(utcYearMonthKey(row.date)) ?? null
-    ),
-    net: budgetNetGainLoss(row)
-  }));
+    );
+    return {
+      date: row.date,
+      income,
+      spend,
+      mortgage,
+      net: income - spend - mortgage
+    };
+  });
   return typeof limit === 'number' ? out.slice(0, limit) : out;
 }
