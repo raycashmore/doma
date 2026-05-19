@@ -2,8 +2,11 @@ import { formatCurrency } from '@/lib/budget';
 
 interface Props {
   contribTotal: number;
-  interestCharged: number;
-  principalPaid: number;
+  fixedPayment: number;
+  variablePayment: number;
+  paymentTotal: number;
+  offset1: number;
+  offset2: number;
   debt1: number;
   debt2: number;
   equity: number;
@@ -11,8 +14,11 @@ interface Props {
 
 export default function MonthMortgageSection({
   contribTotal,
-  interestCharged,
-  principalPaid,
+  fixedPayment,
+  variablePayment,
+  paymentTotal,
+  offset1,
+  offset2,
   debt1,
   debt2,
   equity
@@ -34,15 +40,21 @@ export default function MonthMortgageSection({
         </h4>
         <ul className="flex flex-col gap-1.5 text-sm">
           <li className="flex justify-between">
-            <span className="text-warm-text-secondary">Interest charged</span>
+            <span className="text-warm-text-secondary">Fixed payment</span>
             <span className="text-warm-text-primary">
-              {formatCurrency(interestCharged)}
+              {formatCurrency(fixedPayment)}
             </span>
           </li>
           <li className="flex justify-between">
-            <span className="text-warm-text-secondary">Principal paid</span>
+            <span className="text-warm-text-secondary">Variable payment</span>
             <span className="text-warm-text-primary">
-              {formatCurrency(principalPaid)}
+              {formatCurrency(variablePayment)}
+            </span>
+          </li>
+          <li className="flex justify-between font-medium">
+            <span className="text-warm-text-primary">Total payment</span>
+            <span className="text-warm-text-primary">
+              {formatCurrency(paymentTotal)}
             </span>
           </li>
         </ul>
@@ -53,6 +65,18 @@ export default function MonthMortgageSection({
           Debt and equity context
         </h4>
         <ul className="flex flex-col gap-1.5 text-sm">
+          <li className="flex justify-between">
+            <span className="text-warm-text-secondary">Offset 1</span>
+            <span className="text-warm-text-primary">
+              {formatCurrency(offset1)}
+            </span>
+          </li>
+          <li className="flex justify-between">
+            <span className="text-warm-text-secondary">Offset 2</span>
+            <span className="text-warm-text-primary">
+              {formatCurrency(offset2)}
+            </span>
+          </li>
           <li className="flex justify-between">
             <span className="text-warm-text-secondary">Debt 1</span>
             <span className="text-warm-text-primary">

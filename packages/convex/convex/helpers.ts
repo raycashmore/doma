@@ -64,19 +64,63 @@ export function investmentTotal(row: Doc<'investmentAccounts'>) {
 // ============================================================
 // MORTGAGE — derived fields
 // ============================================================
+export type MortgageConfigInput = Pick<
+  Doc<'mortgageConfig'>,
+  | 'price'
+  | 'deposit'
+  | 'familyContrib'
+  | 'contrib1'
+  | 'contrib2'
+  | 'contrib3'
+  | 'loanValue'
+>;
+
+export function mortgageConfigForTotals(
+  config: MortgageConfigInput | null | undefined
+): MortgageConfigInput {
+  return (
+    config ?? {
+      price: 0,
+      deposit: 0,
+      familyContrib: 0,
+      contrib1: 0,
+      contrib2: 0,
+      contrib3: 0,
+      loanValue: 0
+    }
+  );
+}
+
 export function mortgageTotalDebt(row: Doc<'mortgage'>) {
   return row.debt1 + row.debt2;
 }
 
 // ============================================================
-// MORTGAGE — monthly contribution
+// MORTGAGE — static contribution
 // ============================================================
-export function mortgageContrib(row: Doc<'mortgage'>): number {
-  return row.contrib1 + row.contrib2 + row.contrib3;
+export function mortgageContrib(config: MortgageConfigInput): number {
+  return config.contrib1 + config.contrib2 + config.contrib3;
 }
 
-export function mortgageEquity(row: Doc<'mortgage'>) {
-  return row.price - mortgageTotalDebt(row);
+export function mortgagePaymentTotal(row: Doc<'mortgage'>): number {
+  return row.fixedPayment + row.variablePayment;
+}
+
+// Stored interest/principal fields were removed. Until a real amortization
+// model exists, treat the full payment as interest so derived principal is 0.
+export function mortgageInterestPortion(row: Doc<'mortgage'>): number {
+  return mortgagePaymentTotal(row);
+}
+
+export function mortgagePrincipalPaid(row: Doc<'mortgage'>): number {
+  return Math.max(0, mortgagePaymentTotal(row) - mortgageInterestPortion(row));
+}
+
+export function mortgageEquity(
+  row: Doc<'mortgage'>,
+  config: MortgageConfigInput
+) {
+  return config.price - mortgageTotalDebt(row);
 }
 
 // ============================================================
@@ -87,7 +131,7 @@ export function budgetTotalIn(row: Doc<'budget'>) {
 }
 
 export function budgetTotalOut(row: Doc<'budget'>) {
-  return row.credit2 + row.credit1 + row.credit3 + row.oneOffs + row.shared;
+  return row.credit2 + row.credit1 + row.credit3 + row.oneOffs + row.sharedOut;
 }
 
 export function budgetNetGainLoss(row: Doc<'budget'>) {
@@ -101,22 +145,21 @@ export function budgetSpend(row: Doc<'budget'>) {
   return row.credit2 + row.credit1 + row.credit3 + row.oneOffs;
 }
 
-export function budgetSinkOrSwim(row: Doc<'budget'>) {
+export function budgetSinkOrSwim(
+  row: Doc<'budget'>,
+  mortgage?: Doc<'mortgage'> | null
+) {
   return (
     row.incomePrimary +
     row.incomeSecondary +
-    (row.rateVar ?? 0) +
-    (row.rateFix ?? 0) +
+    (mortgage?.rateVar ?? 0) +
+    (mortgage?.rateFixed ?? 0) +
     row.rent
   );
 }
 
-// Per-month mortgage spend, derived from the budget table.
-// `variable` and `fixed` are stored as negative numbers (expenses);
-// take the magnitude of each so a missing month doesn't cancel out a
-// charged one.
-export function budgetMortgagePortion(row: Doc<'budget'>): number {
-  return Math.abs(row.variable) + Math.abs(row.fixed);
+export function budgetMortgagePortion(row: Doc<'mortgage'> | null): number {
+  return row ? mortgagePaymentTotal(row) : 0;
 }
 
 // ============================================================
@@ -134,6 +177,7 @@ export interface TotalsInput {
   uk: Doc<'ukAccounts'>;
   investments: Doc<'investmentAccounts'>;
   mortgage: Doc<'mortgage'>;
+  mortgageConfig: MortgageConfigInput;
   cash: Doc<'cashAccounts'>;
   current: Doc<'currentAccounts'>;
 }
@@ -142,7 +186,7 @@ export function computeTotals(input: TotalsInput) {
   const superVal = superTotal(input.super);
   const ukVal = ukTotalAud(input.uk);
   const investVal = investmentTotal(input.investments);
-  const houseEquity = mortgageEquity(input.mortgage);
+  const houseEquity = mortgageEquity(input.mortgage, input.mortgageConfig);
   const cashVal = cashAccountTotal(input.cash);
   const currentVal = currentAccountTotal(input.current);
 
@@ -180,7 +224,7 @@ export function timestampToExcelDate(timestamp: number): number {
 // ============================================================
 // Money: integer minor units (cents/pence) conversion
 // All money fields in this schema are stored as integer minor
-// units. Rates (gbpAud, usdAud, rateVar, rateFix) stay as floats.
+// units. Rates (gbpAud, usdAud, rateVar, rateFixed) stay as floats.
 // ============================================================
 export function toCents(value: number): number {
   return Math.round(value * 100);

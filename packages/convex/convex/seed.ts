@@ -13,6 +13,7 @@ export const clearTable = mutation({
       v.literal('superAccounts'),
       v.literal('investmentAccounts'),
       v.literal('mortgage'),
+      v.literal('mortgageConfig'),
       v.literal('budget'),
       v.literal('cryptoTransactions'),
       v.literal('cryptoSummaries')
@@ -194,18 +195,14 @@ export const seedMortgage = mutation({
     rows: v.array(
       v.object({
         date: v.number(),
-        deposit: v.number(),
-        familyContrib: v.number(),
         debt1: v.number(),
         debt2: v.number(),
-        interestCharged: v.number(),
-        principalPaid: v.number(),
-        contrib1: v.number(),
-        contrib2: v.number(),
-        contrib3: v.number(),
-        price: v.number(),
-        landValue: v.number(),
-        capitalGrowth: v.number()
+        fixedPayment: v.number(),
+        variablePayment: v.number(),
+        rateVar: v.optional(v.number()),
+        rateFixed: v.optional(v.number()),
+        offset1: v.number(),
+        offset2: v.number()
       })
     )
   },
@@ -213,21 +210,44 @@ export const seedMortgage = mutation({
     for (const row of args.rows) {
       await ctx.db.insert('mortgage', {
         date: row.date,
-        deposit: row.deposit,
-        familyContrib: row.familyContrib,
         debt1: row.debt1,
         debt2: row.debt2,
-        interestCharged: row.interestCharged,
-        principalPaid: row.principalPaid,
-        contrib1: row.contrib1,
-        contrib2: row.contrib2,
-        contrib3: row.contrib3,
-        price: row.price,
-        landValue: row.landValue,
-        capitalGrowth: row.capitalGrowth
+        fixedPayment: row.fixedPayment,
+        variablePayment: row.variablePayment,
+        rateVar: row.rateVar,
+        rateFixed: row.rateFixed,
+        offset1: row.offset1,
+        offset2: row.offset2
       });
     }
     return { inserted: args.rows.length };
+  }
+});
+
+export const seedMortgageConfig = mutation({
+  args: {
+    config: v.object({
+      key: v.literal('default'),
+      price: v.number(),
+      deposit: v.number(),
+      familyContrib: v.number(),
+      contrib1: v.number(),
+      contrib2: v.number(),
+      contrib3: v.number(),
+      loanValue: v.number()
+    })
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query('mortgageConfig')
+      .withIndex('by_key', (q) => q.eq('key', 'default'))
+      .first();
+    if (existing) {
+      await ctx.db.patch(existing._id, args.config);
+      return { upserted: 1 };
+    }
+    await ctx.db.insert('mortgageConfig', args.config);
+    return { upserted: 1 };
   }
 });
 
@@ -246,12 +266,8 @@ export const seedBudget = mutation({
         credit1: v.number(),
         credit3: v.number(),
         oneOffs: v.number(),
-        shared: v.number(),
-        variable: v.number(),
-        fixed: v.number(),
-        rent: v.number(),
-        rateVar: v.optional(v.number()),
-        rateFix: v.optional(v.number())
+        sharedOut: v.number(),
+        rent: v.number()
       })
     )
   },
@@ -266,12 +282,8 @@ export const seedBudget = mutation({
         credit1: row.credit1,
         credit3: row.credit3,
         oneOffs: row.oneOffs,
-        shared: row.shared,
-        variable: row.variable,
-        fixed: row.fixed,
-        rent: row.rent,
-        rateVar: row.rateVar,
-        rateFix: row.rateFix
+        sharedOut: row.sharedOut,
+        rent: row.rent
       });
     }
     return { inserted: args.rows.length };

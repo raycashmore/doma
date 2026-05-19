@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
+  budgetMortgagePortion,
+  budgetTotalOut,
   toCents,
   fromCents,
+  mortgageConfigForTotals,
+  mortgageEquity,
+  mortgagePaymentTotal,
+  mortgagePrincipalPaid,
   superPensionAud,
   ukTotalAud,
   investmentTotal
@@ -118,5 +124,78 @@ describe('rate-boundary rounding (returns integer cents)', () => {
     // total = 500000 + 100000 + 50000 + 124000 = 774000
     expect(investmentTotal(row)).toBe(774_000);
     expect(Number.isInteger(investmentTotal(row))).toBe(true);
+  });
+});
+
+describe('refactored mortgage and budget helpers', () => {
+  const mortgage = {
+    _id: 'm' as any,
+    _creationTime: 0,
+    date: 0,
+    debt1: 30_000_000,
+    debt2: 10_000_000,
+    fixedPayment: 240_000,
+    variablePayment: 150_000,
+    rateVar: 6.12,
+    rateFixed: 5.49,
+    offset1: 25_000_000,
+    offset2: 2_500_000
+  };
+
+  const config = {
+    _id: 'cfg' as any,
+    _creationTime: 0,
+    key: 'default' as const,
+    price: 80_000_000,
+    deposit: 18_400_000,
+    familyContrib: 3_500_000,
+    contrib1: 100_000,
+    contrib2: 120_000,
+    contrib3: 72_000,
+    loanValue: 90_000_000
+  };
+
+  it('uses sharedOut for budget total out', () => {
+    expect(
+      budgetTotalOut({
+        _id: 'b' as any,
+        _creationTime: 0,
+        date: 0,
+        incomePrimary: 0,
+        incomeSecondary: 0,
+        billContrib: 0,
+        credit1: 10_000,
+        credit2: 20_000,
+        credit3: 30_000,
+        oneOffs: 40_000,
+        sharedOut: 50_000,
+        rent: 0
+      } as any)
+    ).toBe(150_000);
+  });
+
+  it('derives mortgage payment total from mortgage fixed and variable payment fields', () => {
+    expect(mortgagePaymentTotal(mortgage as any)).toBe(390_000);
+    expect(budgetMortgagePortion(mortgage as any)).toBe(390_000);
+  });
+
+  it('derives equity from mortgage config price', () => {
+    expect(mortgageEquity(mortgage as any, config)).toBe(40_000_000);
+  });
+
+  it('normalizes missing config to zeros for totals guards', () => {
+    expect(mortgageConfigForTotals(null)).toEqual({
+      price: 0,
+      deposit: 0,
+      familyContrib: 0,
+      contrib1: 0,
+      contrib2: 0,
+      contrib3: 0,
+      loanValue: 0
+    });
+  });
+
+  it('derives principal paid from payment minus interest estimate', () => {
+    expect(mortgagePrincipalPaid(mortgage as any)).toBe(0);
   });
 });

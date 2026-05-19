@@ -3,7 +3,7 @@
  * ----------------
  * All monetary fields in this schema are stored as integer minor units
  * (cents for AUD/USD, pence for GBP). Use toCents() / fromCents() in
- * helpers.ts to convert. Rates (gbpAud, usdAud, rateVar, rateFix) remain
+ * helpers.ts to convert. Rates (gbpAud, usdAud, rateVar, rateFixed) remain
  * floats.
  */
 import { defineSchema, defineTable } from 'convex/server';
@@ -75,23 +75,33 @@ export default defineSchema({
   }).index('by_date', ['date']),
 
   // ============================================================
-  // MORTGAGE — Property debt, equity & contributions
+  // MORTGAGE — Monthly property debt, payments & offsets
   // ============================================================
   mortgage: defineTable({
     date: v.number(),
-    deposit: v.number(),
-    familyContrib: v.number(),
     debt1: v.number(),
     debt2: v.number(),
-    interestCharged: v.number(),
-    principalPaid: v.number(),
+    fixedPayment: v.number(),
+    variablePayment: v.number(),
+    rateVar: v.optional(v.number()),
+    rateFixed: v.optional(v.number()),
+    offset1: v.number(),
+    offset2: v.number()
+  }).index('by_date', ['date']),
+
+  // ============================================================
+  // MORTGAGE CONFIG — Property-level constants for totals
+  // ============================================================
+  mortgageConfig: defineTable({
+    key: v.literal('default'),
+    price: v.number(),
+    deposit: v.number(),
+    familyContrib: v.number(),
     contrib1: v.number(),
     contrib2: v.number(),
     contrib3: v.number(),
-    price: v.number(), // Property price — external input
-    landValue: v.number(), // Land value — external input
-    capitalGrowth: v.number() // Capital growth — external input
-  }).index('by_date', ['date']),
+    loanValue: v.number()
+  }).index('by_key', ['key']),
 
   // ============================================================
   // BUDGET — Monthly income vs. expenses
@@ -105,12 +115,8 @@ export default defineSchema({
     credit1: v.number(),
     credit3: v.number(),
     oneOffs: v.number(),
-    shared: v.number(),
-    variable: v.number(),
-    fixed: v.number(),
-    rent: v.number(),
-    rateVar: v.optional(v.number()),
-    rateFix: v.optional(v.number())
+    sharedOut: v.number(),
+    rent: v.number()
   }).index('by_date', ['date']),
 
   // ============================================================

@@ -31,6 +31,7 @@ const tables = [
   'superAccounts',
   'investmentAccounts',
   'mortgage',
+  'mortgageConfig',
   'budget',
   'cryptoTransactions',
   'cryptoSummaries'

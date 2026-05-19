@@ -272,34 +272,26 @@ export const deleteInvestmentAccount = mutation({
 export const addMortgage = mutation({
   args: {
     date: v.number(),
-    deposit: v.number(),
-    familyContrib: v.number(),
     debt1: v.number(),
     debt2: v.number(),
-    interestCharged: v.number(),
-    principalPaid: v.number(),
-    contrib1: v.number(),
-    contrib2: v.number(),
-    contrib3: v.number(),
-    price: v.number(),
-    landValue: v.number(),
-    capitalGrowth: v.number()
+    fixedPayment: v.number(),
+    variablePayment: v.number(),
+    rateVar: v.optional(v.number()),
+    rateFixed: v.optional(v.number()),
+    offset1: v.number(),
+    offset2: v.number()
   },
   handler: async (ctx, args) => {
     return ctx.db.insert('mortgage', {
       date: args.date,
-      deposit: args.deposit,
-      familyContrib: args.familyContrib,
       debt1: args.debt1,
       debt2: args.debt2,
-      interestCharged: args.interestCharged,
-      principalPaid: args.principalPaid,
-      contrib1: args.contrib1,
-      contrib2: args.contrib2,
-      contrib3: args.contrib3,
-      price: args.price,
-      landValue: args.landValue,
-      capitalGrowth: args.capitalGrowth
+      fixedPayment: args.fixedPayment,
+      variablePayment: args.variablePayment,
+      rateVar: args.rateVar,
+      rateFixed: args.rateFixed,
+      offset1: args.offset1,
+      offset2: args.offset2
     });
   }
 });
@@ -307,18 +299,14 @@ export const addMortgage = mutation({
 export const updateMortgage = mutation({
   args: {
     id: v.id('mortgage'),
-    deposit: v.optional(v.number()),
-    familyContrib: v.optional(v.number()),
     debt1: v.optional(v.number()),
     debt2: v.optional(v.number()),
-    interestCharged: v.optional(v.number()),
-    principalPaid: v.optional(v.number()),
-    contrib1: v.optional(v.number()),
-    contrib2: v.optional(v.number()),
-    contrib3: v.optional(v.number()),
-    price: v.optional(v.number()),
-    landValue: v.optional(v.number()),
-    capitalGrowth: v.optional(v.number())
+    fixedPayment: v.optional(v.number()),
+    variablePayment: v.optional(v.number()),
+    rateVar: v.optional(v.number()),
+    rateFixed: v.optional(v.number()),
+    offset1: v.optional(v.number()),
+    offset2: v.optional(v.number())
   },
   handler: async (ctx, args) => {
     const { id, ...fields } = args;
@@ -337,6 +325,30 @@ export const deleteMortgage = mutation({
   }
 });
 
+export const addOrUpdateMortgageConfig = mutation({
+  args: {
+    price: v.number(),
+    deposit: v.number(),
+    familyContrib: v.number(),
+    contrib1: v.number(),
+    contrib2: v.number(),
+    contrib3: v.number(),
+    loanValue: v.number()
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query('mortgageConfig')
+      .withIndex('by_key', (q) => q.eq('key', 'default'))
+      .first();
+    const config = { key: 'default' as const, ...args };
+    if (existing) {
+      await ctx.db.patch(existing._id, config);
+      return existing._id;
+    }
+    return ctx.db.insert('mortgageConfig', config);
+  }
+});
+
 // ============================================================
 // BUDGET — CRUD
 // ============================================================
@@ -350,12 +362,8 @@ export const addBudget = mutation({
     credit1: v.number(),
     credit3: v.number(),
     oneOffs: v.number(),
-    shared: v.number(),
-    variable: v.number(),
-    fixed: v.number(),
-    rent: v.number(),
-    rateVar: v.optional(v.number()),
-    rateFix: v.optional(v.number())
+    sharedOut: v.number(),
+    rent: v.number()
   },
   handler: async (ctx, args) => {
     return ctx.db.insert('budget', {
@@ -367,12 +375,8 @@ export const addBudget = mutation({
       credit1: args.credit1,
       credit3: args.credit3,
       oneOffs: args.oneOffs,
-      shared: args.shared,
-      variable: args.variable,
-      fixed: args.fixed,
-      rent: args.rent,
-      rateVar: args.rateVar,
-      rateFix: args.rateFix
+      sharedOut: args.sharedOut,
+      rent: args.rent
     });
   }
 });
@@ -387,12 +391,8 @@ export const updateBudget = mutation({
     credit1: v.optional(v.number()),
     credit3: v.optional(v.number()),
     oneOffs: v.optional(v.number()),
-    shared: v.optional(v.number()),
-    variable: v.optional(v.number()),
-    fixed: v.optional(v.number()),
-    rent: v.optional(v.number()),
-    rateVar: v.optional(v.number()),
-    rateFix: v.optional(v.number())
+    sharedOut: v.optional(v.number()),
+    rent: v.optional(v.number())
   },
   handler: async (ctx, args) => {
     const { id, ...fields } = args;
@@ -567,18 +567,14 @@ export const addSnapshot = mutation({
     ),
     mortgage: v.optional(
       v.object({
-        deposit: v.number(),
-        familyContrib: v.number(),
         debt1: v.number(),
         debt2: v.number(),
-        interestCharged: v.number(),
-        principalPaid: v.number(),
-        contrib1: v.number(),
-        contrib2: v.number(),
-        contrib3: v.number(),
-        price: v.number(),
-        landValue: v.number(),
-        capitalGrowth: v.number()
+        fixedPayment: v.number(),
+        variablePayment: v.number(),
+        rateVar: v.optional(v.number()),
+        rateFixed: v.optional(v.number()),
+        offset1: v.number(),
+        offset2: v.number()
       })
     ),
     budget: v.optional(
@@ -590,12 +586,8 @@ export const addSnapshot = mutation({
         credit1: v.number(),
         credit3: v.number(),
         oneOffs: v.number(),
-        shared: v.number(),
-        variable: v.number(),
-        fixed: v.number(),
-        rent: v.number(),
-        rateVar: v.optional(v.number()),
-        rateFix: v.optional(v.number())
+        sharedOut: v.number(),
+        rent: v.number()
       })
     )
   },
