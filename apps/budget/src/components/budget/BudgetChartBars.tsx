@@ -12,6 +12,7 @@ interface BudgetChartBarsProps {
     datum: BudgetDataPoint
   ) => void;
   onMouseLeave: () => void;
+  onBarClick?: (date: number) => void;
 }
 
 const INCOME_FILL = '#5F946666';
@@ -24,7 +25,8 @@ export default function BudgetChartBars({
   yScale,
   height,
   onMouseMove,
-  onMouseLeave
+  onMouseLeave,
+  onBarClick
 }: BudgetChartBarsProps) {
   const bandwidth = xScale.bandwidth();
   const incomeWidth = bandwidth * 0.78;
@@ -46,6 +48,8 @@ export default function BudgetChartBars({
             height={Math.max(0, height - y)}
             fill={INCOME_FILL}
             rx={4}
+            style={onBarClick ? { cursor: 'pointer' } : undefined}
+            onClick={() => onBarClick?.(d.date)}
             onMouseMove={(e) =>
               onMouseMove(e as React.MouseEvent<SVGRectElement>, d)
             }
@@ -68,6 +72,8 @@ export default function BudgetChartBars({
             height={Math.max(0, height - y)}
             fill={MORTGAGE_FILL}
             rx={3}
+            style={onBarClick ? { cursor: 'pointer' } : undefined}
+            onClick={() => onBarClick?.(d.date)}
             onMouseMove={(e) =>
               onMouseMove(e as React.MouseEvent<SVGRectElement>, d)
             }
@@ -91,6 +97,8 @@ export default function BudgetChartBars({
             height={Math.max(0, yMortgageTop - yTop)}
             fill={DISCRETIONARY_FILL}
             rx={3}
+            style={onBarClick ? { cursor: 'pointer' } : undefined}
+            onClick={() => onBarClick?.(d.date)}
             onMouseMove={(e) =>
               onMouseMove(e as React.MouseEvent<SVGRectElement>, d)
             }

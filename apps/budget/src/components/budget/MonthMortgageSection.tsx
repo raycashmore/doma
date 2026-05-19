@@ -1,3 +1,5 @@
+import { Minus, TrendingDown, TrendingUp } from 'lucide-react';
+import type { Trend } from './SummaryMini';
 import { formatCurrency } from '@/lib/budget';
 
 interface Props {
@@ -10,10 +12,11 @@ interface Props {
   debt1: number;
   debt2: number;
   equity: number;
+  trend?: Trend | null;
 }
 
 export default function MonthMortgageSection({
-  contribTotal,
+  contribTotal: _contribTotal,
   fixedPayment,
   variablePayment,
   paymentTotal,
@@ -21,17 +24,26 @@ export default function MonthMortgageSection({
   offset2,
   debt1,
   debt2,
-  equity
+  equity,
+  trend
 }: Props) {
   return (
     <section className="rounded-3xl bg-warm-section-mortgage p-5 flex-1 min-w-0 flex flex-col gap-3">
-      <header className="flex items-center justify-between">
-        <h3 className="text-[22px] leading-tight font-warm-display text-warm-text-primary">
-          Mortgage
-        </h3>
-        <span className="text-sm font-warm-display text-warm-text-primary">
-          {formatCurrency(contribTotal)}
-        </span>
+      <header className="flex items-start justify-between">
+        <div className="flex flex-col gap-0.5">
+          <h3 className="text-[22px] leading-tight font-warm-display text-warm-text-primary">
+            Mortgage
+          </h3>
+          <span className="text-[10px] font-bold text-warm-text-secondary">
+            Payment split
+          </span>
+        </div>
+        <div className="flex flex-col items-end gap-0.5">
+          <span className="text-[22px] leading-tight font-warm-display text-warm-text-primary">
+            {formatCurrency(fixedPayment + variablePayment)}
+          </span>
+          {trend ? <TrendBadge trend={trend} /> : null}
+        </div>
       </header>
 
       <div className="rounded-2xl bg-warm-bg-card p-4">
@@ -98,5 +110,33 @@ export default function MonthMortgageSection({
         </ul>
       </div>
     </section>
+  );
+}
+
+function TrendBadge({ trend }: { trend: Trend }) {
+  const Icon =
+    trend.direction === 'up'
+      ? TrendingUp
+      : trend.direction === 'down'
+        ? TrendingDown
+        : Minus;
+  const color =
+    trend.direction === 'up'
+      ? 'text-warm-positive'
+      : trend.direction === 'down'
+        ? 'text-warm-accent'
+        : 'text-warm-text-secondary';
+  const sign = trend.pct > 0 ? '+' : '';
+  const label =
+    trend.direction === 'flat'
+      ? 'Flat'
+      : `${sign}${trend.pct.toFixed(1)}%`;
+  return (
+    <div
+      className={`flex items-center gap-1 text-[10px] font-bold ${color}`}
+    >
+      <Icon size={10} aria-hidden />
+      <span>{label}</span>
+    </div>
   );
 }

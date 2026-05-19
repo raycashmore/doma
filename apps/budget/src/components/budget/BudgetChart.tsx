@@ -22,6 +22,7 @@ const AXIS_FONT_SIZE = 11;
 interface BudgetChartProps {
   data: Array<BudgetDataPoint>;
   period: TimePeriod;
+  onBarClick?: (date: number) => void;
 }
 
 function LegendDot({ color, label }: { color: string; label: string }) {
@@ -56,7 +57,8 @@ function BudgetChartSvg({
   data,
   period,
   width,
-  height
+  height,
+  onBarClick
 }: BudgetChartProps & { width: number; height: number }) {
   const {
     tooltipData,
@@ -91,7 +93,7 @@ function BudgetChartSvg({
   });
 
   const spendMA = computeMovingAverage(
-    filtered.map((d) => d.spend),
+    filtered.map((d) => d.spend + d.mortgage),
     MA_WINDOW
   );
   const sosMA = computeMovingAverage(
@@ -148,6 +150,7 @@ function BudgetChartSvg({
             height={innerHeight}
             onMouseMove={handleMouseMove}
             onMouseLeave={hideTooltip}
+            onBarClick={onBarClick}
           />
 
           <BudgetChartLines
@@ -211,7 +214,7 @@ function BudgetChartSvg({
   );
 }
 
-export default function BudgetChart({ data, period }: BudgetChartProps) {
+export default function BudgetChart({ data, period, onBarClick }: BudgetChartProps) {
   const filtered = filterByTimePeriod(data, period);
   const isEmpty = filtered.length === 0;
 
@@ -235,6 +238,7 @@ export default function BudgetChart({ data, period }: BudgetChartProps) {
                   period={period}
                   width={width}
                   height={height}
+                  onBarClick={onBarClick}
                 />
               ) : null
             }

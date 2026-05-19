@@ -12,7 +12,6 @@ import MonthlyDetailOverlay from '@/components/budget/MonthlyDetailOverlay';
 import MonthIncomeSection from '@/components/budget/MonthIncomeSection';
 import MonthSpendSection from '@/components/budget/MonthSpendSection';
 import MonthMortgageSection from '@/components/budget/MonthMortgageSection';
-import SummaryMini from '@/components/budget/SummaryMini';
 import { useBudgetHeaderActions } from '@/components/budget/BudgetHeaderActionsContext';
 
 export const Route = createFileRoute('/')({
@@ -60,7 +59,7 @@ function BudgetPage() {
         <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
           <h2 className="sr-only">Budget overview</h2>
           <BudgetKpiCards summary={summary} />
-          <BudgetChart data={chartData ?? []} period={period} />
+          <BudgetChart data={chartData ?? []} period={period} onBarClick={(date) => setOpenMonth(date)} />
           <BudgetBreakdownTable
             rows={rows}
             onRowClick={(date) => setOpenMonth(date)}
@@ -77,38 +76,19 @@ function BudgetPage() {
         onClose={() => setOpenMonth(null)}
       >
         {detail ? (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
-              <SummaryMini
-                label="Income"
-                value={detail.income.total}
-                fill="bg-warm-section-income"
-                trend={detail.trends.income}
-              />
-              <SummaryMini
-                label="Spend"
-                value={detail.spend.total}
-                fill="bg-warm-section-spend"
-                trend={detail.trends.spend}
-              />
-              <SummaryMini
-                label="Mortgage"
-                value={detail.mortgage?.contribTotal ?? 0}
-                fill="bg-warm-section-mortgage"
-                trend={detail.trends.mortgage}
-              />
-            </div>
-            <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex flex-col md:flex-row gap-4 md:h-full">
               <MonthIncomeSection
                 primary={detail.income.primary}
                 secondary={detail.income.secondary}
                 billContrib={detail.income.billContrib}
+                trend={detail.trends.income}
               />
               <MonthSpendSection
                 credit1={detail.spend.credit1}
                 credit2={detail.spend.credit2}
                 credit3={detail.spend.credit3}
                 oneOffs={detail.spend.oneOffs}
+                trend={detail.trends.spend}
               />
               {detail.mortgage ? (
                 <MonthMortgageSection
@@ -121,10 +101,10 @@ function BudgetPage() {
                   debt1={detail.mortgage.debt1}
                   debt2={detail.mortgage.debt2}
                   equity={detail.mortgage.equity}
+                  trend={detail.trends.mortgage}
                 />
               ) : null}
             </div>
-          </>
         ) : null}
       </MonthlyDetailOverlay>
     </>

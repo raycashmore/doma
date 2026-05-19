@@ -1,5 +1,14 @@
 import type { Doc } from './_generated/dataModel';
-import { budgetTotalIn, budgetTotalOut, budgetNetGainLoss } from './helpers';
+import {
+  budgetTotalIn,
+  budgetTotalOut,
+  budgetMortgagePortion
+} from './helpers';
+import {
+  buildMortgageByMonth,
+  utcYearMonthKey,
+  type MortgageRow
+} from './monthlyBreakdown';
 
 export type SummaryPeriod = '3M' | '6M' | '12M' | 'ALL';
 export type BudgetRow = Doc<'budget'>;
@@ -44,10 +53,19 @@ function metric(current: number, prior: number | null): SummaryMetric {
   return { value: current, delta, deltaPct };
 }
 
-function computeWindow(rows: BudgetRow[]) {
+function computeWindow(
+  rows: BudgetRow[],
+  mortgageByMonth: Map<string, MortgageRow>
+) {
   const ins = rows.map(budgetTotalIn);
-  const outs = rows.map(budgetTotalOut);
-  const nets = rows.map(budgetNetGainLoss);
+  const outs = rows.map(
+    (r) =>
+      budgetTotalOut(r) +
+      budgetMortgagePortion(
+        mortgageByMonth.get(utcYearMonthKey(r.date)) ?? null
+      )
+  );
+  const nets = ins.map((income, i) => income - outs[i]!);
   const avgIn = avg(ins);
   const avgOut = avg(outs);
   const totalIn = ins.reduce((s, x) => s + x, 0);
@@ -65,6 +83,7 @@ function computeWindow(rows: BudgetRow[]) {
 
 export function summarizeBudgetForPeriod(
   rows: BudgetRow[],
+  mortgageRows: MortgageRow[],
   period: SummaryPeriod,
   now: number
 ): BudgetPageSummary {
@@ -97,8 +116,11 @@ export function summarizeBudgetForPeriod(
     );
   }
 
-  const cur = computeWindow(currentRows);
-  const prior = priorRows.length > 0 ? computeWindow(priorRows) : null;
+  const mortgageByMonth = buildMortgageByMonth(mortgageRows);
+
+  const cur = computeWindow(currentRows, mortgageByMonth);
+  const prior =
+    priorRows.length > 0 ? computeWindow(priorRows, mortgageByMonth) : null;
 
   return {
     avgSpend: metric(cur.avgSpend, prior?.avgSpend ?? null),
