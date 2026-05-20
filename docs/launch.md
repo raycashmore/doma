@@ -12,8 +12,30 @@ This runbook covers the first live rollout of Doma and the steady-state release 
    - create the `convex` JWT template
 4. In each Convex cloud deployment, set `CLERK_JWT_ISSUER_DOMAIN` to the matching Clerk Frontend API URL.
 5. In Vercel, configure Preview and Production environment variables for `apps/home` and `apps/budget`.
-6. Confirm `apps/home/vercel.json` points to a stable Budget alias such as `https://doma-budget.vercel.app`.
-7. Attach the apex domain to the Home project and add the same apex domain in Clerk Production.
+6. Add a stable Budget subdomain such as `budget.doma.example.com` to the Budget Vercel project.
+7. Confirm `apps/home/vercel.json` points to that stable Budget alias.
+8. Attach the apex domain to the Home project and add the same apex domain in Clerk Production.
+
+## DNS layout
+
+Recommended production layout:
+
+- `doma.example.com` → Home apex
+- `budget.doma.example.com` → stable Budget alias for Home rewrites
+- `www.doma.example.com` → optional redirect or alias to Home
+
+Typical DNS record patterns:
+
+- apex host (`@` or `doma`) → use the exact `A`, `ALIAS`, or `ANAME` target Vercel provides
+- `budget` → `CNAME` to the Budget Vercel target
+- `www` → optional `CNAME` to the Home Vercel target
+
+Recommended order:
+
+1. Verify the Budget subdomain in Vercel.
+2. Update Home rewrites to point at the Budget subdomain.
+3. Verify the apex domain in the Home Vercel project.
+4. Add the apex domain in Clerk Production.
 
 ## Environment variable checklist
 
