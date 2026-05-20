@@ -16,6 +16,7 @@ What you'll create:
 
 | Piece                              | Where           | One per                            |
 | ---------------------------------- | --------------- | ---------------------------------- |
+| Convex deployment (staging)        | Convex cloud    | All apps share one                 |
 | Convex deployment (production)     | Convex cloud    | All apps share one                 |
 | Clerk application (production env) | Clerk dashboard | All apps share one                 |
 | Vercel project for Home            | Vercel          | Owns the apex domain + rewrites    |
@@ -25,24 +26,24 @@ What you'll create:
 ## Prerequisites
 
 - A Vercel account, logged in via the CLI (`pnpm dlx vercel login`) or the dashboard.
-- A Convex production deployment (covered below — separate from your dev deployment).
+- A Convex staging deployment and Convex production deployment (both separate from your dev deployment).
 - A Clerk application with production environment configured (covered below).
 - A custom domain you control (optional but recommended — Vercel's default `*.vercel.app` works too).
 
-## Step 1 — Convex production deployment
+## Step 1 — Convex staging and production deployments
 
-The dev `pnpm convex` you run locally uses a development deployment. Production gets its own.
+The dev `pnpm convex` you run locally uses a development deployment. Staging and production each get their own stable cloud deployment.
 
 ```bash
-# From repo root, one-time:
+# From repo root, one-time per cloud environment:
 pnpm --filter @repo/convex exec convex deploy --cmd 'echo "deployed"'
 ```
 
-This creates a production deployment in your Convex project and prints the production deployment URL (something like `https://<name>.convex.cloud`). Save it — you'll set this as `VITE_CONVEX_URL` on Vercel.
+Create one deployment for staging and one for production. Each command prints a deployment URL (something like `https://<name>.convex.cloud`). Save both — you will set them as `VITE_CONVEX_URL` in the matching environments.
 
-In the Convex dashboard for the **production** deployment specifically:
+In the Convex dashboard for each cloud deployment:
 
-- **Settings → Environment Variables**: set `CLERK_JWT_ISSUER_DOMAIN` to your **production** Clerk Frontend API URL (different from dev — see Step 2).
+- **Settings → Environment Variables**: set `CLERK_JWT_ISSUER_DOMAIN` to the Clerk Frontend API URL for that environment.
 
 ## Step 2 — Clerk production environment
 
@@ -57,7 +58,34 @@ Clerk's model: one application contains both a development environment (what you
    - `Frontend API URL` (the issuer, e.g. `https://clerk.your-domain.com`)
 5. **Domains**: add your apex domain (e.g. `doma.example.com`). Clerk uses this to scope cookies to the apex, which is what lets all zones share the session.
 
-## Step 3 — Deploy Budget (do this first)
+## Step 3 — Configure staging and Vercel Preview
+
+Use a stable staging Convex deployment for realistic pre-production data checks. Vercel Preview deployments can point at that staging backend.
+
+For Vercel Preview on Budget, set:
+
+| Name                          | Value                          |
+| ----------------------------- | ------------------------------ |
+| `VITE_CONVEX_URL`             | Convex staging URL from Step 1 |
+| `VITE_CLERK_PUBLISHABLE_KEY`  | Clerk preview publishable key  |
+| `CLERK_SECRET_KEY`            | Clerk preview secret key       |
+| `VITE_CLERK_FRONTEND_API_URL` | Clerk preview Frontend API URL |
+
+For Vercel Preview on Home, set:
+
+| Name                          | Value                          |
+| ----------------------------- | ------------------------------ |
+| `VITE_CLERK_PUBLISHABLE_KEY`  | Clerk preview publishable key  |
+| `CLERK_SECRET_KEY`            | Clerk preview secret key       |
+| `VITE_CLERK_FRONTEND_API_URL` | Clerk preview Frontend API URL |
+
+Seed the staging Convex deployment from the repo before using Vercel Preview as a release gate:
+
+```bash
+STAGING_CONVEX_URL="$STAGING_CONVEX_URL" pnpm seed:staging
+```
+
+## Step 4 — Deploy Budget (do this first)
 
 Budget needs to be live before Home can rewrite to it.
 
@@ -87,32 +115,32 @@ Or via the dashboard:
    | `CLERK_SECRET_KEY`            | Clerk production secret key (Step 2)      |
    | `VITE_CLERK_FRONTEND_API_URL` | Clerk Frontend API URL (Step 2)           |
 
-4. **Deploy**. When it succeeds, copy the deployment URL — it'll look like `https://doma-budget-<hash>.vercel.app`. You'll use this in Step 4.
+4. **Deploy**. When it succeeds, confirm the project also has a stable alias such as `https://doma-budget.vercel.app`. Use that stable alias for rewrites instead of the hashed deployment URL.
 
 `apps/budget/vercel.json` already has the SPA fallback rewrite. No further config needed inside the project.
 
-## Step 4 — Deploy Home
+## Step 5 — Deploy Home
 
 Home owns the apex. Before deploying, point its rewrites at Budget's real URL.
 
-1. Edit `apps/home/vercel.json`. Replace the placeholder `https://doma-budget.vercel.app` with Budget's actual production URL from Step 3:
+1. Edit `apps/home/vercel.json` only if the stable Budget alias changes. Prefer a stable destination such as `https://doma-budget.vercel.app`:
 
    ```json
    {
      "rewrites": [
        {
          "source": "/budget",
-         "destination": "https://doma-budget-<hash>.vercel.app/budget"
+         "destination": "https://doma-budget.vercel.app/budget"
        },
        {
          "source": "/budget/:path*",
-         "destination": "https://doma-budget-<hash>.vercel.app/budget/:path*"
+         "destination": "https://doma-budget.vercel.app/budget/:path*"
        }
      ]
    }
    ```
 
-   Better: point at a Vercel project alias. In Budget's Vercel project under **Domains**, add a stable internal name like `budget.<your-apex>` or use Vercel's `<project>.vercel.app` URL (no hash) and reference that in the rewrite. This way Budget's deploys don't break Home's rewrites.
+   Better: point at a Vercel project alias. In Budget's Vercel project under **Domains**, add a stable internal name like `budget.<your-apex>` or use Vercel's `<project>.vercel.app` URL (no hash) and reference that in the rewrite. This way Budget's deploys do not break Home's rewrites.
 
 2. Commit the rewrite update and push.
 
@@ -133,13 +161,23 @@ Home owns the apex. Before deploying, point its rewrites at Budget's real URL.
    | `CLERK_SECRET_KEY`            | Clerk production secret key      |
    | `VITE_CLERK_FRONTEND_API_URL` | Clerk Frontend API URL           |
 
-## Step 5 — Attach your apex domain to Home
+## Step 6 — Attach your apex domain to Home
 
 In the Home Vercel project → **Domains** → add your apex (`doma.example.com`). Vercel walks you through the DNS records. Once verified, the production URL becomes `https://doma.example.com`, and `/budget` reverse-proxies to Budget via the rewrite.
 
 Add the same apex domain to your Clerk production environment (Step 2 step 5) if you haven't already — Clerk needs to know it for cookie scoping.
 
-## Step 6 — Verify the deployment
+## Step 7 — Verify Preview and Production
+
+Vercel Preview checks:
+
+1. Open the Home preview deployment.
+2. Confirm the sign-in page shows no sign-up affordance.
+3. Sign in with an approved non-production account.
+4. Navigate to Budget.
+5. Confirm Budget loads seeded staging data with no Convex `Unauthorized` errors.
+
+Production checks:
 
 1. Open `https://doma.example.com/` — Home renders, you see Clerk's sign-in.
 2. Sign in with an allowlisted user. Home dashboard appears.
