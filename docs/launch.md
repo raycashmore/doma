@@ -4,7 +4,7 @@ This runbook covers the first live rollout of Doma and the steady-state release 
 
 ## One-time setup
 
-1. Create a preview Convex deployment.
+1. Create a staging Convex deployment.
 2. Create a production Convex deployment.
 3. In Clerk Production:
    - disable public sign-up
@@ -32,7 +32,7 @@ This runbook covers the first live rollout of Doma and the steady-state release 
 
 ### Local shell variables for seeding
 
-- `PREVIEW_CONVEX_URL`
+- `STAGING_CONVEX_URL`
 - `PROD_CONVEX_URL`
 
 ## Preview rehearsal
@@ -47,20 +47,20 @@ This runbook covers the first live rollout of Doma and the steady-state release 
    pnpm build
    ```
 
-2. Seed preview data:
+2. Seed staging data:
 
    ```bash
-   PREVIEW_CONVEX_URL="$PREVIEW_CONVEX_URL" pnpm seed:preview
+   STAGING_CONVEX_URL="$STAGING_CONVEX_URL" pnpm seed:staging
    ```
 
 3. Push the release branch and open a PR.
 4. Wait for GitHub Actions to pass.
 5. Wait for Vercel Preview deployments for Home and Budget.
-6. Verify Preview:
+6. Verify Vercel Preview against staging data:
    - Home shows sign-in only
    - approved account can sign in
    - `/budget` opens without a second sign-in
-   - Budget renders seeded data
+   - Budget renders seeded staging data
    - browser console shows no Convex `Unauthorized` errors
 
 ## Production cutover
@@ -103,7 +103,7 @@ This runbook covers the first live rollout of Doma and the steady-state release 
 1. Open PR.
 2. Let GitHub Actions run format, lint, typecheck, test, and build.
 3. Verify Vercel Preview.
-4. Re-seed preview if the workbook source changed.
+4. Re-seed staging if the workbook source changed.
 5. Seed production when preparing the cutover.
 6. Deploy Convex.
 7. Merge to `main`.

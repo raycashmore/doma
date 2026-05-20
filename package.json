@@ -11,8 +11,8 @@
     "convex": "pnpm --filter @repo/convex dev",
     "seed": "pnpm --filter @repo/convex seed",
     "seed:clear": "pnpm --filter @repo/convex seed:clear",
-    "seed:preview": "CONVEX_URL=\"$PREVIEW_CONVEX_URL\" pnpm --filter @repo/convex seed",
-    "seed:preview:clear": "CONVEX_URL=\"$PREVIEW_CONVEX_URL\" pnpm --filter @repo/convex seed:clear",
+    "seed:staging": "CONVEX_URL=\"$STAGING_CONVEX_URL\" pnpm --filter @repo/convex seed",
+    "seed:staging:clear": "CONVEX_URL=\"$STAGING_CONVEX_URL\" pnpm --filter @repo/convex seed:clear",
     "seed:prod": "CONVEX_URL=\"$PROD_CONVEX_URL\" pnpm --filter @repo/convex seed",
     "seed:prod:clear": "CONVEX_URL=\"$PROD_CONVEX_URL\" pnpm --filter @repo/convex seed:clear"
   },

@@ -18,7 +18,7 @@ We use Clerk for sign-in across all zones. One Clerk application; the cookie is 
 5. **Convex env var.** Convex reads `CLERK_JWT_ISSUER_DOMAIN` at runtime to validate JWTs. Set it in the Convex dashboard (Project → Settings → Environment Variables) to the same value as `VITE_CLERK_FRONTEND_API_URL`. Restart `pnpm convex` after changes.
 6. **Local dev with auth.** Run `pnpm dev` — both Home and Budget pick up the env vars via `dotenv-cli`. Sign in once on either; the session covers both.
 7. **Local dev without auth.** For browser automation, Playwright checks, or any local visual verification where signing in is just friction, run `pnpm --filter home dev:no-auth` or `pnpm --filter budget dev:no-auth`. These scripts unset `VITE_CLERK_PUBLISHABLE_KEY` for that process so `AuthGate` becomes a passthrough and Budget falls back to a plain `ConvexProvider`.
-8. **Preview.** Use a separate non-production Clerk environment or equivalent preview-safe keys for Vercel Preview deployments. Point preview Vercel env vars and preview Convex issuer configuration at that environment.
+8. **Staging and Preview.** Use a separate non-production Clerk environment or equivalent staging-safe keys for the stable staging Convex deployment and for Vercel Preview deployments. Point staging and preview Vercel env vars plus the staging Convex issuer configuration at that environment.
 9. **Production.** Add the production Clerk env vars to each Vercel project. The cookie domain should be the apex (e.g. `doma.example.com`); Clerk handles this automatically when the deployment URL matches.
 
 ## How it flows

@@ -16,7 +16,7 @@ What you'll create:
 
 | Piece                              | Where           | One per                            |
 | ---------------------------------- | --------------- | ---------------------------------- |
-| Convex deployment (preview)        | Convex cloud    | All apps share one                 |
+| Convex deployment (staging)        | Convex cloud    | All apps share one                 |
 | Convex deployment (production)     | Convex cloud    | All apps share one                 |
 | Clerk application (production env) | Clerk dashboard | All apps share one                 |
 | Vercel project for Home            | Vercel          | Owns the apex domain + rewrites    |
@@ -26,20 +26,20 @@ What you'll create:
 ## Prerequisites
 
 - A Vercel account, logged in via the CLI (`pnpm dlx vercel login`) or the dashboard.
-- A Convex preview deployment and Convex production deployment (both separate from your dev deployment).
+- A Convex staging deployment and Convex production deployment (both separate from your dev deployment).
 - A Clerk application with production environment configured (covered below).
 - A custom domain you control (optional but recommended — Vercel's default `*.vercel.app` works too).
 
-## Step 1 — Convex preview and production deployments
+## Step 1 — Convex staging and production deployments
 
-The dev `pnpm convex` you run locally uses a development deployment. Preview and production each get their own cloud deployment.
+The dev `pnpm convex` you run locally uses a development deployment. Staging and production each get their own stable cloud deployment.
 
 ```bash
 # From repo root, one-time per cloud environment:
 pnpm --filter @repo/convex exec convex deploy --cmd 'echo "deployed"'
 ```
 
-Create one deployment for preview and one for production. Each command prints a deployment URL (something like `https://<name>.convex.cloud`). Save both — you will set them as `VITE_CONVEX_URL` in the matching Vercel environments.
+Create one deployment for staging and one for production. Each command prints a deployment URL (something like `https://<name>.convex.cloud`). Save both — you will set them as `VITE_CONVEX_URL` in the matching environments.
 
 In the Convex dashboard for each cloud deployment:
 
@@ -58,15 +58,15 @@ Clerk's model: one application contains both a development environment (what you
    - `Frontend API URL` (the issuer, e.g. `https://clerk.your-domain.com`)
 5. **Domains**: add your apex domain (e.g. `doma.example.com`). Clerk uses this to scope cookies to the apex, which is what lets all zones share the session.
 
-## Step 3 — Configure Preview environments
+## Step 3 — Configure staging and Vercel Preview
 
-Preview should behave like a real staging environment, not just a static UI build.
+Use a stable staging Convex deployment for realistic pre-production data checks. Vercel Preview deployments can point at that staging backend.
 
 For Vercel Preview on Budget, set:
 
 | Name                          | Value                          |
 | ----------------------------- | ------------------------------ |
-| `VITE_CONVEX_URL`             | Convex preview URL from Step 1 |
+| `VITE_CONVEX_URL`             | Convex staging URL from Step 1 |
 | `VITE_CLERK_PUBLISHABLE_KEY`  | Clerk preview publishable key  |
 | `CLERK_SECRET_KEY`            | Clerk preview secret key       |
 | `VITE_CLERK_FRONTEND_API_URL` | Clerk preview Frontend API URL |
@@ -79,10 +79,10 @@ For Vercel Preview on Home, set:
 | `CLERK_SECRET_KEY`            | Clerk preview secret key       |
 | `VITE_CLERK_FRONTEND_API_URL` | Clerk preview Frontend API URL |
 
-Seed the preview Convex deployment from the repo before using Preview as a release gate:
+Seed the staging Convex deployment from the repo before using Vercel Preview as a release gate:
 
 ```bash
-PREVIEW_CONVEX_URL="$PREVIEW_CONVEX_URL" pnpm seed:preview
+STAGING_CONVEX_URL="$STAGING_CONVEX_URL" pnpm seed:staging
 ```
 
 ## Step 4 — Deploy Budget (do this first)
@@ -169,13 +169,13 @@ Add the same apex domain to your Clerk production environment (Step 2 step 5) if
 
 ## Step 7 — Verify Preview and Production
 
-Preview checks:
+Vercel Preview checks:
 
 1. Open the Home preview deployment.
 2. Confirm the sign-in page shows no sign-up affordance.
-3. Sign in with an approved preview account.
+3. Sign in with an approved non-production account.
 4. Navigate to Budget.
-5. Confirm Budget loads seeded preview data with no Convex `Unauthorized` errors.
+5. Confirm Budget loads seeded staging data with no Convex `Unauthorized` errors.
 
 Production checks:
 
