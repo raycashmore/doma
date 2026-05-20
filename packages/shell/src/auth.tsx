@@ -60,8 +60,31 @@ export function AuthGate({ publishableKey, children }: AuthGateProps) {
         <ClerkUrlAuthProvider>{children}</ClerkUrlAuthProvider>
       </SignedIn>
       <SignedOut>
-        <div className="flex items-center justify-center min-h-screen bg-neutral-50">
-          <SignIn routing="hash" />
+        <div className="flex min-h-screen items-center justify-center bg-neutral-50 px-6">
+          <div className="flex w-full max-w-md flex-col gap-3 text-center">
+            <p className="text-sm font-medium uppercase tracking-[0.24em] text-neutral-500">
+              Private access
+            </p>
+            <h1 className="text-3xl font-semibold tracking-tight text-neutral-900">
+              Sign in to Doma
+            </h1>
+            <p className="text-sm text-neutral-600">
+              Access is limited to approved family accounts.
+            </p>
+            <div className="flex justify-center">
+              <SignIn
+                appearance={{
+                  elements: {
+                    footerAction: 'hidden',
+                    footerActionLink: 'hidden'
+                  }
+                }}
+                fallbackRedirectUrl="/"
+                routing="hash"
+                signUpUrl=""
+              />
+            </div>
+          </div>
         </div>
       </SignedOut>
     </ClerkProvider>
