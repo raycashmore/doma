@@ -153,6 +153,8 @@ async function main() {
   {
     const ws = wb.Sheets['Current'];
     const data = XLSX.utils.sheet_to_json<any[]>(ws, { header: 1 });
+    // Columns: Date(0) | Current Secondary(1) | Shared(2) | Current Primary(3) |
+    //          Other(4) | Total(5=derived) | Currency(6)
     const rows = data
       .slice(1)
       .filter((r: any[]) => r[0] && typeof r[0] === 'number')
@@ -161,7 +163,8 @@ async function main() {
         currentSecondary: toCents(num(r[1])),
         shared: toCents(num(r[2])),
         currentPrimary: toCents(num(r[3])),
-        other: toCents(num(r[4]))
+        other: toCents(num(r[4])),
+        currency: toCents(num(r[6]))
         // r[5] = TOTAL (derived, skip)
       }));
 

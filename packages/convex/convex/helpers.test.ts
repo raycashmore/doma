@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   budgetMortgagePortion,
   budgetTotalOut,
+  currentAccountTotal,
   toCents,
   fromCents,
   mortgageConfigForTotals,
@@ -170,6 +171,21 @@ describe('refactored mortgage and budget helpers', () => {
         oneOffs: 40_000,
         sharedOut: 50_000,
         rent: 0
+      } as any)
+    ).toBe(150_000);
+  });
+
+  it('includes currency in current account totals', () => {
+    expect(
+      currentAccountTotal({
+        _id: 'c' as any,
+        _creationTime: 0,
+        date: 0,
+        currentSecondary: 10_000,
+        shared: 20_000,
+        currentPrimary: 30_000,
+        other: 40_000,
+        currency: 50_000
       } as any)
     ).toBe(150_000);
   });

@@ -39,7 +39,8 @@ export const seedCurrentAccounts = mutation({
         currentSecondary: v.number(),
         shared: v.number(),
         currentPrimary: v.number(),
-        other: v.number()
+        other: v.number(),
+        currency: v.number()
       })
     )
   },
@@ -50,7 +51,8 @@ export const seedCurrentAccounts = mutation({
         currentSecondary: row.currentSecondary,
         shared: row.shared,
         currentPrimary: row.currentPrimary,
-        other: row.other
+        other: row.other,
+        currency: row.currency
       });
     }
     return { inserted: args.rows.length };
