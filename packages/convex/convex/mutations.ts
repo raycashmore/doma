@@ -10,7 +10,8 @@ export const addCurrentAccount = mutation({
     currentSecondary: v.number(),
     shared: v.number(),
     currentPrimary: v.number(),
-    other: v.number()
+    other: v.number(),
+    currency: v.number()
   },
   handler: async (ctx, args) => {
     return ctx.db.insert('currentAccounts', {
@@ -18,7 +19,8 @@ export const addCurrentAccount = mutation({
       currentSecondary: args.currentSecondary,
       shared: args.shared,
       currentPrimary: args.currentPrimary,
-      other: args.other
+      other: args.other,
+      currency: args.currency
     });
   }
 });
@@ -29,7 +31,8 @@ export const updateCurrentAccount = mutation({
     currentSecondary: v.optional(v.number()),
     shared: v.optional(v.number()),
     currentPrimary: v.optional(v.number()),
-    other: v.optional(v.number())
+    other: v.optional(v.number()),
+    currency: v.optional(v.number())
   },
   handler: async (ctx, args) => {
     const { id, ...fields } = args;
@@ -41,6 +44,7 @@ export const updateCurrentAccount = mutation({
     if (fields.currentPrimary !== undefined)
       patch.currentPrimary = fields.currentPrimary;
     if (fields.other !== undefined) patch.other = fields.other;
+    if (fields.currency !== undefined) patch.currency = fields.currency;
     await ctx.db.patch(id, patch);
   }
 });
@@ -523,7 +527,8 @@ export const addSnapshot = mutation({
         currentSecondary: v.number(),
         shared: v.number(),
         currentPrimary: v.number(),
-        other: v.number()
+        other: v.number(),
+        currency: v.number()
       })
     ),
     cash: v.optional(

@@ -18,7 +18,8 @@ export default defineSchema({
     currentSecondary: v.number(),
     shared: v.number(),
     currentPrimary: v.number(),
-    other: v.number()
+    other: v.number(),
+    currency: v.number()
   }).index('by_date', ['date']),
 
   // ============================================================

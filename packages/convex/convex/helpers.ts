@@ -4,7 +4,13 @@ import type { Doc } from './_generated/dataModel';
 // CURRENT ACCOUNTS — derived total
 // ============================================================
 export function currentAccountTotal(row: Doc<'currentAccounts'>) {
-  return row.currentSecondary + row.shared + row.currentPrimary + row.other;
+  return (
+    row.currentSecondary +
+    row.shared +
+    row.currentPrimary +
+    row.other +
+    row.currency
+  );
 }
 
 // ============================================================
