@@ -1,9 +1,0 @@
-{
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": null,
-  "buildCommand": "pnpm build",
-  "outputDirectory": ".output/public",
-  "rewrites": [
-    { "source": "/budget/(.*)", "destination": "/budget/index.html" }
-  ]
-}

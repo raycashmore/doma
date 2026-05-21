@@ -1,12 +1,13 @@
 import { createRouter } from '@tanstack/react-router';
 
+import { getBudgetBasePath } from './config/basePath';
 import { routeTree } from './routeTree.gen';
 
 // In dev, Budget serves at the root of its own port (localhost:3001/). In
 // production, Vercel rewrites mount it under /budget on the apex domain.
 // The basepath needs to match wherever the app is served.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const BASEPATH = (import.meta as any).env.DEV ? '/' : '/budget';
+const BASEPATH = getBudgetBasePath((import.meta as any).env.DEV === true);
 
 export const getRouter = () => {
   const router = createRouter({
