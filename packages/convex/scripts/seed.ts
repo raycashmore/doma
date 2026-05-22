@@ -3,36 +3,24 @@
  *
  * Run with: pnpm --filter @repo/convex seed
  *       or: pnpm seed   (root convenience alias)
+ *       or: pnpm seed:url -- https://<preview>.convex.cloud
  *
- * Loads env from ../../.env.local (CONVEX_URL or NEXT_PUBLIC_CONVEX_URL or VITE_CONVEX_URL).
+ * Uses the first positional argument, or loads env from ../../.env.local
+ * (CONVEX_URL or NEXT_PUBLIC_CONVEX_URL or VITE_CONVEX_URL).
  * Every money column is converted to integer cents via toCents().
  */
 
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import * as dotenv from 'dotenv';
 import { ConvexHttpClient } from 'convex/browser';
 import { api } from '@repo/convex';
 import { toCents } from '@repo/convex/helpers';
 import XLSX from 'xlsx';
+import { getTargetConvexUrl } from './targetUrl';
 
-// Load monorepo root .env.local (must run before reading process.env)
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.resolve(__dirname, '../../../.env.local') });
 
-const CONVEX_URL =
-  process.env.CONVEX_URL ??
-  process.env.NEXT_PUBLIC_CONVEX_URL ??
-  process.env.VITE_CONVEX_URL;
-
-if (!CONVEX_URL) {
-  console.error(
-    'No CONVEX_URL found. Set CONVEX_URL or NEXT_PUBLIC_CONVEX_URL in .env.local.'
-  );
-  process.exit(1);
-}
-
-const client = new ConvexHttpClient(CONVEX_URL);
+const client = new ConvexHttpClient(getTargetConvexUrl());
 const XLSX_PATH = path.resolve(__dirname, 'CREAM.xlsx');
 
 function excelDateToTimestamp(excelDate: number): number {

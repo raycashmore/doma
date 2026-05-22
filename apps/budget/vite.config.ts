@@ -9,12 +9,17 @@ import tailwindcss from '@tailwindcss/vite';
 import { nitro } from 'nitro/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
+import { BUDGET_BASE_URL, getBudgetBaseUrl } from './src/config/basePath';
+
 const config = defineConfig(({ command }) => ({
   // /budget/ base only in production builds. In dev, Vite serves at root on
   // its own port; setting base in dev breaks several TanStack Start + Vite
   // internal handlers (/budget/@react-refresh, /budget/@vite/client, etc.
   // 404 because those endpoints don't honor base in this combo).
-  base: command === 'build' ? '/budget/' : '/',
+  base: getBudgetBaseUrl(command !== 'build'),
+  nitro: {
+    baseURL: getBudgetBaseUrl(command !== 'build')
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
@@ -35,19 +40,19 @@ const config = defineConfig(({ command }) => ({
     }),
     VitePWA({
       registerType: 'autoUpdate',
-      base: '/budget/',
-      scope: '/budget/',
+      base: BUDGET_BASE_URL,
+      scope: BUDGET_BASE_URL,
       manifest: {
         name: 'Doma Budget',
         short_name: 'Budget',
-        start_url: '/budget/',
-        scope: '/budget/',
+        start_url: BUDGET_BASE_URL,
+        scope: BUDGET_BASE_URL,
         display: 'standalone',
         background_color: '#ffffff',
         theme_color: '#f97316',
         icons: [
           {
-            src: '/budget/icons/icon.svg',
+            src: `${BUDGET_BASE_URL}icons/icon.svg`,
             sizes: 'any',
             type: 'image/svg+xml',
             purpose: 'any'
@@ -55,7 +60,6 @@ const config = defineConfig(({ command }) => ({
         ]
       },
       workbox: {
-        navigateFallback: '/budget/index.html',
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         runtimeCaching: [
           {

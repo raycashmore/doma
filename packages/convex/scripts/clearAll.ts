@@ -1,28 +1,14 @@
 /**
  * Clear every seedable table in @repo/convex.
  * Run with: pnpm seed:clear
+ *       or: pnpm seed:url:clear -- https://<preview>.convex.cloud
  */
 
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import * as dotenv from 'dotenv';
 import { ConvexHttpClient } from 'convex/browser';
 import { api } from '@repo/convex';
+import { getTargetConvexUrl } from './targetUrl';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.resolve(__dirname, '../../../.env.local') });
-
-const CONVEX_URL =
-  process.env.CONVEX_URL ??
-  process.env.NEXT_PUBLIC_CONVEX_URL ??
-  process.env.VITE_CONVEX_URL;
-
-if (!CONVEX_URL) {
-  console.error('No CONVEX_URL found in .env.local.');
-  process.exit(1);
-}
-
-const client = new ConvexHttpClient(CONVEX_URL);
+const client = new ConvexHttpClient(getTargetConvexUrl());
 
 const tables = [
   'currentAccounts',

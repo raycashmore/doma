@@ -52,6 +52,8 @@ describe('AuthGate', () => {
       expect.objectContaining({
         routing: 'hash',
         signUpUrl: '',
+        transferable: false,
+        withSignUp: false,
         fallbackRedirectUrl: '/',
         appearance: expect.objectContaining({
           elements: expect.objectContaining({

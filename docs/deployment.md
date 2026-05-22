@@ -79,11 +79,16 @@ For Vercel Preview on Home, set:
 | `CLERK_SECRET_KEY`            | Clerk preview secret key       |
 | `VITE_CLERK_FRONTEND_API_URL` | Clerk preview Frontend API URL |
 
-Seed the staging Convex deployment from the repo before using Vercel Preview as a release gate:
+If the Vercel Preview environment uses a temporary Convex deployment, seed that
+deployment by passing its current Convex URL:
 
 ```bash
-STAGING_CONVEX_URL="$STAGING_CONVEX_URL" pnpm seed:staging
+pnpm seed:url -- https://<preview>.convex.cloud
 ```
+
+The command runs locally and read a local excel spreadsheet. It
+clears seedable tables on the target deployment before inserting workbook data,
+so confirm the URL before running it.
 
 ## Step 4 — Deploy Budget (do this first)
 
@@ -161,13 +166,60 @@ Home owns the apex. Before deploying, point its rewrites at Budget's real URL.
    | `CLERK_SECRET_KEY`            | Clerk production secret key      |
    | `VITE_CLERK_FRONTEND_API_URL` | Clerk Frontend API URL           |
 
-## Step 6 — Attach your apex domain to Home
+## Step 6 — Configure domains and DNS
+
+Pick a domain layout before you touch DNS. A good default is:
+
+| Purpose                    | Example                    | Points to |
+| -------------------------- | -------------------------- | --------- |
+| Apex production site       | `doma.example.com`         | Home      |
+| Stable Budget alias        | `budget.doma.example.com`  | Budget    |
+| Optional www redirect      | `www.doma.example.com`     | Home      |
+| Optional staging app alias | `staging.doma.example.com` | Home      |
+
+The important distinction:
+
+- the **apex** is the user-facing production entry point
+- the **Budget subdomain** is an internal stable target for Home rewrites
+- Vercel Preview deploy URLs stay ephemeral and do not need custom DNS
+
+### DNS record patterns
+
+Your DNS provider UI may call these records slightly different things, but the patterns are usually:
+
+| Host / Name   | Type                     | Typical target                                  | Used for                   |
+| ------------- | ------------------------ | ----------------------------------------------- | -------------------------- |
+| `doma` or `@` | `A`, `ALIAS`, or `ANAME` | Vercel apex target from the dashboard           | Home apex                  |
+| `budget`      | `CNAME`                  | Vercel subdomain target from the Budget project | Stable Budget alias        |
+| `www`         | `CNAME`                  | Vercel subdomain target from the Home project   | Optional redirect or alias |
+
+Two practical notes:
+
+1. Apex domains often cannot use a plain `CNAME` record. Many DNS providers solve this with `ALIAS`, `ANAME`, or CNAME flattening. Follow the exact record type Vercel shows for your provider.
+2. Subdomains like `budget.doma.example.com` usually can use a normal `CNAME`, which makes them a good fit for stable internal routing targets.
+
+### Recommended setup order
+
+1. Add `budget.doma.example.com` to the Budget Vercel project first.
+2. Create the DNS record Vercel asks for.
+3. Wait for Vercel to verify the subdomain.
+4. Update `apps/home/vercel.json` to rewrite `/budget` to `https://budget.doma.example.com/budget`.
+5. Add `doma.example.com` to the Home Vercel project.
+6. Create the DNS record Vercel asks for for the apex.
+7. Wait for Vercel to verify the apex.
+8. Add `doma.example.com` to Clerk Production under **Domains**.
+
+This order matters because it lets Home point at a stable Budget destination before the apex goes live.
+
+## Step 7 — Attach your apex domain to Home
 
 In the Home Vercel project → **Domains** → add your apex (`doma.example.com`). Vercel walks you through the DNS records. Once verified, the production URL becomes `https://doma.example.com`, and `/budget` reverse-proxies to Budget via the rewrite.
 
 Add the same apex domain to your Clerk production environment (Step 2 step 5) if you haven't already — Clerk needs to know it for cookie scoping.
 
-## Step 7 — Verify Preview and Production
+If you use a stable Budget subdomain such as `budget.doma.example.com`, add that to the Budget Vercel project before the apex cutover. The Home rewrite target should point at that stable subdomain, not at a hashed Vercel deploy URL.
+
+## Step 8 — Verify Preview and Production
 
 Vercel Preview checks:
 

@@ -5,7 +5,7 @@ We use Clerk for sign-in across all zones. One Clerk application; the cookie is 
 ## One-time setup
 
 1. Create a Clerk application at <https://dashboard.clerk.com/apps/new>.
-2. **Restrict signups.** Settings → User & Authentication → disable "Enable sign-up". Add yourself + your spouse manually under Users.
+2. **Restrict signups.** Settings → Restrictions → enable Restricted mode. Add yourself + your spouse manually under Users, or enable the Allowlist and add only the approved email addresses. The app also renders `<SignIn transferable={false} withSignUp={false}>` so Google OAuth attempts for unknown emails cannot fall through into Clerk's sign-up flow.
 3. **JWT template for Convex.** JWT Templates → New template → name it `convex`. Use the default Convex template Clerk provides.
 4. Copy the publishable key, secret key, and Frontend API URL. Add to `.env.local` at the repo root:
 
