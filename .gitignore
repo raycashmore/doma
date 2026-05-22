@@ -47,3 +47,4 @@ packages/convex/scripts/*.xlsx
 packages/convex/scripts/README.md
 .playwright-mcp
 .claude
+.agents

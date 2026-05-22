@@ -82,6 +82,8 @@ export function AuthGate({ publishableKey, children }: AuthGateProps) {
                 fallbackRedirectUrl="/"
                 routing="hash"
                 signUpUrl=""
+                transferable={false}
+                withSignUp={false}
               />
             </div>
           </div>
