@@ -57,6 +57,17 @@ Recommended order:
 - `STAGING_CONVEX_URL`
 - `PROD_CONVEX_URL`
 
+For Vercel Preview deployments that create temporary Convex deployments, pass
+the current Convex URL directly:
+
+```bash
+pnpm seed:url -- https://<preview>.convex.cloud
+```
+
+The seed command runs locally, read a local excel spreadsheet, clears
+the seedable tables on the target deployment, and inserts the workbook data.
+Confirm the target URL before running it.
+
 ## Preview rehearsal
 
 1. Refresh the local checks:
@@ -69,10 +80,12 @@ Recommended order:
    pnpm build
    ```
 
-2. Seed staging data:
+2. Seed staging data for the backend that Preview will use.
+
+   For an ephemeral Convex Preview deployment:
 
    ```bash
-   STAGING_CONVEX_URL="$STAGING_CONVEX_URL" pnpm seed:staging
+   pnpm seed:url -- https://<preview>.convex.cloud
    ```
 
 3. Push the release branch and open a PR.
@@ -87,11 +100,7 @@ Recommended order:
 
 ## Production cutover
 
-1. Seed production data:
-
-   ```bash
-   PROD_CONVEX_URL="$PROD_CONVEX_URL" pnpm seed:prod
-   ```
+1. Seed production data
 
 2. Deploy Convex schema and functions:
 

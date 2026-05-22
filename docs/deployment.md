@@ -79,11 +79,16 @@ For Vercel Preview on Home, set:
 | `CLERK_SECRET_KEY`            | Clerk preview secret key       |
 | `VITE_CLERK_FRONTEND_API_URL` | Clerk preview Frontend API URL |
 
-Seed the staging Convex deployment from the repo before using Vercel Preview as a release gate:
+If the Vercel Preview environment uses a temporary Convex deployment, seed that
+deployment by passing its current Convex URL:
 
 ```bash
-STAGING_CONVEX_URL="$STAGING_CONVEX_URL" pnpm seed:staging
+pnpm seed:url -- https://<preview>.convex.cloud
 ```
+
+The command runs locally and read a local excel spreadsheet. It
+clears seedable tables on the target deployment before inserting workbook data,
+so confirm the URL before running it.
 
 ## Step 4 — Deploy Budget (do this first)
 

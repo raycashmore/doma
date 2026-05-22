@@ -14,7 +14,33 @@ pnpm format        # Format with Prettier
 pnpm convex        # Start Convex dev for @repo/convex
 pnpm seed          # Seed Convex data
 pnpm seed:clear    # Clear seeded Convex data
+pnpm seed:url -- <convex-url>       # Seed a specific Convex deployment
+pnpm seed:url:clear -- <convex-url> # Clear seeded data from a specific Convex deployment
 ```
+
+## Convex Seeding
+
+Seed scripts run from the local machine and read a local excel spreadsheet. That 
+workbook is ignored by git and must exist locally before seeding.
+
+Use `pnpm seed` for the local Convex deployment configured by `.env.local`.
+The seed script clears seedable tables before inserting workbook data.
+
+Use `pnpm seed:url` for an ephemeral Convex Preview deployment. Pass the Convex
+cloud URL as the first argument:
+
+```bash
+pnpm seed:url -- https://dynamic-kingfisher-926.convex.cloud
+```
+
+To clear a target deployment without re-seeding it:
+
+```bash
+pnpm seed:url:clear -- https://dynamic-kingfisher-926.convex.cloud
+```
+Before running any seed command against a shared or remote deployment, confirm
+the target URL with the user. Seeding replaces the existing seedable finance
+tables on that deployment.
 
 ## App Commands
 

@@ -2,6 +2,32 @@
 
 Backend code lives in `packages/convex/convex/`.
 
+## Seeding
+
+Seed scripts run locally and read a local excel spreadsheet, which is
+ignored by git. The seed command clears seedable finance tables on the target
+deployment before inserting workbook data.
+
+For a local Convex deployment:
+
+```bash
+pnpm seed
+```
+
+For a specific Convex Preview deployment:
+
+```bash
+pnpm seed:url -- https://<preview>.convex.cloud
+```
+
+To clear a target deployment without re-seeding it:
+
+```bash
+pnpm seed:url:clear -- https://<preview>.convex.cloud
+```
+
+Confirm the target URL before seeding any shared or remote deployment.
+
 ## Core Pattern: Derive at Read Time
 
 Store only raw inputs in the database. All computed values are calculated at read time via helper functions in `helpers.ts`. Never store derived values.
