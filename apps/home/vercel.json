@@ -6,7 +6,11 @@
   "rewrites": [
     {
       "source": "/budget",
-      "destination": "https://budget.rayandromana.com/budget"
+      "destination": "https://budget.rayandromana.com/budget/"
+    },
+    {
+      "source": "/budget/",
+      "destination": "https://budget.rayandromana.com/budget/"
     },
     {
       "source": "/budget/:path*",
