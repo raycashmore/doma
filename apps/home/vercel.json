@@ -6,11 +6,11 @@
   "rewrites": [
     {
       "source": "/budget",
-      "destination": "https://doma-budget.vercel.app/budget"
+      "destination": "https://budget.rayandromana.com/budget"
     },
     {
       "source": "/budget/:path*",
-      "destination": "https://doma-budget.vercel.app/budget/:path*"
+      "destination": "https://budget.rayandromana.com/budget/:path*"
     }
   ]
 }
