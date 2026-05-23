@@ -26,6 +26,8 @@ const PARENT_SIZE_STYLES = {
   width: '100%',
   height: '100%'
 } satisfies React.CSSProperties;
+export const BUDGET_CHART_CARD_CLASS =
+  'flex min-h-[16rem] min-w-0 flex-1 flex-col rounded-3xl bg-warm-bg-card-soft border border-warm-border p-5 lg:min-h-0 md:p-6';
 
 interface BudgetChartProps {
   data: Array<BudgetDataPoint>;
@@ -260,7 +262,7 @@ export default function BudgetChart({
   const isEmpty = filtered.length === 0;
 
   return (
-    <div className="flex min-h-[16rem] min-w-0 flex-1 flex-col rounded-3xl bg-warm-bg-card-soft border border-warm-border p-5 md:min-h-0 md:p-6">
+    <div className={BUDGET_CHART_CARD_CLASS}>
       <ChartHeader />
       <div className="relative min-h-0 flex-1">
         {isEmpty ? (
