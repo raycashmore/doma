@@ -25,7 +25,7 @@ export function Sidebar({
   return (
     <nav
       aria-label="App navigation"
-      className="hidden md:flex flex-col items-center w-24 py-6 text-warm-text-on-dark"
+      className="hidden md:flex flex-col items-end w-14 py-6 text-warm-text-on-dark"
     >
       <a
         href={buildHref(homeApp)}
@@ -37,7 +37,7 @@ export function Sidebar({
 
       <div className="h-6" aria-hidden />
 
-      <ul className="flex flex-col items-center gap-[18px] flex-1 w-full">
+      <ul className="flex flex-col items-end gap-[18px] flex-1 w-full">
         {APPS.filter((app) => app.id !== 'home' && app.enabled).map((app) => {
           const Icon = app.icon;
           const isActive = activeAppId === app.id;
