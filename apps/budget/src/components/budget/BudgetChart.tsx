@@ -15,9 +15,17 @@ import {
   formatCurrency
 } from '@/lib/budget';
 
-const MARGIN = { top: 14, right: 16, bottom: 28, left: 66 };
+const BASE_MARGIN = { top: 14, right: 16, bottom: 28, left: 66 };
+const COMPACT_MARGIN = { top: 14, right: 8, bottom: 28, left: 44 };
 const MA_WINDOW = 6;
 const AXIS_FONT_SIZE = 11;
+const COMPACT_AXIS_WIDTH = 420;
+const PARENT_SIZE_STYLES = {
+  position: 'absolute',
+  inset: 0,
+  width: '100%',
+  height: '100%'
+} satisfies React.CSSProperties;
 
 interface BudgetChartProps {
   data: Array<BudgetDataPoint>;
@@ -36,6 +44,35 @@ function LegendDot({ color, label }: { color: string; label: string }) {
       {label}
     </span>
   );
+}
+
+export function getBudgetChartLayout(width: number, height: number) {
+  const margin = width < COMPACT_AXIS_WIDTH ? COMPACT_MARGIN : BASE_MARGIN;
+
+  return {
+    margin,
+    innerWidth: width - margin.left - margin.right,
+    innerHeight: height - margin.top - margin.bottom,
+    compactYAxis: width < COMPACT_AXIS_WIDTH
+  };
+}
+
+export function formatYAxisTick(cents: number, compact: boolean) {
+  if (!compact) return formatCurrency(cents);
+
+  const dollars = Math.round(cents / 100);
+  const sign = dollars < 0 ? '-' : '';
+  const absolute = Math.abs(dollars);
+
+  if (absolute < 1000) return formatCurrency(cents);
+  if (absolute < 1_000_000) return `${sign}$${Math.round(absolute / 1000)}k`;
+
+  const millions = absolute / 1_000_000;
+  const value =
+    millions >= 10
+      ? Math.round(millions).toString()
+      : millions.toFixed(1).replace(/\.0$/, '');
+  return `${sign}$${value}m`;
 }
 
 function ChartHeader() {
@@ -71,8 +108,8 @@ function BudgetChartSvg({
 
   const filtered = filterByTimePeriod(data, period);
 
-  const innerWidth = width - MARGIN.left - MARGIN.right;
-  const innerHeight = height - MARGIN.top - MARGIN.bottom;
+  const { margin, innerWidth, innerHeight, compactYAxis } =
+    getBudgetChartLayout(width, height);
 
   if (filtered.length === 0 || innerWidth <= 0 || innerHeight <= 0) return null;
 
@@ -135,7 +172,7 @@ function BudgetChartSvg({
   return (
     <>
       <svg width={width} height={height} className="block">
-        <Group left={MARGIN.left} top={MARGIN.top}>
+        <Group left={margin.left} top={margin.top}>
           <GridRows
             scale={yScale}
             width={innerWidth}
@@ -182,7 +219,7 @@ function BudgetChartSvg({
 
           <AxisLeft
             scale={yScale}
-            tickFormat={(v) => formatCurrency(v as number)}
+            tickFormat={(v) => formatYAxisTick(v as number, compactYAxis)}
             tickLabelProps={() => ({
               fill: '#7C6755',
               fontSize: AXIS_FONT_SIZE,
@@ -214,7 +251,11 @@ function BudgetChartSvg({
   );
 }
 
-export default function BudgetChart({ data, period, onBarClick }: BudgetChartProps) {
+export default function BudgetChart({
+  data,
+  period,
+  onBarClick
+}: BudgetChartProps) {
   const filtered = filterByTimePeriod(data, period);
   const isEmpty = filtered.length === 0;
 
@@ -230,7 +271,7 @@ export default function BudgetChart({ data, period, onBarClick }: BudgetChartPro
             </p>
           </div>
         ) : (
-          <ParentSize debounceTime={50}>
+          <ParentSize debounceTime={50} parentSizeStyles={PARENT_SIZE_STYLES}>
             {({ width, height }) =>
               width > 0 && height > 0 ? (
                 <BudgetChartSvg
