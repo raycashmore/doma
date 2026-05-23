@@ -11,7 +11,6 @@ interface Props {
   offset2: number;
   debt1: number;
   debt2: number;
-  equity: number;
   trend?: Trend | null;
 }
 
@@ -24,7 +23,6 @@ export default function MonthMortgageSection({
   offset2,
   debt1,
   debt2,
-  equity,
   trend
 }: Props) {
   return (
@@ -99,12 +97,6 @@ export default function MonthMortgageSection({
             <span className="text-warm-text-secondary">Debt 2</span>
             <span className="text-warm-text-primary">
               {formatCurrency(debt2)}
-            </span>
-          </li>
-          <li className="flex justify-between font-medium">
-            <span className="text-warm-text-primary">House equity</span>
-            <span className="text-warm-text-primary">
-              {formatCurrency(equity)}
             </span>
           </li>
         </ul>

@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import { render, screen } from '@testing-library/react';
 
 import {
   BUDGET_CHART_CARD_CLASS,
+  default as BudgetChart,
   formatYAxisTick,
   getBudgetChartLayout
 } from './BudgetChart';
@@ -23,5 +25,18 @@ describe('BudgetChart responsive layout', () => {
     expect(BUDGET_CHART_CARD_CLASS).toContain('min-h-[16rem]');
     expect(BUDGET_CHART_CARD_CLASS).toContain('lg:min-h-0');
     expect(BUDGET_CHART_CARD_CLASS).not.toContain('md:min-h-0');
+  });
+
+  it('shows legend labels in Income, Spend, Mortgage order', () => {
+    const { container } = render(<BudgetChart data={[]} period="6M" />);
+
+    expect(screen.getByText('Income')).toBeDefined();
+    expect(screen.getByText('Spend')).toBeDefined();
+    expect(screen.getByText('Mortgage')).toBeDefined();
+    expect(screen.queryByText('Discretionary')).toBeNull();
+
+    const legendText =
+      container.querySelector('h2')?.nextElementSibling?.textContent;
+    expect(legendText).toBe('IncomeSpendMortgage');
   });
 });

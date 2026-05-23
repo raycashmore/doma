@@ -104,7 +104,6 @@ function BudgetPage() {
                 offset2={detail.mortgage.offset2}
                 debt1={detail.mortgage.debt1}
                 debt2={detail.mortgage.debt2}
-                equity={detail.mortgage.equity}
                 trend={detail.trends.mortgage}
               />
             ) : null}

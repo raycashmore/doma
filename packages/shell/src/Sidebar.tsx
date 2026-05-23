@@ -1,4 +1,4 @@
-import { LogOut } from 'lucide-react';
+import { Home, LogOut } from 'lucide-react';
 import clsx from 'clsx';
 import { APPS, getAppHref, type AppDescriptor, type AppId } from './apps';
 import { useUrlAuth } from './auth';
@@ -8,15 +8,11 @@ const homeApp = APPS.find((a) => a.id === 'home')!;
 export interface SidebarProps {
   activeAppId: AppId;
   onSignOut?: () => void;
-  brandLabel?: string;
 }
 
-export function Sidebar({
-  activeAppId,
-  onSignOut,
-  brandLabel = 'D'
-}: SidebarProps) {
+export function Sidebar({ activeAppId, onSignOut }: SidebarProps) {
   const urlAuth = useUrlAuth();
+  const isHomeActive = activeAppId === 'home';
   const buildHref = (app: AppDescriptor) => {
     const href = getAppHref(app);
     return urlAuth && href.startsWith('http') ? urlAuth(href) : href;
@@ -30,9 +26,15 @@ export function Sidebar({
       <a
         href={buildHref(homeApp)}
         aria-label="Home"
-        className="flex items-center justify-center w-12 h-12 rounded-xl bg-warm-accent text-warm-bg font-warm-display text-2xl font-bold"
+        aria-current={isHomeActive ? 'page' : undefined}
+        className={clsx(
+          'flex items-center justify-center w-12 h-12 rounded-xl transition-colors',
+          isHomeActive
+            ? 'bg-warm-accent text-warm-bg'
+            : 'text-warm-text-tertiary hover:bg-warm-bg-dark-muted hover:text-warm-text-on-dark'
+        )}
       >
-        {brandLabel}
+        <Home size={22} aria-hidden="true" />
       </a>
 
       <div className="h-6" aria-hidden />

@@ -84,9 +84,9 @@ function ChartHeader() {
         Income vs Spending
       </h2>
       <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[11px] font-medium text-warm-text-secondary">
-        <LegendDot color="#3D2E22" label="Mortgage" />
-        <LegendDot color="#D85A36" label="Discretionary" />
         <LegendDot color="#5F9466" label="Income" />
+        <LegendDot color="#D85A36" label="Spend" />
+        <LegendDot color="#3D2E22" label="Mortgage" />
       </div>
     </div>
   );
