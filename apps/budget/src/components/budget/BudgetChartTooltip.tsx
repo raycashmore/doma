@@ -59,7 +59,7 @@ export default function BudgetChartTooltip({
         className="flex items-center justify-between gap-3 font-semibold"
         style={{ color: '#D85A36' }}
       >
-        <span>Discretionary</span>
+        <span>Spend</span>
         <span>{formatCurrency(spend)}</span>
       </div>
       <div className="flex items-center justify-between gap-3 font-semibold text-warm-text-secondary">

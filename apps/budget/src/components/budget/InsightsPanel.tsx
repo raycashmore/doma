@@ -2,7 +2,7 @@ import { Sparkles } from 'lucide-react';
 
 export default function InsightsPanel() {
   return (
-    <aside className="flex min-h-0 flex-col gap-4 md:w-[380px] md:shrink-0">
+    <aside className="hidden min-h-0 flex-col gap-4 lg:flex lg:w-[380px] lg:shrink-0">
       <h2 className="px-1 pt-1 text-[20px] leading-tight font-warm-display text-warm-text-primary tracking-[-0.3px]">
         Insights
       </h2>

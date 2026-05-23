@@ -9,4 +9,12 @@ describe('InsightsPanel', () => {
     expect(screen.queryByText("You're in good shape")).toBeNull();
     expect(screen.getByText('Personalised insights coming soon')).toBeDefined();
   });
+
+  it('stays collapsed until the large dashboard breakpoint', () => {
+    const { container } = render(<InsightsPanel />);
+    const panel = container.querySelector('aside');
+
+    expect(panel?.className).toContain('hidden');
+    expect(panel?.className).toContain('lg:flex');
+  });
 });

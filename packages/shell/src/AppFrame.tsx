@@ -29,7 +29,7 @@ export function AppFrame({
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <Header title={title} actions={actions} className={headerClassName} />
           <main
-            className={`min-h-0 flex-1 overflow-y-auto overflow-x-hidden pl-2 pr-4 pb-4 md:overflow-hidden ${mainClassName ?? ''}`}
+            className={`min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 pb-4 md:overflow-hidden ${mainClassName ?? ''}`}
           >
             {children}
           </main>

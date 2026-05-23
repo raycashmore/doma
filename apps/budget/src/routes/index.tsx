@@ -55,11 +55,15 @@ function BudgetPage() {
 
   return (
     <>
-      <div className="flex flex-col gap-5 rounded-[28px] bg-warm-bg-card p-5 md:h-full md:min-h-0 md:flex-row md:gap-5 md:overflow-hidden md:p-6">
+      <div className="flex flex-col gap-5 rounded-[28px] bg-warm-bg-card p-5 md:p-6 lg:h-full lg:min-h-0 lg:flex-row lg:gap-5 lg:overflow-hidden">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
           <h2 className="sr-only">Budget overview</h2>
           <BudgetKpiCards summary={summary} />
-          <BudgetChart data={chartData ?? []} period={period} onBarClick={(date) => setOpenMonth(date)} />
+          <BudgetChart
+            data={chartData ?? []}
+            period={period}
+            onBarClick={(date) => setOpenMonth(date)}
+          />
           <BudgetBreakdownTable
             rows={rows}
             onRowClick={(date) => setOpenMonth(date)}
@@ -76,35 +80,34 @@ function BudgetPage() {
         onClose={() => setOpenMonth(null)}
       >
         {detail ? (
-            <div className="flex flex-col md:flex-row gap-4 md:h-full">
-              <MonthIncomeSection
-                primary={detail.income.primary}
-                secondary={detail.income.secondary}
-                billContrib={detail.income.billContrib}
-                trend={detail.trends.income}
+          <div className="flex flex-col md:flex-row gap-4 md:h-full">
+            <MonthIncomeSection
+              primary={detail.income.primary}
+              secondary={detail.income.secondary}
+              billContrib={detail.income.billContrib}
+              trend={detail.trends.income}
+            />
+            <MonthSpendSection
+              credit1={detail.spend.credit1}
+              credit2={detail.spend.credit2}
+              credit3={detail.spend.credit3}
+              oneOffs={detail.spend.oneOffs}
+              trend={detail.trends.spend}
+            />
+            {detail.mortgage ? (
+              <MonthMortgageSection
+                contribTotal={detail.mortgage.contribTotal}
+                fixedPayment={detail.mortgage.fixedPayment}
+                variablePayment={detail.mortgage.variablePayment}
+                paymentTotal={detail.mortgage.paymentTotal}
+                offset1={detail.mortgage.offset1}
+                offset2={detail.mortgage.offset2}
+                debt1={detail.mortgage.debt1}
+                debt2={detail.mortgage.debt2}
+                trend={detail.trends.mortgage}
               />
-              <MonthSpendSection
-                credit1={detail.spend.credit1}
-                credit2={detail.spend.credit2}
-                credit3={detail.spend.credit3}
-                oneOffs={detail.spend.oneOffs}
-                trend={detail.trends.spend}
-              />
-              {detail.mortgage ? (
-                <MonthMortgageSection
-                  contribTotal={detail.mortgage.contribTotal}
-                  fixedPayment={detail.mortgage.fixedPayment}
-                  variablePayment={detail.mortgage.variablePayment}
-                  paymentTotal={detail.mortgage.paymentTotal}
-                  offset1={detail.mortgage.offset1}
-                  offset2={detail.mortgage.offset2}
-                  debt1={detail.mortgage.debt1}
-                  debt2={detail.mortgage.debt2}
-                  equity={detail.mortgage.equity}
-                  trend={detail.trends.mortgage}
-                />
-              ) : null}
-            </div>
+            ) : null}
+          </div>
         ) : null}
       </MonthlyDetailOverlay>
     </>

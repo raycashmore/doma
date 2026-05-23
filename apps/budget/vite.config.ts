@@ -39,8 +39,10 @@ const config = defineConfig(({ command }) => ({
       }
     }),
     VitePWA({
+      injectRegister: false,
       registerType: 'autoUpdate',
       base: BUDGET_BASE_URL,
+      outDir: '.output/public',
       scope: BUDGET_BASE_URL,
       manifest: {
         name: 'Doma Budget',
@@ -56,11 +58,23 @@ const config = defineConfig(({ command }) => ({
             sizes: 'any',
             type: 'image/svg+xml',
             purpose: 'any'
+          },
+          {
+            src: `${BUDGET_BASE_URL}icons/icon-192.png`,
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: `${BUDGET_BASE_URL}icons/icon-512.png`,
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any'
           }
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2,webmanifest}'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/.*\.convex\.cloud\/.*/,
