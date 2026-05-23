@@ -19572,6 +19572,1507 @@
           ]
         }
       ]
+    },
+    {
+      "type": "frame",
+      "id": "STO07",
+      "x": 8200,
+      "y": -800,
+      "name": "Icon Exploration",
+      "clip": true,
+      "width": 2800,
+      "height": 1500,
+      "fill": "$warm-bg",
+      "layout": "vertical",
+      "gap": 48,
+      "padding": 80,
+      "children": [
+        {
+          "type": "text",
+          "id": "ZgYb8",
+          "fill": "$warm-text",
+          "content": "Doma — Icon Exploration",
+          "fontFamily": "$warm-font-display",
+          "fontSize": 48,
+          "fontWeight": "700"
+        },
+        {
+          "type": "text",
+          "id": "rhUoG",
+          "fill": "$warm-text-secondary",
+          "textGrowth": "fixed-width",
+          "width": 1400,
+          "content": "Five concepts for a domestic management system. Each shown at hero size, 48px sidebar size, and 16px favicon size.",
+          "fontFamily": "$warm-font-body",
+          "fontSize": 18,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "frame",
+          "id": "k4jJO",
+          "name": "iconRow",
+          "width": "fill_container",
+          "gap": 24,
+          "children": [
+            {
+              "type": "frame",
+              "id": "zZOGM",
+              "name": "slot/house",
+              "width": "fill_container",
+              "fill": "$warm-bg-card",
+              "cornerRadius": 24,
+              "stroke": {
+                "thickness": 1,
+                "fill": "$warm-border"
+              },
+              "layout": "vertical",
+              "gap": 24,
+              "padding": 24,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "O5zXw",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "FzzgJ",
+                      "fill": "$warm-text",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "House",
+                      "fontFamily": "DM Serif Display",
+                      "fontSize": 28,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "k27ANi",
+                      "fill": "$warm-text-secondary",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "A pure geometric silhouette — gable roof on a single rounded body. Reads as 'home' instantly, even at 16px.",
+                      "lineHeight": 1.5,
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "qTbDP",
+                  "width": "fill_container",
+                  "padding": [
+                    8,
+                    0
+                  ],
+                  "justifyContent": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "jV3Yf",
+                      "width": 320,
+                      "height": 320,
+                      "fill": "$warm-accent",
+                      "cornerRadius": 64,
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "$warm-shadow",
+                        "offset": {
+                          "x": 0,
+                          "y": 8
+                        },
+                        "blur": 24
+                      },
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "path",
+                          "id": "Havau",
+                          "geometry": "M47 11q3-3 6 0l38 31q3 2.5 3 6.5l0 39.5q0 6-6 6l-76 0q-6 0-6-6l0-39.5q0-4 3-6.5l38-31z",
+                          "viewBox": [
+                            0,
+                            0,
+                            100,
+                            100
+                          ],
+                          "fill": "$warm-bg",
+                          "width": 220,
+                          "height": 215
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "ZuC0B",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 16,
+                  "padding": [
+                    8,
+                    0,
+                    0,
+                    0
+                  ],
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "tynhy",
+                      "width": "fill_container",
+                      "fill": "$warm-bg",
+                      "cornerRadius": 12,
+                      "gap": 16,
+                      "padding": [
+                        12,
+                        16
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "LduCr",
+                          "width": 48,
+                          "height": 48,
+                          "fill": "$warm-accent",
+                          "cornerRadius": 10,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "path",
+                              "id": "gnM0M",
+                              "geometry": "M47 11q3-3 6 0l38 31q3 2.5 3 6.5l0 39.5q0 6-6 6l-76 0q-6 0-6-6l0-39.5q0-4 3-6.5l38-31z",
+                              "viewBox": [
+                                0,
+                                0,
+                                100,
+                                100
+                              ],
+                              "fill": "$warm-bg",
+                              "width": 32,
+                              "height": 31
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "DXvky",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "c73SM",
+                              "fill": "$warm-text",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "48px",
+                              "fontFamily": "DM Serif Display",
+                              "fontSize": 16,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "text",
+                              "id": "ZHZ28",
+                              "fill": "$warm-text-secondary",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Sidebar app mark",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 12,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "H2KVTA",
+                      "width": "fill_container",
+                      "fill": "$warm-bg",
+                      "cornerRadius": 12,
+                      "gap": 16,
+                      "padding": [
+                        12,
+                        16
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "MYkqK",
+                          "width": 48,
+                          "height": 48,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "xpta9",
+                              "width": 16,
+                              "height": 16,
+                              "fill": "$warm-accent",
+                              "cornerRadius": 3,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "path",
+                                  "id": "y8gLf",
+                                  "geometry": "M47 11q3-3 6 0l38 31q3 2.5 3 6.5l0 39.5q0 6-6 6l-76 0q-6 0-6-6l0-39.5q0-4 3-6.5l38-31z",
+                                  "viewBox": [
+                                    0,
+                                    0,
+                                    100,
+                                    100
+                                  ],
+                                  "fill": "$warm-bg",
+                                  "width": 12,
+                                  "height": 11
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "V4eiB",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "e8N4cU",
+                              "fill": "$warm-text",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "16px",
+                              "fontFamily": "DM Serif Display",
+                              "fontSize": 16,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "text",
+                              "id": "oKKko",
+                              "fill": "$warm-text-secondary",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Favicon / tab icon",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 12,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "Kd6Sl",
+              "name": "slot/arch",
+              "width": "fill_container",
+              "fill": "$warm-bg-card",
+              "cornerRadius": 24,
+              "stroke": {
+                "thickness": 1,
+                "fill": "$warm-border"
+              },
+              "layout": "vertical",
+              "gap": 24,
+              "padding": 24,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "k9l7W",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "VK7Aq",
+                      "fill": "$warm-text",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Archway",
+                      "fontFamily": "DM Serif Display",
+                      "fontSize": 28,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "y6F6B",
+                      "fill": "$warm-text-secondary",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "A Romanesque portal reduced to its essence — a single confident silhouette.",
+                      "lineHeight": 1.45,
+                      "fontFamily": "DM Sans",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Be60j",
+                  "width": "fill_container",
+                  "padding": [
+                    8,
+                    0
+                  ],
+                  "justifyContent": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "DMZqx",
+                      "clip": true,
+                      "width": 320,
+                      "height": 320,
+                      "fill": "$warm-card-peach",
+                      "cornerRadius": 72,
+                      "layout": "none",
+                      "children": [
+                        {
+                          "type": "path",
+                          "id": "aDhzF",
+                          "x": 95,
+                          "y": 45,
+                          "geometry": "M0 190l0-125a65 65 0 0 1 130 0l0 125z",
+                          "viewBox": [
+                            0,
+                            0,
+                            130,
+                            190
+                          ],
+                          "fill": "$warm-text",
+                          "width": 130,
+                          "height": 190
+                        },
+                        {
+                          "type": "rectangle",
+                          "cornerRadius": 3.5,
+                          "id": "AqFZW",
+                          "x": 70,
+                          "y": 240,
+                          "fill": "$warm-text",
+                          "width": 180,
+                          "height": 7
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "HTJlM",
+                  "width": "fill_container",
+                  "gap": 48,
+                  "padding": [
+                    8,
+                    0,
+                    4,
+                    0
+                  ],
+                  "justifyContent": "center",
+                  "alignItems": "end",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "f1XkW",
+                      "layout": "vertical",
+                      "gap": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "FNNZ8",
+                          "clip": true,
+                          "width": 48,
+                          "height": 48,
+                          "fill": "$warm-card-peach",
+                          "cornerRadius": 11,
+                          "layout": "none",
+                          "children": [
+                            {
+                              "type": "path",
+                              "id": "ZNF5A",
+                              "x": 14,
+                              "y": 7,
+                              "geometry": "M0 28l0-18a10 10 0 0 1 20 0l0 18z",
+                              "viewBox": [
+                                0,
+                                0,
+                                20,
+                                28
+                              ],
+                              "fill": "$warm-text",
+                              "width": 20,
+                              "height": 28
+                            },
+                            {
+                              "type": "rectangle",
+                              "cornerRadius": 0.75,
+                              "id": "VZCXT",
+                              "x": 10,
+                              "y": 37,
+                              "fill": "$warm-text",
+                              "width": 28,
+                              "height": 1.5
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "jV8kX",
+                          "fill": "$warm-text-tertiary",
+                          "content": "48px sidebar",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "yuK9K",
+                      "layout": "vertical",
+                      "gap": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "hgbD6",
+                          "clip": true,
+                          "width": 16,
+                          "height": 16,
+                          "fill": "$warm-card-peach",
+                          "cornerRadius": 4,
+                          "layout": "none",
+                          "children": [
+                            {
+                              "type": "path",
+                              "id": "x7avU",
+                              "x": 4,
+                              "y": 2,
+                              "geometry": "M0 11l0-7a4 4 0 0 1 8 0l0 7z",
+                              "viewBox": [
+                                0,
+                                0,
+                                8,
+                                11
+                              ],
+                              "fill": "$warm-text",
+                              "width": 8,
+                              "height": 11
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "xgpDR",
+                          "fill": "$warm-text-tertiary",
+                          "content": "16px favicon",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "n6MJja",
+              "name": "slot/window",
+              "width": "fill_container",
+              "fill": "$warm-bg-card",
+              "cornerRadius": 24,
+              "stroke": {
+                "thickness": 1,
+                "fill": "$warm-border"
+              },
+              "layout": "vertical",
+              "gap": 24,
+              "padding": 24,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "tCQQC",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "QMwJq",
+                      "fill": "$warm-text",
+                      "content": "Window",
+                      "lineHeight": 1.1,
+                      "fontFamily": "DM Serif Display",
+                      "fontSize": 36,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "B3B9eX",
+                      "fill": "$warm-text-secondary",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Looking out from a warm home — four panes, one frame.",
+                      "lineHeight": 1.5,
+                      "fontFamily": "DM Sans",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "JELvi",
+                  "width": "fill_container",
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "ywDE1",
+                      "width": 320,
+                      "height": 320,
+                      "fill": "$warm-card-peach",
+                      "cornerRadius": 56,
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "$warm-shadow",
+                        "offset": {
+                          "x": 0,
+                          "y": 8
+                        },
+                        "blur": 24
+                      },
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "Yu5wq",
+                          "width": 200,
+                          "height": 200,
+                          "fill": "$warm-text",
+                          "cornerRadius": 44,
+                          "layout": "vertical",
+                          "gap": 6,
+                          "padding": 14,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "RhWmU",
+                              "width": "fill_container",
+                              "height": "fill_container",
+                              "gap": 6,
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "McOJO",
+                                  "width": "fill_container",
+                                  "height": "fill_container",
+                                  "fill": {
+                                    "type": "gradient",
+                                    "gradientType": "radial",
+                                    "enabled": true,
+                                    "rotation": 0,
+                                    "size": {
+                                      "width": 1,
+                                      "height": 1
+                                    },
+                                    "colors": [
+                                      {
+                                        "color": "#FFF1B8",
+                                        "position": 0
+                                      },
+                                      {
+                                        "color": "$warm-card-butter",
+                                        "position": 0.7
+                                      },
+                                      {
+                                        "color": "$warm-card-peach",
+                                        "position": 1
+                                      }
+                                    ]
+                                  },
+                                  "cornerRadius": 14
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "CKuJ4",
+                                  "width": "fill_container",
+                                  "height": "fill_container",
+                                  "fill": {
+                                    "type": "gradient",
+                                    "gradientType": "radial",
+                                    "enabled": true,
+                                    "rotation": 0,
+                                    "size": {
+                                      "width": 1,
+                                      "height": 1
+                                    },
+                                    "colors": [
+                                      {
+                                        "color": "#FFF1B8",
+                                        "position": 0
+                                      },
+                                      {
+                                        "color": "$warm-card-butter",
+                                        "position": 0.7
+                                      },
+                                      {
+                                        "color": "$warm-card-peach",
+                                        "position": 1
+                                      }
+                                    ]
+                                  },
+                                  "cornerRadius": 14
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "aqPv9",
+                              "width": "fill_container",
+                              "height": "fill_container",
+                              "gap": 6,
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "JwTmD",
+                                  "width": "fill_container",
+                                  "height": "fill_container",
+                                  "fill": {
+                                    "type": "gradient",
+                                    "gradientType": "radial",
+                                    "enabled": true,
+                                    "rotation": 0,
+                                    "size": {
+                                      "width": 1,
+                                      "height": 1
+                                    },
+                                    "colors": [
+                                      {
+                                        "color": "#FFF1B8",
+                                        "position": 0
+                                      },
+                                      {
+                                        "color": "$warm-card-butter",
+                                        "position": 0.7
+                                      },
+                                      {
+                                        "color": "$warm-card-peach",
+                                        "position": 1
+                                      }
+                                    ]
+                                  },
+                                  "cornerRadius": 14
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "JwaSL",
+                                  "width": "fill_container",
+                                  "height": "fill_container",
+                                  "fill": {
+                                    "type": "gradient",
+                                    "gradientType": "radial",
+                                    "enabled": true,
+                                    "rotation": 0,
+                                    "size": {
+                                      "width": 1,
+                                      "height": 1
+                                    },
+                                    "colors": [
+                                      {
+                                        "color": "#FFF1B8",
+                                        "position": 0
+                                      },
+                                      {
+                                        "color": "$warm-card-butter",
+                                        "position": 0.7
+                                      },
+                                      {
+                                        "color": "$warm-card-peach",
+                                        "position": 1
+                                      }
+                                    ]
+                                  },
+                                  "cornerRadius": 14
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "k1pf1H",
+                  "width": "fill_container",
+                  "gap": 40,
+                  "padding": [
+                    8,
+                    0,
+                    0,
+                    0
+                  ],
+                  "justifyContent": "center",
+                  "alignItems": "end",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "BicYr",
+                      "layout": "vertical",
+                      "gap": 14,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "l6Ueuy",
+                          "width": 88,
+                          "height": 88,
+                          "fill": "$warm-card-sand",
+                          "cornerRadius": 20,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "V44gYy",
+                              "width": 48,
+                              "height": 48,
+                              "fill": "$warm-text",
+                              "cornerRadius": 11,
+                              "layout": "vertical",
+                              "gap": 2,
+                              "padding": 4,
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "TwpSs",
+                                  "width": "fill_container",
+                                  "height": "fill_container",
+                                  "gap": 2,
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "rF94m",
+                                      "width": "fill_container",
+                                      "height": "fill_container",
+                                      "fill": "$warm-card-butter",
+                                      "cornerRadius": 3
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "xI2kA",
+                                      "width": "fill_container",
+                                      "height": "fill_container",
+                                      "fill": "$warm-card-butter",
+                                      "cornerRadius": 3
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "Byrp4",
+                                  "width": "fill_container",
+                                  "height": "fill_container",
+                                  "gap": 2,
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "y0gBp",
+                                      "width": "fill_container",
+                                      "height": "fill_container",
+                                      "fill": "$warm-card-butter",
+                                      "cornerRadius": 3
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "ZXQrJ",
+                                      "width": "fill_container",
+                                      "height": "fill_container",
+                                      "fill": "$warm-card-butter",
+                                      "cornerRadius": 3
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "jCqwt",
+                          "fill": "$warm-text-tertiary",
+                          "content": "48px sidebar",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "yn8Bm",
+                      "layout": "vertical",
+                      "gap": 14,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "pS158",
+                          "width": 48,
+                          "height": 48,
+                          "fill": "$warm-card-sand",
+                          "cornerRadius": 12,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "Jwhi2",
+                              "width": 16,
+                              "height": 16,
+                              "fill": "$warm-text",
+                              "cornerRadius": 4,
+                              "layout": "vertical",
+                              "gap": 2,
+                              "padding": 2,
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "PIwqz",
+                                  "width": "fill_container",
+                                  "height": "fill_container",
+                                  "gap": 2,
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "wGpje",
+                                      "width": "fill_container",
+                                      "height": "fill_container",
+                                      "fill": "$warm-card-butter",
+                                      "cornerRadius": 1
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "zPU0C",
+                                      "width": "fill_container",
+                                      "height": "fill_container",
+                                      "fill": "$warm-card-butter",
+                                      "cornerRadius": 1
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "NXcA9",
+                                  "width": "fill_container",
+                                  "height": "fill_container",
+                                  "gap": 2,
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "zD1Cy",
+                                      "width": "fill_container",
+                                      "height": "fill_container",
+                                      "fill": "$warm-card-butter",
+                                      "cornerRadius": 1
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "I7DsKH",
+                                      "width": "fill_container",
+                                      "height": "fill_container",
+                                      "fill": "$warm-card-butter",
+                                      "cornerRadius": 1
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "g4WFih",
+                          "fill": "$warm-text-tertiary",
+                          "content": "16px favicon",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "qW7ZN",
+              "name": "slot/monogram",
+              "width": "fill_container",
+              "fill": "$warm-bg-card",
+              "cornerRadius": 24,
+              "stroke": {
+                "thickness": 1,
+                "fill": "$warm-border"
+              },
+              "layout": "vertical",
+              "gap": 24,
+              "padding": 24,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "nYpEf",
+                  "name": "title-row",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "q4oh9S",
+                      "fill": "$warm-text",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "D Monogram",
+                      "lineHeight": 1.1,
+                      "fontFamily": "DM Serif Display",
+                      "fontSize": 28,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Oy30U",
+                      "fill": "$warm-text-secondary",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "A serif D crowned with a small gable — letterform as home.",
+                      "lineHeight": 1.45,
+                      "fontFamily": "DM Sans",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "o5C06j",
+                  "name": "hero-wrap",
+                  "width": "fill_container",
+                  "justifyContent": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "ngvNV",
+                      "name": "hero-tile",
+                      "clip": true,
+                      "width": 320,
+                      "height": 320,
+                      "fill": "$warm-card-sand",
+                      "cornerRadius": 64,
+                      "stroke": {
+                        "thickness": 1,
+                        "fill": "$warm-border"
+                      },
+                      "layout": "vertical",
+                      "gap": 4,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "polygon",
+                          "polygonCount": 3,
+                          "id": "t3vdRm",
+                          "fill": "$warm-accent",
+                          "width": 64,
+                          "height": 34
+                        },
+                        {
+                          "type": "text",
+                          "id": "QsT98",
+                          "fill": "$warm-text",
+                          "content": "D",
+                          "lineHeight": 1,
+                          "fontFamily": "DM Serif Display",
+                          "fontSize": 240,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Mtx24",
+                  "name": "sizes-row",
+                  "width": "fill_container",
+                  "gap": 32,
+                  "padding": [
+                    8,
+                    0
+                  ],
+                  "justifyContent": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "GhFJm",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "qPONy",
+                          "clip": true,
+                          "width": 48,
+                          "height": 48,
+                          "fill": "$warm-card-sand",
+                          "cornerRadius": 12,
+                          "stroke": {
+                            "thickness": 1,
+                            "fill": "$warm-border"
+                          },
+                          "layout": "vertical",
+                          "gap": 1,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "polygon",
+                              "polygonCount": 3,
+                              "id": "oa1ru",
+                              "fill": "$warm-accent",
+                              "width": 11,
+                              "height": 6
+                            },
+                            {
+                              "type": "text",
+                              "id": "h4JqD",
+                              "fill": "$warm-text",
+                              "content": "D",
+                              "lineHeight": 1,
+                              "fontFamily": "DM Serif Display",
+                              "fontSize": 36,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "IMarW",
+                          "fill": "$warm-text-tertiary",
+                          "content": "48px sidebar",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "pSP0r",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "rHnEJ",
+                          "width": 48,
+                          "height": 48,
+                          "layout": "vertical",
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "S6yyK",
+                              "clip": true,
+                              "width": 16,
+                              "height": 16,
+                              "fill": "$warm-card-sand",
+                              "cornerRadius": 4,
+                              "stroke": {
+                                "thickness": 1,
+                                "fill": "$warm-border"
+                              },
+                              "layout": "vertical",
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "A0wb6W",
+                                  "fill": "$warm-text",
+                                  "content": "D",
+                                  "lineHeight": 1,
+                                  "fontFamily": "DM Serif Display",
+                                  "fontSize": 14,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "NNpXu",
+                          "fill": "$warm-text-tertiary",
+                          "content": "16px favicon",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "H2y5e",
+              "name": "slot/hearth",
+              "width": "fill_container",
+              "fill": "$warm-bg-card",
+              "cornerRadius": 24,
+              "stroke": {
+                "thickness": 1,
+                "fill": "$warm-border"
+              },
+              "layout": "vertical",
+              "gap": 24,
+              "padding": 24,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "wbOes",
+                  "name": "header",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "v4buXW",
+                      "fill": "$warm-text",
+                      "content": "Hearth",
+                      "fontFamily": "$warm-font-display",
+                      "fontSize": 28,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "text",
+                      "id": "G9Bl6X",
+                      "fill": "$warm-text-secondary",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "House with a glowing core — home and the warmth that lives in it.",
+                      "lineHeight": 1.4,
+                      "fontFamily": "$warm-font-body",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "flfBO",
+                  "name": "hero",
+                  "width": "fill_container",
+                  "padding": [
+                    24,
+                    0
+                  ],
+                  "justifyContent": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "er92j",
+                      "name": "heroTile",
+                      "width": 320,
+                      "height": 320,
+                      "fill": "$warm-card-sand",
+                      "cornerRadius": 56,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "NwHs6",
+                          "name": "iconStack",
+                          "width": 200,
+                          "height": 200,
+                          "layout": "none",
+                          "children": [
+                            {
+                              "type": "path",
+                              "id": "ynwFe",
+                              "x": 0,
+                              "y": 0,
+                              "name": "house",
+                              "geometry": "M50 15l40 40 0 35-80 0 0-35z",
+                              "viewBox": [
+                                0,
+                                0,
+                                100,
+                                100
+                              ],
+                              "fill": "$warm-text",
+                              "width": 200,
+                              "height": 200
+                            },
+                            {
+                              "type": "ellipse",
+                              "id": "qtOSY",
+                              "x": 72,
+                              "y": 116,
+                              "name": "hearth",
+                              "fill": "$warm-accent",
+                              "width": 56,
+                              "height": 56
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "d7a8S",
+                  "name": "sizesRow",
+                  "width": "fill_container",
+                  "gap": 16,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "ERS6w",
+                      "name": "s48Cell",
+                      "width": "fill_container",
+                      "fill": "$warm-bg",
+                      "cornerRadius": 12,
+                      "gap": 12,
+                      "padding": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "sb9gr",
+                          "name": "s48Tile",
+                          "width": 48,
+                          "height": 48,
+                          "fill": "$warm-card-sand",
+                          "cornerRadius": 10,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "V8itRQ",
+                              "name": "stack",
+                              "width": 30,
+                              "height": 30,
+                              "layout": "none",
+                              "children": [
+                                {
+                                  "type": "path",
+                                  "id": "OzDXM",
+                                  "x": 0,
+                                  "y": 0,
+                                  "geometry": "M50 15l40 40 0 35-80 0 0-35z",
+                                  "viewBox": [
+                                    0,
+                                    0,
+                                    100,
+                                    100
+                                  ],
+                                  "fill": "$warm-text",
+                                  "width": 30,
+                                  "height": 30
+                                },
+                                {
+                                  "type": "ellipse",
+                                  "id": "IrOgP",
+                                  "x": 10.8,
+                                  "y": 17.4,
+                                  "fill": "$warm-accent",
+                                  "width": 8.4,
+                                  "height": 8.4
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "M22SV",
+                          "fill": "$warm-text-secondary",
+                          "content": "48px sidebar",
+                          "fontFamily": "$warm-font-body",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "VtRuS",
+                      "name": "s16Cell",
+                      "width": "fill_container",
+                      "fill": "$warm-bg",
+                      "cornerRadius": 12,
+                      "gap": 12,
+                      "padding": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "mA4gd",
+                          "name": "s16Tile",
+                          "width": 16,
+                          "height": 16,
+                          "fill": "$warm-card-sand",
+                          "cornerRadius": 3,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "YhXUI",
+                              "name": "stack",
+                              "width": 12,
+                              "height": 12,
+                              "layout": "none",
+                              "children": [
+                                {
+                                  "type": "path",
+                                  "id": "KEvI1",
+                                  "x": 0,
+                                  "y": 0,
+                                  "geometry": "M50 15l40 40 0 35-80 0 0-35z",
+                                  "viewBox": [
+                                    0,
+                                    0,
+                                    100,
+                                    100
+                                  ],
+                                  "fill": "$warm-text",
+                                  "width": 12,
+                                  "height": 12
+                                },
+                                {
+                                  "type": "ellipse",
+                                  "id": "Epz1l",
+                                  "x": 4.32,
+                                  "y": 6.96,
+                                  "fill": "$warm-accent",
+                                  "width": 3.36,
+                                  "height": 3.36
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "Q4aRM",
+                          "fill": "$warm-text-secondary",
+                          "content": "16px favicon",
+                          "fontFamily": "$warm-font-body",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "uPcIm",
+      "x": 8200,
+      "y": 1063,
+      "name": "Hearth Icon",
+      "width": 320,
+      "height": 320,
+      "fill": "$warm-card-sand",
+      "cornerRadius": 56,
+      "justifyContent": "center",
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "frame",
+          "id": "L24NVN",
+          "name": "iconStack",
+          "width": 200,
+          "height": 200,
+          "layout": "none",
+          "children": [
+            {
+              "type": "path",
+              "id": "Gf0Lh",
+              "x": 0,
+              "y": 0,
+              "name": "house",
+              "geometry": "M50 15l40 40 0 35-80 0 0-35z",
+              "viewBox": [
+                0,
+                0,
+                100,
+                100
+              ],
+              "fill": "$warm-text",
+              "width": 200,
+              "height": 200
+            },
+            {
+              "type": "ellipse",
+              "id": "UZFJe",
+              "x": 72,
+              "y": 116,
+              "name": "hearth",
+              "fill": "$warm-accent",
+              "width": 56,
+              "height": 56
+            }
+          ]
+        }
+      ]
     }
   ],
   "variables": {

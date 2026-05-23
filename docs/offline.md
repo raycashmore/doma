@@ -33,5 +33,5 @@ When the first offline-needing app is built, choose the layer in that PR — not
 
 ## Follow-ups for the PWA shell itself
 
-- **PNG icons.** Today the manifest references only `icon.svg`. Chrome/Edge/Firefox handle SVG icons. iOS Add-to-Home-Screen needs PNGs (`apple-touch-icon`). Generate 180/192/512 PNGs from the SVG and add them to the manifest's icon array + an `apple-touch-icon` link in each app's `__root.tsx`.
+- **PNG icons.** The Budget app now has 180/192/512 PNG icons and an `apple-touch-icon` link for iOS Add to Home Screen. Repeat this for each app as its brand mark settles.
 - **Per-app theme colors.** Currently all apps use `#f97316` (the orange accent). Once each sub-app gets a real brand mark, give it its own `theme_color` so the installed app's title bar reflects it.
