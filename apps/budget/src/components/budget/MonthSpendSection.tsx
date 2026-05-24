@@ -6,21 +6,19 @@ interface Props {
   credit1: number;
   credit2: number;
   credit3: number;
+  categories: Array<{
+    category: string;
+    amount: number;
+  }>;
   oneOffs: number;
   trend?: Trend | null;
 }
-
-const CATEGORY_STUBS = [
-  'Groceries',
-  'Dining out',
-  'Transport',
-  'Retail, bills & health'
-];
 
 export default function MonthSpendSection({
   credit1,
   credit2,
   credit3,
+  categories,
   oneOffs,
   trend
 }: Props) {
@@ -49,20 +47,30 @@ export default function MonthSpendSection({
       <div className="rounded-2xl bg-warm-bg-card p-4">
         <div className="flex items-center justify-between mb-2">
           <span className="text-[13px] font-bold text-warm-text-primary">
-            Credit card categories
+            Card spend by category
           </span>
           <span className="text-[13px] font-bold text-warm-text-primary">
             {formatCurrency(creditSubtotal)}
           </span>
         </div>
-        <ul className="flex flex-col gap-1.5 text-sm">
-          {CATEGORY_STUBS.map((cat) => (
-            <li key={cat} className="flex justify-between">
-              <span className="text-warm-text-secondary">{cat}</span>
-              <span className="text-warm-text-tertiary">—</span>
-            </li>
-          ))}
-        </ul>
+        {categories.length > 0 ? (
+          <ul className="flex flex-col gap-1.5 text-sm">
+            {categories.map((cat) => (
+              <li key={cat.category} className="flex justify-between gap-3">
+                <span className="min-w-0 text-warm-text-secondary">
+                  {cat.category}
+                </span>
+                <span className="shrink-0 text-warm-text-primary">
+                  {formatCurrency(cat.amount)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-warm-text-secondary">
+            No category data for this month.
+          </p>
+        )}
       </div>
 
       <div className="rounded-2xl bg-warm-bg-card p-4 flex items-center justify-between text-sm">
@@ -91,13 +99,9 @@ function TrendBadge({ trend }: { trend: Trend }) {
         : 'text-warm-text-secondary';
   const sign = trend.pct > 0 ? '+' : '';
   const label =
-    trend.direction === 'flat'
-      ? 'Flat'
-      : `${sign}${trend.pct.toFixed(1)}%`;
+    trend.direction === 'flat' ? 'Flat' : `${sign}${trend.pct.toFixed(1)}%`;
   return (
-    <div
-      className={`flex items-center gap-1 text-[10px] font-bold ${color}`}
-    >
+    <div className={`flex items-center gap-1 text-[10px] font-bold ${color}`}>
       <Icon size={10} aria-hidden />
       <span>{label}</span>
     </div>

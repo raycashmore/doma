@@ -10,6 +10,7 @@ import {
 
 export type BudgetRow = Doc<'budget'>;
 export type MortgageRow = Doc<'mortgage'>;
+export type SpendCategoryBreakdownRow = Doc<'spendCategoryBreakdown'>;
 
 export type TrendDirection = 'up' | 'down' | 'flat';
 
@@ -30,6 +31,11 @@ export interface MonthDetail {
     credit1: number;
     credit2: number;
     credit3: number;
+    cardSubtotal: number;
+    categories: Array<{
+      category: string;
+      amount: number;
+    }>;
     oneOffs: number;
     total: number;
   };
@@ -65,6 +71,10 @@ function spendTotal(b: BudgetRow): number {
   return b.credit1 + b.credit2 + b.credit3 + b.oneOffs;
 }
 
+function cardSubtotal(b: BudgetRow): number {
+  return b.credit1 + b.credit2 + b.credit3;
+}
+
 export function computeTrend(
   current: number,
   prior: number | null | undefined
@@ -84,7 +94,8 @@ export function shapeMonthDetail(
   mortgage: MortgageRow | null,
   mortgageConfig: MortgageConfigInput | null,
   priorBudget?: BudgetRow | null,
-  priorMortgage?: MortgageRow | null
+  priorMortgage?: MortgageRow | null,
+  spendCategoryRows: SpendCategoryBreakdownRow[] = []
 ): MonthDetail | null {
   if (!budget) return null;
 
@@ -111,6 +122,13 @@ export function shapeMonthDetail(
       credit1: budget.credit1,
       credit2: budget.credit2,
       credit3: budget.credit3,
+      cardSubtotal: cardSubtotal(budget),
+      categories: [...spendCategoryRows]
+        .sort((a, b) => b.amount - a.amount)
+        .map((row) => ({
+          category: row.category,
+          amount: row.amount
+        })),
       oneOffs: budget.oneOffs,
       total: curSpend
     },

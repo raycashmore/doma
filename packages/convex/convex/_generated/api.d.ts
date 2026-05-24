@@ -15,6 +15,7 @@ import type * as monthlyBreakdown from "../monthlyBreakdown.js";
 import type * as mutations from "../mutations.js";
 import type * as queries from "../queries.js";
 import type * as seed from "../seed.js";
+import type * as spendingSummary from "../spendingSummary.js";
 
 import type {
   ApiFromModules,
@@ -30,6 +31,7 @@ declare const fullApi: ApiFromModules<{
   mutations: typeof mutations;
   queries: typeof queries;
   seed: typeof seed;
+  spendingSummary: typeof spendingSummary;
 }>;
 
 /**

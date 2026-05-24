@@ -91,6 +91,7 @@ function BudgetPage() {
               credit1={detail.spend.credit1}
               credit2={detail.spend.credit2}
               credit3={detail.spend.credit3}
+              categories={detail.spend.categories}
               oneOffs={detail.spend.oneOffs}
               trend={detail.trends.spend}
             />

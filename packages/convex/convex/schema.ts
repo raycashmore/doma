@@ -121,6 +121,16 @@ export default defineSchema({
   }).index('by_date', ['date']),
 
   // ============================================================
+  // SPEND CATEGORY BREAKDOWN — Monthly card spend category context
+  // ============================================================
+  spendCategoryBreakdown: defineTable({
+    monthKey: v.string(),
+    sourceDate: v.number(),
+    category: v.string(),
+    amount: v.number()
+  }).index('by_month', ['monthKey']),
+
+  // ============================================================
   // CRYPTO — Deposit/withdrawal transactions
   // ============================================================
   cryptoTransactions: defineTable({

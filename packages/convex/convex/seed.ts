@@ -15,6 +15,7 @@ export const clearTable = mutation({
       v.literal('mortgage'),
       v.literal('mortgageConfig'),
       v.literal('budget'),
+      v.literal('spendCategoryBreakdown'),
       v.literal('cryptoTransactions'),
       v.literal('cryptoSummaries')
     )
@@ -286,6 +287,33 @@ export const seedBudget = mutation({
         oneOffs: row.oneOffs,
         sharedOut: row.sharedOut,
         rent: row.rent
+      });
+    }
+    return { inserted: args.rows.length };
+  }
+});
+
+// ============================================================
+// SEED: Spend Category Breakdown
+// ============================================================
+export const seedSpendCategoryBreakdown = mutation({
+  args: {
+    rows: v.array(
+      v.object({
+        monthKey: v.string(),
+        sourceDate: v.number(),
+        category: v.string(),
+        amount: v.number()
+      })
+    )
+  },
+  handler: async (ctx, args) => {
+    for (const row of args.rows) {
+      await ctx.db.insert('spendCategoryBreakdown', {
+        monthKey: row.monthKey,
+        sourceDate: row.sourceDate,
+        category: row.category,
+        amount: row.amount
       });
     }
     return { inserted: args.rows.length };
