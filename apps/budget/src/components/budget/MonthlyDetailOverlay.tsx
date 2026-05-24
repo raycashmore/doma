@@ -1,12 +1,15 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 interface Props {
   open: boolean;
   monthLabel: string;
-  subtitle?: string;
+  previousMonthLabel?: string;
+  nextMonthLabel?: string;
+  onPreviousMonth?: () => void;
+  onNextMonth?: () => void;
   onClose: () => void;
   children: ReactNode;
 }
@@ -14,7 +17,10 @@ interface Props {
 export default function MonthlyDetailOverlay({
   open,
   monthLabel,
-  subtitle,
+  previousMonthLabel,
+  nextMonthLabel,
+  onPreviousMonth,
+  onNextMonth,
   onClose,
   children
 }: Props) {
@@ -34,7 +40,7 @@ export default function MonthlyDetailOverlay({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-12"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-6"
       onClick={onClose}
     >
       <div
@@ -48,36 +54,54 @@ export default function MonthlyDetailOverlay({
         aria-label={`${monthLabel} detail`}
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
-        className="relative flex h-[85vh] w-full max-w-5xl flex-col overflow-hidden rounded-[28px] border border-warm-border bg-warm-bg-card shadow-[0_24px_60px_rgba(61,46,34,0.25)] outline-none"
+        className="relative flex h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-[28px] border border-warm-border bg-warm-bg-card shadow-[0_24px_60px_rgba(61,46,34,0.25)] outline-none md:h-[92vh]"
       >
-        <div className="flex flex-none items-start justify-between gap-4 border-b border-warm-border px-7 pt-6 pb-5">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-11 h-11 rounded-[14px] bg-warm-section-spend text-warm-accent">
-              <span aria-hidden className="text-base font-warm-display">
-                $
-              </span>
-            </div>
-            <div>
-              <h2 className="text-[26px] leading-tight font-warm-display text-warm-text-primary">
-                {monthLabel}
-              </h2>
-              {subtitle ? (
-                <p className="text-xs text-warm-text-secondary mt-0.5">
-                  {subtitle}
-                </p>
-              ) : null}
-            </div>
+        <div className="flex flex-none items-center justify-between gap-4 border-b border-warm-border px-3.5 pt-5 pb-4 md:px-7 md:pt-6 md:pb-5">
+          <div className="min-w-0">
+            <h2 className="text-[32px] leading-none font-warm-display text-warm-text-primary md:text-[36px]">
+              {monthLabel}
+            </h2>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="flex items-center justify-center w-10 h-10 rounded-full bg-warm-bg-card-soft border border-warm-border text-warm-text-secondary hover:text-warm-text-primary"
-          >
-            <X size={18} aria-hidden />
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={onPreviousMonth}
+              disabled={!onPreviousMonth}
+              aria-label={
+                previousMonthLabel
+                  ? `Open ${previousMonthLabel}`
+                  : 'Open previous month'
+              }
+              title={previousMonthLabel ?? 'Previous month'}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-warm-border bg-warm-bg-card-soft text-warm-text-secondary shadow-sm hover:border-warm-accent/40 hover:text-warm-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-warm-accent disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:border-warm-border disabled:hover:text-warm-text-secondary"
+            >
+              <ChevronLeft size={18} aria-hidden />
+            </button>
+            <button
+              type="button"
+              onClick={onNextMonth}
+              disabled={!onNextMonth}
+              aria-label={
+                nextMonthLabel ? `Open ${nextMonthLabel}` : 'Open next month'
+              }
+              title={nextMonthLabel ?? 'Next month'}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-warm-border bg-warm-bg-card-soft text-warm-text-secondary shadow-sm hover:border-warm-accent/40 hover:text-warm-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-warm-accent disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:border-warm-border disabled:hover:text-warm-text-secondary"
+            >
+              <ChevronRight size={18} aria-hidden />
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-warm-border bg-warm-bg-card-soft text-warm-text-secondary shadow-sm hover:text-warm-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-warm-accent"
+            >
+              <X size={18} aria-hidden />
+            </button>
+          </div>
         </div>
-        <div className="min-h-0 flex-1 overflow-auto px-7 py-6">{children}</div>
+        <div className="min-h-0 flex-1 overflow-auto px-3.5 py-5 md:px-7 md:py-6">
+          {children}
+        </div>
       </div>
     </div>,
     document.body

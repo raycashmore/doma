@@ -52,6 +52,23 @@ function BudgetPage() {
     api.queries.getMonthlyDetail,
     openMonth !== null ? { date: openMonth } : 'skip'
   );
+  const adjacentMonths = useMemo(() => {
+    if (!rows || openMonth === null) {
+      return { previous: null, next: null };
+    }
+
+    const monthIndex = rows.findIndex((row) => row.date === openMonth);
+    if (monthIndex === -1) {
+      return { previous: null, next: null };
+    }
+
+    return {
+      previous: rows[monthIndex + 1] ?? null,
+      next: rows[monthIndex - 1] ?? null
+    };
+  }, [openMonth, rows]);
+  const previousMonth = adjacentMonths.previous;
+  const nextMonth = adjacentMonths.next;
 
   return (
     <>
@@ -76,7 +93,18 @@ function BudgetPage() {
       <MonthlyDetailOverlay
         open={openMonth !== null && detail !== undefined && detail !== null}
         monthLabel={openMonth !== null ? monthLabel(openMonth) : ''}
-        subtitle="Income, spend and mortgage contributions for the selected month"
+        previousMonthLabel={
+          previousMonth ? monthLabel(previousMonth.date) : undefined
+        }
+        nextMonthLabel={
+          nextMonth ? monthLabel(nextMonth.date) : undefined
+        }
+        onPreviousMonth={
+          previousMonth ? () => setOpenMonth(previousMonth.date) : undefined
+        }
+        onNextMonth={
+          nextMonth ? () => setOpenMonth(nextMonth.date) : undefined
+        }
         onClose={() => setOpenMonth(null)}
       >
         {detail ? (
@@ -88,6 +116,7 @@ function BudgetPage() {
               trend={detail.trends.income}
             />
             <MonthSpendSection
+              key={openMonth ?? 'spend'}
               credit1={detail.spend.credit1}
               credit2={detail.spend.credit2}
               credit3={detail.spend.credit3}
@@ -101,10 +130,6 @@ function BudgetPage() {
                 fixedPayment={detail.mortgage.fixedPayment}
                 variablePayment={detail.mortgage.variablePayment}
                 paymentTotal={detail.mortgage.paymentTotal}
-                offset1={detail.mortgage.offset1}
-                offset2={detail.mortgage.offset2}
-                debt1={detail.mortgage.debt1}
-                debt2={detail.mortgage.debt2}
                 trend={detail.trends.mortgage}
               />
             ) : null}
