@@ -12,9 +12,9 @@ Use `pnpm` (`packageManager`: `pnpm@9.0.0`).
 
 ## Task-Specific Instructions
 
+- [Testing policy](docs/agents/testing-policy.md)
 - [Browser Verification](docs/agents/browser-verification.md)
 - [Repository Map](docs/agents/repo-map.md)
-- [Instruction Audit](docs/agents/instruction-audit.md)
 
 ## Agent skills
 
