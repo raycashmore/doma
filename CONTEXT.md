@@ -5,7 +5,7 @@ Doma is a personal finance context for understanding household accounts, budget 
 ## Language
 
 **Budget total**:
-A monthly amount used for budget-level income, spending, mortgage, and net calculations. A **budget total** can come from a different spreadsheet source than category analytics and does not have to reconcile to a **spend category breakdown**.
+A monthly amount used for budget-level income, spending, mortgage, and net calculations. A **budget total** belongs to a **budget display month**, can come from a different spreadsheet source than category analytics, and does not have to reconcile to a **spend category breakdown**.
 _Avoid_: Category total, transaction total
 
 **Spend category breakdown**:
@@ -24,8 +24,16 @@ _Avoid_: Empty category, zero row
 A calendar month with no visible spend categories. It should be shown as an explicit absence of category analytics, not filled with placeholder categories.
 _Avoid_: Placeholder category rows, fake category rows
 
+**Budget display month**:
+The month-and-year period where budget and mortgage captures are shown, represented by the final day of that month. All values in a budget or mortgage capture belong to the previous budget display month; account balance captures remain point-in-time records.
+_Avoid_: Source month, capture month
+
+**Capture date**:
+The spreadsheet date attached to a budget or mortgage capture before it is assigned to a budget display month. It is provenance for the capture, not the month where the captured values are shown.
+_Avoid_: Display date, month date
+
 **Calendar month**:
-The month-and-year period used to align budget rows and spend category breakdowns. Day-of-month differences in source spreadsheets do not create separate periods.
+The month-and-year period used for source data that is not shifted into a budget display month. Spending summary category analytics use calendar month; day-of-month differences in that source do not create separate periods.
 _Avoid_: Exact source date, statement date
 
 ## Example Dialogue
@@ -34,9 +42,13 @@ Dev: "The card spend by category for April does not add up to the credit-card bu
 
 Domain expert: "No. The budget total and the spend category breakdown are independent views. Show the breakdown as context without forcing it to reconcile."
 
-Dev: "The budget row is dated April 10 and the category sheet says April 30. Are those separate periods?"
+Dev: "The budget row is dated May 10 and the category sheet says April 30. Are those separate periods?"
 
-Domain expert: "No. They are both April. Match category analytics to budget detail by calendar month."
+Domain expert: "No. The budget row belongs to the April budget display month, and the category sheet belongs to the April calendar month."
+
+Dev: "Should April card spend by category appear with the May-dated budget capture?"
+
+Domain expert: "Yes. The budget capture is shown under April, and the April spend category breakdown is matched to that displayed month."
 
 Dev: "Should the card spend by category panel total add up the visible categories?"
 

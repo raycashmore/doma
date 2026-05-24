@@ -80,6 +80,7 @@ export default defineSchema({
   // ============================================================
   mortgage: defineTable({
     date: v.number(),
+    captureDate: v.optional(v.number()),
     debt1: v.number(),
     debt2: v.number(),
     fixedPayment: v.number(),
@@ -109,6 +110,7 @@ export default defineSchema({
   // ============================================================
   budget: defineTable({
     date: v.number(),
+    captureDate: v.optional(v.number()),
     incomePrimary: v.number(),
     incomeSecondary: v.number(),
     billContrib: v.number(),

@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as budgetDisplayMonth from "../budgetDisplayMonth.js";
 import type * as budgetSummary from "../budgetSummary.js";
 import type * as helpers from "../helpers.js";
 import type * as monthDetail from "../monthDetail.js";
@@ -24,6 +25,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  budgetDisplayMonth: typeof budgetDisplayMonth;
   budgetSummary: typeof budgetSummary;
   helpers: typeof helpers;
   monthDetail: typeof monthDetail;
