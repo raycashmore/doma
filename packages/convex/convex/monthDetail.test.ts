@@ -3,6 +3,7 @@ import {
   computeTrend,
   shapeMonthDetail,
   type BudgetRow,
+  type SpendCategoryBreakdownRow,
   type MortgageRow
 } from './monthDetail';
 
@@ -71,6 +72,25 @@ const priorMortgageRow: MortgageRow = {
   variablePayment: 150_000
 };
 
+const categoryRows: SpendCategoryBreakdownRow[] = [
+  {
+    _id: 'sc-small' as any,
+    _creationTime: 0,
+    monthKey: '1970-04',
+    sourceDate: MS * 100,
+    category: 'Category B',
+    amount: 12_000
+  },
+  {
+    _id: 'sc-large' as any,
+    _creationTime: 0,
+    monthKey: '1970-04',
+    sourceDate: MS * 100,
+    category: 'Category A',
+    amount: 34_000
+  }
+];
+
 describe('shapeMonthDetail', () => {
   it('returns null when budget row missing', () => {
     expect(shapeMonthDetail(null, mortgageRow, mortgageConfig)).toBeNull();
@@ -84,6 +104,24 @@ describe('shapeMonthDetail', () => {
   it('returns spend subtotal (credit + oneOffs)', () => {
     const r = shapeMonthDetail(budgetRow, null, mortgageConfig)!;
     expect(r.spend.total).toBe(264_000); // 90+60+80+34 (thousands of cents)
+  });
+
+  it('returns category context ordered by amount without changing spend totals', () => {
+    const r = shapeMonthDetail(
+      budgetRow,
+      null,
+      mortgageConfig,
+      null,
+      null,
+      categoryRows
+    )!;
+
+    expect(r.spend.cardSubtotal).toBe(230_000);
+    expect(r.spend.categories).toEqual([
+      { category: 'Category A', amount: 34_000 },
+      { category: 'Category B', amount: 12_000 }
+    ]);
+    expect(r.spend.total).toBe(264_000);
   });
 
   it('returns null mortgage when no mortgage row', () => {

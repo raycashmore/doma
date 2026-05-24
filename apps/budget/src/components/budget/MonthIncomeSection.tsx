@@ -18,13 +18,10 @@ export default function MonthIncomeSection({
   return (
     <section className="rounded-3xl bg-warm-section-income p-5 flex-1 min-w-0 flex flex-col gap-3">
       <header className="flex items-start justify-between">
-        <div className="flex flex-col gap-0.5">
+        <div>
           <h3 className="text-[22px] leading-tight font-warm-display text-warm-text-primary">
             Income
           </h3>
-          <span className="text-[10px] font-bold text-warm-text-secondary">
-            Monthly total
-          </span>
         </div>
         <div className="flex flex-col items-end gap-0.5">
           <span className="text-[22px] leading-tight font-warm-display text-warm-text-primary">
@@ -77,14 +74,10 @@ function TrendBadge({ trend }: { trend: Trend }) {
         : 'text-warm-text-secondary';
   const sign = trend.pct > 0 ? '+' : '';
   const label =
-    trend.direction === 'flat'
-      ? 'Flat'
-      : `${sign}${trend.pct.toFixed(1)}%`;
+    trend.direction === 'flat' ? 'Flat' : `${sign}${trend.pct.toFixed(1)}%`;
   return (
-    <div
-      className={`flex items-center gap-1 text-[10px] font-bold ${color}`}
-    >
-      <Icon size={10} aria-hidden />
+    <div className={`flex items-center gap-1 text-[12px] font-bold ${color}`}>
+      <Icon size={12} aria-hidden />
       <span>{label}</span>
     </div>
   );

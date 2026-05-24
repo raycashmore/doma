@@ -19,6 +19,7 @@ const tables = [
   'mortgage',
   'mortgageConfig',
   'budget',
+  'spendCategoryBreakdown',
   'cryptoTransactions',
   'cryptoSummaries'
 ] as const;

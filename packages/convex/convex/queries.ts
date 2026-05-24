@@ -30,6 +30,7 @@ import {
   utcYearMonthKey
 } from './monthlyBreakdown';
 import { shapeMonthDetail } from './monthDetail';
+import { monthKeyFromTimestamp } from './spendingSummary';
 
 async function getDefaultMortgageConfig(ctx: QueryCtx) {
   return ctx.db
@@ -437,12 +438,18 @@ export const getMonthlyBreakdown = query({
 export const getMonthlyDetail = query({
   args: { date: v.number() },
   handler: async (ctx, args) => {
-    const [budget, mortgageConfig] = await Promise.all([
+    const [budget, mortgageConfig, spendCategories] = await Promise.all([
       ctx.db
         .query('budget')
         .withIndex('by_date', (q) => q.eq('date', args.date))
         .first(),
-      getDefaultMortgageConfig(ctx)
+      getDefaultMortgageConfig(ctx),
+      ctx.db
+        .query('spendCategoryBreakdown')
+        .withIndex('by_month', (q) =>
+          q.eq('monthKey', monthKeyFromTimestamp(args.date))
+        )
+        .collect()
     ]);
 
     // Carry-forward mortgage lookup: most recent at-or-before args.date
@@ -473,7 +480,8 @@ export const getMonthlyDetail = query({
       mortgage,
       mortgageConfig,
       priorBudget,
-      priorMortgage
+      priorMortgage,
+      spendCategories
     );
   }
 });

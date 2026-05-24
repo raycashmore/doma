@@ -48,7 +48,7 @@ export default function BudgetKpiCards({ summary }: Props) {
         periodLabel={summary.periodLabel}
       />
       <KpiCard
-        label="Net gain"
+        label="Monthly Net Gain"
         value={summary.netGain.value}
         delta={summary.netGain.delta}
         deltaPct={summary.netGain.deltaPct}

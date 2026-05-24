@@ -15,6 +15,7 @@ export const clearTable = mutation({
       v.literal('mortgage'),
       v.literal('mortgageConfig'),
       v.literal('budget'),
+      v.literal('spendCategoryBreakdown'),
       v.literal('cryptoTransactions'),
       v.literal('cryptoSummaries')
     )
@@ -197,6 +198,7 @@ export const seedMortgage = mutation({
     rows: v.array(
       v.object({
         date: v.number(),
+        captureDate: v.number(),
         debt1: v.number(),
         debt2: v.number(),
         fixedPayment: v.number(),
@@ -212,6 +214,7 @@ export const seedMortgage = mutation({
     for (const row of args.rows) {
       await ctx.db.insert('mortgage', {
         date: row.date,
+        captureDate: row.captureDate,
         debt1: row.debt1,
         debt2: row.debt2,
         fixedPayment: row.fixedPayment,
@@ -261,6 +264,7 @@ export const seedBudget = mutation({
     rows: v.array(
       v.object({
         date: v.number(),
+        captureDate: v.number(),
         incomePrimary: v.number(),
         incomeSecondary: v.number(),
         billContrib: v.number(),
@@ -277,6 +281,7 @@ export const seedBudget = mutation({
     for (const row of args.rows) {
       await ctx.db.insert('budget', {
         date: row.date,
+        captureDate: row.captureDate,
         incomePrimary: row.incomePrimary,
         incomeSecondary: row.incomeSecondary,
         billContrib: row.billContrib,
@@ -286,6 +291,33 @@ export const seedBudget = mutation({
         oneOffs: row.oneOffs,
         sharedOut: row.sharedOut,
         rent: row.rent
+      });
+    }
+    return { inserted: args.rows.length };
+  }
+});
+
+// ============================================================
+// SEED: Spend Category Breakdown
+// ============================================================
+export const seedSpendCategoryBreakdown = mutation({
+  args: {
+    rows: v.array(
+      v.object({
+        monthKey: v.string(),
+        sourceDate: v.number(),
+        category: v.string(),
+        amount: v.number()
+      })
+    )
+  },
+  handler: async (ctx, args) => {
+    for (const row of args.rows) {
+      await ctx.db.insert('spendCategoryBreakdown', {
+        monthKey: row.monthKey,
+        sourceDate: row.sourceDate,
+        category: row.category,
+        amount: row.amount
       });
     }
     return { inserted: args.rows.length };

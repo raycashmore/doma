@@ -17,6 +17,8 @@ import { api } from '@repo/convex';
 import { toCents } from '@repo/convex/helpers';
 import XLSX from 'xlsx';
 import { getTargetConvexUrl } from './targetUrl';
+import { budgetCaptureDatesFromCaptureDate } from '../convex/budgetDisplayMonth';
+import { parseSpendingSummaryRows } from '../convex/spendingSummary';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -43,6 +45,7 @@ function optNum(val: unknown): number | undefined {
 
 interface BudgetRow {
   date: number;
+  captureDate: number;
   incomePrimary: number;
   incomeSecondary: number;
   billContrib: number;
@@ -56,6 +59,7 @@ interface BudgetRow {
 
 interface MortgageFields {
   date: number;
+  captureDate: number;
   fixedPayment: number;
   variablePayment: number;
   rateVar?: number;
@@ -78,9 +82,10 @@ function readBudgetRows(wb: XLSX.WorkBook): {
 
   for (const r of data.slice(1)) {
     if (!r[0] || typeof r[0] !== 'number') continue;
-    const date = excelDateToTimestamp(num(r[0]));
+    const captureDate = excelDateToTimestamp(num(r[0]));
+    const dates = budgetCaptureDatesFromCaptureDate(captureDate);
     budgetRows.push({
-      date,
+      ...dates,
       incomePrimary: toCents(num(r[5])),
       incomeSecondary: toCents(num(r[6])),
       billContrib: toCents(num(r[16])),
@@ -92,7 +97,7 @@ function readBudgetRows(wb: XLSX.WorkBook): {
       rent: toCents(num(r[9]))
     });
     mortgageFieldsByDate.push({
-      date,
+      ...dates,
       fixedPayment: Math.abs(toCents(num(r[8]))),
       variablePayment: Math.abs(toCents(num(r[7]))),
       rateVar: optNum(r[10]),
@@ -127,6 +132,7 @@ async function main() {
     'mortgage',
     'mortgageConfig',
     'budget',
+    'spendCategoryBreakdown',
     'cryptoTransactions',
     'cryptoSummaries'
   ] as const) {
@@ -320,18 +326,19 @@ async function main() {
     }
 
     const rows = datedRows.map((r: any[]) => {
-      const date = excelDateToTimestamp(num(r[0]));
+      const captureDate = excelDateToTimestamp(num(r[0]));
+      const dates = budgetCaptureDatesFromCaptureDate(captureDate);
       const mortgageFields = findMortgageFieldsAtOrBefore(
         mortgageFieldsByDate,
-        date
+        dates.date
       );
       if (!mortgageFields) {
         throw new Error(
-          `Missing Sink or Swim mortgage fields at or before Mortgage row ${new Date(date).toISOString()} (Excel date ${r[0]})`
+          `Missing Sink or Swim mortgage fields at or before Mortgage row ${new Date(dates.date).toISOString()} (Excel date ${r[0]})`
         );
       }
       return {
-        date,
+        ...dates,
         debt1: toCents(num(r[3])),
         debt2: toCents(num(r[4])),
         fixedPayment: mortgageFields.fixedPayment,
@@ -369,6 +376,29 @@ async function main() {
       );
     }
     console.log(`  budget: ${rows.length} total rows`);
+  }
+
+  // ── Spend Category Breakdown (Spending summary) ───────────
+  {
+    const ws = wb.Sheets['Spending summary'];
+    const data = ws
+      ? XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1 })
+      : [];
+    const rows = parseSpendingSummaryRows(data);
+
+    for (let i = 0; i < rows.length; i += 100) {
+      const batch = rows.slice(i, i + 100);
+      const result = await client.mutation(
+        api.seed.seedSpendCategoryBreakdown,
+        {
+          rows: batch
+        }
+      );
+      console.log(
+        `  spendCategoryBreakdown: inserted ${result.inserted} (batch ${Math.floor(i / 100) + 1})`
+      );
+    }
+    console.log(`  spendCategoryBreakdown: ${rows.length} total rows`);
   }
 
   // ── Crypto Transactions ───────────────────────────────────
