@@ -15,3 +15,17 @@ Use `pnpm` (`packageManager`: `pnpm@9.0.0`).
 - [Browser Verification](docs/agents/browser-verification.md)
 - [Repository Map](docs/agents/repo-map.md)
 - [Instruction Audit](docs/agents/instruction-audit.md)
+
+## Agent skills
+
+### Issue tracker
+
+Issues and PRDs for this repo live in Ray's Notion workspace in the `Doma Backlog` database. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+This repo uses the five canonical triage states as its issue status vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, and `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+This repo is treated as a single-context repo. Skills should look for one root `CONTEXT.md` and one root `docs/adr/` when those files exist. See `docs/agents/domain.md`.
