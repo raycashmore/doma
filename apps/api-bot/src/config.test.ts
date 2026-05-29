@@ -51,6 +51,12 @@ describe('parseConfig', () => {
     );
   });
 
+  it('throws a stable config error when the Upstash Redis REST URL is invalid', () => {
+    expect(() =>
+      parseConfig({ ...validEnv, UPSTASH_REDIS_REST_URL: 'not-a-url' })
+    ).toThrow(new Error('Invalid bot gateway config'));
+  });
+
   it.each([
     ['path', 'https://app.example.com/dashboard'],
     ['query', 'https://app.example.com?next=/dashboard'],

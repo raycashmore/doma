@@ -38,7 +38,7 @@ const botConfigSchema = z.object({
   TELEGRAM_BOT_TOKEN: z.string().min(1),
   TELEGRAM_WEBHOOK_SECRET: z.string().min(1),
   TELEGRAM_BOT_USERNAME: z.string().min(1),
-  UPSTASH_REDIS_REST_URL: z.string().min(1),
+  UPSTASH_REDIS_REST_URL: z.string().url(),
   UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
   APP_ORIGIN: z.string().min(1).transform(parseAppOrigin),
 });
