@@ -1,0 +1,10 @@
+{
+  "extends": "@repo/typescript-config/base.json",
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "types": ["node", "vitest/globals"],
+    "noEmit": true
+  },
+  "include": ["api/**/*.ts", "src/**/*.ts", "vitest.config.ts"]
+}
