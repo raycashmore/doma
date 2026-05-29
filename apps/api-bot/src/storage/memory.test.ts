@@ -177,4 +177,36 @@ describe('createMemoryStorage', () => {
       storage.getActiveChannelLinkByProviderUser('telegram', 'telegram-user-p')
     ).resolves.toEqual(secondLink);
   });
+
+  it('does not return stale provider-user pointers without a matching canonical link', async () => {
+    const canonicalLink = {
+      clerkUserId: 'user_123',
+      provider: 'telegram' as const,
+      providerUserId: 'telegram-user-b',
+      providerChatId: 'telegram-chat-b',
+      status: 'active' as const,
+      createdAt: 1_000,
+      updatedAt: 2_000,
+    };
+    const storage = createMemoryStorage({
+      channelLinksByUser: [['telegram:user_123', canonicalLink]],
+      channelLinksByProviderUser: [
+        [
+          'telegram:telegram-user-a',
+          { clerkUserId: 'user_123', provider: 'telegram' },
+        ],
+        [
+          'telegram:telegram-user-b',
+          { clerkUserId: 'user_123', provider: 'telegram' },
+        ],
+      ],
+    });
+
+    await expect(
+      storage.getActiveChannelLinkByProviderUser('telegram', 'telegram-user-a')
+    ).resolves.toBeNull();
+    await expect(
+      storage.getActiveChannelLinkByProviderUser('telegram', 'telegram-user-b')
+    ).resolves.toEqual(canonicalLink);
+  });
 });
