@@ -136,6 +136,43 @@ describe('createUpstashStorageFromClient', () => {
     ).resolves.toEqual(canonicalLink);
   });
 
+  it('does not return stale canonical clerk-user links for outbound lookup', async () => {
+    const redis = createRedisDouble();
+    const storage = createUpstashStorageFromClient(redis);
+    const firstLink = {
+      clerkUserId: 'user_a',
+      provider: 'telegram' as const,
+      providerUserId: 'telegram-user-p',
+      providerChatId: 'telegram-chat-a',
+      status: 'active' as const,
+      createdAt: 1_000,
+      updatedAt: 1_000,
+    };
+    const secondLink = {
+      ...firstLink,
+      clerkUserId: 'user_b',
+      providerChatId: 'telegram-chat-b',
+      updatedAt: 2_000,
+    };
+
+    redis.store.set('bot:channel-link:user:telegram:user_a', firstLink);
+    redis.store.set('bot:channel-link:user:telegram:user_b', secondLink);
+    redis.store.set('bot:channel-link:provider-user:telegram:telegram-user-p', {
+      clerkUserId: 'user_b',
+      provider: 'telegram',
+    });
+
+    await expect(
+      storage.getActiveChannelLinkForUser('user_a', 'telegram')
+    ).resolves.toBeNull();
+    await expect(
+      storage.getActiveChannelLinkForUser('user_b', 'telegram')
+    ).resolves.toEqual(secondLink);
+    await expect(
+      storage.getActiveChannelLinkByProviderUser('telegram', 'telegram-user-p')
+    ).resolves.toEqual(secondLink);
+  });
+
   it('replaces provider-user links for the same clerk user through storage operations', async () => {
     const redis = createRedisDouble();
     const storage = createUpstashStorageFromClient(redis);

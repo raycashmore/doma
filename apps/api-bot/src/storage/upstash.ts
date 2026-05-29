@@ -58,6 +58,18 @@ function isActiveProviderUserLink(
   );
 }
 
+function isActiveClerkUserLink(
+  record: ChannelLinkRecord | null,
+  clerkUserId: string,
+  provider: ProviderName
+) {
+  return (
+    record?.status === 'active' &&
+    record.clerkUserId === clerkUserId &&
+    record.provider === provider
+  );
+}
+
 export function createUpstashStorage(config: BotConfig): BotStorage {
   const redis = new Redis({
     url: config.upstashRedisRestUrl,
@@ -166,8 +178,17 @@ export function createUpstashStorageFromClient(
       const record = await redis.get<ChannelLinkRecord>(
         channelLinkUserKey(clerkUserId, provider)
       );
+      const pointer = record
+        ? await redis.get<ChannelLinkPointer>(
+            channelLinkProviderUserKey(record.provider, record.providerUserId)
+          )
+        : null;
 
-      return record?.status === 'active' ? record : null;
+      return isActiveClerkUserLink(record, clerkUserId, provider) &&
+        pointer?.clerkUserId === clerkUserId &&
+        pointer.provider === provider
+        ? record
+        : null;
     },
 
     async getActiveChannelLinkByProviderUser(provider, providerUserId) {

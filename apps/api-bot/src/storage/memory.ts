@@ -34,10 +34,31 @@ function isActiveProviderUserLink(
   );
 }
 
-export function createMemoryStorage(): BotStorage {
+function isActiveClerkUserLink(
+  record: ChannelLinkRecord | null,
+  clerkUserId: string,
+  provider: ProviderName
+) {
+  return (
+    record?.status === 'active' &&
+    record.clerkUserId === clerkUserId &&
+    record.provider === provider
+  );
+}
+
+export interface MemoryStorageSeed {
+  channelLinksByUser?: Iterable<[string, ChannelLinkRecord]>;
+  channelLinksByProviderUser?: Iterable<[string, ChannelLinkPointer]>;
+}
+
+export function createMemoryStorage(seed: MemoryStorageSeed = {}): BotStorage {
   const pairingTokens = new Map<string, PairingTokenRecord>();
-  const channelLinksByUser = new Map<string, ChannelLinkRecord>();
-  const channelLinksByProviderUser = new Map<string, ChannelLinkPointer>();
+  const channelLinksByUser = new Map<string, ChannelLinkRecord>(
+    seed.channelLinksByUser
+  );
+  const channelLinksByProviderUser = new Map<string, ChannelLinkPointer>(
+    seed.channelLinksByProviderUser
+  );
   const notificationAttempts = new Map<string, NotificationAttemptRecord>();
 
   return {
@@ -126,11 +147,20 @@ export function createMemoryStorage(): BotStorage {
     },
 
     async getActiveChannelLinkForUser(clerkUserId, provider) {
-      const record = channelLinksByUser.get(
-        channelLinkUserKey(clerkUserId, provider)
-      );
+      const record =
+        channelLinksByUser.get(channelLinkUserKey(clerkUserId, provider)) ??
+        null;
+      const pointer = record
+        ? channelLinksByProviderUser.get(
+            channelLinkProviderUserKey(record.provider, record.providerUserId)
+          )
+        : null;
 
-      return record?.status === 'active' ? record : null;
+      return isActiveClerkUserLink(record ?? null, clerkUserId, provider) &&
+        pointer?.clerkUserId === clerkUserId &&
+        pointer.provider === provider
+        ? record
+        : null;
     },
 
     async getActiveChannelLinkByProviderUser(provider, providerUserId) {

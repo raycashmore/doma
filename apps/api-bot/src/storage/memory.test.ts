@@ -137,4 +137,44 @@ describe('createMemoryStorage', () => {
       storage.getActiveChannelLinkByProviderUser('telegram', 'telegram-user-p')
     ).resolves.toEqual(secondLink);
   });
+
+  it('does not return stale canonical clerk-user links for outbound lookup', async () => {
+    const firstLink = {
+      clerkUserId: 'user_a',
+      provider: 'telegram' as const,
+      providerUserId: 'telegram-user-p',
+      providerChatId: 'telegram-chat-a',
+      status: 'active' as const,
+      createdAt: 1_000,
+      updatedAt: 1_000,
+    };
+    const secondLink = {
+      ...firstLink,
+      clerkUserId: 'user_b',
+      providerChatId: 'telegram-chat-b',
+      updatedAt: 2_000,
+    };
+    const storage = createMemoryStorage({
+      channelLinksByUser: [
+        ['telegram:user_a', firstLink],
+        ['telegram:user_b', secondLink],
+      ],
+      channelLinksByProviderUser: [
+        [
+          'telegram:telegram-user-p',
+          { clerkUserId: 'user_b', provider: 'telegram' },
+        ],
+      ],
+    });
+
+    await expect(
+      storage.getActiveChannelLinkForUser('user_a', 'telegram')
+    ).resolves.toBeNull();
+    await expect(
+      storage.getActiveChannelLinkForUser('user_b', 'telegram')
+    ).resolves.toEqual(secondLink);
+    await expect(
+      storage.getActiveChannelLinkByProviderUser('telegram', 'telegram-user-p')
+    ).resolves.toEqual(secondLink);
+  });
 });
