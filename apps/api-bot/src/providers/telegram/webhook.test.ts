@@ -211,6 +211,36 @@ describe('createTelegramWebhookRoutes', () => {
     });
   });
 
+  it('links when start bot username casing differs from config', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-30T00:00:00.000Z'));
+    const botConfig: BotConfig = {
+      ...config,
+      telegramBotUsername: 'DomaBot'
+    };
+    const storage = createMemoryStorage();
+    const pairing = await createPairingToken({
+      storage,
+      clerkUserId: 'user_123',
+      telegramBotUsername: botConfig.telegramBotUsername,
+      now: Date.now()
+    });
+    const routes = createTelegramWebhookRoutes({ config: botConfig, storage });
+
+    const response = await routes.request(
+      telegramRequest(`/start@domabot ${pairing.token}`)
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ ok: true, reply: 'linked' });
+    await expect(
+      storage.getActiveChannelLinkByProviderUser('telegram', '789')
+    ).resolves.toMatchObject({
+      clerkUserId: 'user_123',
+      providerChatId: '-100123'
+    });
+  });
+
   it('ignores start commands addressed to another bot username', async () => {
     const storage = createMemoryStorage();
     const pairing = await createPairingToken({
