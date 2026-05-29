@@ -1,6 +1,8 @@
 import { Hono } from 'hono';
 import type { Context } from 'hono';
 import type { BotConfig } from '../../config.js';
+import { createCommandDispatcher } from '../../dispatch/router.js';
+import type { CapabilityHandler } from '../../dispatch/types.js';
 import { jsonError, jsonOk } from '../../http/json.js';
 import { consumePairingToken } from '../../linking/pairing.js';
 import type { BotStorage } from '../../storage/index.js';
@@ -10,6 +12,7 @@ import type { TelegramUpdate } from './types.js';
 export interface CreateTelegramWebhookRoutesOptions {
   config: BotConfig;
   storage: BotStorage;
+  capabilities?: Record<string, CapabilityHandler>;
 }
 
 const startCommandPattern = /^\/start(?:@[A-Za-z0-9_]+)?(?:\s+(\S+))?/i;
@@ -38,9 +41,11 @@ function isCommandAddressedToThisBot(
 
 export function createTelegramWebhookRoutes({
   config,
-  storage
+  storage,
+  capabilities = {}
 }: CreateTelegramWebhookRoutesOptions) {
   const routes = new Hono();
+  const dispatcher = createCommandDispatcher({ capabilities });
 
   routes.post('/webhook', async (c) => {
     const secret = c.req.header('x-telegram-bot-api-secret-token');
@@ -105,13 +110,23 @@ export function createTelegramWebhookRoutes({
       inbound.providerUserId
     );
 
-    return jsonOk(c, {
-      ok: true,
-      reply:
-        link && link.providerChatId === inbound.providerChatId
-          ? 'dispatch_deferred'
-          : 'link_required'
+    if (!link || link.providerChatId !== inbound.providerChatId) {
+      return jsonOk(c, { ok: true, reply: 'link_required' });
+    }
+
+    const dispatchResult = await dispatcher.dispatch({
+      userId: link.clerkUserId,
+      command: inbound.command,
+      messageText: inbound.text,
+      receivedAt: inbound.receivedAt,
+      providerContext: {
+        provider: inbound.provider,
+        providerUserId: inbound.providerUserId,
+        providerChatId: inbound.providerChatId
+      }
     });
+
+    return jsonOk(c, { ok: true, dispatchResult });
   });
 
   return routes;

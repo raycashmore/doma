@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { CapabilityRequest } from '../../dispatch/types.js';
 import type { BotConfig } from '../../config.js';
 import { consumePairingToken, createPairingToken } from '../../linking/pairing.js';
 import { createMemoryStorage } from '../../storage/memory.js';
@@ -291,7 +292,49 @@ describe('createTelegramWebhookRoutes', () => {
     });
   });
 
-  it('defers dispatch for linked non-start messages', async () => {
+  it('dispatches linked schedule commands to the matching capability', async () => {
+    const storage = createMemoryStorage();
+    await storage.upsertChannelLink({
+      clerkUserId: 'user_123',
+      provider: 'telegram',
+      providerUserId: '789',
+      providerChatId: '-100123',
+      status: 'active',
+      createdAt: 1,
+      updatedAt: 1,
+      displayLabel: 'ray_cashmore'
+    });
+    const schedule = vi.fn(async () => ({
+      kind: 'reply' as const,
+      text: 'Schedule received.'
+    }));
+    const routes = createTelegramWebhookRoutes({
+      config,
+      storage,
+      capabilities: { schedule }
+    });
+
+    const response = await routes.request(telegramRequest('/schedule tomorrow'));
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      ok: true,
+      dispatchResult: { kind: 'reply', text: 'Schedule received.' }
+    });
+    expect(schedule).toHaveBeenCalledWith({
+      userId: 'user_123',
+      command: 'schedule',
+      messageText: '/schedule tomorrow',
+      receivedAt: 1_700_000_000_000,
+      providerContext: {
+        provider: 'telegram',
+        providerUserId: '789',
+        providerChatId: '-100123'
+      }
+    } satisfies CapabilityRequest);
+  });
+
+  it('returns default dispatch help for linked plain text', async () => {
     const storage = createMemoryStorage();
     await storage.upsertChannelLink({
       clerkUserId: 'user_123',
@@ -310,7 +353,10 @@ describe('createTelegramWebhookRoutes', () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
       ok: true,
-      reply: 'dispatch_deferred'
+      dispatchResult: {
+        kind: 'reply',
+        text: 'I can help with scheduling soon. Try /schedule.'
+      }
     });
   });
 
