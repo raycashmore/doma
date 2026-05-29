@@ -33,12 +33,26 @@ function ttlSecondsUntil(expiresAt: number, now = Date.now()) {
   return Math.max(1, Math.ceil((expiresAt - now) / 1_000));
 }
 
+interface UpstashStorageClient {
+  setex<TData>(key: string, ttl: number, value: TData): Promise<string>;
+  get<TData>(key: string): Promise<TData | null>;
+  getdel<TData>(key: string): Promise<TData | null>;
+  del(key: string): Promise<number>;
+  set<TData>(key: string, value: TData): Promise<unknown>;
+}
+
 export function createUpstashStorage(config: BotConfig): BotStorage {
   const redis = new Redis({
     url: config.upstashRedisRestUrl,
     token: config.upstashRedisRestToken,
   });
 
+  return createUpstashStorageFromClient(redis);
+}
+
+export function createUpstashStorageFromClient(
+  redis: UpstashStorageClient
+): BotStorage {
   return {
     async savePairingToken(record) {
       await redis.setex(
@@ -49,10 +63,9 @@ export function createUpstashStorage(config: BotConfig): BotStorage {
     },
 
     async consumePairingToken(tokenHash, now = Date.now()) {
-      const key = pairingTokenKey(tokenHash);
-      const record = await redis.get<PairingTokenRecord>(key);
-
-      await redis.del(key);
+      const record = await redis.getdel<PairingTokenRecord>(
+        pairingTokenKey(tokenHash)
+      );
 
       if (!record || record.expiresAt <= now) {
         return null;
