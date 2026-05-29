@@ -1,5 +1,36 @@
 import { z } from 'zod';
 
+function parseAppOrigin(value: string, ctx: z.RefinementCtx) {
+  try {
+    const url = new URL(value);
+
+    if (
+      (url.protocol !== 'http:' && url.protocol !== 'https:') ||
+      url.pathname !== '/' ||
+      url.search !== '' ||
+      url.hash !== '' ||
+      url.username !== '' ||
+      url.password !== ''
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'APP_ORIGIN must be an HTTP(S) origin',
+      });
+
+      return z.NEVER;
+    }
+
+    return url.origin;
+  } catch {
+    ctx.addIssue({
+      code: 'custom',
+      message: 'APP_ORIGIN must be an HTTP(S) origin',
+    });
+
+    return z.NEVER;
+  }
+}
+
 const botConfigSchema = z.object({
   CLERK_SECRET_KEY: z.string().min(1),
   CLERK_PUBLISHABLE_KEY: z.string().min(1),
@@ -9,7 +40,7 @@ const botConfigSchema = z.object({
   TELEGRAM_BOT_USERNAME: z.string().min(1),
   UPSTASH_REDIS_REST_URL: z.string().min(1),
   UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
-  APP_ORIGIN: z.string().min(1),
+  APP_ORIGIN: z.string().min(1).transform(parseAppOrigin),
 });
 
 export interface BotConfig {

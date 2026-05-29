@@ -28,6 +28,20 @@ describe('parseConfig', () => {
     });
   });
 
+  it('normalizes a localhost app origin without changing the port', () => {
+    expect(
+      parseConfig({ ...validEnv, APP_ORIGIN: 'http://localhost:3000' })
+        .appOrigin
+    ).toBe('http://localhost:3000');
+  });
+
+  it('normalizes an app origin with a trailing slash', () => {
+    expect(
+      parseConfig({ ...validEnv, APP_ORIGIN: 'https://app.example.com/' })
+        .appOrigin
+    ).toBe('https://app.example.com');
+  });
+
   it('throws a stable config error when required values are missing', () => {
     const env: Record<string, string> = { ...validEnv };
     delete env.BOT_SERVICE_TOKEN;
@@ -35,5 +49,17 @@ describe('parseConfig', () => {
     expect(() => parseConfig(env)).toThrow(
       new Error('Invalid bot gateway config')
     );
+  });
+
+  it.each([
+    ['path', 'https://app.example.com/dashboard'],
+    ['query', 'https://app.example.com?next=/dashboard'],
+    ['hash', 'https://app.example.com#dashboard'],
+    ['invalid', 'not-a-url'],
+    ['empty', ''],
+  ])('throws a stable config error for an app origin with %s', (_case, value) => {
+    expect(() =>
+      parseConfig({ ...validEnv, APP_ORIGIN: value })
+    ).toThrow(new Error('Invalid bot gateway config'));
   });
 });
