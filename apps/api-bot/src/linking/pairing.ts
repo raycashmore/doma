@@ -36,9 +36,13 @@ export async function createPairingToken({
     expiresAt
   });
 
+  const deepLink = new URL('https://t.me/');
+  deepLink.pathname = telegramBotUsername;
+  deepLink.searchParams.set('start', token);
+
   return {
     token,
-    deepLink: `https://t.me/${telegramBotUsername}?start=${token}`,
+    deepLink: deepLink.toString(),
     expiresAt
   };
 }

@@ -89,4 +89,19 @@ describe('parseConfig', () => {
       parseConfig({ ...validEnv, APP_ORIGIN: value })
     ).toThrow(new Error('Invalid bot gateway config'));
   });
+
+  it.each([
+    ['too short', 'bot'],
+    ['too long', 'a'.repeat(30) + 'bot'],
+    ['invalid character', 'doma-bot'],
+    ['leading at-sign', '@doma_bot'],
+    ['missing bot suffix', 'doma_assistant'],
+  ])('throws a stable config error for a Telegram bot username that is %s', (
+    _case,
+    value
+  ) => {
+    expect(() =>
+      parseConfig({ ...validEnv, TELEGRAM_BOT_USERNAME: value })
+    ).toThrow(new Error('Invalid bot gateway config'));
+  });
 });

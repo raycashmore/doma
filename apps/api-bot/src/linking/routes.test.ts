@@ -51,12 +51,26 @@ describe('linking routes', () => {
     const body = await response.json();
 
     expect(response.status).toBe(201);
+    expect(response.headers.get('Cache-Control')).toBe('no-store');
     expect(body).toMatchObject({
       deepLink: `https://t.me/doma_bot?start=${body.token}`
     });
     await expect(
       consumePairingToken({ storage, token: body.token })
     ).resolves.toEqual({ clerkUserId: 'user_123' });
+  });
+
+  it('returns unauthorized for unauthenticated unlink requests', async () => {
+    authenticateClerkRequestMock.mockResolvedValueOnce(null);
+    const storage = createMemoryStorage();
+    const revokeChannelLink = vi.spyOn(storage, 'revokeChannelLink');
+    const routes = createLinkingRoutes({ config, storage });
+
+    const response = await routes.request('/unlink', { method: 'POST' });
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toEqual({ error: 'unauthorized' });
+    expect(revokeChannelLink).not.toHaveBeenCalled();
   });
 
   it('revokes the Telegram link for the authenticated Clerk user', async () => {

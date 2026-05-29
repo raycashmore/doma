@@ -37,7 +37,10 @@ const botConfigSchema = z.object({
   BOT_SERVICE_TOKEN: z.string().min(1),
   TELEGRAM_BOT_TOKEN: z.string().min(1),
   TELEGRAM_WEBHOOK_SECRET: z.string().min(1),
-  TELEGRAM_BOT_USERNAME: z.string().min(1),
+  TELEGRAM_BOT_USERNAME: z
+    .string()
+    .regex(/^[A-Za-z0-9_]{5,32}$/)
+    .regex(/bot$/i),
   UPSTASH_REDIS_REST_URL: z.string().url().startsWith('https://'),
   UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
   APP_ORIGIN: z.string().min(1).transform(parseAppOrigin),

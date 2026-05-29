@@ -17,6 +17,8 @@ export function createLinkingRoutes({
   const routes = new Hono();
 
   routes.post('/pairing-token', async (c) => {
+    c.header('Cache-Control', 'no-store');
+
     const auth = await authenticateClerkRequest(c.req.raw, config);
 
     if (!auth) {
