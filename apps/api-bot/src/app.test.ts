@@ -52,4 +52,23 @@ describe('api-bot app', () => {
 
     expect(response.status).toBe(201);
   });
+
+  it('mounts Telegram webhook routes', async () => {
+    const app = createApp({
+      config: testConfig,
+      storage: createMemoryStorage()
+    });
+
+    const response = await app.request('/telegram/webhook', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-telegram-bot-api-secret-token': testConfig.telegramWebhookSecret
+      },
+      body: JSON.stringify({ update_id: 123 })
+    });
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ ok: true });
+  });
 });

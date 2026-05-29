@@ -3,6 +3,7 @@ import type { BotConfig } from './config.js';
 import { getConfig } from './config.js';
 import { jsonOk } from './http/json.js';
 import { createLinkingRoutes } from './linking/routes.js';
+import { createTelegramWebhookRoutes } from './providers/telegram/webhook.js';
 import { createRuntimeStorage, type BotStorage } from './storage/index.js';
 
 export interface CreateAppOptions {
@@ -17,6 +18,7 @@ export function createApp(options: CreateAppOptions = {}) {
 
   app.get('/health', (c) => jsonOk(c, { ok: true }));
   app.route('/linking', createLinkingRoutes({ config, storage }));
+  app.route('/telegram', createTelegramWebhookRoutes({ config, storage }));
 
   return app;
 }
