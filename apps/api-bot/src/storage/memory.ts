@@ -17,10 +17,27 @@ function channelLinkProviderUserKey(
   return `${provider}:${providerUserId}`;
 }
 
+interface ChannelLinkPointer {
+  clerkUserId: string;
+  provider: ProviderName;
+}
+
+function isActiveProviderUserLink(
+  record: ChannelLinkRecord | null,
+  provider: ProviderName,
+  providerUserId: string
+) {
+  return (
+    record?.status === 'active' &&
+    record.provider === provider &&
+    record.providerUserId === providerUserId
+  );
+}
+
 export function createMemoryStorage(): BotStorage {
   const pairingTokens = new Map<string, PairingTokenRecord>();
   const channelLinksByUser = new Map<string, ChannelLinkRecord>();
-  const channelLinksByProviderUser = new Map<string, ChannelLinkRecord>();
+  const channelLinksByProviderUser = new Map<string, ChannelLinkPointer>();
   const notificationAttempts = new Map<string, NotificationAttemptRecord>();
 
   return {
@@ -46,8 +63,6 @@ export function createMemoryStorage(): BotStorage {
         record.provider,
         record.providerUserId
       );
-      const existingByProviderUser =
-        channelLinksByProviderUser.get(providerUserKey);
 
       if (existingByUser) {
         channelLinksByProviderUser.delete(
@@ -58,17 +73,11 @@ export function createMemoryStorage(): BotStorage {
         );
       }
 
-      if (existingByProviderUser) {
-        channelLinksByUser.delete(
-          channelLinkUserKey(
-            existingByProviderUser.clerkUserId,
-            existingByProviderUser.provider
-          )
-        );
-      }
-
       channelLinksByUser.set(userKey, record);
-      channelLinksByProviderUser.set(providerUserKey, record);
+      channelLinksByProviderUser.set(providerUserKey, {
+        clerkUserId: record.clerkUserId,
+        provider: record.provider,
+      });
     },
 
     async revokeChannelLink(clerkUserId, provider, now = Date.now()) {
@@ -86,9 +95,8 @@ export function createMemoryStorage(): BotStorage {
       };
 
       channelLinksByUser.set(userKey, revokedRecord);
-      channelLinksByProviderUser.set(
-        channelLinkProviderUserKey(provider, record.providerUserId),
-        revokedRecord
+      channelLinksByProviderUser.delete(
+        channelLinkProviderUserKey(provider, record.providerUserId)
       );
     },
 
@@ -101,11 +109,18 @@ export function createMemoryStorage(): BotStorage {
     },
 
     async getActiveChannelLinkByProviderUser(provider, providerUserId) {
-      const record = channelLinksByProviderUser.get(
+      const pointer = channelLinksByProviderUser.get(
         channelLinkProviderUserKey(provider, providerUserId)
       );
+      const record = pointer
+        ? (channelLinksByUser.get(
+            channelLinkUserKey(pointer.clerkUserId, pointer.provider)
+          ) ?? null)
+        : null;
 
-      return record?.status === 'active' ? record : null;
+      return isActiveProviderUserLink(record, provider, providerUserId)
+        ? record
+        : null;
     },
 
     async saveNotificationAttempt(record) {

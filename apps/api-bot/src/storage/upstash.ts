@@ -33,12 +33,29 @@ function ttlSecondsUntil(expiresAt: number, now = Date.now()) {
   return Math.max(1, Math.ceil((expiresAt - now) / 1_000));
 }
 
+interface ChannelLinkPointer {
+  clerkUserId: string;
+  provider: ProviderName;
+}
+
 interface UpstashStorageClient {
   setex<TData>(key: string, ttl: number, value: TData): Promise<string>;
   get<TData>(key: string): Promise<TData | null>;
   getdel<TData>(key: string): Promise<TData | null>;
   del(key: string): Promise<number>;
   set<TData>(key: string, value: TData): Promise<unknown>;
+}
+
+function isActiveProviderUserLink(
+  record: ChannelLinkRecord | null,
+  provider: ProviderName,
+  providerUserId: string
+) {
+  return (
+    record?.status === 'active' &&
+    record.provider === provider &&
+    record.providerUserId === providerUserId
+  );
 }
 
 export function createUpstashStorage(config: BotConfig): BotStorage {
@@ -83,9 +100,6 @@ export function createUpstashStorageFromClient(
       const existingByUser = await redis.get<ChannelLinkRecord>(
         userKey
       );
-      const existingByProviderUser = await redis.get<ChannelLinkRecord>(
-        providerUserKey
-      );
 
       if (existingByUser) {
         await redis.del(
@@ -96,17 +110,11 @@ export function createUpstashStorageFromClient(
         );
       }
 
-      if (existingByProviderUser) {
-        await redis.del(
-          channelLinkUserKey(
-            existingByProviderUser.clerkUserId,
-            existingByProviderUser.provider
-          )
-        );
-      }
-
       await redis.set(userKey, record);
-      await redis.set(providerUserKey, record);
+      await redis.set<ChannelLinkPointer>(providerUserKey, {
+        clerkUserId: record.clerkUserId,
+        provider: record.provider,
+      });
     },
 
     async revokeChannelLink(clerkUserId, provider, now = Date.now()) {
@@ -124,9 +132,8 @@ export function createUpstashStorageFromClient(
       };
 
       await redis.set(userKey, revokedRecord);
-      await redis.set(
-        channelLinkProviderUserKey(provider, record.providerUserId),
-        revokedRecord
+      await redis.del(
+        channelLinkProviderUserKey(provider, record.providerUserId)
       );
     },
 
@@ -139,11 +146,18 @@ export function createUpstashStorageFromClient(
     },
 
     async getActiveChannelLinkByProviderUser(provider, providerUserId) {
-      const record = await redis.get<ChannelLinkRecord>(
+      const pointer = await redis.get<ChannelLinkPointer>(
         channelLinkProviderUserKey(provider, providerUserId)
       );
+      const record = pointer
+        ? await redis.get<ChannelLinkRecord>(
+            channelLinkUserKey(pointer.clerkUserId, pointer.provider)
+          )
+        : null;
 
-      return record?.status === 'active' ? record : null;
+      return isActiveProviderUserLink(record, provider, providerUserId)
+        ? record
+        : null;
     },
 
     async saveNotificationAttempt(record: NotificationAttemptRecord) {
