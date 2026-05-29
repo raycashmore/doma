@@ -57,6 +57,27 @@ describe('parseConfig', () => {
     ).toThrow(new Error('Invalid bot gateway config'));
   });
 
+  it('accepts an HTTPS Upstash Redis REST URL', () => {
+    expect(
+      parseConfig({
+        ...validEnv,
+        UPSTASH_REDIS_REST_URL: 'https://upstash.example.com',
+      }).upstashRedisRestUrl
+    ).toBe('https://upstash.example.com');
+  });
+
+  it.each([
+    ['FTP', 'ftp://upstash.example.com'],
+    ['HTTP', 'http://upstash.example.com'],
+  ])('throws a stable config error for a non-HTTPS %s Upstash URL', (
+    _scheme,
+    value
+  ) => {
+    expect(() =>
+      parseConfig({ ...validEnv, UPSTASH_REDIS_REST_URL: value })
+    ).toThrow(new Error('Invalid bot gateway config'));
+  });
+
   it.each([
     ['path', 'https://app.example.com/dashboard'],
     ['query', 'https://app.example.com?next=/dashboard'],
