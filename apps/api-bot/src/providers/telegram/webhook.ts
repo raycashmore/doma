@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import type { Context } from 'hono';
 import type { BotConfig } from '../../config.js';
 import { jsonError, jsonOk } from '../../http/json.js';
 import { consumePairingToken } from '../../linking/pairing.js';
@@ -17,6 +18,24 @@ function extractStartToken(text: string) {
   return startCommandPattern.exec(text)?.[1] ?? null;
 }
 
+async function parseTelegramUpdate(c: Context) {
+  try {
+    return await c.req.json<TelegramUpdate>();
+  } catch {
+    return null;
+  }
+}
+
+function isCommandAddressedToThisBot(
+  commandBotUsername: string | undefined,
+  telegramBotUsername: string
+) {
+  return (
+    !commandBotUsername ||
+    commandBotUsername.toLowerCase() === telegramBotUsername.toLowerCase()
+  );
+}
+
 export function createTelegramWebhookRoutes({
   config,
   storage
@@ -30,10 +49,25 @@ export function createTelegramWebhookRoutes({
       return jsonError(c, 401, 'unauthorized');
     }
 
-    const update = await c.req.json<TelegramUpdate>();
+    const update = await parseTelegramUpdate(c);
+
+    if (!update) {
+      return jsonError(c, 400, 'bad_request');
+    }
+
     const inbound = normalizeTelegramUpdate(update);
 
     if (!inbound) {
+      return jsonOk(c, { ok: true });
+    }
+
+    if (
+      inbound.command &&
+      !isCommandAddressedToThisBot(
+        inbound.commandBotUsername,
+        config.telegramBotUsername
+      )
+    ) {
       return jsonOk(c, { ok: true });
     }
 
@@ -73,7 +107,10 @@ export function createTelegramWebhookRoutes({
 
     return jsonOk(c, {
       ok: true,
-      reply: link ? 'dispatch_deferred' : 'link_required'
+      reply:
+        link && link.providerChatId === inbound.providerChatId
+          ? 'dispatch_deferred'
+          : 'link_required'
     });
   });
 

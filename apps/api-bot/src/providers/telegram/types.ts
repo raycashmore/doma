@@ -21,4 +21,6 @@ export interface TelegramMessage {
 export interface TelegramUpdate {
   update_id: number;
   message?: TelegramMessage;
+  edited_message?: TelegramMessage;
+  channel_post?: TelegramMessage;
 }

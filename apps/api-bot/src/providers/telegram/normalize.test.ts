@@ -29,6 +29,7 @@ describe('normalizeTelegramUpdate', () => {
       providerChatId: '-100123',
       text: '/Start@Doma_Bot abc123',
       command: 'start',
+      commandBotUsername: 'Doma_Bot',
       receivedAt: 1_700_000_000_000,
       displayLabel: 'ray_cashmore',
       rawUpdateId: '123'
@@ -79,46 +80,170 @@ describe('normalizeTelegramUpdate', () => {
     expect(normalizeTelegramUpdate(update)?.command).toBe('help');
   });
 
+  it('keeps non-command text commandless', () => {
+    const update: TelegramUpdate = {
+      update_id: 126,
+      message: {
+        message_id: 459,
+        date: 1_700_000_003,
+        text: 'hello',
+        from: {
+          id: 792,
+          is_bot: false,
+          first_name: 'Ray'
+        },
+        chat: {
+          id: 792,
+          type: 'private'
+        }
+      }
+    };
+
+    expect(normalizeTelegramUpdate(update)?.command).toBeUndefined();
+  });
+
   it.each([
-    ['non-message updates', { update_id: 126 }],
+    ['non-message updates', { update_id: 127 }],
+    [
+      'edited message updates',
+      {
+        update_id: 128,
+        edited_message: {
+          message_id: 461,
+          date: 1_700_000_005,
+          text: 'edited',
+          from: { id: 794, is_bot: false, first_name: 'Ray' },
+          chat: { id: 794, type: 'private' }
+        }
+      }
+    ],
+    [
+      'channel post updates',
+      {
+        update_id: 129,
+        channel_post: {
+          message_id: 462,
+          date: 1_700_000_006,
+          text: 'channel',
+          chat: { id: -100123, type: 'channel' }
+        }
+      }
+    ],
+    [
+      'updates without numeric update ids',
+      {
+        update_id: 'not-a-number',
+        message: {
+          message_id: 463,
+          date: 1_700_000_007,
+          text: 'hello',
+          from: { id: 793, is_bot: false, first_name: 'Ray' },
+          chat: { id: 793, type: 'private' }
+        }
+      }
+    ],
     [
       'messages without text',
       {
-        update_id: 127,
+        update_id: 130,
         message: {
-          message_id: 459,
-          date: 1_700_000_003,
-          from: { id: 792, is_bot: false, first_name: 'Ray' },
-          chat: { id: 792, type: 'private' }
+          message_id: 464,
+          date: 1_700_000_008,
+          from: { id: 794, is_bot: false, first_name: 'Ray' },
+          chat: { id: 794, type: 'private' }
+        }
+      }
+    ],
+    [
+      'messages with non-string text',
+      {
+        update_id: 131,
+        message: {
+          message_id: 465,
+          date: 1_700_000_009,
+          text: 123,
+          from: { id: 795, is_bot: false, first_name: 'Ray' },
+          chat: { id: 795, type: 'private' }
+        }
+      }
+    ],
+    [
+      'messages without numeric dates',
+      {
+        update_id: 132,
+        message: {
+          message_id: 466,
+          date: 'not-a-number',
+          text: 'hello',
+          from: { id: 796, is_bot: false, first_name: 'Ray' },
+          chat: { id: 796, type: 'private' }
         }
       }
     ],
     [
       'messages without sender',
       {
-        update_id: 128,
+        update_id: 133,
         message: {
-          message_id: 460,
-          date: 1_700_000_004,
+          message_id: 467,
+          date: 1_700_000_010,
           text: 'hello',
-          chat: { id: 793, type: 'private' }
+          chat: { id: 797, type: 'private' }
+        }
+      }
+    ],
+    [
+      'messages without numeric sender ids',
+      {
+        update_id: 134,
+        message: {
+          message_id: 468,
+          date: 1_700_000_011,
+          text: 'hello',
+          from: { id: 'not-a-number', is_bot: false, first_name: 'Ray' },
+          chat: { id: 798, type: 'private' }
+        }
+      }
+    ],
+    [
+      'messages without chat',
+      {
+        update_id: 135,
+        message: {
+          message_id: 469,
+          date: 1_700_000_012,
+          text: 'hello',
+          from: { id: 799, is_bot: false, first_name: 'Ray' }
+        }
+      }
+    ],
+    [
+      'messages without numeric chat ids',
+      {
+        update_id: 136,
+        message: {
+          message_id: 470,
+          date: 1_700_000_013,
+          text: 'hello',
+          from: { id: 800, is_bot: false, first_name: 'Ray' },
+          chat: { id: 'not-a-number', type: 'private' }
         }
       }
     ],
     [
       'bot senders',
       {
-        update_id: 129,
+        update_id: 137,
         message: {
-          message_id: 461,
-          date: 1_700_000_005,
+          message_id: 471,
+          date: 1_700_000_014,
           text: 'hello',
-          from: { id: 794, is_bot: true, first_name: 'Bot' },
-          chat: { id: 794, type: 'private' }
+          from: { id: 801, is_bot: true, first_name: 'Bot' },
+          chat: { id: 801, type: 'private' }
         }
       }
     ]
-  ] satisfies Array<[string, TelegramUpdate]>)('returns null for %s', (_, update) => {
-    expect(normalizeTelegramUpdate(update)).toBeNull();
+  ] satisfies Array<[string, unknown]>)('returns null for %s', (_, update) => {
+    expect(normalizeTelegramUpdate(update as TelegramUpdate)).toBeNull();
   });
 });

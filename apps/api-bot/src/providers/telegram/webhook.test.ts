@@ -44,6 +44,38 @@ function telegramRequest(text: string, secret = config.telegramWebhookSecret) {
   });
 }
 
+function telegramRequestWithChat(
+  text: string,
+  chatId: number,
+  secret = config.telegramWebhookSecret
+) {
+  return new Request('https://bot.example.com/webhook', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-telegram-bot-api-secret-token': secret
+    },
+    body: JSON.stringify({
+      update_id: 123,
+      message: {
+        message_id: 456,
+        date: 1_700_000_000,
+        text,
+        from: {
+          id: 789,
+          is_bot: false,
+          first_name: 'Ray',
+          username: 'ray_cashmore'
+        },
+        chat: {
+          id: chatId,
+          type: 'private'
+        }
+      }
+    })
+  });
+}
+
 describe('createTelegramWebhookRoutes', () => {
   afterEach(() => {
     vi.useRealTimers();
@@ -59,6 +91,41 @@ describe('createTelegramWebhookRoutes', () => {
 
     expect(response.status).toBe(401);
     await expect(response.json()).resolves.toEqual({ error: 'unauthorized' });
+  });
+
+  it('rejects requests with a missing Telegram webhook secret', async () => {
+    const routes = createTelegramWebhookRoutes({
+      config,
+      storage: createMemoryStorage()
+    });
+
+    const response = await routes.request('/webhook', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ update_id: 123 })
+    });
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toEqual({ error: 'unauthorized' });
+  });
+
+  it('returns a stable JSON 400 for malformed JSON', async () => {
+    const routes = createTelegramWebhookRoutes({
+      config,
+      storage: createMemoryStorage()
+    });
+
+    const response = await routes.request('/webhook', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-telegram-bot-api-secret-token': config.telegramWebhookSecret
+      },
+      body: '{"update_id":'
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error: 'bad_request' });
   });
 
   it('ignores unsupported updates', async () => {
@@ -114,6 +181,56 @@ describe('createTelegramWebhookRoutes', () => {
     ).resolves.toBeNull();
   });
 
+  it('links when start is addressed to this bot username', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-30T00:00:00.000Z'));
+    const botConfig: BotConfig = {
+      ...config,
+      telegramBotUsername: 'DomaBot'
+    };
+    const storage = createMemoryStorage();
+    const pairing = await createPairingToken({
+      storage,
+      clerkUserId: 'user_123',
+      telegramBotUsername: botConfig.telegramBotUsername,
+      now: Date.now()
+    });
+    const routes = createTelegramWebhookRoutes({ config: botConfig, storage });
+
+    const response = await routes.request(
+      telegramRequest(`/start@DomaBot ${pairing.token}`)
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ ok: true, reply: 'linked' });
+    await expect(
+      storage.getActiveChannelLinkByProviderUser('telegram', '789')
+    ).resolves.toMatchObject({
+      clerkUserId: 'user_123',
+      providerChatId: '-100123'
+    });
+  });
+
+  it('ignores start commands addressed to another bot username', async () => {
+    const storage = createMemoryStorage();
+    const pairing = await createPairingToken({
+      storage,
+      clerkUserId: 'user_123',
+      telegramBotUsername: config.telegramBotUsername
+    });
+    const routes = createTelegramWebhookRoutes({ config, storage });
+
+    const response = await routes.request(
+      telegramRequest(`/start@OtherBot ${pairing.token}`)
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ ok: true });
+    await expect(
+      storage.getActiveChannelLinkByProviderUser('telegram', '789')
+    ).resolves.toBeNull();
+  });
+
   it('reports link_required when start has no token', async () => {
     const routes = createTelegramWebhookRoutes({
       config,
@@ -164,6 +281,29 @@ describe('createTelegramWebhookRoutes', () => {
     await expect(response.json()).resolves.toEqual({
       ok: true,
       reply: 'dispatch_deferred'
+    });
+  });
+
+  it('requires relinking when a linked user sends from a different chat', async () => {
+    const storage = createMemoryStorage();
+    await storage.upsertChannelLink({
+      clerkUserId: 'user_123',
+      provider: 'telegram',
+      providerUserId: '789',
+      providerChatId: '-100123',
+      status: 'active',
+      createdAt: 1,
+      updatedAt: 1,
+      displayLabel: 'ray_cashmore'
+    });
+    const routes = createTelegramWebhookRoutes({ config, storage });
+
+    const response = await routes.request(telegramRequestWithChat('hello', -100999));
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      ok: true,
+      reply: 'link_required'
     });
   });
 

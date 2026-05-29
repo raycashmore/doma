@@ -6,6 +6,7 @@ export interface NormalizedInboundMessage {
   providerChatId: string;
   text: string;
   command?: string;
+  commandBotUsername?: string;
   receivedAt: number;
   displayLabel?: string;
   rawUpdateId: string;
