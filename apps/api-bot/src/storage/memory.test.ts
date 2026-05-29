@@ -1,0 +1,76 @@
+import { describe, expect, it } from 'vitest';
+import { createMemoryStorage } from './memory.js';
+
+describe('createMemoryStorage', () => {
+  it('consumes pairing tokens once', async () => {
+    const storage = createMemoryStorage();
+    const token = {
+      tokenHash: 'token-hash',
+      clerkUserId: 'user_123',
+      expiresAt: 2_000,
+      createdAt: 1_000,
+    };
+
+    await storage.savePairingToken(token);
+
+    await expect(storage.consumePairingToken('token-hash', 1_500)).resolves.toEqual(
+      token
+    );
+    await expect(
+      storage.consumePairingToken('token-hash', 1_500)
+    ).resolves.toBeNull();
+  });
+
+  it('returns null for expired pairing tokens', async () => {
+    const storage = createMemoryStorage();
+
+    await storage.savePairingToken({
+      tokenHash: 'expired-token-hash',
+      clerkUserId: 'user_123',
+      expiresAt: 2_000,
+      createdAt: 1_000,
+    });
+
+    await expect(
+      storage.consumePairingToken('expired-token-hash', 2_000)
+    ).resolves.toBeNull();
+  });
+
+  it('stores active channel links by provider user and clerk user', async () => {
+    const storage = createMemoryStorage();
+    const link = {
+      clerkUserId: 'user_123',
+      provider: 'telegram' as const,
+      providerUserId: 'telegram-user-123',
+      providerChatId: 'telegram-chat-123',
+      status: 'active' as const,
+      createdAt: 1_000,
+      updatedAt: 1_000,
+      displayLabel: 'Primary Telegram',
+    };
+
+    await storage.upsertChannelLink(link);
+
+    await expect(
+      storage.getActiveChannelLinkForUser('user_123', 'telegram')
+    ).resolves.toEqual(link);
+    await expect(
+      storage.getActiveChannelLinkByProviderUser(
+        'telegram',
+        'telegram-user-123'
+      )
+    ).resolves.toEqual(link);
+
+    await storage.revokeChannelLink('user_123', 'telegram', 2_000);
+
+    await expect(
+      storage.getActiveChannelLinkForUser('user_123', 'telegram')
+    ).resolves.toBeNull();
+    await expect(
+      storage.getActiveChannelLinkByProviderUser(
+        'telegram',
+        'telegram-user-123'
+      )
+    ).resolves.toBeNull();
+  });
+});
