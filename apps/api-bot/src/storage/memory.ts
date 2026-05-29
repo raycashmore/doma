@@ -63,6 +63,31 @@ export function createMemoryStorage(): BotStorage {
         record.provider,
         record.providerUserId
       );
+      const existingByProviderUser =
+        channelLinksByProviderUser.get(providerUserKey);
+
+      if (
+        existingByProviderUser &&
+        existingByProviderUser.clerkUserId !== record.clerkUserId
+      ) {
+        const existingProviderUserKey = channelLinkUserKey(
+          existingByProviderUser.clerkUserId,
+          existingByProviderUser.provider
+        );
+        const existingProviderUserRecord = channelLinksByUser.get(
+          existingProviderUserKey
+        );
+
+        if (
+          isActiveProviderUserLink(
+            existingProviderUserRecord ?? null,
+            record.provider,
+            record.providerUserId
+          )
+        ) {
+          channelLinksByUser.delete(existingProviderUserKey);
+        }
+      }
 
       if (existingByUser) {
         channelLinksByProviderUser.delete(

@@ -100,6 +100,31 @@ export function createUpstashStorageFromClient(
       const existingByUser = await redis.get<ChannelLinkRecord>(
         userKey
       );
+      const existingByProviderUser = await redis.get<ChannelLinkPointer>(
+        providerUserKey
+      );
+
+      if (
+        existingByProviderUser &&
+        existingByProviderUser.clerkUserId !== record.clerkUserId
+      ) {
+        const existingProviderUserKey = channelLinkUserKey(
+          existingByProviderUser.clerkUserId,
+          existingByProviderUser.provider
+        );
+        const existingProviderUserRecord =
+          await redis.get<ChannelLinkRecord>(existingProviderUserKey);
+
+        if (
+          isActiveProviderUserLink(
+            existingProviderUserRecord,
+            record.provider,
+            record.providerUserId
+          )
+        ) {
+          await redis.del(existingProviderUserKey);
+        }
+      }
 
       if (existingByUser) {
         await redis.del(

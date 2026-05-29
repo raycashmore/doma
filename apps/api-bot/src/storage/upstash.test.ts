@@ -1,6 +1,37 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createUpstashStorageFromClient } from './upstash.js';
 
+type RedisDouble = Parameters<typeof createUpstashStorageFromClient>[0] & {
+  store: Map<string, unknown>;
+};
+
+function createRedisDouble(): RedisDouble {
+  const store = new Map<string, unknown>();
+
+  return {
+    store,
+    setex: vi.fn(async (key: string, _ttl: number, value: unknown) => {
+      store.set(key, value);
+      return 'OK';
+    }),
+    async get<TData>(key: string) {
+      return (store.get(key) as TData | undefined) ?? null;
+    },
+    async getdel<TData>(key: string) {
+      const value = (store.get(key) as TData | undefined) ?? null;
+      store.delete(key);
+      return value;
+    },
+    del: vi.fn(async (key: string) => {
+      return store.delete(key) ? 1 : 0;
+    }),
+    set: vi.fn(async (key: string, value: unknown) => {
+      store.set(key, value);
+      return 'OK';
+    }),
+  };
+}
+
 describe('createUpstashStorageFromClient', () => {
   it('atomically consumes pairing tokens with getdel', async () => {
     const token = {
@@ -103,5 +134,71 @@ describe('createUpstashStorageFromClient', () => {
     await expect(
       storage.getActiveChannelLinkByProviderUser('telegram', 'telegram-user-b')
     ).resolves.toEqual(canonicalLink);
+  });
+
+  it('replaces provider-user links for the same clerk user through storage operations', async () => {
+    const redis = createRedisDouble();
+    const storage = createUpstashStorageFromClient(redis);
+    const firstLink = {
+      clerkUserId: 'user_123',
+      provider: 'telegram' as const,
+      providerUserId: 'telegram-user-a',
+      providerChatId: 'telegram-chat-a',
+      status: 'active' as const,
+      createdAt: 1_000,
+      updatedAt: 1_000,
+    };
+    const secondLink = {
+      ...firstLink,
+      providerUserId: 'telegram-user-b',
+      providerChatId: 'telegram-chat-b',
+      updatedAt: 2_000,
+    };
+
+    await storage.upsertChannelLink(firstLink);
+    await storage.upsertChannelLink(secondLink);
+
+    await expect(
+      storage.getActiveChannelLinkByProviderUser('telegram', 'telegram-user-a')
+    ).resolves.toBeNull();
+    await expect(
+      storage.getActiveChannelLinkByProviderUser('telegram', 'telegram-user-b')
+    ).resolves.toEqual(secondLink);
+    await expect(
+      storage.getActiveChannelLinkForUser('user_123', 'telegram')
+    ).resolves.toEqual(secondLink);
+  });
+
+  it('removes the previous clerk user link when a provider user relinks through storage operations', async () => {
+    const redis = createRedisDouble();
+    const storage = createUpstashStorageFromClient(redis);
+    const firstLink = {
+      clerkUserId: 'user_a',
+      provider: 'telegram' as const,
+      providerUserId: 'telegram-user-p',
+      providerChatId: 'telegram-chat-a',
+      status: 'active' as const,
+      createdAt: 1_000,
+      updatedAt: 1_000,
+    };
+    const secondLink = {
+      ...firstLink,
+      clerkUserId: 'user_b',
+      providerChatId: 'telegram-chat-b',
+      updatedAt: 2_000,
+    };
+
+    await storage.upsertChannelLink(firstLink);
+    await storage.upsertChannelLink(secondLink);
+
+    await expect(
+      storage.getActiveChannelLinkForUser('user_a', 'telegram')
+    ).resolves.toBeNull();
+    await expect(
+      storage.getActiveChannelLinkForUser('user_b', 'telegram')
+    ).resolves.toEqual(secondLink);
+    await expect(
+      storage.getActiveChannelLinkByProviderUser('telegram', 'telegram-user-p')
+    ).resolves.toEqual(secondLink);
   });
 });

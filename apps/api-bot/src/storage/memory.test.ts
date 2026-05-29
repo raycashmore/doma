@@ -105,4 +105,36 @@ describe('createMemoryStorage', () => {
       storage.getActiveChannelLinkForUser('user_123', 'telegram')
     ).resolves.toEqual(secondLink);
   });
+
+  it('removes the previous clerk user link when a provider user relinks', async () => {
+    const storage = createMemoryStorage();
+    const firstLink = {
+      clerkUserId: 'user_a',
+      provider: 'telegram' as const,
+      providerUserId: 'telegram-user-p',
+      providerChatId: 'telegram-chat-a',
+      status: 'active' as const,
+      createdAt: 1_000,
+      updatedAt: 1_000,
+    };
+    const secondLink = {
+      ...firstLink,
+      clerkUserId: 'user_b',
+      providerChatId: 'telegram-chat-b',
+      updatedAt: 2_000,
+    };
+
+    await storage.upsertChannelLink(firstLink);
+    await storage.upsertChannelLink(secondLink);
+
+    await expect(
+      storage.getActiveChannelLinkForUser('user_a', 'telegram')
+    ).resolves.toBeNull();
+    await expect(
+      storage.getActiveChannelLinkForUser('user_b', 'telegram')
+    ).resolves.toEqual(secondLink);
+    await expect(
+      storage.getActiveChannelLinkByProviderUser('telegram', 'telegram-user-p')
+    ).resolves.toEqual(secondLink);
+  });
 });
