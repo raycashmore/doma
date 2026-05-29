@@ -3,12 +3,12 @@ import type {
   CapabilityRequest,
   CapabilityResponse
 } from './types.js';
+import {
+  CAPABILITY_FALLBACK_RESPONSE,
+  parseCapabilityResponse
+} from './types.js';
 
 const DEFAULT_TIMEOUT_MS = 5_000;
-const FALLBACK_RESPONSE: CapabilityResponse = {
-  kind: 'reply',
-  text: 'I could not handle that just now.'
-};
 
 export interface CreateHttpCapabilityOptions {
   endpointUrl: string;
@@ -37,12 +37,15 @@ export function createHttpCapability({
       });
 
       if (!response.ok) {
-        return FALLBACK_RESPONSE;
+        return CAPABILITY_FALLBACK_RESPONSE;
       }
 
-      return (await response.json()) as CapabilityResponse;
+      return (
+        parseCapabilityResponse(await response.json()) ??
+        CAPABILITY_FALLBACK_RESPONSE
+      );
     } catch {
-      return FALLBACK_RESPONSE;
+      return CAPABILITY_FALLBACK_RESPONSE;
     } finally {
       clearTimeout(timeout);
     }

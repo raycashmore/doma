@@ -73,4 +73,21 @@ describe('createCommandDispatcher', () => {
       dispatcher.dispatch(request({ command: 'schedule', messageText: '/schedule' }))
     ).resolves.toEqual({ kind: 'no_response' });
   });
+
+  it('returns fallback reply when a capability throws', async () => {
+    const dispatcher = createCommandDispatcher({
+      capabilities: {
+        schedule: vi.fn(async () => {
+          throw new Error('capability unavailable');
+        })
+      }
+    });
+
+    await expect(
+      dispatcher.dispatch(request({ command: 'schedule', messageText: '/schedule' }))
+    ).resolves.toEqual({
+      kind: 'reply',
+      text: 'I could not handle that just now.'
+    });
+  });
 });

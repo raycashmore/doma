@@ -3,6 +3,7 @@ import type {
   CapabilityRequest,
   CapabilityResponse
 } from './types.js';
+import { CAPABILITY_FALLBACK_RESPONSE } from './types.js';
 
 export const DEFAULT_HELP = 'I can help with scheduling soon. Try /schedule.';
 
@@ -20,7 +21,11 @@ export function createCommandDispatcher({
         : undefined;
 
       if (capability) {
-        return capability(request);
+        try {
+          return await capability(request);
+        } catch {
+          return CAPABILITY_FALLBACK_RESPONSE;
+        }
       }
 
       return { kind: 'reply', text: DEFAULT_HELP };
