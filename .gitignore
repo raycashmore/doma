@@ -42,7 +42,7 @@ yarn-error.log*
 
 # Local only
 /data
-/docs/superpowers
+/docs/superpowers/
 packages/convex/scripts/*.xlsx
 packages/convex/scripts/README.md
 .playwright-mcp

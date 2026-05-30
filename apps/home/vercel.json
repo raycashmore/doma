@@ -5,6 +5,14 @@
   "outputDirectory": ".output/public",
   "rewrites": [
     {
+      "source": "/api/bot",
+      "destination": "https://doma-api-bot.vercel.app/"
+    },
+    {
+      "source": "/api/bot/:path*",
+      "destination": "https://doma-api-bot.vercel.app/:path*"
+    },
+    {
       "source": "/budget",
       "destination": "https://budget.rayandromana.com/budget/"
     },

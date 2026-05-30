@@ -10,3 +10,9 @@ Keep files with real spreadsheet details local and ignored by git. If a script, 
 git check-ignore -v <path>
 git status --short
 ```
+
+For bot and notification work, treat Telegram IDs, chat IDs, bot tokens,
+webhook secrets, private message text, and notification payloads as private.
+Tests and docs should use generic IDs and messages. Telegram account linking
+must only accept private chats; never store a group or supergroup chat as a
+finance notification destination.

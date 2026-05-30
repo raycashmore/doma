@@ -10,6 +10,16 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
   base: '/',
+  server: {
+    proxy: {
+      '/api/bot': {
+        // eslint-disable-next-line turbo/no-undeclared-env-vars
+        target: process.env.BOT_GATEWAY_DEV_ORIGIN ?? 'http://localhost:3002',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/bot/, '') || '/'
+      }
+    }
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))

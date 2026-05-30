@@ -8,7 +8,8 @@ Doma is a Vercel Multi-Zones monorepo. `apps/home` owns the apex domain and rewr
 | ---------------------------- | ---------------- | -------------------------------------------------------- |
 | `apps/home`                  | TanStack Start   | Apex zone, port 3000; owns `vercel.json` rewrites        |
 | `apps/budget`                | TanStack Start   | Mounts at `/budget`, port 3001                           |
-| `apps/api-*`                 | (per-experiment) | Convention for non-Convex backends — none scaffolded yet |
+| `apps/api-bot`               | Hono on Vercel   | Shared bot gateway for Telegram delivery and chat        |
+| `apps/api-*`                 | (per-experiment) | Convention for non-Convex backends                       |
 | `packages/convex`            | —                | Shared Convex schema/functions (`@repo/convex`)          |
 | `packages/tokens`            | —                | Tailwind v4 design tokens (`@repo/tokens`)               |
 | `packages/shell`             | React            | Shared sidebar + AppFrame + AuthGate (`@repo/shell`)     |
@@ -20,7 +21,7 @@ Doma is a Vercel Multi-Zones monorepo. `apps/home` owns the apex domain and rewr
 
 `apps/home/vercel.json` rewrites paths to other Vercel projects. Each sub-app builds with `base: '/<path>/'` (Vite) plus `basepath: '/<path>'` (TanStack Router) so asset URLs and route matching agree. Cross-app navigation is real browser navigation; same apex domain means a single Clerk cookie covers every zone.
 
-**Local dev does not apply the rewrites.** Each app runs on its own port (Home 3000, Budget 3001). Visit each port directly. Vercel rewrites are a production-only mechanism.
+**Local dev does not apply Vercel rewrites.** Each app runs on its own port (Home 3000, Budget 3001, Bot gateway 3002). Visit UI apps directly. Home's Vite dev server proxies `/api/bot/*` to the bot gateway so the notification settings page can use the same same-origin path in local dev and production.
 
 ### Cross-origin Clerk session sync in dev
 
@@ -38,6 +39,8 @@ When new sub-apps land, add rewrite entries to `apps/home/vercel.json`:
 ```
 
 ## Backend services convention
+
+`apps/api-bot` is the shared channel gateway for notifications and inbound chat. It owns provider-specific webhook and send APIs, while app capabilities stay behind HTTP contracts and may use Convex or another backend. Telegram is the first provider; the app-facing boundary should remain provider-neutral so WhatsApp or another channel can be added later.
 
 Non-Convex backend experiments live at `apps/api-<name>` (e.g. `apps/api-recipes-import`). Each is its own Vercel project. To expose one to the frontend, add a rewrite under `apps/home/vercel.json`:
 

@@ -21,6 +21,7 @@ What you'll create:
 | Clerk application (production env) | Clerk dashboard | All apps share one                 |
 | Vercel project for Home            | Vercel          | Owns the apex domain + rewrites    |
 | Vercel project for Budget          | Vercel          | Lives behind a Vercel-assigned URL |
+| Vercel project for Bot gateway     | Vercel          | Receives Telegram webhooks + sends |
 | Vercel project for each future app | Vercel          | One per app                        |
 
 ## Prerequisites
@@ -79,6 +80,8 @@ For Vercel Preview on Home, set:
 | `CLERK_SECRET_KEY`            | Clerk preview secret key       |
 | `VITE_CLERK_FRONTEND_API_URL` | Clerk preview Frontend API URL |
 
+For Vercel Preview on the Bot gateway, set the same Clerk server credentials plus the bot gateway variables from [Bot Gateway Environment](#bot-gateway-environment). Use preview Telegram bots and preview Upstash databases where possible.
+
 If the Vercel Preview environment uses a temporary Convex deployment, seed that
 deployment by passing its current Convex URL:
 
@@ -124,15 +127,46 @@ Or via the dashboard:
 
 `apps/budget/vercel.json` already has the SPA fallback rewrite. No further config needed inside the project.
 
-## Step 5 — Deploy Home
+## Step 5 — Deploy Bot Gateway
 
-Home owns the apex. Before deploying, point its rewrites at Budget's real URL.
+The bot gateway needs to be live before Home's notification settings can create Telegram pairing links.
 
-1. Edit `apps/home/vercel.json` only if the stable Budget alias changes. Prefer a stable destination such as `https://doma-budget.vercel.app`:
+Via the Vercel CLI:
+
+```bash
+pnpm dlx vercel link --project doma-api-bot --cwd apps/api-bot
+pnpm dlx vercel --cwd apps/api-bot
+pnpm dlx vercel --cwd apps/api-bot --prod
+```
+
+Or via the dashboard:
+
+1. **New Project** → import your repo.
+2. **Configure Project**:
+   - **Root Directory**: `apps/api-bot`
+   - **Framework Preset**: Other
+   - **Build Command**: `pnpm build`
+   - **Output Directory**: leave unset
+   - **Install Command**: leave default; Vercel detects pnpm workspaces and runs install from the repo root.
+3. Set the variables in [Bot Gateway Environment](#bot-gateway-environment).
+4. Deploy. When it succeeds, confirm the project has a stable alias such as `https://doma-api-bot.vercel.app`.
+5. Configure Telegram's webhook URL to the deployed gateway, for example `https://doma-api-bot.vercel.app/telegram/webhook`, with the same secret token as `TELEGRAM_WEBHOOK_SECRET`.
+
+`apps/api-bot/vercel.json` rewrites all incoming paths to its Hono handler, so `/linking/*`, `/notifications/*`, `/telegram/*`, and `/health` are served by the same app.
+
+## Step 6 — Deploy Home
+
+Home owns the apex. Before deploying, point its rewrites at Budget's real URL and the Bot gateway's real URL.
+
+1. Edit `apps/home/vercel.json` only if the stable Budget or Bot gateway aliases change. Prefer stable destinations such as `https://doma-budget.vercel.app` and `https://doma-api-bot.vercel.app`:
 
    ```json
    {
      "rewrites": [
+       {
+         "source": "/api/bot/:path*",
+         "destination": "https://doma-api-bot.vercel.app/:path*"
+       },
        {
          "source": "/budget",
          "destination": "https://doma-budget.vercel.app/budget"
@@ -145,7 +179,7 @@ Home owns the apex. Before deploying, point its rewrites at Budget's real URL.
    }
    ```
 
-   Better: point at a Vercel project alias. In Budget's Vercel project under **Domains**, add a stable internal name like `budget.<your-apex>` or use Vercel's `<project>.vercel.app` URL (no hash) and reference that in the rewrite. This way Budget's deploys do not break Home's rewrites.
+   Better: point at Vercel project aliases. In each downstream Vercel project under **Domains**, add a stable internal name like `budget.<your-apex>` or `api-bot.<your-apex>`, or use Vercel's `<project>.vercel.app` URL (no hash) and reference that in the rewrite. This way downstream deploys do not break Home's rewrites.
 
 2. Commit the rewrite update and push.
 
@@ -166,7 +200,7 @@ Home owns the apex. Before deploying, point its rewrites at Budget's real URL.
    | `CLERK_SECRET_KEY`            | Clerk production secret key      |
    | `VITE_CLERK_FRONTEND_API_URL` | Clerk Frontend API URL           |
 
-## Step 6 — Configure domains and DNS
+## Step 7 — Configure domains and DNS
 
 Pick a domain layout before you touch DNS. A good default is:
 
@@ -174,6 +208,7 @@ Pick a domain layout before you touch DNS. A good default is:
 | -------------------------- | -------------------------- | --------- |
 | Apex production site       | `doma.example.com`         | Home      |
 | Stable Budget alias        | `budget.doma.example.com`  | Budget    |
+| Stable Bot gateway alias   | `api-bot.doma.example.com` | Bot       |
 | Optional www redirect      | `www.doma.example.com`     | Home      |
 | Optional staging app alias | `staging.doma.example.com` | Home      |
 
@@ -181,6 +216,7 @@ The important distinction:
 
 - the **apex** is the user-facing production entry point
 - the **Budget subdomain** is an internal stable target for Home rewrites
+- the **Bot gateway subdomain** is the direct webhook target for Telegram and the internal target for Home's `/api/bot/*` rewrite
 - Vercel Preview deploy URLs stay ephemeral and do not need custom DNS
 
 ### DNS record patterns
@@ -191,6 +227,7 @@ Your DNS provider UI may call these records slightly different things, but the p
 | ------------- | ------------------------ | ----------------------------------------------- | -------------------------- |
 | `doma` or `@` | `A`, `ALIAS`, or `ANAME` | Vercel apex target from the dashboard           | Home apex                  |
 | `budget`      | `CNAME`                  | Vercel subdomain target from the Budget project | Stable Budget alias        |
+| `api-bot`     | `CNAME`                  | Vercel subdomain target from the Bot project    | Stable Bot gateway alias   |
 | `www`         | `CNAME`                  | Vercel subdomain target from the Home project   | Optional redirect or alias |
 
 Two practical notes:
@@ -204,14 +241,18 @@ Two practical notes:
 2. Create the DNS record Vercel asks for.
 3. Wait for Vercel to verify the subdomain.
 4. Update `apps/home/vercel.json` to rewrite `/budget` to `https://budget.doma.example.com/budget`.
-5. Add `doma.example.com` to the Home Vercel project.
-6. Create the DNS record Vercel asks for for the apex.
-7. Wait for Vercel to verify the apex.
-8. Add `doma.example.com` to Clerk Production under **Domains**.
+5. Add `api-bot.doma.example.com` to the Bot gateway Vercel project.
+6. Create the DNS record Vercel asks for.
+7. Wait for Vercel to verify the subdomain.
+8. Update `apps/home/vercel.json` to rewrite `/api/bot/*` to `https://api-bot.doma.example.com/:path*`.
+9. Add `doma.example.com` to the Home Vercel project.
+10. Create the DNS record Vercel asks for for the apex.
+11. Wait for Vercel to verify the apex.
+12. Add `doma.example.com` to Clerk Production under **Domains**.
 
-This order matters because it lets Home point at a stable Budget destination before the apex goes live.
+This order matters because it lets Home point at stable downstream destinations before the apex goes live.
 
-## Step 7 — Attach your apex domain to Home
+## Step 8 — Attach your apex domain to Home
 
 In the Home Vercel project → **Domains** → add your apex (`doma.example.com`). Vercel walks you through the DNS records. Once verified, the production URL becomes `https://doma.example.com`, and `/budget` reverse-proxies to Budget via the rewrite.
 
@@ -219,7 +260,7 @@ Add the same apex domain to your Clerk production environment (Step 2 step 5) if
 
 If you use a stable Budget subdomain such as `budget.doma.example.com`, add that to the Budget Vercel project before the apex cutover. The Home rewrite target should point at that stable subdomain, not at a hashed Vercel deploy URL.
 
-## Step 8 — Verify Preview and Production
+## Step 9 — Verify Preview and Production
 
 Vercel Preview checks:
 
@@ -228,6 +269,8 @@ Vercel Preview checks:
 3. Sign in with an approved non-production account.
 4. Navigate to Budget.
 5. Confirm Budget loads seeded staging data with no Convex `Unauthorized` errors.
+6. Open `/settings/notifications`.
+7. Confirm the Telegram pairing UI either creates a QR code or shows an expected environment/auth error.
 
 Production checks:
 
@@ -237,6 +280,42 @@ Production checks:
 4. Budget renders. No second sign-in (cookie shared on apex).
 5. Budget's chart loads with data — Convex queries are authenticated end-to-end.
 6. Open DevTools → Network. Refreshing `/budget` should show a 200 response served via Home's project; the underlying response comes from Budget's project (you'll see headers like `x-vercel-id` mentioning the Budget project, but the URL stays under the apex).
+7. Open `https://doma.example.com/settings/notifications` and create a Telegram pairing QR code.
+8. Open DevTools → Network. The pairing request should go to `https://doma.example.com/api/bot/linking/pairing-token` and return `201`.
+9. Open the Telegram deep link or scan the QR code, send `/start`, and confirm the bot acknowledges the link.
+
+## Bot Gateway Environment
+
+`apps/api-bot` requires these environment variables in local, preview, staging, and production:
+
+| Variable                   | Where it lives                   | Notes                                                      |
+| -------------------------- | -------------------------------- | ---------------------------------------------------------- |
+| `CLERK_SECRET_KEY`         | Vercel Bot gateway, `.env.local` | Used to verify Clerk bearer tokens                         |
+| `CLERK_PUBLISHABLE_KEY`    | Vercel Bot gateway, `.env.local` | Clerk backend configuration                                |
+| `BOT_SERVICE_TOKEN`        | Vercel Bot gateway, callers      | Shared bearer token for service-to-service sends           |
+| `TELEGRAM_BOT_TOKEN`       | Vercel Bot gateway, `.env.local` | Bot token from BotFather                                   |
+| `TELEGRAM_WEBHOOK_SECRET`  | Vercel Bot gateway, Telegram     | Sent as Telegram's webhook secret token                    |
+| `TELEGRAM_BOT_USERNAME`    | Vercel Bot gateway, `.env.local` | Bot username, ending in `bot`, without `@`                 |
+| `UPSTASH_REDIS_REST_URL`   | Vercel Bot gateway, `.env.local` | HTTPS Upstash REST URL                                     |
+| `UPSTASH_REDIS_REST_TOKEN` | Vercel Bot gateway, `.env.local` | Upstash REST token                                         |
+| `APP_ORIGIN`               | Vercel Bot gateway, `.env.local` | Public Home origin, for example `https://doma.example.com` |
+
+`VERCEL_ENV` is read from Vercel's system environment variables and should not
+be set by hand in the dashboard. Pairing links are created only when
+`VERCEL_ENV=production`; preview and local bot deployments can still run health,
+webhook, status, unlink, and notification routes, but `/linking/pairing-token`
+returns `pairing_disabled`.
+
+Do not commit real bot tokens, Telegram IDs, chat IDs, or private message payloads. Notification attempts store metadata only; keep it that way when adding new channels or capabilities.
+
+For local development:
+
+```bash
+pnpm bot
+pnpm --filter home dev
+```
+
+Home proxies `/api/bot/*` to `http://localhost:3002` by default. Override with `BOT_GATEWAY_DEV_ORIGIN` if the bot gateway runs elsewhere.
 
 ## Adding a new app later
 
