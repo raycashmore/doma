@@ -8,7 +8,8 @@ import { useState } from 'react';
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
 import { TanStackDevtools } from '@tanstack/react-devtools';
 
-import { AppFrame, AuthGate } from '@repo/shell';
+import { AppFrame } from '@repo/shell';
+import { AuthGate } from '@/integrations/auth/AuthGate';
 import ConvexProvider from '../integrations/convex/provider';
 import appCss from '../styles.css?url';
 import type { ReactNode } from 'react';
@@ -21,6 +22,8 @@ const CLERK_KEY = (import.meta as any).env.VITE_CLERK_PUBLISHABLE_KEY;
 const APP_BASE_URL = getBudgetBaseUrl((import.meta as any).env.DEV);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const IS_PROD = Boolean((import.meta as any).env.PROD);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const IS_DEV = Boolean((import.meta as any).env.DEV);
 const SERVICE_WORKER_SCRIPT = `if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('${APP_BASE_URL}sw.js', { scope: '${APP_BASE_URL}' });
@@ -72,6 +75,7 @@ function RootDocument() {
               <AppFrame
                 appId="budget"
                 title="Budget"
+                isDev={IS_DEV}
                 actions={headerActions}
                 headerClassName="px-4 pt-2 pb-3"
                 mainClassName="px-4 pb-4"
