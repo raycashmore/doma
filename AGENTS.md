@@ -9,6 +9,7 @@ Use `pnpm` (`packageManager`: `pnpm@9.0.0`).
 - Protect private finance data: use generic account and institution labels in anything checked into git. See [Privacy](docs/agents/privacy.md).
 - Use the repo scripts for build, lint, typecheck, tests, and Convex work. See [Commands](docs/agents/commands.md).
 - Before committing, follow [Git Workflow](docs/agents/git-workflow.md).
+- In TypeScript, prefer `type` aliases over `interface` unless interface-specific behavior is required.
 
 ## Task-Specific Instructions
 

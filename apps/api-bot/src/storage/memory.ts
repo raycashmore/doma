@@ -17,10 +17,10 @@ function channelLinkProviderUserKey(
   return `${provider}:${providerUserId}`;
 }
 
-interface ChannelLinkPointer {
+type ChannelLinkPointer = {
   clerkUserId: string;
   provider: ProviderName;
-}
+};
 
 function isActiveProviderUserLink(
   record: ChannelLinkRecord | null,
@@ -46,10 +46,10 @@ function isActiveClerkUserLink(
   );
 }
 
-export interface MemoryStorageSeed {
+export type MemoryStorageSeed = {
   channelLinksByUser?: Iterable<[string, ChannelLinkRecord]>;
   channelLinksByProviderUser?: Iterable<[string, ChannelLinkPointer]>;
-}
+};
 
 export function createMemoryStorage(seed: MemoryStorageSeed = {}): BotStorage {
   const pairingTokens = new Map<string, PairingTokenRecord>();

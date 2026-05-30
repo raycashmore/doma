@@ -33,18 +33,18 @@ function ttlSecondsUntil(expiresAt: number, now = Date.now()) {
   return Math.max(1, Math.ceil((expiresAt - now) / 1_000));
 }
 
-interface ChannelLinkPointer {
+type ChannelLinkPointer = {
   clerkUserId: string;
   provider: ProviderName;
-}
+};
 
-interface UpstashStorageClient {
+type UpstashStorageClient = {
   setex<TData>(key: string, ttl: number, value: TData): Promise<string>;
   get<TData>(key: string): Promise<TData | null>;
   getdel<TData>(key: string): Promise<TData | null>;
   del(key: string): Promise<number>;
   set<TData>(key: string, value: TData): Promise<unknown>;
-}
+};
 
 function isActiveProviderUserLink(
   record: ChannelLinkRecord | null,

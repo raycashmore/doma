@@ -10,11 +10,11 @@ import {
 
 const DEFAULT_TIMEOUT_MS = 5_000;
 
-export interface CreateHttpCapabilityOptions {
+export type CreateHttpCapabilityOptions = {
   endpointUrl: string;
   serviceToken: string;
   timeoutMs?: number;
-}
+};
 
 export function createHttpCapability({
   endpointUrl,

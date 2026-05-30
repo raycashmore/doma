@@ -7,18 +7,18 @@ function hashPairingToken(token: string) {
   return createHash('sha256').update(token).digest('hex');
 }
 
-export interface CreatePairingTokenOptions {
+export type CreatePairingTokenOptions = {
   storage: BotStorage;
   clerkUserId: string;
   telegramBotUsername: string;
   now?: number;
-}
+};
 
-export interface ConsumePairingTokenOptions {
+export type ConsumePairingTokenOptions = {
   storage: BotStorage;
   token: string;
   now?: number;
-}
+};
 
 export async function createPairingToken({
   storage,

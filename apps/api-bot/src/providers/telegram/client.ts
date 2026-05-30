@@ -1,7 +1,7 @@
-export interface TelegramMessageRequest {
+export type TelegramMessageRequest = {
   chatId: string;
   text: string;
-}
+};
 
 export type SendTelegramMessageResult =
   | { ok: true }
@@ -11,14 +11,14 @@ export type TelegramMessageSender = (
   request: TelegramMessageRequest
 ) => Promise<SendTelegramMessageResult>;
 
-export interface SendTelegramMessageRequest extends TelegramMessageRequest {
+export type SendTelegramMessageRequest = TelegramMessageRequest & {
   botToken: string;
-}
+};
 
-interface TelegramSendMessageResponse {
+type TelegramSendMessageResponse = {
   ok?: boolean;
   error_code?: number;
-}
+};
 
 async function parseTelegramResponse(response: Response) {
   try {

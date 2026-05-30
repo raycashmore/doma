@@ -1,13 +1,13 @@
 export type ProviderName = 'telegram';
 
-export interface PairingTokenRecord {
+export type PairingTokenRecord = {
   tokenHash: string;
   clerkUserId: string;
   expiresAt: number;
   createdAt: number;
-}
+};
 
-export interface ChannelLinkRecord {
+export type ChannelLinkRecord = {
   clerkUserId: string;
   provider: ProviderName;
   providerUserId: string;
@@ -16,9 +16,9 @@ export interface ChannelLinkRecord {
   createdAt: number;
   updatedAt: number;
   displayLabel?: string;
-}
+};
 
-export interface NotificationAttemptRecord {
+export type NotificationAttemptRecord = {
   id: string;
   recipientUserId: string;
   provider: ProviderName;
@@ -26,9 +26,9 @@ export interface NotificationAttemptRecord {
   status: 'sent' | 'failed' | 'skipped';
   providerErrorCode?: string;
   createdAt: number;
-}
+};
 
-export interface BotStorage {
+export type BotStorage = {
   savePairingToken(record: PairingTokenRecord): Promise<void>;
   consumePairingToken(
     tokenHash: string,
@@ -49,4 +49,4 @@ export interface BotStorage {
     providerUserId: string
   ): Promise<ChannelLinkRecord | null>;
   saveNotificationAttempt(record: NotificationAttemptRecord): Promise<void>;
-}
+};

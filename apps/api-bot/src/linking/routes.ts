@@ -5,10 +5,10 @@ import { jsonError, jsonOk } from '../http/json.js';
 import type { BotStorage } from '../storage/index.js';
 import { createPairingToken } from './pairing.js';
 
-export interface CreateLinkingRoutesOptions {
+export type CreateLinkingRoutesOptions = {
   config: BotConfig;
   storage: BotStorage;
-}
+};
 
 export function createLinkingRoutes({
   config,

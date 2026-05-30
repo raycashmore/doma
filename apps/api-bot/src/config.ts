@@ -46,7 +46,7 @@ const botConfigSchema = z.object({
   APP_ORIGIN: z.string().min(1).transform(parseAppOrigin),
 });
 
-export interface BotConfig {
+export type BotConfig = {
   clerkSecretKey: string;
   clerkPublishableKey: string;
   botServiceToken: string;
@@ -56,7 +56,7 @@ export interface BotConfig {
   upstashRedisRestUrl: string;
   upstashRedisRestToken: string;
   appOrigin: string;
-}
+};
 
 export function parseConfig(env: Record<string, unknown>): BotConfig {
   const result = botConfigSchema.safeParse(env);

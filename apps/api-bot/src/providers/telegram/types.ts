@@ -1,26 +1,26 @@
-export interface TelegramUser {
+export type TelegramUser = {
   id: number;
   is_bot?: boolean;
   first_name?: string;
   username?: string;
-}
+};
 
-export interface TelegramChat {
+export type TelegramChat = {
   id: number;
   type?: string;
-}
+};
 
-export interface TelegramMessage {
+export type TelegramMessage = {
   message_id: number;
   date: number;
   text?: string;
   from?: TelegramUser;
   chat: TelegramChat;
-}
+};
 
-export interface TelegramUpdate {
+export type TelegramUpdate = {
   update_id: number;
   message?: TelegramMessage;
   edited_message?: TelegramMessage;
   channel_post?: TelegramMessage;
-}
+};

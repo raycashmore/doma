@@ -7,11 +7,11 @@ import { jsonError, jsonOk } from '../http/json.js';
 import type { TelegramMessageSender } from '../providers/telegram/client.js';
 import type { BotStorage } from '../storage/index.js';
 
-export interface CreateNotificationRoutesOptions {
+export type CreateNotificationRoutesOptions = {
   serviceToken: string;
   storage: BotStorage;
   sendTelegramMessage: TelegramMessageSender;
-}
+};
 
 const notificationSchema = z.object({
   recipientUserId: z.string().trim().min(1),

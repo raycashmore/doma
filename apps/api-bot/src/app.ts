@@ -8,10 +8,10 @@ import { sendTelegramMessage } from './providers/telegram/client.js';
 import { createTelegramWebhookRoutes } from './providers/telegram/webhook.js';
 import { createRuntimeStorage, type BotStorage } from './storage/index.js';
 
-export interface CreateAppOptions {
+export type CreateAppOptions = {
   config?: BotConfig;
   storage?: BotStorage;
-}
+};
 
 export function createApp(options: CreateAppOptions = {}) {
   const config = options.config ?? getConfig();

@@ -10,12 +10,12 @@ import type { TelegramMessageSender } from './client.js';
 import { normalizeTelegramUpdate } from './normalize.js';
 import type { TelegramUpdate } from './types.js';
 
-export interface CreateTelegramWebhookRoutesOptions {
+export type CreateTelegramWebhookRoutesOptions = {
   config: BotConfig;
   storage: BotStorage;
   capabilities?: Record<string, CapabilityHandler>;
   sendTelegramMessage?: TelegramMessageSender;
-}
+};
 
 const startCommandPattern = /^\/start(?:@[A-Za-z0-9_]+)?(?:\s+(\S+))?/i;
 const replyTimeoutMs = 1_000;

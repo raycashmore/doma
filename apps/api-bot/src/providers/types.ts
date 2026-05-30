@@ -1,6 +1,6 @@
 import type { ProviderName } from '../storage/types.js';
 
-export interface NormalizedInboundMessage {
+export type NormalizedInboundMessage = {
   provider: ProviderName;
   providerUserId: string;
   providerChatId: string;
@@ -10,4 +10,4 @@ export interface NormalizedInboundMessage {
   receivedAt: number;
   displayLabel?: string;
   rawUpdateId: string;
-}
+};

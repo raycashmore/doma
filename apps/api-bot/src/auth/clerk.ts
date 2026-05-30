@@ -1,9 +1,9 @@
 import { createClerkClient } from '@clerk/backend';
 import type { BotConfig } from '../config.js';
 
-export interface ClerkAuthResult {
+export type ClerkAuthResult = {
   userId: string;
-}
+};
 
 export async function authenticateClerkRequest(
   request: Request,

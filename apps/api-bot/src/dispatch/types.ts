@@ -1,6 +1,6 @@
 import type { ProviderName } from '../storage/types.js';
 
-export interface CapabilityRequest {
+export type CapabilityRequest = {
   userId: string;
   command?: string;
   messageText: string;
@@ -10,7 +10,7 @@ export interface CapabilityRequest {
     providerUserId: string;
     providerChatId: string;
   };
-}
+};
 
 export type CapabilityResponse =
   | { kind: 'reply'; text: string }

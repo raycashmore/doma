@@ -7,9 +7,9 @@ import { CAPABILITY_FALLBACK_RESPONSE } from './types.js';
 
 export const DEFAULT_HELP = 'I can help with scheduling soon. Try /schedule.';
 
-export interface CreateCommandDispatcherOptions {
+export type CreateCommandDispatcherOptions = {
   capabilities: Record<string, CapabilityHandler>;
-}
+};
 
 export function createCommandDispatcher({
   capabilities
