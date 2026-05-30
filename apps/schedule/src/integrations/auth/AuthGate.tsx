@@ -1,13 +1,7 @@
 'use client';
 
 import { type ReactNode } from 'react';
-import {
-  ClerkProvider,
-  SignedIn,
-  SignedOut,
-  SignIn,
-  useClerk
-} from '@clerk/nextjs';
+import { ClerkProvider, SignIn, useAuth, useClerk } from '@clerk/nextjs';
 import { UrlAuthProvider, SignInLayout } from '@repo/shell';
 
 export type AuthGateProps = {
@@ -24,6 +18,34 @@ function ClerkUrlAuth({ children }: { children: ReactNode }) {
   );
 }
 
+function ClerkAuthenticatedGate({ children }: { children: ReactNode }) {
+  const { isSignedIn, isLoaded } = useAuth();
+
+  if (!isLoaded) {
+    return null;
+  }
+
+  if (isSignedIn) {
+    return <ClerkUrlAuth>{children}</ClerkUrlAuth>;
+  }
+
+  return (
+    <SignInLayout>
+      <SignIn
+        appearance={{
+          elements: {
+            footerAction: 'hidden',
+            footerActionLink: 'hidden'
+          }
+        }}
+        fallbackRedirectUrl="/"
+        routing="hash"
+        withSignUp={false}
+      />
+    </SignInLayout>
+  );
+}
+
 export function AuthGate({ publishableKey, children }: AuthGateProps) {
   if (!publishableKey) {
     return <>{children}</>;
@@ -31,24 +53,7 @@ export function AuthGate({ publishableKey, children }: AuthGateProps) {
 
   return (
     <ClerkProvider publishableKey={publishableKey}>
-      <SignedIn>
-        <ClerkUrlAuth>{children}</ClerkUrlAuth>
-      </SignedIn>
-      <SignedOut>
-        <SignInLayout>
-          <SignIn
-            appearance={{
-              elements: {
-                footerAction: 'hidden',
-                footerActionLink: 'hidden'
-              }
-            }}
-            fallbackRedirectUrl="/"
-            routing="hash"
-            withSignUp={false}
-          />
-        </SignInLayout>
-      </SignedOut>
+      <ClerkAuthenticatedGate>{children}</ClerkAuthenticatedGate>
     </ClerkProvider>
   );
 }

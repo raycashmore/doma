@@ -1,3 +1,5 @@
+'use client';
+
 import { Home, LogOut } from 'lucide-react';
 import clsx from 'clsx';
 import { APPS, getAppHref, type AppDescriptor, type AppId } from './apps';

@@ -1,3 +1,5 @@
+'use client';
+
 import clsx from 'clsx';
 import { APPS, getAppHref, type AppDescriptor, type AppId } from './apps';
 import { useUrlAuth } from './auth';
