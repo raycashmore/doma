@@ -159,7 +159,12 @@ describe('createTelegramWebhookRoutes', () => {
       telegramBotUsername: config.telegramBotUsername,
       now
     });
-    const routes = createTelegramWebhookRoutes({ config, storage });
+    const sendTelegramMessage = vi.fn(async () => ({ ok: true as const }));
+    const routes = createTelegramWebhookRoutes({
+      config,
+      storage,
+      sendTelegramMessage
+    });
 
     const response = await routes.request(telegramRequest(`/start ${pairing.token}`));
 
@@ -180,6 +185,10 @@ describe('createTelegramWebhookRoutes', () => {
     await expect(
       consumePairingToken({ storage, token: pairing.token, now })
     ).resolves.toBeNull();
+    expect(sendTelegramMessage).toHaveBeenCalledWith({
+      chatId: '-100123',
+      text: 'Telegram is linked to Doma.'
+    });
   });
 
   it('links when start is addressed to this bot username', async () => {
@@ -308,10 +317,12 @@ describe('createTelegramWebhookRoutes', () => {
       kind: 'reply' as const,
       text: 'Schedule received.'
     }));
+    const sendTelegramMessage = vi.fn(async () => ({ ok: true as const }));
     const routes = createTelegramWebhookRoutes({
       config,
       storage,
-      capabilities: { schedule }
+      capabilities: { schedule },
+      sendTelegramMessage
     });
 
     const response = await routes.request(telegramRequest('/schedule tomorrow'));
@@ -332,6 +343,44 @@ describe('createTelegramWebhookRoutes', () => {
         providerChatId: '-100123'
       }
     } satisfies CapabilityRequest);
+    expect(sendTelegramMessage).toHaveBeenCalledWith({
+      chatId: '-100123',
+      text: 'Schedule received.'
+    });
+  });
+
+  it('does not fail the webhook when sending a reply fails', async () => {
+    const storage = createMemoryStorage();
+    await storage.upsertChannelLink({
+      clerkUserId: 'user_123',
+      provider: 'telegram',
+      providerUserId: '789',
+      providerChatId: '-100123',
+      status: 'active',
+      createdAt: 1,
+      updatedAt: 1,
+      displayLabel: 'ray_cashmore'
+    });
+    const sendTelegramMessage = vi.fn(async () => ({
+      ok: false as const,
+      errorCode: '500'
+    }));
+    const routes = createTelegramWebhookRoutes({
+      config,
+      storage,
+      sendTelegramMessage
+    });
+
+    const response = await routes.request(telegramRequest('hello'));
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      ok: true,
+      dispatchResult: {
+        kind: 'reply',
+        text: 'I can help with scheduling soon. Try /schedule.'
+      }
+    });
   });
 
   it('returns default dispatch help for linked plain text', async () => {

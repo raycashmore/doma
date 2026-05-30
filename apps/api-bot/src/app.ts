@@ -3,6 +3,8 @@ import type { BotConfig } from './config.js';
 import { getConfig } from './config.js';
 import { jsonOk } from './http/json.js';
 import { createLinkingRoutes } from './linking/routes.js';
+import { createNotificationRoutes } from './notifications/routes.js';
+import { sendTelegramMessage } from './providers/telegram/client.js';
 import { createTelegramWebhookRoutes } from './providers/telegram/webhook.js';
 import { createRuntimeStorage, type BotStorage } from './storage/index.js';
 
@@ -18,7 +20,32 @@ export function createApp(options: CreateAppOptions = {}) {
 
   app.get('/health', (c) => jsonOk(c, { ok: true }));
   app.route('/linking', createLinkingRoutes({ config, storage }));
-  app.route('/telegram', createTelegramWebhookRoutes({ config, storage }));
+  app.route(
+    '/notifications',
+    createNotificationRoutes({
+      serviceToken: config.botServiceToken,
+      storage,
+      sendTelegramMessage: ({ chatId, text }) =>
+        sendTelegramMessage({
+          botToken: config.telegramBotToken,
+          chatId,
+          text
+        })
+    })
+  );
+  app.route(
+    '/telegram',
+    createTelegramWebhookRoutes({
+      config,
+      storage,
+      sendTelegramMessage: ({ chatId, text }) =>
+        sendTelegramMessage({
+          botToken: config.telegramBotToken,
+          chatId,
+          text
+        })
+    })
+  );
 
   return app;
 }

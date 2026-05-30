@@ -6,6 +6,7 @@ import type { CapabilityHandler } from '../../dispatch/types.js';
 import { jsonError, jsonOk } from '../../http/json.js';
 import { consumePairingToken } from '../../linking/pairing.js';
 import type { BotStorage } from '../../storage/index.js';
+import type { TelegramMessageSender } from './client.js';
 import { normalizeTelegramUpdate } from './normalize.js';
 import type { TelegramUpdate } from './types.js';
 
@@ -13,6 +14,7 @@ export interface CreateTelegramWebhookRoutesOptions {
   config: BotConfig;
   storage: BotStorage;
   capabilities?: Record<string, CapabilityHandler>;
+  sendTelegramMessage?: TelegramMessageSender;
 }
 
 const startCommandPattern = /^\/start(?:@[A-Za-z0-9_]+)?(?:\s+(\S+))?/i;
@@ -42,10 +44,23 @@ function isCommandAddressedToThisBot(
 export function createTelegramWebhookRoutes({
   config,
   storage,
-  capabilities = {}
+  capabilities = {},
+  sendTelegramMessage
 }: CreateTelegramWebhookRoutesOptions) {
   const routes = new Hono();
   const dispatcher = createCommandDispatcher({ capabilities });
+
+  async function sendReply(chatId: string, text: string) {
+    if (!sendTelegramMessage) {
+      return;
+    }
+
+    try {
+      await sendTelegramMessage({ chatId, text });
+    } catch {
+      // Telegram delivery failures should not make webhook acknowledgement fail.
+    }
+  }
 
   routes.post('/webhook', async (c) => {
     const secret = c.req.header('x-telegram-bot-api-secret-token');
@@ -80,12 +95,20 @@ export function createTelegramWebhookRoutes({
       const token = extractStartToken(inbound.text);
 
       if (!token) {
+        await sendReply(
+          inbound.providerChatId,
+          'Open Doma and request a new Telegram linking code to connect this chat.'
+        );
         return jsonOk(c, { ok: true, reply: 'link_required' });
       }
 
       const pairing = await consumePairingToken({ storage, token });
 
       if (!pairing) {
+        await sendReply(
+          inbound.providerChatId,
+          'That Doma linking code is invalid or expired. Please request a new one.'
+        );
         return jsonOk(c, { ok: true, reply: 'invalid_or_expired_token' });
       }
 
@@ -102,6 +125,7 @@ export function createTelegramWebhookRoutes({
         displayLabel: inbound.displayLabel
       });
 
+      await sendReply(inbound.providerChatId, 'Telegram is linked to Doma.');
       return jsonOk(c, { ok: true, reply: 'linked' });
     }
 
@@ -111,6 +135,10 @@ export function createTelegramWebhookRoutes({
     );
 
     if (!link || link.providerChatId !== inbound.providerChatId) {
+      await sendReply(
+        inbound.providerChatId,
+        'Open Doma and link Telegram before sending commands here.'
+      );
       return jsonOk(c, { ok: true, reply: 'link_required' });
     }
 
@@ -125,6 +153,10 @@ export function createTelegramWebhookRoutes({
         providerChatId: inbound.providerChatId
       }
     });
+
+    if (dispatchResult.kind === 'reply') {
+      await sendReply(inbound.providerChatId, dispatchResult.text);
+    }
 
     return jsonOk(c, { ok: true, dispatchResult });
   });

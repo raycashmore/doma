@@ -71,4 +71,22 @@ describe('api-bot app', () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ ok: true });
   });
+
+  it('mounts notification routes', async () => {
+    const app = createApp({
+      config: testConfig,
+      storage: createMemoryStorage()
+    });
+
+    const response = await app.request('/notifications/send', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({})
+    });
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toEqual({ error: 'unauthorized' });
+  });
 });
