@@ -288,17 +288,23 @@ Production checks:
 
 `apps/api-bot` requires these environment variables in local, preview, staging, and production:
 
-| Variable                    | Where it lives                  | Notes                                                  |
-| --------------------------- | ------------------------------- | ------------------------------------------------------ |
-| `CLERK_SECRET_KEY`          | Vercel Bot gateway, `.env.local` | Used to verify Clerk bearer tokens                     |
-| `CLERK_PUBLISHABLE_KEY`     | Vercel Bot gateway, `.env.local` | Clerk backend configuration                            |
-| `BOT_SERVICE_TOKEN`         | Vercel Bot gateway, callers      | Shared bearer token for service-to-service sends       |
-| `TELEGRAM_BOT_TOKEN`        | Vercel Bot gateway, `.env.local` | Bot token from BotFather                               |
-| `TELEGRAM_WEBHOOK_SECRET`   | Vercel Bot gateway, Telegram     | Sent as Telegram's webhook secret token                |
-| `TELEGRAM_BOT_USERNAME`     | Vercel Bot gateway, `.env.local` | Bot username, ending in `bot`, without `@`             |
-| `UPSTASH_REDIS_REST_URL`    | Vercel Bot gateway, `.env.local` | HTTPS Upstash REST URL                                 |
-| `UPSTASH_REDIS_REST_TOKEN`  | Vercel Bot gateway, `.env.local` | Upstash REST token                                     |
-| `APP_ORIGIN`                | Vercel Bot gateway, `.env.local` | Public Home origin, for example `https://doma.example.com` |
+| Variable                   | Where it lives                   | Notes                                                      |
+| -------------------------- | -------------------------------- | ---------------------------------------------------------- |
+| `CLERK_SECRET_KEY`         | Vercel Bot gateway, `.env.local` | Used to verify Clerk bearer tokens                         |
+| `CLERK_PUBLISHABLE_KEY`    | Vercel Bot gateway, `.env.local` | Clerk backend configuration                                |
+| `BOT_SERVICE_TOKEN`        | Vercel Bot gateway, callers      | Shared bearer token for service-to-service sends           |
+| `TELEGRAM_BOT_TOKEN`       | Vercel Bot gateway, `.env.local` | Bot token from BotFather                                   |
+| `TELEGRAM_WEBHOOK_SECRET`  | Vercel Bot gateway, Telegram     | Sent as Telegram's webhook secret token                    |
+| `TELEGRAM_BOT_USERNAME`    | Vercel Bot gateway, `.env.local` | Bot username, ending in `bot`, without `@`                 |
+| `UPSTASH_REDIS_REST_URL`   | Vercel Bot gateway, `.env.local` | HTTPS Upstash REST URL                                     |
+| `UPSTASH_REDIS_REST_TOKEN` | Vercel Bot gateway, `.env.local` | Upstash REST token                                         |
+| `APP_ORIGIN`               | Vercel Bot gateway, `.env.local` | Public Home origin, for example `https://doma.example.com` |
+
+`VERCEL_ENV` is read from Vercel's system environment variables and should not
+be set by hand in the dashboard. Pairing links are created only when
+`VERCEL_ENV=production`; preview and local bot deployments can still run health,
+webhook, status, unlink, and notification routes, but `/linking/pairing-token`
+returns `pairing_disabled`.
 
 Do not commit real bot tokens, Telegram IDs, chat IDs, or private message payloads. Notification attempts store metadata only; keep it that way when adding new channels or capabilities.
 
