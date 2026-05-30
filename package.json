@@ -8,6 +8,8 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
     "test": "turbo run test",
+    "bot": "pnpm --filter api-bot dev",
+    "bot:test": "pnpm --filter api-bot test",
     "convex": "pnpm --filter @repo/convex dev",
     "seed": "pnpm --filter @repo/convex seed",
     "seed:clear": "pnpm --filter @repo/convex seed:clear",
