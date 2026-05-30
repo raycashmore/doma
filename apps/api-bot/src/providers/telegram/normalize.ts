@@ -29,7 +29,8 @@ export function normalizeTelegramUpdate(
     message.from.is_bot === true ||
     !isFiniteNumber(message.from.id) ||
     !isRecord(message.chat) ||
-    !isFiniteNumber(message.chat.id)
+    !isFiniteNumber(message.chat.id) ||
+    message.chat.type !== 'private'
   ) {
     return null;
   }

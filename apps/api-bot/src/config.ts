@@ -35,6 +35,7 @@ const botConfigSchema = z.object({
   CLERK_SECRET_KEY: z.string().min(1),
   CLERK_PUBLISHABLE_KEY: z.string().min(1),
   BOT_SERVICE_TOKEN: z.string().min(1),
+  VERCEL_ENV: z.enum(['production', 'preview', 'development']).optional(),
   TELEGRAM_BOT_TOKEN: z.string().min(1),
   TELEGRAM_WEBHOOK_SECRET: z.string().min(1),
   TELEGRAM_BOT_USERNAME: z
@@ -50,6 +51,7 @@ export type BotConfig = {
   clerkSecretKey: string;
   clerkPublishableKey: string;
   botServiceToken: string;
+  pairingEnabled: boolean;
   telegramBotToken: string;
   telegramWebhookSecret: string;
   telegramBotUsername: string;
@@ -69,6 +71,7 @@ export function parseConfig(env: Record<string, unknown>): BotConfig {
     clerkSecretKey: result.data.CLERK_SECRET_KEY,
     clerkPublishableKey: result.data.CLERK_PUBLISHABLE_KEY,
     botServiceToken: result.data.BOT_SERVICE_TOKEN,
+    pairingEnabled: result.data.VERCEL_ENV === 'production',
     telegramBotToken: result.data.TELEGRAM_BOT_TOKEN,
     telegramWebhookSecret: result.data.TELEGRAM_WEBHOOK_SECRET,
     telegramBotUsername: result.data.TELEGRAM_BOT_USERNAME,

@@ -13,6 +13,7 @@ const config: BotConfig = {
   clerkSecretKey: 'clerk-secret-key',
   clerkPublishableKey: 'clerk-publishable-key',
   botServiceToken: 'service-token',
+  pairingEnabled: true,
   telegramBotToken: 'telegram-bot-token',
   telegramWebhookSecret: 'telegram-webhook-secret',
   telegramBotUsername: 'doma_bot',
@@ -60,6 +61,20 @@ describe('linking routes', () => {
     ).resolves.toEqual({ clerkUserId: 'user_123' });
   });
 
+  it('rejects pairing token requests when pairing is disabled', async () => {
+    authenticateClerkRequestMock.mockResolvedValueOnce({ userId: 'user_123' });
+    const storage = createMemoryStorage();
+    const routes = createLinkingRoutes({
+      config: { ...config, pairingEnabled: false },
+      storage
+    });
+
+    const response = await routes.request('/pairing-token', { method: 'POST' });
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({ error: 'pairing_disabled' });
+  });
+
   it('returns unauthorized for unauthenticated unlink requests', async () => {
     authenticateClerkRequestMock.mockResolvedValueOnce(null);
     const storage = createMemoryStorage();
@@ -89,5 +104,50 @@ describe('linking routes', () => {
       'telegram',
       1_700_000_000_000
     );
+  });
+
+  it('returns disabled link status when pairing is unavailable', async () => {
+    authenticateClerkRequestMock.mockResolvedValueOnce({ userId: 'user_123' });
+    const routes = createLinkingRoutes({
+      config: { ...config, pairingEnabled: false },
+      storage: createMemoryStorage()
+    });
+
+    const response = await routes.request('/status');
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      linked: false,
+      pairingEnabled: false
+    });
+  });
+
+  it('returns the current Telegram link status for the authenticated user', async () => {
+    authenticateClerkRequestMock.mockResolvedValueOnce({ userId: 'user_123' });
+    const storage = createMemoryStorage();
+    await storage.upsertChannelLink({
+      clerkUserId: 'user_123',
+      provider: 'telegram',
+      providerUserId: 'telegram-user-123',
+      providerChatId: 'telegram-chat-123',
+      status: 'active',
+      createdAt: 1,
+      updatedAt: 1,
+      displayLabel: 'ray_cashmore'
+    });
+    const routes = createLinkingRoutes({
+      config: { ...config, pairingEnabled: true },
+      storage
+    });
+
+    const response = await routes.request('/status');
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      linked: true,
+      pairingEnabled: true,
+      provider: 'telegram',
+      displayLabel: 'ray_cashmore'
+    });
   });
 });

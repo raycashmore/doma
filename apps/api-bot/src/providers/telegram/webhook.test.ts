@@ -9,6 +9,7 @@ const config: BotConfig = {
   clerkSecretKey: 'clerk-secret-key',
   clerkPublishableKey: 'clerk-publishable-key',
   botServiceToken: 'service-token',
+  pairingEnabled: true,
   telegramBotToken: 'telegram-bot-token',
   telegramWebhookSecret: 'telegram-webhook-secret',
   telegramBotUsername: 'doma_bot',
@@ -48,6 +49,7 @@ function telegramRequest(text: string, secret = config.telegramWebhookSecret) {
 function telegramRequestWithChat(
   text: string,
   chatId: number,
+  chatType = 'private',
   secret = config.telegramWebhookSecret
 ) {
   return new Request('https://bot.example.com/webhook', {
@@ -70,7 +72,7 @@ function telegramRequestWithChat(
         },
         chat: {
           id: chatId,
-          type: 'private'
+          type: chatType
         }
       }
     })
@@ -189,6 +191,33 @@ describe('createTelegramWebhookRoutes', () => {
       chatId: '-100123',
       text: 'Telegram is linked to Doma.'
     });
+  });
+
+  it('does not link start tokens from non-private chats', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-30T00:00:00.000Z'));
+    const now = Date.now();
+    const storage = createMemoryStorage();
+    const pairing = await createPairingToken({
+      storage,
+      clerkUserId: 'user_123',
+      telegramBotUsername: config.telegramBotUsername,
+      now
+    });
+    const routes = createTelegramWebhookRoutes({ config, storage });
+
+    const response = await routes.request(
+      telegramRequestWithChat(`/start ${pairing.token}`, -100123, 'group')
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ ok: true });
+    await expect(
+      storage.getActiveChannelLinkByProviderUser('telegram', '789')
+    ).resolves.toBeNull();
+    await expect(
+      consumePairingToken({ storage, token: pairing.token, now })
+    ).resolves.toEqual({ clerkUserId: 'user_123' });
   });
 
   it('links when start is addressed to this bot username', async () => {

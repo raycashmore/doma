@@ -12,6 +12,7 @@ const testConfig: BotConfig = {
   clerkSecretKey: 'clerk-secret-key',
   clerkPublishableKey: 'clerk-publishable-key',
   botServiceToken: 'service-token',
+  pairingEnabled: true,
   telegramBotToken: 'telegram-bot-token',
   telegramWebhookSecret: 'telegram-webhook-secret',
   telegramBotUsername: 'doma_bot',

@@ -19,6 +19,7 @@ describe('parseConfig', () => {
       clerkSecretKey: 'clerk-secret-key',
       clerkPublishableKey: 'clerk-publishable-key',
       botServiceToken: 'service-token',
+      pairingEnabled: false,
       telegramBotToken: 'telegram-bot-token',
       telegramWebhookSecret: 'telegram-webhook-secret',
       telegramBotUsername: 'doma_bot',
@@ -26,6 +27,12 @@ describe('parseConfig', () => {
       upstashRedisRestToken: 'upstash-token',
       appOrigin: 'https://app.example.com',
     });
+  });
+
+  it('enables pairing in production deployments', () => {
+    expect(
+      parseConfig({ ...validEnv, VERCEL_ENV: 'production' }).pairingEnabled
+    ).toBe(true);
   });
 
   it('normalizes a localhost app origin without changing the port', () => {

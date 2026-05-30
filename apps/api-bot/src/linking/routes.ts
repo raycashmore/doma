@@ -25,6 +25,10 @@ export function createLinkingRoutes({
       return jsonError(c, 401, 'unauthorized');
     }
 
+    if (!config.pairingEnabled) {
+      return jsonError(c, 403, 'pairing_disabled');
+    }
+
     const pairingToken = await createPairingToken({
       storage,
       clerkUserId: auth.userId,
@@ -44,6 +48,33 @@ export function createLinkingRoutes({
     await storage.revokeChannelLink(auth.userId, 'telegram', Date.now());
 
     return jsonOk(c, { ok: true });
+  });
+
+  routes.get('/status', async (c) => {
+    const auth = await authenticateClerkRequest(c.req.raw, config);
+
+    if (!auth) {
+      return jsonError(c, 401, 'unauthorized');
+    }
+
+    const link = await storage.getActiveChannelLinkForUser(
+      auth.userId,
+      'telegram'
+    );
+
+    if (!link) {
+      return jsonOk(c, {
+        linked: false,
+        pairingEnabled: config.pairingEnabled
+      });
+    }
+
+    return jsonOk(c, {
+      linked: true,
+      pairingEnabled: config.pairingEnabled,
+      provider: link.provider,
+      displayLabel: link.displayLabel
+    });
   });
 
   return routes;
