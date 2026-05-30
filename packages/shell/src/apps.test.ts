@@ -19,4 +19,8 @@ describe('getActiveAppId', () => {
     expect(getActiveAppId('/schedule/anything')).toBe('schedule');
     expect(getActiveAppId('/')).toBe('home');
   });
+
+  it('falls back to home for unknown path segments', () => {
+    expect(getActiveAppId('/totally-unknown')).toBe('home');
+  });
 });

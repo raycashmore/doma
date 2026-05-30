@@ -1,14 +1,13 @@
-import { Home } from 'lucide-react';
 import clsx from 'clsx';
 import { APPS, getAppHref, type AppDescriptor, type AppId } from './apps';
 import { useUrlAuth } from './auth';
 
 const homeApp = APPS.find((a) => a.id === 'home')!;
 
-export interface MobileNavProps {
+export type MobileNavProps = {
   activeAppId: AppId;
   isDev: boolean;
-}
+};
 
 export function MobileNav({ activeAppId, isDev }: MobileNavProps) {
   const urlAuth = useUrlAuth();
@@ -25,7 +24,7 @@ export function MobileNav({ activeAppId, isDev }: MobileNavProps) {
       className="flex items-stretch justify-around border-t border-warm-border bg-warm-bg-dark px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] md:hidden"
     >
       {items.map((app) => {
-        const Icon = app.id === 'home' ? Home : app.icon;
+        const Icon = app.icon;
         const isActive = activeAppId === app.id;
         return (
           <a
