@@ -13,6 +13,7 @@ const signInSpy = vi.fn<(props: Record<string, unknown>) => ReactNode>(
 
 vi.mock('@clerk/clerk-react', () => ({
   ClerkProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+  // SignedIn renders null here: these tests only exercise the signed-out / passthrough paths.
   SignedIn: () => null,
   SignedOut: ({ children }: { children: ReactNode }) => <>{children}</>,
   SignIn: (props: Record<string, unknown>) => signInSpy(props),

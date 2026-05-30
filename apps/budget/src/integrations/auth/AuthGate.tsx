@@ -8,10 +8,10 @@ import {
 } from '@clerk/clerk-react';
 import { UrlAuthProvider, SignInLayout } from '@repo/shell';
 
-export interface AuthGateProps {
+export type AuthGateProps = {
   publishableKey: string | undefined;
   children: ReactNode;
-}
+};
 
 function ClerkUrlAuth({ children }: { children: ReactNode }) {
   const clerk = useClerk();
