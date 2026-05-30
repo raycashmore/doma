@@ -59,7 +59,7 @@ export const APPS: AppDescriptor[] = [
     label: 'Schedule',
     href: '/schedule',
     icon: Calendar,
-    enabled: false,
+    enabled: true,
     devPort: 3003
   },
   {
