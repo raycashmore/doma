@@ -1,12 +1,23 @@
 # Doma
 
-Personal finance dashboard — Turborepo monorepo deployed as Vercel Multi-Zones.
+Personal finance dashboard built as a Turborepo monorepo with Vercel
+Multi-Zones, Convex, Clerk, and a shared bot gateway for Telegram
+notifications.
+
+## What lives here
+
+- `apps/home` is the apex zone and account home. It owns the shared domain,
+  cross-zone rewrites, and Telegram notification settings.
+- `apps/budget` is the budgeting app mounted at `/budget`.
+- `apps/api-bot` is the bot gateway for Telegram linking, outbound
+  notifications, and inbound command handling.
 
 ## Apps
 
-- `apps/home` — apex zone, summary/landing (port 3000)
+- `apps/home` — apex zone, summary/settings shell (port 3000)
 - `apps/budget` — Budget app at `/budget` (port 3001)
-- `apps/api-*` — convention for non-Convex backend experiments (none scaffolded)
+- `apps/api-bot` — Hono bot gateway for Telegram/webhook flows (port 3002)
+- `apps/api-*` — convention for other non-Convex backend experiments
 
 ## Packages
 
@@ -23,16 +34,39 @@ pnpm build         # Build all apps
 pnpm lint          # Lint everywhere
 pnpm check-types   # TypeScript across the workspace
 pnpm format        # Prettier
+pnpm test          # Workspace tests
 pnpm convex        # Convex dev (regenerates packages/convex/convex/_generated)
+pnpm bot           # Bot gateway dev server on :3002
+pnpm bot:test      # Bot gateway test suite
 ```
 
 ## Per-app commands
 
 ```bash
-pnpm --filter home dev        # Home on :3000
-pnpm --filter budget dev      # Budget on :3001
-pnpm --filter budget test     # Vitest
+pnpm --filter home dev             # Home on :3000
+pnpm --filter home dev:no-auth     # Home without Clerk auth
+pnpm --filter home build           # Verify Home build
+pnpm --filter budget dev           # Budget on :3001
+pnpm --filter budget dev:no-auth   # Budget without Clerk auth
+pnpm --filter budget test          # Budget Vitest suite
+pnpm --filter api-bot dev          # Bot gateway on :3002
+pnpm --filter api-bot test         # Bot gateway Vitest suite
+pnpm --filter api-bot check-types  # Bot gateway TypeScript check
 ```
+
+## Local development
+
+Run the UI apps directly by port in local dev:
+
+- Home: `http://localhost:3000`
+- Budget: `http://localhost:3001`
+- Bot gateway: `http://localhost:3002`
+
+Home proxies `/api/bot/*` to the bot gateway in local development, so the
+notification settings screen can use the same path locally and in production.
+Telegram pairing is only enabled when the bot gateway runs with
+`VERCEL_ENV=production`; local and preview environments still support status,
+unlink, notifications, and webhook testing.
 
 ## Before committing
 
