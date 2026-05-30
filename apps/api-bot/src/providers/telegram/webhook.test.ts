@@ -383,6 +383,42 @@ describe('createTelegramWebhookRoutes', () => {
     });
   });
 
+  it('does not wait indefinitely when sending a reply hangs', async () => {
+    vi.useFakeTimers();
+    const storage = createMemoryStorage();
+    await storage.upsertChannelLink({
+      clerkUserId: 'user_123',
+      provider: 'telegram',
+      providerUserId: '789',
+      providerChatId: '-100123',
+      status: 'active',
+      createdAt: 1,
+      updatedAt: 1,
+      displayLabel: 'ray_cashmore'
+    });
+    const sendTelegramMessage = vi.fn(
+      () => new Promise<never>(() => undefined)
+    );
+    const routes = createTelegramWebhookRoutes({
+      config,
+      storage,
+      sendTelegramMessage
+    });
+
+    const responsePromise = routes.request(telegramRequest('hello'));
+    await vi.advanceTimersByTimeAsync(1_000);
+    const response = await responsePromise;
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      ok: true,
+      dispatchResult: {
+        kind: 'reply',
+        text: 'I can help with scheduling soon. Try /schedule.'
+      }
+    });
+  });
+
   it('returns default dispatch help for linked plain text', async () => {
     const storage = createMemoryStorage();
     await storage.upsertChannelLink({

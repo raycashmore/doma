@@ -41,4 +41,41 @@ describe('sendTelegramMessage', () => {
       })
     ).resolves.toEqual({ ok: false, errorCode: '429' });
   });
+
+  it('returns network_error when fetch rejects', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw new Error('socket closed');
+      })
+    );
+
+    await expect(
+      sendTelegramMessage({
+        botToken: 'telegram-bot-token',
+        chatId: '-100123',
+        text: 'Try again later.'
+      })
+    ).resolves.toEqual({ ok: false, errorCode: 'network_error' });
+  });
+
+  it('returns the Telegram error code when a 2xx response body is not ok', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify({ ok: false, error_code: 400 }), {
+            status: 200
+          })
+      )
+    );
+
+    await expect(
+      sendTelegramMessage({
+        botToken: 'telegram-bot-token',
+        chatId: '-100123',
+        text: 'Try again later.'
+      })
+    ).resolves.toEqual({ ok: false, errorCode: '400' });
+  });
 });

@@ -18,6 +18,7 @@ export interface CreateTelegramWebhookRoutesOptions {
 }
 
 const startCommandPattern = /^\/start(?:@[A-Za-z0-9_]+)?(?:\s+(\S+))?/i;
+const replyTimeoutMs = 1_000;
 
 function extractStartToken(text: string) {
   return startCommandPattern.exec(text)?.[1] ?? null;
@@ -55,10 +56,21 @@ export function createTelegramWebhookRoutes({
       return;
     }
 
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+
     try {
-      await sendTelegramMessage({ chatId, text });
+      await Promise.race([
+        sendTelegramMessage({ chatId, text }),
+        new Promise((resolve) => {
+          timeout = setTimeout(resolve, replyTimeoutMs);
+        })
+      ]);
     } catch {
       // Telegram delivery failures should not make webhook acknowledgement fail.
+    } finally {
+      if (timeout) {
+        clearTimeout(timeout);
+      }
     }
   }
 

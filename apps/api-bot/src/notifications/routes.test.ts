@@ -210,4 +210,43 @@ describe('createNotificationRoutes', () => {
       })
     );
   });
+
+  it('records failed attempts when the sender rejects', async () => {
+    const storage = createStorage(linkedTelegramChannel);
+    const sendTelegramMessage = vi.fn(async () => {
+      throw new Error('network unavailable');
+    });
+    const routes = createNotificationRoutes({
+      serviceToken: 'service-token',
+      storage,
+      sendTelegramMessage
+    });
+
+    const response = await routes.request(
+      sendRequest({
+        recipientUserId: 'user_123',
+        topic: 'budget',
+        message: 'Budget updated.'
+      })
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      status: 'failed',
+      provider: 'telegram',
+      errorCode: 'network_error'
+    });
+    expect(storage.saveNotificationAttempt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recipientUserId: 'user_123',
+        provider: 'telegram',
+        topic: 'budget',
+        status: 'failed',
+        providerErrorCode: 'network_error'
+      })
+    );
+    expect(storage.saveNotificationAttempt).not.toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'Budget updated.' })
+    );
+  });
 });

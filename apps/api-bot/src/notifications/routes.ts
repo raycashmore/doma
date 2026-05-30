@@ -28,6 +28,18 @@ async function parseNotificationBody(c: Context) {
   }
 }
 
+async function sendNotification(
+  sendTelegramMessage: TelegramMessageSender,
+  chatId: string,
+  text: string
+) {
+  try {
+    return await sendTelegramMessage({ chatId, text });
+  } catch {
+    return { ok: false as const, errorCode: 'network_error' };
+  }
+}
+
 export function createNotificationRoutes({
   serviceToken,
   storage,
@@ -75,10 +87,11 @@ export function createNotificationRoutes({
       });
     }
 
-    const sendResult = await sendTelegramMessage({
-      chatId: link.providerChatId,
-      text: notification.data.message
-    });
+    const sendResult = await sendNotification(
+      sendTelegramMessage,
+      link.providerChatId,
+      notification.data.message
+    );
     const status = sendResult.ok ? 'sent' : 'failed';
     const errorCode = sendResult.ok ? undefined : sendResult.errorCode;
 
