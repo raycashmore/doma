@@ -11,7 +11,7 @@ export const scheduleEventsTable = defineTable({
   allDay: v.boolean(),
   title: v.string(),
   location: v.optional(v.string()),
-  who: v.array(v.string()), // member ids
+  who: v.array(v.string()), // schedule member keys (from SCHEDULE_MEMBERS config)
   recurring: v.boolean(),
-  htmlLink: v.string()
+  htmlLink: v.string() // Google Calendar event URL ("Open in Google Calendar")
 }).index('by_start', ['start']);
