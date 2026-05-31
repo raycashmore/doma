@@ -25,7 +25,15 @@ export const replaceAll = internalMutation({
   }
 });
 
-// Read-only current-week feed for the swimlanes UI. Clerk-gated.
+// Read-only current-week feed for the swimlanes UI.
+//
+// NOTE: this query gates on Clerk identity, which is intentionally ahead of the
+// rest of this deployment — the budget queries currently rely solely on the
+// app-level AuthGate and do not check identity server-side. Family whereabouts
+// are sensitive enough to warrant the explicit gate here. It is only ever
+// called from the authenticated schedule app (never seeds/admin scripts/SSR).
+// If/when the other queries adopt server-side gating, fold this into a shared
+// helper.
 export const currentWeek = query({
   args: {},
   handler: async (ctx) => {
