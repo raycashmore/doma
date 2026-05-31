@@ -48,6 +48,11 @@ function ClerkAuthenticatedGate({ children }: { children: ReactNode }) {
 
 export function AuthGate({ publishableKey, children }: AuthGateProps) {
   if (!publishableKey) {
+    if (process.env.NODE_ENV !== 'test') {
+      console.warn(
+        '[doma] AuthGate bypassed: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is not set.'
+      );
+    }
     return <>{children}</>;
   }
 

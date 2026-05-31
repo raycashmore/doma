@@ -7,11 +7,11 @@ import { useUrlAuth } from './auth';
 
 const homeApp = APPS.find((a) => a.id === 'home')!;
 
-export interface SidebarProps {
+export type SidebarProps = {
   activeAppId: AppId;
   isDev: boolean;
   onSignOut?: () => void;
-}
+};
 
 export function Sidebar({ activeAppId, isDev, onSignOut }: SidebarProps) {
   const urlAuth = useUrlAuth();

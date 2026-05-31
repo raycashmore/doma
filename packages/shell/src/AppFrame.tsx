@@ -6,7 +6,7 @@ import { Header } from './Header';
 import { MobileNav } from './MobileNav';
 import type { AppId } from './apps';
 
-export interface AppFrameProps {
+export type AppFrameProps = {
   appId: AppId;
   title: string;
   isDev: boolean;
@@ -15,7 +15,7 @@ export interface AppFrameProps {
   onSignOut?: () => void;
   headerClassName?: string;
   mainClassName?: string;
-}
+};
 
 export function AppFrame({
   appId,
