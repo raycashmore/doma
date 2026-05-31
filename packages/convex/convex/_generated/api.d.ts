@@ -15,6 +15,9 @@ import type * as monthDetail from "../monthDetail.js";
 import type * as monthlyBreakdown from "../monthlyBreakdown.js";
 import type * as mutations from "../mutations.js";
 import type * as queries from "../queries.js";
+import type * as schedule_mapping from "../schedule/mapping.js";
+import type * as schedule_queries from "../schedule/queries.js";
+import type * as schedule_week from "../schedule/week.js";
 import type * as seed from "../seed.js";
 import type * as spendingSummary from "../spendingSummary.js";
 
@@ -32,6 +35,9 @@ declare const fullApi: ApiFromModules<{
   monthlyBreakdown: typeof monthlyBreakdown;
   mutations: typeof mutations;
   queries: typeof queries;
+  "schedule/mapping": typeof schedule_mapping;
+  "schedule/queries": typeof schedule_queries;
+  "schedule/week": typeof schedule_week;
   seed: typeof seed;
   spendingSummary: typeof spendingSummary;
 }>;
