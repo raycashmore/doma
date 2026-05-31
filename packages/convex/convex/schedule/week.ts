@@ -17,7 +17,7 @@ function tzOffsetMs(date: Date, tz: string): number {
     Number(p.year),
     Number(p.month) - 1,
     Number(p.day),
-    Number(p.hour),
+    Number(p.hour) % 24,
     Number(p.minute),
     Number(p.second)
   );

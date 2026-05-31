@@ -27,4 +27,14 @@ describe('currentWeekRange', () => {
     const { timeMin } = currentWeekRange(new Date('2026-05-25T09:00:00Z'), 'UTC');
     expect(timeMin).toBe('2026-05-25T00:00:00.000Z');
   });
+
+  it('handles an exact local-midnight instant (Brisbane)', () => {
+    // 2026-05-24T14:00:00Z == 2026-05-25T00:00:00 Brisbane (a Monday)
+    const { timeMin, timeMax } = currentWeekRange(
+      new Date('2026-05-24T14:00:00Z'),
+      'Australia/Brisbane'
+    );
+    expect(timeMin).toBe('2026-05-24T14:00:00.000Z'); // that same Monday 00:00 Brisbane
+    expect(timeMax).toBe('2026-05-31T14:00:00.000Z');
+  });
 });
