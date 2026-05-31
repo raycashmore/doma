@@ -6,11 +6,11 @@
   "rewrites": [
     {
       "source": "/api/bot",
-      "destination": "https://doma-api-bot.vercel.app/"
+      "destination": "https://bot.rayandromana.app/"
     },
     {
       "source": "/api/bot/:path*",
-      "destination": "https://doma-api-bot.vercel.app/:path*"
+      "destination": "https://bot.rayandromana.app/:path*"
     },
     {
       "source": "/budget",

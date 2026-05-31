@@ -7,6 +7,7 @@
     "dev:no-auth": "dotenv -e ../../.env.local -- sh -c 'VITE_CLERK_PUBLISHABLE_KEY= vite dev --port 3001'",
     "build": "vite build",
     "preview": "vite preview",
+    "check-types": "tsc --noEmit",
     "test": "vitest run",
     "lint": "eslint --fix",
     "format": "prettier",

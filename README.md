@@ -1,8 +1,9 @@
 # Doma
 
-Personal finance dashboard built as a Turborepo monorepo with Vercel
-Multi-Zones, Convex, Clerk, and a shared bot gateway for Telegram
-notifications.
+Doma: household management system. 
+
+A Turborepo monorepo with Vercel Multi-Zones, Convex, Clerk, and a shared bot 
+gateway for Telegram notifications.
 
 ## What lives here
 
