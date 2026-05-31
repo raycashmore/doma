@@ -6,11 +6,11 @@
   "rewrites": [
     {
       "source": "/api/bot",
-      "destination": "https://bot.rayandromana.app/"
+      "destination": "https://bot.rayandromana.com/"
     },
     {
       "source": "/api/bot/:path*",
-      "destination": "https://bot.rayandromana.app/:path*"
+      "destination": "https://bot.rayandromana.com/:path*"
     },
     {
       "source": "/budget",

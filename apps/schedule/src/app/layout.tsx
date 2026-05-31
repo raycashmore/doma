@@ -11,7 +11,8 @@ const IS_DEV = process.env.NODE_ENV !== 'production';
 
 export const metadata: Metadata = {
   title: 'Doma · Schedule',
-  appleWebApp: { capable: true, title: 'Schedule', statusBarStyle: 'default' }
+  appleWebApp: { capable: true, title: 'Schedule', statusBarStyle: 'default' },
+  icons: [{ rel: 'icon', url: '/favicon.png' }]
 };
 
 export const viewport: Viewport = {
