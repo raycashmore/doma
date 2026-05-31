@@ -1,3 +1,5 @@
+'use client';
+
 import { Home, LogOut } from 'lucide-react';
 import clsx from 'clsx';
 import { APPS, getAppHref, type AppDescriptor, type AppId } from './apps';
@@ -5,16 +7,17 @@ import { useUrlAuth } from './auth';
 
 const homeApp = APPS.find((a) => a.id === 'home')!;
 
-export interface SidebarProps {
+export type SidebarProps = {
   activeAppId: AppId;
+  isDev: boolean;
   onSignOut?: () => void;
-}
+};
 
-export function Sidebar({ activeAppId, onSignOut }: SidebarProps) {
+export function Sidebar({ activeAppId, isDev, onSignOut }: SidebarProps) {
   const urlAuth = useUrlAuth();
   const isHomeActive = activeAppId === 'home';
   const buildHref = (app: AppDescriptor) => {
-    const href = getAppHref(app);
+    const href = getAppHref(app, isDev);
     return urlAuth && href.startsWith('http') ? urlAuth(href) : href;
   };
 

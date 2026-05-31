@@ -1,0 +1,24 @@
+@import 'tailwindcss';
+@import '@repo/tokens/tokens.css';
+@import '@repo/tokens/theme.css';
+
+/* Tailwind v4 only auto-scans this app's own source. Tell it to also pick up
+   class names used by shared workspace packages. */
+@source "../../../../packages/shell/src/**/*.{ts,tsx}";
+
+@custom-variant dark (&:is(.dark *));
+
+body {
+  @apply m-0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}

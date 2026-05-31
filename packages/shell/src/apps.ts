@@ -59,7 +59,7 @@ export const APPS: AppDescriptor[] = [
     label: 'Schedule',
     href: '/schedule',
     icon: Calendar,
-    enabled: false,
+    enabled: true,
     devPort: 3003
   },
   {
@@ -91,19 +91,15 @@ export const APPS: AppDescriptor[] = [
 /**
  * Resolve the right URL for an app link given the current runtime.
  *
- * - **Production:** returns the app's path (`/budget`). Vercel rewrites
- *   route it from the apex domain to the correct zone.
- * - **Dev:** each app runs at the root of its own port (Vercel rewrites
- *   don't run locally), so build an absolute URL to that port.
+ * - **Production (`isDev === false`):** returns the app's path (`/budget`).
+ *   Vercel rewrites route it from the apex domain to the correct zone.
+ * - **Dev (`isDev === true`):** each app runs at the root of its own port
+ *   (Vercel rewrites don't run locally), so build an absolute URL to that port.
  *
- * Cross-port nav in dev means each port is its own Clerk origin — see
- * `useSignedInAppHref` in `./useSignedInAppHref.tsx` for the wrapper that
- * appends Clerk's dev session token so you don't have to sign in on every
- * port.
+ * `isDev` is injected by each app because the source differs per framework
+ * (Vite exposes `import.meta.env.DEV`; Next exposes `process.env.NODE_ENV`).
  */
-export function getAppHref(app: AppDescriptor): string {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const isDev = (import.meta as any).env?.DEV === true;
+export function getAppHref(app: AppDescriptor, isDev: boolean): string {
   if (!isDev) return app.href;
   return `http://localhost:${app.devPort}/`;
 }

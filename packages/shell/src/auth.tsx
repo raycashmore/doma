@@ -1,85 +1,45 @@
-import { type ReactNode, useRef, createContext, useContext } from 'react';
-import {
-  ClerkProvider,
-  SignedIn,
-  SignedOut,
-  SignIn,
-  useClerk
-} from '@clerk/clerk-react';
+'use client';
 
-export interface AuthGateProps {
-  /**
-   * Clerk publishable key. When undefined or empty, AuthGate is a passthrough
-   * and the app boots without sign-in (useful during initial scaffold).
-   * Once Clerk is set up per docs/auth.md, the key becomes a string and the
-   * gate activates.
-   */
-  publishableKey: string | undefined;
-  children: ReactNode;
-}
+import { type ReactNode, createContext, useContext } from 'react';
 
 /**
- * Builder that appends Clerk's dev session token to a cross-origin URL so the
- * destination port auto-rehydrates the session. Identity for production /
- * same-origin URLs. Provided via context by AuthGate when Clerk is loaded;
- * `null` when AuthGate is a passthrough.
+ * Builder that appends a cross-origin auth token to a URL so the destination
+ * port auto-rehydrates the session. Identity for production / same-origin
+ * URLs. Each app supplies one via `UrlAuthProvider` using its own Clerk SDK;
+ * `null` when auth is not configured (passthrough).
  */
 type UrlAuthBuilder = (url: string) => string;
+
 const UrlAuthContext = createContext<UrlAuthBuilder | null>(null);
 
 export function useUrlAuth(): UrlAuthBuilder | null {
   return useContext(UrlAuthContext);
 }
 
-function ClerkUrlAuthProvider({ children }: { children: ReactNode }) {
-  const clerk = useClerk();
+export function UrlAuthProvider({
+  buildUrlWithAuth,
+  children
+}: {
+  buildUrlWithAuth: UrlAuthBuilder;
+  children: ReactNode;
+}) {
   return (
-    <UrlAuthContext.Provider value={(url) => clerk.buildUrlWithAuth(url)}>
+    <UrlAuthContext.Provider value={buildUrlWithAuth}>
       {children}
     </UrlAuthContext.Provider>
   );
 }
 
-export function AuthGate({ publishableKey, children }: AuthGateProps) {
-  const warned = useRef(false);
-
-  if (!publishableKey) {
-    if (typeof window !== 'undefined' && !warned.current) {
-      console.warn(
-        '[doma] AuthGate is bypassed: VITE_CLERK_PUBLISHABLE_KEY is not set. ' +
-          'See docs/auth.md to enable sign-in.'
-      );
-      warned.current = true;
-    }
-    return <>{children}</>;
-  }
-
+/**
+ * Presentational wrapper for a signed-out screen. The app drops its own
+ * SDK-specific `<SignIn>` inside. Framework-neutral — no Clerk import.
+ */
+export function SignInLayout({ children }: { children: ReactNode }) {
   return (
-    <ClerkProvider publishableKey={publishableKey}>
-      <SignedIn>
-        <ClerkUrlAuthProvider>{children}</ClerkUrlAuthProvider>
-      </SignedIn>
-      <SignedOut>
-        <div className="flex min-h-screen items-center justify-center bg-neutral-50 px-6">
-          <div className="flex w-full max-w-md flex-col gap-3 text-center">
-            <div className="flex justify-center">
-              <SignIn
-                appearance={{
-                  elements: {
-                    footerAction: 'hidden',
-                    footerActionLink: 'hidden'
-                  }
-                }}
-                fallbackRedirectUrl="/"
-                routing="hash"
-                signUpUrl=""
-                transferable={false}
-                withSignUp={false}
-              />
-            </div>
-          </div>
-        </div>
-      </SignedOut>
-    </ClerkProvider>
+    <div className="flex min-h-screen items-center justify-center bg-neutral-50 px-6">
+      <div className="flex w-full max-w-md flex-col gap-3 text-center">
+        <div className="flex justify-center">{children}</div>
+      </div>
+    </div>
   );
 }
