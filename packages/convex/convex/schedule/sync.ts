@@ -31,6 +31,9 @@ export const run = internalAction({
   args: {},
   handler: async (ctx) => {
     const { key, calendars, members, tz } = parseEnv();
+    if (!key.client_email || !key.private_key) {
+      throw new Error('GOOGLE_SA_KEY env var is missing or incomplete');
+    }
 
     const auth = new JWT({
       email: key.client_email,
@@ -43,6 +46,9 @@ export const run = internalAction({
     const { timeMin, timeMax } = currentWeekRange(new Date(), tz);
 
     const rows: ScheduleEventRow[] = [];
+    // Intentional: a single calendar failure aborts the whole sync rather than
+    // producing a partial replace. In v1 this is the safest default; isolate
+    // per-calendar if partial syncs become acceptable.
     for (const calendar of calendars) {
       const url = new URL(
         `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(
