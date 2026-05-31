@@ -21,6 +21,7 @@ What you'll create:
 | Clerk application (production env) | Clerk dashboard | All apps share one                 |
 | Vercel project for Home            | Vercel          | Owns the apex domain + rewrites    |
 | Vercel project for Budget          | Vercel          | Lives behind a Vercel-assigned URL |
+| Vercel project for Schedule        | Vercel          | Lives behind a Vercel-assigned URL |
 | Vercel project for Bot gateway     | Vercel          | Receives Telegram webhooks + sends |
 | Vercel project for each future app | Vercel          | One per app                        |
 
@@ -79,6 +80,14 @@ For Vercel Preview on Home, set:
 | `VITE_CLERK_PUBLISHABLE_KEY`  | Clerk preview publishable key  |
 | `CLERK_SECRET_KEY`            | Clerk preview secret key       |
 | `VITE_CLERK_FRONTEND_API_URL` | Clerk preview Frontend API URL |
+
+For Vercel Preview on Schedule, set the same values but under **Next.js public names** (Next inlines `NEXT_PUBLIC_`-prefixed vars at build; the `VITE_` prefix is Vite-only):
+
+| Name                                | Value                          |
+| ----------------------------------- | ------------------------------ |
+| `NEXT_PUBLIC_CONVEX_URL`            | Convex staging URL from Step 1 |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk preview publishable key  |
+| `CLERK_SECRET_KEY`                  | Clerk preview secret key       |
 
 For Vercel Preview on the Bot gateway, set the same Clerk server credentials plus the bot gateway variables from [Bot Gateway Environment](#bot-gateway-environment). Use preview Telegram bots and preview Upstash databases where possible.
 

@@ -9,6 +9,8 @@ notifications.
 - `apps/home` is the apex zone and account home. It owns the shared domain,
   cross-zone rewrites, and Telegram notification settings.
 - `apps/budget` is the budgeting app mounted at `/budget`.
+- `apps/schedule` is the family scheduler mounted at `/schedule` (the first
+  Next.js zone; the others are TanStack Start).
 - `apps/api-bot` is the bot gateway for Telegram linking, outbound
   notifications, and inbound command handling.
 
@@ -16,6 +18,7 @@ notifications.
 
 - `apps/home` — apex zone, summary/settings shell (port 3000)
 - `apps/budget` — Budget app at `/budget` (port 3001)
+- `apps/schedule` — Schedule app at `/schedule`, Next.js App Router (port 3003)
 - `apps/api-bot` — Hono bot gateway for Telegram/webhook flows (port 3002)
 - `apps/api-*` — convention for other non-Convex backend experiments
 
@@ -23,7 +26,9 @@ notifications.
 
 - `@repo/convex` — shared Convex schema/functions
 - `@repo/tokens` — design tokens (Tailwind v4)
-- `@repo/shell` — shared React sidebar + AppFrame + AuthGate
+- `@repo/shell` — shared React Sidebar + AppFrame + MobileNav + auth context
+  (`UrlAuthProvider`/`SignInLayout`); framework-neutral, so both TanStack Start
+  and Next.js apps consume it. Each app supplies its own Clerk `AuthGate` adapter.
 - `@repo/ui` — shared React primitives
 
 ## Commands
@@ -49,6 +54,9 @@ pnpm --filter home build           # Verify Home build
 pnpm --filter budget dev           # Budget on :3001
 pnpm --filter budget dev:no-auth   # Budget without Clerk auth
 pnpm --filter budget test          # Budget Vitest suite
+pnpm --filter schedule dev         # Schedule on :3003 (Next.js)
+pnpm --filter schedule test        # Schedule Vitest suite
+pnpm --filter schedule build       # Verify Schedule build
 pnpm --filter api-bot dev          # Bot gateway on :3002
 pnpm --filter api-bot test         # Bot gateway Vitest suite
 pnpm --filter api-bot check-types  # Bot gateway TypeScript check
@@ -60,6 +68,7 @@ Run the UI apps directly by port in local dev:
 
 - Home: `http://localhost:3000`
 - Budget: `http://localhost:3001`
+- Schedule: `http://localhost:3003`
 - Bot gateway: `http://localhost:3002`
 
 Home proxies `/api/bot/*` to the bot gateway in local development, so the

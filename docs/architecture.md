@@ -4,28 +4,29 @@ Doma is a Vercel Multi-Zones monorepo. `apps/home` owns the apex domain and rewr
 
 ## Monorepo layout
 
-| Path                         | Framework        | Notes                                                    |
-| ---------------------------- | ---------------- | -------------------------------------------------------- |
-| `apps/home`                  | TanStack Start   | Apex zone, port 3000; owns `vercel.json` rewrites        |
-| `apps/budget`                | TanStack Start   | Mounts at `/budget`, port 3001                           |
-| `apps/api-bot`               | Hono on Vercel   | Shared bot gateway for Telegram delivery and chat        |
-| `apps/api-*`                 | (per-experiment) | Convention for non-Convex backends                       |
-| `packages/convex`            | —                | Shared Convex schema/functions (`@repo/convex`)          |
-| `packages/tokens`            | —                | Tailwind v4 design tokens (`@repo/tokens`)               |
-| `packages/shell`             | React            | Shared sidebar + AppFrame + AuthGate (`@repo/shell`)     |
-| `packages/ui`                | React            | Shadcn primitives (`@repo/ui`)                           |
-| `packages/eslint-config`     | —                | Shared ESLint configs                                    |
-| `packages/typescript-config` | —                | Shared TypeScript configs                                |
+| Path                         | Framework            | Notes                                                                                   |
+| ---------------------------- | -------------------- | --------------------------------------------------------------------------------------- |
+| `apps/home`                  | TanStack Start       | Apex zone, port 3000; owns `vercel.json` rewrites                                       |
+| `apps/budget`                | TanStack Start       | Mounts at `/budget`, port 3001                                                          |
+| `apps/schedule`              | Next.js (App Router) | Mounts at `/schedule`, port 3003                                                        |
+| `apps/api-bot`               | Hono on Vercel       | Shared bot gateway for Telegram delivery and chat                                       |
+| `apps/api-*`                 | (per-experiment)     | Convention for non-Convex backends                                                      |
+| `packages/convex`            | —                    | Shared Convex schema/functions (`@repo/convex`)                                         |
+| `packages/tokens`            | —                    | Tailwind v4 design tokens (`@repo/tokens`)                                              |
+| `packages/shell`             | React                | Shared Sidebar + AppFrame + MobileNav + auth context (`@repo/shell`); framework-neutral |
+| `packages/ui`                | React                | Shadcn primitives (`@repo/ui`)                                                          |
+| `packages/eslint-config`     | —                    | Shared ESLint configs                                                                   |
+| `packages/typescript-config` | —                    | Shared TypeScript configs                                                               |
 
 ## Multi-Zones
 
-`apps/home/vercel.json` rewrites paths to other Vercel projects. Each sub-app builds with `base: '/<path>/'` (Vite) plus `basepath: '/<path>'` (TanStack Router) so asset URLs and route matching agree. Cross-app navigation is real browser navigation; same apex domain means a single Clerk cookie covers every zone.
+`apps/home/vercel.json` rewrites paths to other Vercel projects. TanStack Start sub-apps build with `base: '/<path>/'` (Vite) plus `basepath: '/<path>'` (TanStack Router) so asset URLs and route matching agree. Next.js sub-apps (e.g. `schedule`) achieve the same with `basePath`/`assetPrefix` set to the mount path — **in production only**, unset in dev — so cross-port dev links to `localhost:<port>/` still resolve. Cross-app navigation is real browser navigation; same apex domain means a single Clerk cookie covers every zone.
 
-**Local dev does not apply Vercel rewrites.** Each app runs on its own port (Home 3000, Budget 3001, Bot gateway 3002). Visit UI apps directly. Home's Vite dev server proxies `/api/bot/*` to the bot gateway so the notification settings page can use the same same-origin path in local dev and production.
+**Local dev does not apply Vercel rewrites.** Each app runs on its own port (Home 3000, Budget 3001, Bot gateway 3002, Schedule 3003). Visit UI apps directly. Home's Vite dev server proxies `/api/bot/*` to the bot gateway so the notification settings page can use the same same-origin path in local dev and production.
 
 ### Cross-origin Clerk session sync in dev
 
-Each dev port is a separate browser origin, so Clerk's session cookie doesn't carry across them. The Sidebar uses Clerk's `buildUrlWithAuth` to append a short-lived `__clerk_db_jwt` to cross-origin links — clicking the Budget icon while signed in on Home lands you on Budget already authed. Implementation lives in `packages/shell/src/auth.tsx` (`UrlAuthContext`) and `Sidebar.tsx` (`useUrlAuth()` consumer). In production all zones share the apex cookie and the URL builder is a no-op for same-origin paths.
+Each dev port is a separate browser origin, so Clerk's session cookie doesn't carry across them. Each app's `AuthGate` adapter feeds Clerk's `buildUrlWithAuth` into the shell's framework-neutral `UrlAuthProvider`; `Sidebar` and `MobileNav` consume it via `useUrlAuth()` to append a short-lived `__clerk_db_jwt` to cross-origin links — clicking the Budget icon while signed in on Home lands you on Budget already authed. The context lives in `packages/shell/src/auth.tsx` (`UrlAuthContext`); the Clerk wiring lives in each app (Budget uses `@clerk/clerk-react`, Schedule uses `@clerk/nextjs`). In production all zones share the apex cookie and the URL builder is a no-op for same-origin paths.
 
 _A Caddy reverse-proxy was explored as an alternative (single origin → one cookie), but TanStack Start + Nitro + Vite's `base` option don't play well together: `/<base>/@react-refresh`, `/<base>/@vite/client`, `/<base>/@id/...` all 404 in dev even with `base` set, breaking the proxy approach. The `clerk.buildUrlWithAuth` route is simpler and doesn't fight the framework._
 
@@ -55,11 +56,11 @@ Convex remains the primary backend — most data and business logic belong there
 
 ## PWA
 
-Each app uses `vite-plugin-pwa` with `scope` set to its mount path. Each is independently installable. The service worker scope must match the rewrite shape — Budget's SW lives at `/budget/sw.js`, registered when the user visits `/budget`. See `docs/offline.md` for what's covered (shell) and what isn't (offline data).
+TanStack Start apps use `vite-plugin-pwa` with `scope` set to their mount path; each is independently installable. The service worker scope must match the rewrite shape — Budget's SW lives at `/budget/sw.js`, registered when the user visits `/budget`. The Next.js `schedule` app will use Serwist (`@serwist/next`) for the same effect — its PWA layer lands in a later phase. See `docs/offline.md` for what's covered (shell) and what isn't (offline data).
 
 ## Auth
 
-Clerk per zone, restricted-mode allowlist. The Clerk cookie is set on the apex domain, so every zone shares the session. `@repo/shell`'s `<AuthGate>` is a passthrough until `VITE_CLERK_PUBLISHABLE_KEY` is set, then becomes a sign-in gate. See `docs/auth.md`.
+Clerk per zone, restricted-mode allowlist. The Clerk cookie is set on the apex domain, so every zone shares the session. Each app owns an `AuthGate` adapter (`apps/<app>/src/integrations/auth/AuthGate.tsx`) that wraps its Clerk SDK and composes `@repo/shell`'s `UrlAuthProvider` + `SignInLayout`. The gate is a passthrough until the app's Clerk publishable key is set (`VITE_CLERK_PUBLISHABLE_KEY` for Vite apps, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` for Next.js), then becomes a sign-in gate. See `docs/auth.md`.
 
 ## Path aliases
 
@@ -69,3 +70,4 @@ Clerk per zone, restricted-mode allowlist. The Clerk cookie is set on the apex d
 
 - `packages/convex/convex/_generated/` — Convex types and API (regenerated by `pnpm convex`)
 - `apps/<app>/src/routeTree.gen.ts` — TanStack Router route tree (regenerated on dev)
+- `apps/schedule/next-env.d.ts` and `apps/schedule/.next/` — generated by Next.js (git-ignored)
