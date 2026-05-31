@@ -159,9 +159,44 @@ Or via the dashboard:
    - **Install Command**: leave default; Vercel detects pnpm workspaces and runs install from the repo root.
 3. Set the variables in [Bot Gateway Environment](#bot-gateway-environment).
 4. Deploy. When it succeeds, confirm the project has a stable alias such as `https://doma-api-bot.vercel.app`.
-5. Configure Telegram's webhook URL to the deployed gateway, for example `https://doma-api-bot.vercel.app/telegram/webhook`, with the same secret token as `TELEGRAM_WEBHOOK_SECRET`.
+5. Register Telegram's webhook using the commands below. Vercel deploys do not do this for you.
 
 `apps/api-bot/vercel.json` rewrites all incoming paths to its Hono handler, so `/linking/*`, `/notifications/*`, `/telegram/*`, and `/health` are served by the same app.
+
+### Register Telegram webhook
+
+Telegram will not send inbound messages to the bot gateway until its webhook URL
+is registered with Bot API. If `getWebhookInfo` returns `"url": ""`, Telegram
+is not delivering updates anywhere.
+
+From the repo root, register the webhook using the local `.env.local` bot token
+and webhook secret. Replace the URL if the deployed bot origin is different:
+
+```bash
+pnpm --filter api-bot exec dotenv -e ../../.env.local -- sh -c 'curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" -d "url=https://bot.rayandromana.com/telegram/webhook" -d "secret_token=${TELEGRAM_WEBHOOK_SECRET}"'
+```
+
+Then verify Telegram stored it:
+
+```bash
+pnpm --filter api-bot exec dotenv -e ../../.env.local -- sh -c 'curl -sS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getWebhookInfo"'
+```
+
+Expected shape:
+
+```json
+{
+  "ok": true,
+  "result": {
+    "url": "https://bot.rayandromana.com/telegram/webhook",
+    "pending_update_count": 0
+  }
+}
+```
+
+If Telegram still shows an empty or old `url`, re-run `setWebhook`. If
+`last_error_message` is present, fix that before testing from Telegram; it is
+Telegram's record of the last failed delivery attempt.
 
 ## Step 6 — Deploy Home
 
@@ -291,7 +326,8 @@ Production checks:
 6. Open DevTools → Network. Refreshing `/budget` should show a 200 response served via Home's project; the underlying response comes from Budget's project (you'll see headers like `x-vercel-id` mentioning the Budget project, but the URL stays under the apex).
 7. Open `https://doma.example.com/settings/notifications` and create a Telegram pairing QR code.
 8. Open DevTools → Network. The pairing request should go to `https://doma.example.com/api/bot/linking/pairing-token` and return `201`.
-9. Open the Telegram deep link or scan the QR code, send `/start`, and confirm the bot acknowledges the link.
+9. Check Telegram webhook status with `getWebhookInfo`; the `url` must point at the deployed bot gateway.
+10. Open the Telegram deep link or scan the QR code, send `/start`, and confirm the bot acknowledges the link.
 
 ## Bot Gateway Environment
 
