@@ -60,8 +60,13 @@ export function toScheduleEvent(
 ): ScheduleEventRow {
   const title = ev.summary ?? '(no title)';
   const allDay = !ev.start.dateTime;
-  const start = Date.parse(allDay ? (ev.start.date as string) : (ev.start.dateTime as string));
-  const end = Date.parse(allDay ? (ev.end.date as string) : (ev.end.dateTime as string));
+  const startRaw = allDay ? ev.start.date : ev.start.dateTime;
+  const endRaw = allDay ? ev.end.date : ev.end.dateTime;
+  if (!startRaw || !endRaw) {
+    throw new Error(`Event ${ev.id}: missing start/end timestamp`);
+  }
+  const start = Date.parse(startRaw);
+  const end = Date.parse(endRaw);
   const row: ScheduleEventRow = {
     googleEventId: ev.id,
     calendarId: calendar.calendarId,

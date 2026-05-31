@@ -100,4 +100,32 @@ describe('toScheduleEvent', () => {
     expect(row.location).toBe('Studio 12');
     expect(row.title).toBe('(no title)');
   });
+
+  it('throws when start/end timestamps are missing', () => {
+    const ev: GoogleEvent = {
+      id: 'evt-bad',
+      htmlLink: 'https://calendar.google.com/evt-bad',
+      start: {},
+      end: {}
+    };
+    expect(() => toScheduleEvent(ev, personal, members)).toThrow();
+  });
+});
+
+describe('deriveWho token escaping', () => {
+  it('treats regex special characters in tokens literally', () => {
+    const m: MemberConfig[] = [
+      { id: 'memberX', tokens: ['A+B'] },
+      { id: 'memberY', tokens: ['Zed'] }
+    ];
+    const sharedCal: CalendarConfig = { calendarId: 'cal-s', who: 'shared' };
+    // Literal "A+B" matches; the "+" must not act as a regex quantifier.
+    expect(deriveWho('A+B study group', sharedCal, m)).toEqual(['memberX']);
+    // "AAB" would match if "+" were treated as a quantifier (one-or-more A).
+    // With escaping it does not, so no member is named -> the whole family.
+    expect(deriveWho('AAB study group', sharedCal, m)).toEqual([
+      'memberX',
+      'memberY'
+    ]);
+  });
 });
