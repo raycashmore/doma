@@ -47,6 +47,10 @@ In the Convex dashboard for each cloud deployment:
 
 - **Settings → Environment Variables**: set `CLERK_JWT_ISSUER_DOMAIN` to the Clerk Frontend API URL for that environment.
 
+### Schedule ingestion (Google Calendar)
+
+The `schedule` app's Convex backend syncs a family's Google calendars via a service account on a cron. It reads four additional Convex env vars: `GOOGLE_SA_KEY`, `SCHEDULE_CALENDARS`, `SCHEDULE_MEMBERS`, and `SCHEDULE_TZ`. These hold real names and calendar ids, so they live only in Convex env — never in git. Setup steps are in [`docs/schedule-ingestion-setup.md`](schedule-ingestion-setup.md).
+
 ## Step 2 — Clerk production environment
 
 Clerk's model: one application contains both a development environment (what you've been using on localhost) and a production environment (separate keys + separate cookie scope). Promote settings from dev to prod inside the Clerk dashboard.

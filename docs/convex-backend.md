@@ -38,8 +38,8 @@ Store only raw inputs in the database. All computed values are calculated at rea
 
 ## Schema Conventions
 
-- **9 tables** defined in `schema.ts`, all financial data
-- **Date field:** All tables indexed by `date` (Unix timestamp in milliseconds) with a `by_date` index
+- **10 tables** defined in `schema.ts`: 9 financial tables plus `scheduleEvents` (read-only Google Calendar data — see [Schedule ingestion](#schedule-ingestion))
+- **Date field:** All financial tables indexed by `date` (Unix timestamp in milliseconds) with a `by_date` index
 - **Crypto tables:** Use `by_platform` indexing in addition to date
 - **Derived field comments:** Schema marks derived fields with `// DERIVED: ...` comments
 
@@ -56,6 +56,27 @@ Removed stored fields:
 - `capitalGrowth` is no longer stored because it is derived.
 
 All monetary values remain integer cents. Rate fields remain floats.
+
+## Schedule ingestion
+
+The `schedule/` module (`packages/convex/convex/schedule/`) ingests a family's
+Google calendars, read-only — a different shape from the financial tables (no
+derive-at-read; the table is a cache of an external source):
+
+- `schema.ts` — the `scheduleEvents` table (one row per expanded event
+  instance, indexed `by_start`), composed into the root `defineSchema`.
+- `week.ts`, `mapping.ts` — pure, unit-tested helpers (tz-aware week range;
+  member derivation + Google-event → row transform).
+- `sync.ts` — a `"use node"` internal action that authenticates as a Google
+  **service account** (`google-auth-library`) and fetches the current week
+  (`singleEvents=true`) from each configured calendar.
+- `queries.ts` — `replaceAll` (internal mutation, full-table replace each sync)
+  and `currentWeek` (Clerk-gated read query).
+- `crons.ts` (convex root) — runs the sync every 15 minutes.
+
+Config + secrets are Convex env vars (`GOOGLE_SA_KEY`, `SCHEDULE_CALENDARS`,
+`SCHEDULE_MEMBERS`, `SCHEDULE_TZ`); never in git. Setup:
+[`docs/schedule-ingestion-setup.md`](schedule-ingestion-setup.md).
 
 ## Helper Functions (`helpers.ts`)
 
