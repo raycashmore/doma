@@ -26,11 +26,11 @@
     },
     {
       "source": "/schedule",
-      "destination": "https://schedule.rayandromana.com/schedule/"
+      "destination": "https://schedule.rayandromana.com/schedule"
     },
     {
       "source": "/schedule/",
-      "destination": "https://schedule.rayandromana.com/schedule/"
+      "destination": "https://schedule.rayandromana.com/schedule"
     },
     {
       "source": "/schedule/:path*",
