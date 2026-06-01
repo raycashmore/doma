@@ -1,5 +1,10 @@
 import { v } from 'convex/values';
-import { internalMutation, query } from '../_generated/server';
+import {
+  internalMutation,
+  internalQuery,
+  query,
+  type QueryCtx
+} from '../_generated/server';
 
 const eventValidator = v.object({
   googleEventId: v.string(),
@@ -14,18 +19,41 @@ const eventValidator = v.object({
   htmlLink: v.string()
 });
 
-// Full-replace the table with the freshly-synced week. Internal: only the
-// sync action calls this.
+async function readLastSyncedAt(ctx: QueryCtx): Promise<number | null> {
+  const meta = await ctx.db
+    .query('scheduleSyncMeta')
+    .withIndex('by_key', (q) => q.eq('key', 'default'))
+    .unique();
+  return meta?.lastSyncedAt ?? null;
+}
+
+// Full-replace the table with the freshly-synced week and stamp the sync time.
+// Internal: only the sync action calls this.
 export const replaceAll = internalMutation({
-  args: { events: v.array(eventValidator) },
-  handler: async (ctx, { events }) => {
+  args: { events: v.array(eventValidator), syncedAt: v.number() },
+  handler: async (ctx, { events, syncedAt }) => {
     const existing = await ctx.db.query('scheduleEvents').collect();
     for (const row of existing) await ctx.db.delete(row._id);
     for (const event of events) await ctx.db.insert('scheduleEvents', event);
+
+    const meta = await ctx.db
+      .query('scheduleSyncMeta')
+      .withIndex('by_key', (q) => q.eq('key', 'default'))
+      .unique();
+    if (meta) await ctx.db.patch(meta._id, { lastSyncedAt: syncedAt });
+    else await ctx.db.insert('scheduleSyncMeta', { key: 'default', lastSyncedAt: syncedAt });
   }
 });
 
-// Read-only current-week feed for the swimlanes UI.
+// Last successful sync time (epoch ms) or null. Internal: the refresh action
+// reads this to decide whether a fresh re-sync is needed.
+export const syncMeta = internalQuery({
+  args: {},
+  handler: async (ctx) => readLastSyncedAt(ctx)
+});
+
+// Read-only current-week feed for the swimlanes UI, plus the last sync time for
+// the "Synced X ago" banner.
 //
 // NOTE: this query gates on Clerk identity, which is intentionally ahead of the
 // rest of this deployment — the budget queries currently rely solely on the
@@ -39,6 +67,10 @@ export const currentWeek = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error('Not authenticated');
-    return await ctx.db.query('scheduleEvents').withIndex('by_start').collect();
+    const events = await ctx.db
+      .query('scheduleEvents')
+      .withIndex('by_start')
+      .collect();
+    return { events, lastSyncedAt: await readLastSyncedAt(ctx) };
   }
 });

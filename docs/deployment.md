@@ -49,7 +49,7 @@ In the Convex dashboard for each cloud deployment:
 
 ### Schedule ingestion (Google Calendar)
 
-The `schedule` app's Convex backend syncs a family's Google calendars via a service account on a cron. It reads four additional Convex env vars: `GOOGLE_SA_KEY`, `SCHEDULE_CALENDARS`, `SCHEDULE_MEMBERS`, and `SCHEDULE_TZ`. These hold real names and calendar ids, so they live only in Convex env — never in git. Setup steps are in [`docs/schedule-ingestion-setup.md`](schedule-ingestion-setup.md).
+The `schedule` app's Convex backend syncs a family's Google calendars via a service account on demand (the app triggers a refresh on load and via a manual button — no cron). It reads four additional Convex env vars: `GOOGLE_SA_KEY`, `SCHEDULE_CALENDARS`, `SCHEDULE_MEMBERS`, and `SCHEDULE_TZ`. These hold real names and calendar ids, so they live only in Convex env — never in git. Setup steps are in [`docs/schedule-ingestion-setup.md`](schedule-ingestion-setup.md).
 
 ## Step 2 — Clerk production environment
 

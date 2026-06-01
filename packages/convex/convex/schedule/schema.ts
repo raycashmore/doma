@@ -15,3 +15,10 @@ export const scheduleEventsTable = defineTable({
   recurring: v.boolean(),
   htmlLink: v.string() // Google Calendar event URL ("Open in Google Calendar")
 }).index('by_start', ['start']);
+
+// Single-row sync metadata (keyed 'default'): when the last successful sync
+// completed. Powers the "Synced X ago" banner and the skip-if-fresh check.
+export const scheduleSyncMetaTable = defineTable({
+  key: v.literal('default'),
+  lastSyncedAt: v.number() // epoch ms
+}).index('by_key', ['key']);

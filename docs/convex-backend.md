@@ -38,7 +38,7 @@ Store only raw inputs in the database. All computed values are calculated at rea
 
 ## Schema Conventions
 
-- **10 tables** defined in `schema.ts`: 9 financial tables plus `scheduleEvents` (read-only Google Calendar data — see [Schedule ingestion](#schedule-ingestion))
+- **11 tables** defined in `schema.ts`: 9 financial tables plus `scheduleEvents` and `scheduleSyncMeta` (read-only Google Calendar data — see [Schedule ingestion](#schedule-ingestion))
 - **Date field:** All financial tables indexed by `date` (Unix timestamp in milliseconds) with a `by_date` index
 - **Crypto tables:** Use `by_platform` indexing in addition to date
 - **Derived field comments:** Schema marks derived fields with `// DERIVED: ...` comments
@@ -61,18 +61,24 @@ All monetary values remain integer cents. Rate fields remain floats.
 
 The `schedule/` module (`packages/convex/convex/schedule/`) ingests a family's
 Google calendars, read-only — a different shape from the financial tables (no
-derive-at-read; the table is a cache of an external source):
+derive-at-read; the tables are a cache of an external source). Sync is
+**on demand** (triggered by the app on load + a manual refresh button), not a
+cron:
 
 - `schema.ts` — the `scheduleEvents` table (one row per expanded event
-  instance, indexed `by_start`), composed into the root `defineSchema`.
-- `week.ts`, `mapping.ts` — pure, unit-tested helpers (tz-aware week range;
-  member derivation + Google-event → row transform).
-- `sync.ts` — a `"use node"` internal action that authenticates as a Google
-  **service account** (`google-auth-library`) and fetches the current week
-  (`singleEvents=true`) from each configured calendar.
-- `queries.ts` — `replaceAll` (internal mutation, full-table replace each sync)
-  and `currentWeek` (Clerk-gated read query).
-- `crons.ts` (convex root) — runs the sync every 15 minutes.
+  instance, indexed `by_start`) and the single-row `scheduleSyncMeta`
+  (`lastSyncedAt`), composed into the root `defineSchema`.
+- `week.ts`, `mapping.ts`, `sync-policy.ts`, `credentials.ts` — pure,
+  unit-tested helpers (tz-aware week range; member derivation + row transform;
+  skip-if-fresh decision; private-key newline normalization).
+- `sync.ts` — a `"use node"` module with `performSync` (service-account
+  `google-auth-library` auth → fetch current week `singleEvents=true` → replace),
+  exposed two ways: `run` (internal, for the CLI/ops) and `refresh` (public,
+  **Clerk-gated** — the app's entry point; unforced calls skip when data is
+  fresh, the button passes `force`).
+- `queries.ts` — `replaceAll` (internal mutation; full-table replace + stamp
+  `lastSyncedAt`), `syncMeta` (internal; last-synced read for the freshness
+  check), and `currentWeek` (Clerk-gated read returning `{ events, lastSyncedAt }`).
 
 Config + secrets are Convex env vars (`GOOGLE_SA_KEY`, `SCHEDULE_CALENDARS`,
 `SCHEDULE_MEMBERS`, `SCHEDULE_TZ`); never in git. Setup:

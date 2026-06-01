@@ -16,6 +16,7 @@ import type * as monthDetail from "../monthDetail.js";
 import type * as monthlyBreakdown from "../monthlyBreakdown.js";
 import type * as mutations from "../mutations.js";
 import type * as queries from "../queries.js";
+import type * as schedule_credentials from "../schedule/credentials.js";
 import type * as schedule_mapping from "../schedule/mapping.js";
 import type * as schedule_queries from "../schedule/queries.js";
 import type * as schedule_sync from "../schedule/sync.js";
@@ -38,6 +39,7 @@ declare const fullApi: ApiFromModules<{
   monthlyBreakdown: typeof monthlyBreakdown;
   mutations: typeof mutations;
   queries: typeof queries;
+  "schedule/credentials": typeof schedule_credentials;
   "schedule/mapping": typeof schedule_mapping;
   "schedule/queries": typeof schedule_queries;
   "schedule/sync": typeof schedule_sync;

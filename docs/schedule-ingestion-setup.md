@@ -2,7 +2,9 @@
 
 The `schedule` app reads a family's Google calendars **read-only** via a Google
 Cloud **service account**. No per-user OAuth. This is a one-time setup; after it,
-a Convex cron syncs the current week every 15 minutes.
+the app syncs the current week on demand — when it loads and via a manual
+refresh button (an unforced refresh is skipped if the data is under a minute
+old).
 
 ## 1. Create the service account
 
@@ -48,5 +50,7 @@ cd packages/convex
 pnpm exec dotenv -e ../../.env.local -- convex run schedule/sync:run
 ```
 
-It returns `{ count: <n> }`. Check the `scheduleEvents` table in the dashboard,
-then confirm the cron (`sync schedule`) is listed and runs every 15 minutes.
+It returns `{ count: <n>, lastSyncedAt: <ms> }`. Check the `scheduleEvents`
+table in the dashboard. In the app, the data refreshes on load and via the
+manual refresh button; `schedule/sync:run` above is the equivalent server-side
+trigger for ops/testing.
