@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { shouldSkipSync } from './sync-policy';
+import { shouldSkipSync } from './syncPolicy';
 
 const FRESH = 60_000;
 

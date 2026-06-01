@@ -6,7 +6,7 @@ import { action, internalAction, type ActionCtx } from '../_generated/server';
 import { internal } from '../_generated/api';
 import { currentWeekRange } from './week';
 import { normalizePrivateKey } from './credentials';
-import { shouldSkipSync } from './sync-policy';
+import { shouldSkipSync } from './syncPolicy';
 import {
   toScheduleEvent,
   type CalendarConfig,

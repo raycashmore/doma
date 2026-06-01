@@ -10,7 +10,6 @@
 
 import type * as budgetDisplayMonth from "../budgetDisplayMonth.js";
 import type * as budgetSummary from "../budgetSummary.js";
-import type * as crons from "../crons.js";
 import type * as helpers from "../helpers.js";
 import type * as monthDetail from "../monthDetail.js";
 import type * as monthlyBreakdown from "../monthlyBreakdown.js";
@@ -20,6 +19,7 @@ import type * as schedule_credentials from "../schedule/credentials.js";
 import type * as schedule_mapping from "../schedule/mapping.js";
 import type * as schedule_queries from "../schedule/queries.js";
 import type * as schedule_sync from "../schedule/sync.js";
+import type * as schedule_syncPolicy from "../schedule/syncPolicy.js";
 import type * as schedule_week from "../schedule/week.js";
 import type * as seed from "../seed.js";
 import type * as spendingSummary from "../spendingSummary.js";
@@ -33,7 +33,6 @@ import type {
 declare const fullApi: ApiFromModules<{
   budgetDisplayMonth: typeof budgetDisplayMonth;
   budgetSummary: typeof budgetSummary;
-  crons: typeof crons;
   helpers: typeof helpers;
   monthDetail: typeof monthDetail;
   monthlyBreakdown: typeof monthlyBreakdown;
@@ -43,6 +42,7 @@ declare const fullApi: ApiFromModules<{
   "schedule/mapping": typeof schedule_mapping;
   "schedule/queries": typeof schedule_queries;
   "schedule/sync": typeof schedule_sync;
+  "schedule/syncPolicy": typeof schedule_syncPolicy;
   "schedule/week": typeof schedule_week;
   seed: typeof seed;
   spendingSummary: typeof spendingSummary;
