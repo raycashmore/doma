@@ -4,6 +4,7 @@ import { JWT } from 'google-auth-library';
 import { internalAction } from '../_generated/server';
 import { internal } from '../_generated/api';
 import { currentWeekRange } from './week';
+import { normalizePrivateKey } from './credentials';
 import {
   toScheduleEvent,
   type CalendarConfig,
@@ -35,9 +36,16 @@ export const run = internalAction({
       throw new Error('GOOGLE_SA_KEY env var is missing or incomplete');
     }
 
+    const privateKey = normalizePrivateKey(key.private_key);
+    if (!privateKey.startsWith('-----BEGIN')) {
+      throw new Error(
+        'GOOGLE_SA_KEY private_key is not a valid PEM (check newline escaping in the env var)'
+      );
+    }
+
     const auth = new JWT({
       email: key.client_email,
-      key: key.private_key,
+      key: privateKey,
       scopes: ['https://www.googleapis.com/auth/calendar.readonly']
     });
     const { token } = await auth.getAccessToken();
