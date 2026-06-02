@@ -22,17 +22,33 @@ type RefreshResult =
   | { skipped: true; count: null; lastSyncedAt: number | null }
   | { skipped: false; count: number; lastSyncedAt: number };
 
+// Parse a JSON env var, naming the offending variable on malformed JSON so the
+// failure points at the env var to fix rather than surfacing a bare SyntaxError.
+function parseJsonEnv<T>(name: string, raw: string, fallback: string): T {
+  try {
+    return JSON.parse(raw || fallback) as T;
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    throw new Error(`${name} env var is not valid JSON: ${detail}`);
+  }
+}
+
 function parseEnv() {
-  const key = JSON.parse(process.env.GOOGLE_SA_KEY ?? '{}') as {
-    client_email: string;
-    private_key: string;
-  };
-  const calendars = JSON.parse(
-    process.env.SCHEDULE_CALENDARS ?? '[]'
-  ) as CalendarConfig[];
-  const members = JSON.parse(
-    process.env.SCHEDULE_MEMBERS ?? '[]'
-  ) as MemberConfig[];
+  const key = parseJsonEnv<{ client_email: string; private_key: string }>(
+    'GOOGLE_SA_KEY',
+    process.env.GOOGLE_SA_KEY ?? '',
+    '{}'
+  );
+  const calendars = parseJsonEnv<CalendarConfig[]>(
+    'SCHEDULE_CALENDARS',
+    process.env.SCHEDULE_CALENDARS ?? '',
+    '[]'
+  );
+  const members = parseJsonEnv<MemberConfig[]>(
+    'SCHEDULE_MEMBERS',
+    process.env.SCHEDULE_MEMBERS ?? '',
+    '[]'
+  );
   const tz = process.env.SCHEDULE_TZ ?? 'UTC';
   return { key, calendars, members, tz };
 }
@@ -92,7 +108,7 @@ async function performSync(
     const data = (await res.json()) as { items?: GoogleEvent[] };
     for (const event of data.items ?? []) {
       if (event.status === 'cancelled') continue;
-      rows.push(toScheduleEvent(event, calendar, members));
+      rows.push(toScheduleEvent(event, calendar, members, tz));
     }
   }
 

@@ -1,3 +1,5 @@
+import { zonedDateStartMs } from './week';
+
 export type CalendarConfig = {
   calendarId: string;
   // A member id for a per-person calendar, or the literal "shared".
@@ -56,7 +58,8 @@ export function deriveWho(
 export function toScheduleEvent(
   ev: GoogleEvent,
   calendar: CalendarConfig,
-  members: MemberConfig[]
+  members: MemberConfig[],
+  tz: string
 ): ScheduleEventRow {
   const title = ev.summary ?? '(no title)';
   const allDay = !ev.start.dateTime;
@@ -65,8 +68,11 @@ export function toScheduleEvent(
   if (!startRaw || !endRaw) {
     throw new Error(`Event ${ev.id}: missing start/end timestamp`);
   }
-  const start = Date.parse(startRaw);
-  const end = Date.parse(endRaw);
+  // Timed events carry an explicit offset (or Z) in `dateTime`, so Date.parse is
+  // zone-correct. All-day events carry a bare date and must be anchored to local
+  // midnight in `tz`.
+  const start = allDay ? zonedDateStartMs(startRaw, tz) : Date.parse(startRaw);
+  const end = allDay ? zonedDateStartMs(endRaw, tz) : Date.parse(endRaw);
   const row: ScheduleEventRow = {
     googleEventId: ev.id,
     calendarId: calendar.calendarId,

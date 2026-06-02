@@ -68,9 +68,10 @@ cron:
 - `schema.ts` — the `scheduleEvents` table (one row per expanded event
   instance, indexed `by_start`) and the single-row `scheduleSyncMeta`
   (`lastSyncedAt`), composed into the root `defineSchema`.
-- `week.ts`, `mapping.ts`, `sync-policy.ts`, `credentials.ts` — pure,
-  unit-tested helpers (tz-aware week range; member derivation + row transform;
-  skip-if-fresh decision; private-key newline normalization).
+- `week.ts`, `mapping.ts`, `syncPolicy.ts`, `credentials.ts` — pure,
+  unit-tested helpers (tz-aware week range + all-day anchoring to local midnight
+  in the configured tz; member derivation + row transform; skip-if-fresh
+  decision; private-key newline normalization).
 - `sync.ts` — a `"use node"` module with `performSync` (service-account
   `google-auth-library` auth → fetch current week `singleEvents=true` → replace),
   exposed two ways: `run` (internal, for the CLI/ops) and `refresh` (public,

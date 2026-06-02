@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { currentWeekRange } from './week';
+import { currentWeekRange, zonedDateStartMs } from './week';
 
 describe('currentWeekRange', () => {
   it('returns Monday 00:00 to next Monday 00:00 in UTC', () => {
@@ -36,5 +36,28 @@ describe('currentWeekRange', () => {
     );
     expect(timeMin).toBe('2026-05-24T14:00:00.000Z'); // that same Monday 00:00 Brisbane
     expect(timeMax).toBe('2026-05-31T14:00:00.000Z');
+  });
+});
+
+describe('zonedDateStartMs', () => {
+  it('is UTC midnight in UTC', () => {
+    expect(zonedDateStartMs('2026-05-26', 'UTC')).toBe(
+      Date.parse('2026-05-26T00:00:00Z')
+    );
+  });
+
+  it('anchors to local midnight in a +10 zone (Brisbane)', () => {
+    // 00:00 on 2026-05-26 in Brisbane is the previous day 14:00 UTC.
+    expect(zonedDateStartMs('2026-05-26', 'Australia/Brisbane')).toBe(
+      Date.parse('2026-05-25T14:00:00Z')
+    );
+  });
+
+  it('anchors to local midnight in a negative-offset zone (New York -4 DST)', () => {
+    // 00:00 on 2026-05-26 in New York (EDT, -4) is 04:00 UTC the same day —
+    // the case that previously rendered all-day events on the wrong day.
+    expect(zonedDateStartMs('2026-05-26', 'America/New_York')).toBe(
+      Date.parse('2026-05-26T04:00:00Z')
+    );
   });
 });

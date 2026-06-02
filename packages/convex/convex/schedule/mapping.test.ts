@@ -58,8 +58,8 @@ describe('toScheduleEvent', () => {
     end: { dateTime: '2026-05-26T17:00:00Z' }
   };
 
-  it('shapes a timed event', () => {
-    expect(toScheduleEvent(base, personal, members)).toEqual({
+  it('shapes a timed event (dateTime offset is zone-correct regardless of tz)', () => {
+    expect(toScheduleEvent(base, personal, members, 'Australia/Brisbane')).toEqual({
       googleEventId: 'evt-1',
       calendarId: 'cal-a@group',
       start: Date.parse('2026-05-26T16:00:00Z'),
@@ -72,18 +72,27 @@ describe('toScheduleEvent', () => {
     });
   });
 
+  const allDay: GoogleEvent = {
+    id: 'evt-2',
+    summary: 'School',
+    htmlLink: 'https://calendar.google.com/evt-2',
+    start: { date: '2026-05-26' },
+    end: { date: '2026-05-27' }
+  };
+
   it('flags all-day events and omits location when absent', () => {
-    const allDay: GoogleEvent = {
-      id: 'evt-2',
-      summary: 'School',
-      htmlLink: 'https://calendar.google.com/evt-2',
-      start: { date: '2026-05-26' },
-      end: { date: '2026-05-27' }
-    };
-    const row = toScheduleEvent(allDay, personal, members);
+    const row = toScheduleEvent(allDay, personal, members, 'UTC');
     expect(row.allDay).toBe(true);
-    expect(row.start).toBe(Date.parse('2026-05-26'));
+    expect(row.start).toBe(Date.parse('2026-05-26T00:00:00Z'));
     expect(row.location).toBeUndefined();
+  });
+
+  it('anchors all-day events to local midnight in tz (Brisbane +10)', () => {
+    const row = toScheduleEvent(allDay, personal, members, 'Australia/Brisbane');
+    // 00:00 on 2026-05-26 in Brisbane is 2026-05-25T14:00:00Z — not UTC midnight,
+    // so the event still falls on the 26th for the calendar owner.
+    expect(row.start).toBe(Date.parse('2026-05-25T14:00:00Z'));
+    expect(row.end).toBe(Date.parse('2026-05-26T14:00:00Z'));
   });
 
   it('detects recurrence and passes through location and title fallback', () => {
@@ -95,7 +104,7 @@ describe('toScheduleEvent', () => {
       start: { dateTime: '2026-05-26T16:00:00Z' },
       end: { dateTime: '2026-05-26T17:00:00Z' }
     };
-    const row = toScheduleEvent(ev, personal, members);
+    const row = toScheduleEvent(ev, personal, members, 'UTC');
     expect(row.recurring).toBe(true);
     expect(row.location).toBe('Studio 12');
     expect(row.title).toBe('(no title)');
@@ -108,7 +117,7 @@ describe('toScheduleEvent', () => {
       start: {},
       end: {}
     };
-    expect(() => toScheduleEvent(ev, personal, members)).toThrow();
+    expect(() => toScheduleEvent(ev, personal, members, 'UTC')).toThrow();
   });
 });
 

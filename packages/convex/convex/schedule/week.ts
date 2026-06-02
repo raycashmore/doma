@@ -51,3 +51,26 @@ export function currentWeekRange(
     timeMax: new Date(nextMonLocal - offset).toISOString()
   };
 }
+
+/**
+ * Epoch ms for local midnight (00:00 in `tz`) of a `YYYY-MM-DD` calendar date.
+ *
+ * All-day Google Calendar events carry a bare `date` with no time or zone, so
+ * `Date.parse` would pin them to UTC midnight — which renders on the wrong day
+ * in any zone with a non-zero offset. This anchors them to midnight in `tz`
+ * instead, matching how the calendar owner sees the day.
+ *
+ * NOTE (v1): the offset is sampled at the date's UTC midnight; a DST transition
+ * at the exact local midnight is not corrected. Acceptable for a family
+ * scheduler (same caveat as `currentWeekRange`).
+ */
+export function zonedDateStartMs(dateStr: string, tz: string): number {
+  const [year, month, day] = dateStr.split('-').map(Number) as [
+    number,
+    number,
+    number
+  ];
+  const utcMidnight = Date.UTC(year, month - 1, day);
+  const offset = tzOffsetMs(new Date(utcMidnight), tz);
+  return utcMidnight - offset;
+}
