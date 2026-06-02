@@ -8,6 +8,7 @@
  */
 import { defineSchema, defineTable } from 'convex/server';
 import { v } from 'convex/values';
+import { scheduleEventsTable, scheduleSyncMetaTable } from './schedule/schema';
 
 export default defineSchema({
   // ============================================================
@@ -153,5 +154,11 @@ export default defineSchema({
     totalWithdrawn: v.number(),
     currentValue: v.number()
     // DERIVED: net = currentValue - (totalDeposited - totalWithdrawn)
-  }).index('by_platform', ['platform'])
+  }).index('by_platform', ['platform']),
+
+  // ============================================================
+  // SCHEDULE EVENTS — Google Calendar ingestion (current week)
+  // ============================================================
+  scheduleEvents: scheduleEventsTable,
+  scheduleSyncMeta: scheduleSyncMetaTable
 });

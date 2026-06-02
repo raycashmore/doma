@@ -1,0 +1,24 @@
+import { defineTable } from 'convex/server';
+import { v } from 'convex/values';
+
+// One row per expanded Google Calendar event instance for the current week.
+// The table is fully replaced on every sync, so it only ever holds this week.
+export const scheduleEventsTable = defineTable({
+  googleEventId: v.string(),
+  calendarId: v.string(),
+  start: v.number(), // epoch ms
+  end: v.number(), // epoch ms
+  allDay: v.boolean(),
+  title: v.string(),
+  location: v.optional(v.string()),
+  who: v.array(v.string()), // schedule member keys (from SCHEDULE_MEMBERS config)
+  recurring: v.boolean(),
+  htmlLink: v.string() // Google Calendar event URL ("Open in Google Calendar")
+}).index('by_start', ['start']);
+
+// Single-row sync metadata (keyed 'default'): when the last successful sync
+// completed. Powers the "Synced X ago" banner and the skip-if-fresh check.
+export const scheduleSyncMetaTable = defineTable({
+  key: v.literal('default'),
+  lastSyncedAt: v.number() // epoch ms
+}).index('by_key', ['key']);
