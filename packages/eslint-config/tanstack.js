@@ -10,5 +10,13 @@ import eslintConfigPrettier from 'eslint-config-prettier';
 export const tanStackConfig = [
   ...baseConfig,
   eslintConfigPrettier,
-  ...tanstackConfig
+  ...tanstackConfig,
+  {
+    // TanStack's config already enforces import/order; disable our sorter so the
+    // two autofixers don't fight.
+    rules: {
+      'simple-import-sort/imports': 'off',
+      'simple-import-sort/exports': 'off'
+    }
+  }
 ];
