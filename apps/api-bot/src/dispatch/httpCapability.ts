@@ -1,12 +1,5 @@
-import type {
-  CapabilityHandler,
-  CapabilityRequest,
-  CapabilityResponse
-} from './types.js';
-import {
-  CAPABILITY_FALLBACK_RESPONSE,
-  parseCapabilityResponse
-} from './types.js';
+import type { CapabilityHandler, CapabilityRequest, CapabilityResponse } from './types.js';
+import { CAPABILITY_FALLBACK_RESPONSE, parseCapabilityResponse } from './types.js';
 
 const DEFAULT_TIMEOUT_MS = 5_000;
 
@@ -40,10 +33,7 @@ export function createHttpCapability({
         return CAPABILITY_FALLBACK_RESPONSE;
       }
 
-      return (
-        parseCapabilityResponse(await response.json()) ??
-        CAPABILITY_FALLBACK_RESPONSE
-      );
+      return parseCapabilityResponse(await response.json()) ?? CAPABILITY_FALLBACK_RESPONSE;
     } catch {
       return CAPABILITY_FALLBACK_RESPONSE;
     } finally {

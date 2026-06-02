@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+
 import type { BotConfig } from './config.js';
 import { getConfig } from './config.js';
 import { jsonOk } from './http/json.js';
@@ -6,7 +7,7 @@ import { createLinkingRoutes } from './linking/routes.js';
 import { createNotificationRoutes } from './notifications/routes.js';
 import { sendTelegramMessage } from './providers/telegram/client.js';
 import { createTelegramWebhookRoutes } from './providers/telegram/webhook.js';
-import { createRuntimeStorage, type BotStorage } from './storage/index.js';
+import { type BotStorage, createRuntimeStorage } from './storage/index.js';
 
 export type CreateAppOptions = {
   config?: BotConfig;

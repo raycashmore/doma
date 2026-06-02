@@ -1,8 +1,9 @@
 'use client';
 
-import { Home, LogOut } from 'lucide-react';
 import clsx from 'clsx';
-import { APPS, getAppHref, type AppDescriptor, type AppId } from './apps';
+import { Home, LogOut } from 'lucide-react';
+
+import { type AppDescriptor, type AppId, APPS, getAppHref } from './apps';
 import { useUrlAuth } from './auth';
 
 const homeApp = APPS.find((a) => a.id === 'home')!;
@@ -22,10 +23,7 @@ export function Sidebar({ activeAppId, isDev, onSignOut }: SidebarProps) {
   };
 
   return (
-    <nav
-      aria-label="App navigation"
-      className="hidden md:flex flex-col items-end w-14 py-6 text-warm-text-on-dark"
-    >
+    <nav aria-label="App navigation" className="hidden md:flex flex-col items-end w-14 py-6 text-warm-text-on-dark">
       <a
         href={buildHref(homeApp)}
         aria-label="Home"

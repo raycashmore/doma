@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+
 import type { BotStorage, ChannelLinkRecord } from '../storage/index.js';
 import { createNotificationRoutes } from './routes.js';
 
@@ -116,10 +117,7 @@ describe('createNotificationRoutes', () => {
       status: 'skipped',
       reason: 'no_linked_channel'
     });
-    expect(storage.getActiveChannelLinkForUser).toHaveBeenCalledWith(
-      'user_123',
-      'telegram'
-    );
+    expect(storage.getActiveChannelLinkForUser).toHaveBeenCalledWith('user_123', 'telegram');
     expect(sendTelegramMessage).not.toHaveBeenCalled();
     expect(storage.saveNotificationAttempt).toHaveBeenCalledWith(
       expect.objectContaining({

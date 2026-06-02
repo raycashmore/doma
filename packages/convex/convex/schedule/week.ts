@@ -10,9 +10,7 @@ function tzOffsetMs(date: Date, tz: string): number {
     minute: '2-digit',
     second: '2-digit'
   });
-  const p = Object.fromEntries(
-    dtf.formatToParts(date).map((part) => [part.type, part.value])
-  );
+  const p = Object.fromEntries(dtf.formatToParts(date).map((part) => [part.type, part.value]));
   const asUTC = Date.UTC(
     Number(p.year),
     Number(p.month) - 1,
@@ -32,19 +30,12 @@ function tzOffsetMs(date: Date, tz: string): number {
  * NOTE (v1): the tz offset is sampled at `now`; a DST transition mid-week is
  * not corrected. Acceptable for a family scheduler.
  */
-export function currentWeekRange(
-  now: Date,
-  tz: string
-): { timeMin: string; timeMax: string } {
+export function currentWeekRange(now: Date, tz: string): { timeMin: string; timeMax: string } {
   const offset = tzOffsetMs(now, tz);
   const local = new Date(now.getTime() + offset);
   const dow = local.getUTCDay(); // 0=Sun..6=Sat (on the shifted wall-clock date)
   const daysFromMon = (dow + 6) % 7;
-  const monLocal = Date.UTC(
-    local.getUTCFullYear(),
-    local.getUTCMonth(),
-    local.getUTCDate() - daysFromMon
-  );
+  const monLocal = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate() - daysFromMon);
   const nextMonLocal = monLocal + 7 * 24 * 60 * 60 * 1000;
   return {
     timeMin: new Date(monLocal - offset).toISOString(),
@@ -65,11 +56,7 @@ export function currentWeekRange(
  * scheduler (same caveat as `currentWeekRange`).
  */
 export function zonedDateStartMs(dateStr: string, tz: string): number {
-  const [year, month, day] = dateStr.split('-').map(Number) as [
-    number,
-    number,
-    number
-  ];
+  const [year, month, day] = dateStr.split('-').map(Number) as [number, number, number];
   const utcMidnight = Date.UTC(year, month - 1, day);
   const offset = tzOffsetMs(new Date(utcMidnight), tz);
   return utcMidnight - offset;

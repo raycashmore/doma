@@ -1,9 +1,7 @@
 import { createContext, useContext, useEffect, useMemo } from 'react';
 import type { ReactNode } from 'react';
 
-const BudgetHeaderActionsContext = createContext<
-  ((actions: ReactNode) => void) | null
->(null);
+const BudgetHeaderActionsContext = createContext<((actions: ReactNode) => void) | null>(null);
 
 export function BudgetHeaderActionsProvider({
   children,
@@ -14,11 +12,7 @@ export function BudgetHeaderActionsProvider({
 }) {
   const value = useMemo(() => setActions, [setActions]);
 
-  return (
-    <BudgetHeaderActionsContext.Provider value={value}>
-      {children}
-    </BudgetHeaderActionsContext.Provider>
-  );
+  return <BudgetHeaderActionsContext.Provider value={value}>{children}</BudgetHeaderActionsContext.Provider>;
 }
 
 export function useBudgetHeaderActions(actions: ReactNode) {

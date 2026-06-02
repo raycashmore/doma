@@ -1,6 +1,6 @@
 'use client';
 
-import { type ReactNode, createContext, useContext } from 'react';
+import { createContext, type ReactNode, useContext } from 'react';
 
 /**
  * Builder that appends a cross-origin auth token to a URL so the destination
@@ -23,11 +23,7 @@ export function UrlAuthProvider({
   buildUrlWithAuth: UrlAuthBuilder;
   children: ReactNode;
 }) {
-  return (
-    <UrlAuthContext.Provider value={buildUrlWithAuth}>
-      {children}
-    </UrlAuthContext.Provider>
-  );
+  return <UrlAuthContext.Provider value={buildUrlWithAuth}>{children}</UrlAuthContext.Provider>;
 }
 
 /**

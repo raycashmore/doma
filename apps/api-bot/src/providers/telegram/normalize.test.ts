@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { normalizeTelegramUpdate } from './normalize.js';
 import type { TelegramUpdate } from './types.js';
 

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { CapabilityRequest } from '../../dispatch/types.js';
+
 import type { BotConfig } from '../../config.js';
+import type { CapabilityRequest } from '../../dispatch/types.js';
 import { consumePairingToken, createPairingToken } from '../../linking/pairing.js';
 import { createMemoryStorage } from '../../storage/memory.js';
 import { createTelegramWebhookRoutes } from './webhook.js';
@@ -172,9 +173,7 @@ describe('createTelegramWebhookRoutes', () => {
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ ok: true, reply: 'linked' });
-    await expect(
-      storage.getActiveChannelLinkByProviderUser('telegram', '789')
-    ).resolves.toEqual({
+    await expect(storage.getActiveChannelLinkByProviderUser('telegram', '789')).resolves.toEqual({
       clerkUserId: 'user_123',
       provider: 'telegram',
       providerUserId: '789',
@@ -184,9 +183,7 @@ describe('createTelegramWebhookRoutes', () => {
       updatedAt: now,
       displayLabel: 'ray_cashmore'
     });
-    await expect(
-      consumePairingToken({ storage, token: pairing.token, now })
-    ).resolves.toBeNull();
+    await expect(consumePairingToken({ storage, token: pairing.token, now })).resolves.toBeNull();
     expect(sendTelegramMessage).toHaveBeenCalledWith({
       chatId: '-100123',
       text: 'Telegram is linked to Doma.'
@@ -206,18 +203,14 @@ describe('createTelegramWebhookRoutes', () => {
     });
     const routes = createTelegramWebhookRoutes({ config, storage });
 
-    const response = await routes.request(
-      telegramRequestWithChat(`/start ${pairing.token}`, -100123, 'group')
-    );
+    const response = await routes.request(telegramRequestWithChat(`/start ${pairing.token}`, -100123, 'group'));
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ ok: true });
-    await expect(
-      storage.getActiveChannelLinkByProviderUser('telegram', '789')
-    ).resolves.toBeNull();
-    await expect(
-      consumePairingToken({ storage, token: pairing.token, now })
-    ).resolves.toEqual({ clerkUserId: 'user_123' });
+    await expect(storage.getActiveChannelLinkByProviderUser('telegram', '789')).resolves.toBeNull();
+    await expect(consumePairingToken({ storage, token: pairing.token, now })).resolves.toEqual({
+      clerkUserId: 'user_123'
+    });
   });
 
   it('links when start is addressed to this bot username', async () => {
@@ -236,15 +229,11 @@ describe('createTelegramWebhookRoutes', () => {
     });
     const routes = createTelegramWebhookRoutes({ config: botConfig, storage });
 
-    const response = await routes.request(
-      telegramRequest(`/start@DomaBot ${pairing.token}`)
-    );
+    const response = await routes.request(telegramRequest(`/start@DomaBot ${pairing.token}`));
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ ok: true, reply: 'linked' });
-    await expect(
-      storage.getActiveChannelLinkByProviderUser('telegram', '789')
-    ).resolves.toMatchObject({
+    await expect(storage.getActiveChannelLinkByProviderUser('telegram', '789')).resolves.toMatchObject({
       clerkUserId: 'user_123',
       providerChatId: '-100123'
     });
@@ -266,15 +255,11 @@ describe('createTelegramWebhookRoutes', () => {
     });
     const routes = createTelegramWebhookRoutes({ config: botConfig, storage });
 
-    const response = await routes.request(
-      telegramRequest(`/start@domabot ${pairing.token}`)
-    );
+    const response = await routes.request(telegramRequest(`/start@domabot ${pairing.token}`));
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ ok: true, reply: 'linked' });
-    await expect(
-      storage.getActiveChannelLinkByProviderUser('telegram', '789')
-    ).resolves.toMatchObject({
+    await expect(storage.getActiveChannelLinkByProviderUser('telegram', '789')).resolves.toMatchObject({
       clerkUserId: 'user_123',
       providerChatId: '-100123'
     });
@@ -289,15 +274,11 @@ describe('createTelegramWebhookRoutes', () => {
     });
     const routes = createTelegramWebhookRoutes({ config, storage });
 
-    const response = await routes.request(
-      telegramRequest(`/start@OtherBot ${pairing.token}`)
-    );
+    const response = await routes.request(telegramRequest(`/start@OtherBot ${pairing.token}`));
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ ok: true });
-    await expect(
-      storage.getActiveChannelLinkByProviderUser('telegram', '789')
-    ).resolves.toBeNull();
+    await expect(storage.getActiveChannelLinkByProviderUser('telegram', '789')).resolves.toBeNull();
   });
 
   it('reports link_required when start has no token', async () => {
@@ -425,9 +406,7 @@ describe('createTelegramWebhookRoutes', () => {
       updatedAt: 1,
       displayLabel: 'ray_cashmore'
     });
-    const sendTelegramMessage = vi.fn(
-      () => new Promise<never>(() => undefined)
-    );
+    const sendTelegramMessage = vi.fn(() => new Promise<never>(() => undefined));
     const routes = createTelegramWebhookRoutes({
       config,
       storage,

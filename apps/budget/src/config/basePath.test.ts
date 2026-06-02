@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  BUDGET_BASE_PATH,
-  BUDGET_BASE_URL,
-  getBudgetBasePath,
-  getBudgetBaseUrl
-} from './basePath';
+import { BUDGET_BASE_PATH, BUDGET_BASE_URL, getBudgetBasePath, getBudgetBaseUrl } from './basePath';
 
 describe('budget base path helpers', () => {
   it('uses the app subpath in production', () => {

@@ -1,12 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
 
-import {
-  BUDGET_CHART_CARD_CLASS,
-  default as BudgetChart,
-  formatYAxisTick,
-  getBudgetChartLayout
-} from './BudgetChart';
+import { BUDGET_CHART_CARD_CLASS, default as BudgetChart, formatYAxisTick, getBudgetChartLayout } from './BudgetChart';
 
 describe('BudgetChart responsive layout', () => {
   it('keeps a drawable plot area at very narrow mobile widths', () => {
@@ -35,8 +30,7 @@ describe('BudgetChart responsive layout', () => {
     expect(screen.getByText('Mortgage')).toBeDefined();
     expect(screen.queryByText('Discretionary')).toBeNull();
 
-    const legendText =
-      container.querySelector('h2')?.nextElementSibling?.textContent;
+    const legendText = container.querySelector('h2')?.nextElementSibling?.textContent;
     expect(legendText).toBe('IncomeSpendMortgage');
   });
 });

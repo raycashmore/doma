@@ -1,5 +1,6 @@
-import { Hono } from 'hono';
 import type { Context } from 'hono';
+import { Hono } from 'hono';
+
 import type { BotConfig } from '../../config.js';
 import { createCommandDispatcher } from '../../dispatch/router.js';
 import type { CapabilityHandler } from '../../dispatch/types.js';
@@ -32,14 +33,8 @@ async function parseTelegramUpdate(c: Context) {
   }
 }
 
-function isCommandAddressedToThisBot(
-  commandBotUsername: string | undefined,
-  telegramBotUsername: string
-) {
-  return (
-    !commandBotUsername ||
-    commandBotUsername.toLowerCase() === telegramBotUsername.toLowerCase()
-  );
+function isCommandAddressedToThisBot(commandBotUsername: string | undefined, telegramBotUsername: string) {
+  return !commandBotUsername || commandBotUsername.toLowerCase() === telegramBotUsername.toLowerCase();
 }
 
 export function createTelegramWebhookRoutes({
@@ -93,13 +88,7 @@ export function createTelegramWebhookRoutes({
       return jsonOk(c, { ok: true });
     }
 
-    if (
-      inbound.command &&
-      !isCommandAddressedToThisBot(
-        inbound.commandBotUsername,
-        config.telegramBotUsername
-      )
-    ) {
+    if (inbound.command && !isCommandAddressedToThisBot(inbound.commandBotUsername, config.telegramBotUsername)) {
       return jsonOk(c, { ok: true });
     }
 
@@ -141,16 +130,10 @@ export function createTelegramWebhookRoutes({
       return jsonOk(c, { ok: true, reply: 'linked' });
     }
 
-    const link = await storage.getActiveChannelLinkByProviderUser(
-      'telegram',
-      inbound.providerUserId
-    );
+    const link = await storage.getActiveChannelLinkByProviderUser('telegram', inbound.providerUserId);
 
     if (!link || link.providerChatId !== inbound.providerChatId) {
-      await sendReply(
-        inbound.providerChatId,
-        'Open Doma and link Telegram before sending commands here.'
-      );
+      await sendReply(inbound.providerChatId, 'Open Doma and link Telegram before sending commands here.');
       return jsonOk(c, { ok: true, reply: 'link_required' });
     }
 

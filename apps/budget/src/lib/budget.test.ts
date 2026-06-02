@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  computeMovingAverage,
-  filterByTimePeriod,
-  formatCurrency,
-  formatDateLabel
-} from './budget';
+import { computeMovingAverage, filterByTimePeriod, formatCurrency, formatDateLabel } from './budget';
 
 describe('computeMovingAverage', () => {
   it('returns same values for window=1', () => {

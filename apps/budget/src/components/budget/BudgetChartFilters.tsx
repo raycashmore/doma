@@ -8,20 +8,14 @@ const PERIODS: Array<{ id: TimePeriod; label: string }> = [
   { id: 'ALL', label: 'All' }
 ];
 
-interface BudgetChartFiltersProps {
+type BudgetChartFiltersProps = {
   selected: TimePeriod;
   onChange: (period: TimePeriod) => void;
-}
+};
 
-export default function BudgetChartFilters({
-  selected,
-  onChange
-}: BudgetChartFiltersProps) {
+export default function BudgetChartFilters({ selected, onChange }: BudgetChartFiltersProps) {
   return (
-    <div
-      role="tablist"
-      className="inline-flex rounded-full border border-white/10 bg-white/8 p-1 backdrop-blur-sm"
-    >
+    <div role="tablist" className="inline-flex rounded-full border border-white/10 bg-white/8 p-1 backdrop-blur-sm">
       {PERIODS.map((p) => {
         const active = selected === p.id;
         return (
@@ -32,9 +26,7 @@ export default function BudgetChartFilters({
             onClick={() => onChange(p.id)}
             className={cn(
               'rounded-full px-3 py-1 text-xs font-medium transition-colors whitespace-nowrap',
-              active
-                ? 'bg-white/14 text-warm-text-on-dark'
-                : 'text-white/72 hover:text-warm-text-on-dark'
+              active ? 'bg-white/14 text-warm-text-on-dark' : 'text-white/72 hover:text-warm-text-on-dark'
             )}
           >
             {p.label}

@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+
 import { createHttpCapability } from './httpCapability.js';
 import type { CapabilityRequest } from './types.js';
 
@@ -36,9 +37,7 @@ describe('createHttpCapability', () => {
   });
 
   it('posts the capability request with bearer auth and JSON content', async () => {
-    const fetch = vi.fn(async () =>
-      jsonResponse({ kind: 'reply', text: 'Scheduled.' })
-    );
+    const fetch = vi.fn(async () => jsonResponse({ kind: 'reply', text: 'Scheduled.' }));
     vi.stubGlobal('fetch', fetch);
     const handler = createHttpCapability({
       endpointUrl: 'https://capability.example.com/schedule',
@@ -65,9 +64,7 @@ describe('createHttpCapability', () => {
   it('returns a sanitized reply response from an ok upstream response', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () =>
-        jsonResponse({ kind: 'reply', text: 'Scheduled.', internalToken: 'secret' })
-      )
+      vi.fn(async () => jsonResponse({ kind: 'reply', text: 'Scheduled.', internalToken: 'secret' }))
     );
     const handler = createHttpCapability({
       endpointUrl: 'https://capability.example.com/schedule',
@@ -83,9 +80,7 @@ describe('createHttpCapability', () => {
   it('returns a sanitized no_response response from an ok upstream response', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () =>
-        jsonResponse({ kind: 'no_response', internalToken: 'secret' })
-      )
+      vi.fn(async () => jsonResponse({ kind: 'no_response', internalToken: 'secret' }))
     );
     const handler = createHttpCapability({
       endpointUrl: 'https://capability.example.com/schedule',

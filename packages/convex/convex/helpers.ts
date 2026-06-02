@@ -4,13 +4,7 @@ import type { Doc } from './_generated/dataModel';
 // CURRENT ACCOUNTS — derived total
 // ============================================================
 export function currentAccountTotal(row: Doc<'currentAccounts'>) {
-  return (
-    row.currentSecondary +
-    row.shared +
-    row.currentPrimary +
-    row.other +
-    row.currency
-  );
+  return row.currentSecondary + row.shared + row.currentPrimary + row.other + row.currency;
 }
 
 // ============================================================
@@ -72,18 +66,10 @@ export function investmentTotal(row: Doc<'investmentAccounts'>) {
 // ============================================================
 export type MortgageConfigInput = Pick<
   Doc<'mortgageConfig'>,
-  | 'price'
-  | 'deposit'
-  | 'familyContrib'
-  | 'contrib1'
-  | 'contrib2'
-  | 'contrib3'
-  | 'loanValue'
+  'price' | 'deposit' | 'familyContrib' | 'contrib1' | 'contrib2' | 'contrib3' | 'loanValue'
 >;
 
-export function mortgageConfigForTotals(
-  config: MortgageConfigInput | null | undefined
-): MortgageConfigInput {
+export function mortgageConfigForTotals(config: MortgageConfigInput | null | undefined): MortgageConfigInput {
   return (
     config ?? {
       price: 0,
@@ -122,10 +108,7 @@ export function mortgagePrincipalPaid(row: Doc<'mortgage'>): number {
   return Math.max(0, mortgagePaymentTotal(row) - mortgageInterestPortion(row));
 }
 
-export function mortgageEquity(
-  row: Doc<'mortgage'>,
-  config: MortgageConfigInput
-) {
+export function mortgageEquity(row: Doc<'mortgage'>, config: MortgageConfigInput) {
   return config.price - mortgageTotalDebt(row);
 }
 
@@ -151,17 +134,8 @@ export function budgetSpend(row: Doc<'budget'>) {
   return row.credit2 + row.credit1 + row.credit3 + row.oneOffs;
 }
 
-export function budgetSinkOrSwim(
-  row: Doc<'budget'>,
-  mortgage?: Doc<'mortgage'> | null
-) {
-  return (
-    row.incomePrimary +
-    row.incomeSecondary +
-    (mortgage?.rateVar ?? 0) +
-    (mortgage?.rateFixed ?? 0) +
-    row.rent
-  );
+export function budgetSinkOrSwim(row: Doc<'budget'>, mortgage?: Doc<'mortgage'> | null) {
+  return row.incomePrimary + row.incomeSecondary + (mortgage?.rateVar ?? 0) + (mortgage?.rateFixed ?? 0) + row.rent;
 }
 
 export function budgetMortgagePortion(row: Doc<'mortgage'> | null): number {
@@ -178,7 +152,7 @@ export function cryptoNet(row: Doc<'cryptoSummaries'>) {
 // ============================================================
 // TOTALS — grand aggregation across all tables
 // ============================================================
-export interface TotalsInput {
+export type TotalsInput = {
   super: Doc<'superAccounts'>;
   uk: Doc<'ukAccounts'>;
   investments: Doc<'investmentAccounts'>;
@@ -186,7 +160,7 @@ export interface TotalsInput {
   mortgageConfig: MortgageConfigInput;
   cash: Doc<'cashAccounts'>;
   current: Doc<'currentAccounts'>;
-}
+};
 
 export function computeTotals(input: TotalsInput) {
   const superVal = superTotal(input.super);
@@ -196,8 +170,7 @@ export function computeTotals(input: TotalsInput) {
   const cashVal = cashAccountTotal(input.cash);
   const currentVal = currentAccountTotal(input.current);
 
-  const total =
-    superVal + ukVal + investVal + houseEquity + cashVal + currentVal;
+  const total = superVal + ukVal + investVal + houseEquity + cashVal + currentVal;
   const liquid = total - superVal - houseEquity;
 
   return {

@@ -1,16 +1,13 @@
 export type TimePeriod = '3M' | '6M' | '12M' | 'ALL';
 
-export interface BudgetDataPoint {
+export type BudgetDataPoint = {
   date: number;
   spend: number; // discretionary spend (excludes mortgage)
   sinkOrSwim: number; // income proxy used for the income trend
   mortgage: number; // monthly mortgage contribution (carry-forward from latest mortgage row)
-}
+};
 
-export function computeMovingAverage(
-  values: Array<number>,
-  window: number
-): Array<number> {
+export function computeMovingAverage(values: Array<number>, window: number): Array<number> {
   const result: Array<number> = [];
   let sum = 0;
 
@@ -27,10 +24,7 @@ export function computeMovingAverage(
   return result;
 }
 
-export function filterByTimePeriod<T extends { date: number }>(
-  data: Array<T>,
-  period: TimePeriod
-): Array<T> {
+export function filterByTimePeriod<T extends { date: number }>(data: Array<T>, period: TimePeriod): Array<T> {
   if (period === 'ALL') return data;
   const months = period === '3M' ? 3 : period === '6M' ? 6 : 12;
   const cutoff = Date.now() - months * 30 * 24 * 60 * 60 * 1000;

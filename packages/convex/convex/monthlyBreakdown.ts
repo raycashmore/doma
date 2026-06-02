@@ -1,29 +1,23 @@
 import type { Doc } from './_generated/dataModel';
-import {
-  budgetTotalIn,
-  budgetTotalOut,
-  budgetMortgagePortion
-} from './helpers';
+import { budgetMortgagePortion, budgetTotalIn, budgetTotalOut } from './helpers';
 
 export type BudgetRow = Doc<'budget'>;
 export type MortgageRow = Doc<'mortgage'>;
 
-export interface BreakdownRow {
+export type BreakdownRow = {
   date: number;
   income: number;
   spend: number;
   mortgage: number;
   net: number;
-}
+};
 
 export function utcYearMonthKey(timestamp: number): string {
   const date = new Date(timestamp);
   return `${date.getUTCFullYear()}-${date.getUTCMonth()}`;
 }
 
-export function buildMortgageByMonth(
-  mortgageRows: MortgageRow[]
-): Map<string, MortgageRow> {
+export function buildMortgageByMonth(mortgageRows: MortgageRow[]): Map<string, MortgageRow> {
   const mortgageByMonth = new Map<string, MortgageRow>();
 
   for (const row of mortgageRows) {
@@ -52,9 +46,7 @@ export function buildMonthlyBreakdown(
   const out = sortedBudget.map((row) => {
     const income = budgetTotalIn(row);
     const spend = budgetTotalOut(row);
-    const mortgage = budgetMortgagePortion(
-      mortgageByMonth.get(utcYearMonthKey(row.date)) ?? null
-    );
+    const mortgage = budgetMortgagePortion(mortgageByMonth.get(utcYearMonthKey(row.date)) ?? null);
     return {
       date: row.date,
       income,

@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
+
 import {
-  computeTrend,
-  shapeMonthDetail,
   type BudgetRow,
-  type SpendCategoryBreakdownRow,
-  type MortgageRow
+  computeTrend,
+  type MortgageRow,
+  shapeMonthDetail,
+  type SpendCategoryBreakdownRow
 } from './monthDetail';
 
 const MS = 86_400_000;
@@ -107,14 +108,7 @@ describe('shapeMonthDetail', () => {
   });
 
   it('returns category context ordered by amount without changing spend totals', () => {
-    const r = shapeMonthDetail(
-      budgetRow,
-      null,
-      mortgageConfig,
-      null,
-      null,
-      categoryRows
-    )!;
+    const r = shapeMonthDetail(budgetRow, null, mortgageConfig, null, null, categoryRows)!;
 
     expect(r.spend.cardSubtotal).toBe(230_000);
     expect(r.spend.categories).toEqual([
@@ -125,9 +119,7 @@ describe('shapeMonthDetail', () => {
   });
 
   it('returns null mortgage when no mortgage row', () => {
-    expect(
-      shapeMonthDetail(budgetRow, null, mortgageConfig)!.mortgage
-    ).toBeNull();
+    expect(shapeMonthDetail(budgetRow, null, mortgageConfig)!.mortgage).toBeNull();
   });
 
   it('returns mortgage block with derived totals', () => {
@@ -151,48 +143,24 @@ describe('shapeMonthDetail', () => {
   });
 
   it('returns income trend up when income increases', () => {
-    const r = shapeMonthDetail(
-      budgetRow,
-      mortgageRow,
-      mortgageConfig,
-      priorBudgetRow,
-      null
-    )!;
+    const r = shapeMonthDetail(budgetRow, mortgageRow, mortgageConfig, priorBudgetRow, null)!;
     // current 870k vs prior 770k → +12.987% → rounds to 13.0
     expect(r.trends.income).toEqual({ pct: 13.0, direction: 'up' });
   });
 
   it('returns spend trend down when spend decreases', () => {
-    const r = shapeMonthDetail(
-      budgetRow,
-      mortgageRow,
-      mortgageConfig,
-      priorBudgetRow,
-      null
-    )!;
+    const r = shapeMonthDetail(budgetRow, mortgageRow, mortgageConfig, priorBudgetRow, null)!;
     // current 264k vs prior 280k → −5.71% → rounds to −5.7
     expect(r.trends.spend).toEqual({ pct: -5.7, direction: 'down' });
   });
 
   it('returns flat mortgage trend when contrib unchanged', () => {
-    const r = shapeMonthDetail(
-      budgetRow,
-      mortgageRow,
-      mortgageConfig,
-      priorBudgetRow,
-      priorMortgageRow
-    )!;
+    const r = shapeMonthDetail(budgetRow, mortgageRow, mortgageConfig, priorBudgetRow, priorMortgageRow)!;
     expect(r.trends.mortgage).toEqual({ pct: 0, direction: 'flat' });
   });
 
   it('returns null mortgage trend when prior mortgage missing', () => {
-    const r = shapeMonthDetail(
-      budgetRow,
-      mortgageRow,
-      mortgageConfig,
-      priorBudgetRow,
-      null
-    )!;
+    const r = shapeMonthDetail(budgetRow, mortgageRow, mortgageConfig, priorBudgetRow, null)!;
     expect(r.trends.mortgage).toBeNull();
   });
 });

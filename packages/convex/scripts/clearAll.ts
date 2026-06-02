@@ -4,8 +4,9 @@
  *       or: pnpm seed:url:clear -- https://<preview>.convex.cloud
  */
 
-import { ConvexHttpClient } from 'convex/browser';
 import { api } from '@repo/convex';
+import { ConvexHttpClient } from 'convex/browser';
+
 import { getTargetConvexUrl } from './targetUrl';
 
 const client = new ConvexHttpClient(getTargetConvexUrl());

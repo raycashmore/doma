@@ -1,4 +1,5 @@
 import { v } from 'convex/values';
+
 import { mutation } from './_generated/server';
 
 // ============================================================
@@ -38,11 +39,9 @@ export const updateCurrentAccount = mutation({
     const { id, ...fields } = args;
     // Strip undefined values so we only patch what's provided
     const patch: Record<string, number> = {};
-    if (fields.currentSecondary !== undefined)
-      patch.currentSecondary = fields.currentSecondary;
+    if (fields.currentSecondary !== undefined) patch.currentSecondary = fields.currentSecondary;
     if (fields.shared !== undefined) patch.shared = fields.shared;
-    if (fields.currentPrimary !== undefined)
-      patch.currentPrimary = fields.currentPrimary;
+    if (fields.currentPrimary !== undefined) patch.currentPrimary = fields.currentPrimary;
     if (fields.other !== undefined) patch.other = fields.other;
     if (fields.currency !== undefined) patch.currency = fields.currency;
     await ctx.db.patch(id, patch);
@@ -84,8 +83,7 @@ export const updateCashAccount = mutation({
     const { id, ...fields } = args;
     const patch: Record<string, number> = {};
     if (fields.saver !== undefined) patch.saver = fields.saver;
-    if (fields.highInterest !== undefined)
-      patch.highInterest = fields.highInterest;
+    if (fields.highInterest !== undefined) patch.highInterest = fields.highInterest;
     await ctx.db.patch(id, patch);
   }
 });
@@ -136,8 +134,7 @@ export const updateUkAccount = mutation({
     if (fields.currentGbp !== undefined) patch.currentGbp = fields.currentGbp;
     if (fields.saverGbp !== undefined) patch.saverGbp = fields.saverGbp;
     if (fields.cashIsaGbp !== undefined) patch.cashIsaGbp = fields.cashIsaGbp;
-    if (fields.sharesIsaGbp !== undefined)
-      patch.sharesIsaGbp = fields.sharesIsaGbp;
+    if (fields.sharesIsaGbp !== undefined) patch.sharesIsaGbp = fields.sharesIsaGbp;
     if (fields.gbpAud !== undefined) patch.gbpAud = fields.gbpAud;
     await ctx.db.patch(id, patch);
   }

@@ -9,11 +9,7 @@ import BudgetChartBars from './BudgetChartBars';
 import BudgetChartLines from './BudgetChartLines';
 import BudgetChartTooltip from './BudgetChartTooltip';
 import type { BudgetDataPoint, TimePeriod } from '@/lib/budget';
-import {
-  computeMovingAverage,
-  filterByTimePeriod,
-  formatCurrency
-} from '@/lib/budget';
+import { computeMovingAverage, filterByTimePeriod, formatCurrency } from '@/lib/budget';
 
 const BASE_MARGIN = { top: 14, right: 16, bottom: 28, left: 66 };
 const COMPACT_MARGIN = { top: 14, right: 8, bottom: 28, left: 44 };
@@ -29,20 +25,16 @@ const PARENT_SIZE_STYLES = {
 export const BUDGET_CHART_CARD_CLASS =
   'flex min-h-[16rem] min-w-0 flex-1 flex-col rounded-3xl bg-warm-bg-card-soft border border-warm-border p-5 lg:min-h-0 md:p-6';
 
-interface BudgetChartProps {
+type BudgetChartProps = {
   data: Array<BudgetDataPoint>;
   period: TimePeriod;
   onBarClick?: (date: number) => void;
-}
+};
 
 function LegendDot({ color, label }: { color: string; label: string }) {
   return (
     <span className="inline-flex items-center gap-1.5">
-      <span
-        aria-hidden
-        className="inline-block h-2.5 w-2.5 rounded-[3px]"
-        style={{ backgroundColor: color }}
-      />
+      <span aria-hidden className="inline-block h-2.5 w-2.5 rounded-[3px]" style={{ backgroundColor: color }} />
       {label}
     </span>
   );
@@ -70,10 +62,7 @@ export function formatYAxisTick(cents: number, compact: boolean) {
   if (absolute < 1_000_000) return `${sign}$${Math.round(absolute / 1000)}k`;
 
   const millions = absolute / 1_000_000;
-  const value =
-    millions >= 10
-      ? Math.round(millions).toString()
-      : millions.toFixed(1).replace(/\.0$/, '');
+  const value = millions >= 10 ? Math.round(millions).toString() : millions.toFixed(1).replace(/\.0$/, '');
   return `${sign}$${value}m`;
 }
 
@@ -99,19 +88,11 @@ function BudgetChartSvg({
   height,
   onBarClick
 }: BudgetChartProps & { width: number; height: number }) {
-  const {
-    tooltipData,
-    tooltipLeft,
-    tooltipTop,
-    tooltipOpen,
-    showTooltip,
-    hideTooltip
-  } = useTooltip<BudgetDataPoint>();
+  const { tooltipData, tooltipLeft, tooltipTop, tooltipOpen, showTooltip, hideTooltip } = useTooltip<BudgetDataPoint>();
 
   const filtered = filterByTimePeriod(data, period);
 
-  const { margin, innerWidth, innerHeight, compactYAxis } =
-    getBudgetChartLayout(width, height);
+  const { margin, innerWidth, innerHeight, compactYAxis } = getBudgetChartLayout(width, height);
 
   if (filtered.length === 0 || innerWidth <= 0 || innerHeight <= 0) return null;
 
@@ -121,9 +102,7 @@ function BudgetChartSvg({
     padding: 0.04
   });
 
-  const maxVal = Math.max(
-    ...filtered.map((d) => Math.max(d.sinkOrSwim, d.spend + d.mortgage))
-  );
+  const maxVal = Math.max(...filtered.map((d) => Math.max(d.sinkOrSwim, d.spend + d.mortgage)));
 
   const yScale = scaleLinear<number>({
     domain: [0, maxVal * 1.1],
@@ -149,10 +128,7 @@ function BudgetChartSvg({
     value: sosMA[i]
   }));
 
-  const handleMouseMove = (
-    event: React.MouseEvent<SVGRectElement>,
-    datum: BudgetDataPoint
-  ) => {
+  const handleMouseMove = (event: React.MouseEvent<SVGRectElement>, datum: BudgetDataPoint) => {
     const svgRect = event.currentTarget.closest('svg')?.getBoundingClientRect();
     if (!svgRect) return;
     showTooltip({
@@ -175,12 +151,7 @@ function BudgetChartSvg({
     <>
       <svg width={width} height={height} className="block">
         <Group left={margin.left} top={margin.top}>
-          <GridRows
-            scale={yScale}
-            width={innerWidth}
-            stroke="#EFE3D2"
-            strokeOpacity={0.6}
-          />
+          <GridRows scale={yScale} width={innerWidth} stroke="#EFE3D2" strokeOpacity={0.6} />
 
           <BudgetChartBars
             data={filtered}
@@ -192,19 +163,12 @@ function BudgetChartSvg({
             onBarClick={onBarClick}
           />
 
-          <BudgetChartLines
-            spendTrend={spendTrend}
-            sinkOrSwimTrend={sinkOrSwimTrend}
-            xScale={xScale}
-            yScale={yScale}
-          />
+          <BudgetChartLines spendTrend={spendTrend} sinkOrSwimTrend={sinkOrSwimTrend} xScale={xScale} yScale={yScale} />
 
           <AxisBottom
             top={innerHeight}
             scale={xScale}
-            tickFormat={(date) =>
-              new Date(date).toLocaleString('en-AU', { month: 'short' })
-            }
+            tickFormat={(date) => new Date(date).toLocaleString('en-AU', { month: 'short' })}
             tickValues={tickValues}
             tickLabelProps={() => ({
               fill: '#7C6755',
@@ -253,11 +217,7 @@ function BudgetChartSvg({
   );
 }
 
-export default function BudgetChart({
-  data,
-  period,
-  onBarClick
-}: BudgetChartProps) {
+export default function BudgetChart({ data, period, onBarClick }: BudgetChartProps) {
   const filtered = filterByTimePeriod(data, period);
   const isEmpty = filtered.length === 0;
 
@@ -268,21 +228,13 @@ export default function BudgetChart({
         {isEmpty ? (
           <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-warm-text-secondary">
             <p className="text-sm font-medium">No budget data</p>
-            <p className="text-sm text-warm-text-tertiary">
-              Seed the budget table to render the chart.
-            </p>
+            <p className="text-sm text-warm-text-tertiary">Seed the budget table to render the chart.</p>
           </div>
         ) : (
           <ParentSize debounceTime={50} parentSizeStyles={PARENT_SIZE_STYLES}>
             {({ width, height }) =>
               width > 0 && height > 0 ? (
-                <BudgetChartSvg
-                  data={data}
-                  period={period}
-                  width={width}
-                  height={height}
-                  onBarClick={onBarClick}
-                />
+                <BudgetChartSvg data={data} period={period} width={width} height={height} onBarClick={onBarClick} />
               ) : null
             }
           </ParentSize>

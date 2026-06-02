@@ -1,7 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import { Hono } from 'hono';
+
 import type { Context } from 'hono';
+import { Hono } from 'hono';
 import { z } from 'zod';
+
 import { isAuthorizedServiceRequest } from '../auth/serviceAuth.js';
 import { jsonError, jsonOk } from '../http/json.js';
 import type { TelegramMessageSender } from '../providers/telegram/client.js';
@@ -28,11 +30,7 @@ async function parseNotificationBody(c: Context) {
   }
 }
 
-async function sendNotification(
-  sendTelegramMessage: TelegramMessageSender,
-  chatId: string,
-  text: string
-) {
+async function sendNotification(sendTelegramMessage: TelegramMessageSender, chatId: string, text: string) {
   try {
     return await sendTelegramMessage({ chatId, text });
   } catch {
@@ -64,10 +62,7 @@ export function createNotificationRoutes({
       return jsonError(c, 400, 'invalid_notification');
     }
 
-    const link = await storage.getActiveChannelLinkForUser(
-      notification.data.recipientUserId,
-      'telegram'
-    );
+    const link = await storage.getActiveChannelLinkForUser(notification.data.recipientUserId, 'telegram');
     const createdAt = Date.now();
 
     if (!link) {
@@ -87,11 +82,7 @@ export function createNotificationRoutes({
       });
     }
 
-    const sendResult = await sendNotification(
-      sendTelegramMessage,
-      link.providerChatId,
-      notification.data.message
-    );
+    const sendResult = await sendNotification(sendTelegramMessage, link.providerChatId, notification.data.message);
     const status = sendResult.ok ? 'sent' : 'failed';
     const errorCode = sendResult.ok ? undefined : sendResult.errorCode;
 

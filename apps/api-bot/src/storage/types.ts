@@ -30,23 +30,10 @@ export type NotificationAttemptRecord = {
 
 export type BotStorage = {
   savePairingToken(record: PairingTokenRecord): Promise<void>;
-  consumePairingToken(
-    tokenHash: string,
-    now?: number
-  ): Promise<PairingTokenRecord | null>;
+  consumePairingToken(tokenHash: string, now?: number): Promise<PairingTokenRecord | null>;
   upsertChannelLink(record: ChannelLinkRecord): Promise<void>;
-  revokeChannelLink(
-    clerkUserId: string,
-    provider: ProviderName,
-    now?: number
-  ): Promise<void>;
-  getActiveChannelLinkForUser(
-    clerkUserId: string,
-    provider: ProviderName
-  ): Promise<ChannelLinkRecord | null>;
-  getActiveChannelLinkByProviderUser(
-    provider: ProviderName,
-    providerUserId: string
-  ): Promise<ChannelLinkRecord | null>;
+  revokeChannelLink(clerkUserId: string, provider: ProviderName, now?: number): Promise<void>;
+  getActiveChannelLinkForUser(clerkUserId: string, provider: ProviderName): Promise<ChannelLinkRecord | null>;
+  getActiveChannelLinkByProviderUser(provider: ProviderName, providerUserId: string): Promise<ChannelLinkRecord | null>;
   saveNotificationAttempt(record: NotificationAttemptRecord): Promise<void>;
 };

@@ -1,17 +1,18 @@
 import { describe, expect, it } from 'vitest';
+
 import {
   budgetMortgagePortion,
   budgetTotalOut,
   currentAccountTotal,
-  toCents,
   fromCents,
+  investmentTotal,
   mortgageConfigForTotals,
   mortgageEquity,
   mortgagePaymentTotal,
   mortgagePrincipalPaid,
   superPensionAud,
-  ukTotalAud,
-  investmentTotal
+  toCents,
+  ukTotalAud
 } from './helpers';
 
 describe('toCents', () => {

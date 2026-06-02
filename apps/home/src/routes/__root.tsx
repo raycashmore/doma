@@ -1,9 +1,4 @@
-import {
-  HeadContent,
-  Outlet,
-  Scripts,
-  createRootRoute
-} from '@tanstack/react-router';
+import { HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-router';
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
 import { TanStackDevtools } from '@tanstack/react-devtools';
 
@@ -74,9 +69,7 @@ function RootDocument() {
             ]}
           />
         </AuthGate>
-        {IS_PROD ? (
-          <script dangerouslySetInnerHTML={{ __html: SERVICE_WORKER_SCRIPT }} />
-        ) : null}
+        {IS_PROD ? <script dangerouslySetInnerHTML={{ __html: SERVICE_WORKER_SCRIPT }} /> : null}
         <Scripts />
       </body>
     </html>

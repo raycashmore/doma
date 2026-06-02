@@ -1,14 +1,14 @@
 import { TooltipWithBounds } from '@visx/tooltip';
 import { formatCurrency } from '@/lib/budget';
 
-interface BudgetChartTooltipProps {
+type BudgetChartTooltipProps = {
   date: number;
   spend: number; // discretionary
   sinkOrSwim: number; // income proxy
   mortgage: number;
   top: number;
   left: number;
-}
+};
 
 function monthYear(date: number) {
   return new Date(date).toLocaleString('en-AU', {
@@ -17,14 +17,7 @@ function monthYear(date: number) {
   });
 }
 
-export default function BudgetChartTooltip({
-  date,
-  spend,
-  sinkOrSwim,
-  mortgage,
-  top,
-  left
-}: BudgetChartTooltipProps) {
+export default function BudgetChartTooltip({ date, spend, sinkOrSwim, mortgage, top, left }: BudgetChartTooltipProps) {
   return (
     <TooltipWithBounds
       top={top}
@@ -44,10 +37,7 @@ export default function BudgetChartTooltip({
       }}
     >
       <div className="font-bold text-[12px] mb-1">{monthYear(date)}</div>
-      <div
-        className="flex items-center justify-between gap-3 font-semibold"
-        style={{ color: '#5F9466' }}
-      >
+      <div className="flex items-center justify-between gap-3 font-semibold" style={{ color: '#5F9466' }}>
         <span>Income</span>
         <span>{formatCurrency(sinkOrSwim)}</span>
       </div>
@@ -55,10 +45,7 @@ export default function BudgetChartTooltip({
         <span>Mortgage</span>
         <span>{formatCurrency(mortgage)}</span>
       </div>
-      <div
-        className="flex items-center justify-between gap-3 font-semibold"
-        style={{ color: '#D85A36' }}
-      >
+      <div className="flex items-center justify-between gap-3 font-semibold" style={{ color: '#D85A36' }}>
         <span>Spend</span>
         <span>{formatCurrency(spend)}</span>
       </div>

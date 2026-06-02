@@ -1,4 +1,5 @@
 import { createHash, randomBytes } from 'node:crypto';
+
 import type { BotStorage } from '../storage/index.js';
 
 const pairingTokenTtlMs = 10 * 60 * 1_000;
@@ -47,15 +48,8 @@ export async function createPairingToken({
   };
 }
 
-export async function consumePairingToken({
-  storage,
-  token,
-  now = Date.now()
-}: ConsumePairingTokenOptions) {
-  const record = await storage.consumePairingToken(
-    hashPairingToken(token),
-    now
-  );
+export async function consumePairingToken({ storage, token, now = Date.now() }: ConsumePairingTokenOptions) {
+  const record = await storage.consumePairingToken(hashPairingToken(token), now);
 
   return record ? { clerkUserId: record.clerkUserId } : null;
 }

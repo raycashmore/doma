@@ -1,11 +1,11 @@
 import type { Doc } from './_generated/dataModel';
 import {
   mortgageConfigForTotals,
+  type MortgageConfigInput,
   mortgageContrib,
   mortgageEquity,
   mortgagePaymentTotal,
-  mortgageTotalDebt,
-  type MortgageConfigInput
+  mortgageTotalDebt
 } from './helpers';
 
 export type BudgetRow = Doc<'budget'>;
@@ -14,12 +14,12 @@ export type SpendCategoryBreakdownRow = Doc<'spendCategoryBreakdown'>;
 
 export type TrendDirection = 'up' | 'down' | 'flat';
 
-export interface MonthDetailTrend {
+export type MonthDetailTrend = {
   pct: number;
   direction: TrendDirection;
-}
+};
 
-export interface MonthDetail {
+export type MonthDetail = {
   date: number;
   income: {
     primary: number;
@@ -61,7 +61,7 @@ export interface MonthDetail {
     spend: MonthDetailTrend | null;
     mortgage: MonthDetailTrend | null;
   };
-}
+};
 
 function incomeTotal(b: BudgetRow): number {
   return b.incomePrimary + b.incomeSecondary + b.billContrib;
@@ -75,10 +75,7 @@ function cardSubtotal(b: BudgetRow): number {
   return b.credit1 + b.credit2 + b.credit3;
 }
 
-export function computeTrend(
-  current: number,
-  prior: number | null | undefined
-): MonthDetailTrend | null {
+export function computeTrend(current: number, prior: number | null | undefined): MonthDetailTrend | null {
   if (prior == null || prior === 0) return null;
   const pct = ((current - prior) / prior) * 100;
   const rounded = Math.round(pct * 10) / 10;
@@ -106,9 +103,7 @@ export function shapeMonthDetail(
 
   const priorIncome = priorBudget ? incomeTotal(priorBudget) : null;
   const priorSpend = priorBudget ? spendTotal(priorBudget) : null;
-  const priorMortgagePayment = priorMortgage
-    ? mortgagePaymentTotal(priorMortgage)
-    : null;
+  const priorMortgagePayment = priorMortgage ? mortgagePaymentTotal(priorMortgage) : null;
 
   return {
     date: budget.date,
@@ -154,10 +149,7 @@ export function shapeMonthDetail(
     trends: {
       income: computeTrend(curIncome, priorIncome),
       spend: computeTrend(curSpend, priorSpend),
-      mortgage:
-        curMortgagePayment != null
-          ? computeTrend(curMortgagePayment, priorMortgagePayment)
-          : null
+      mortgage: curMortgagePayment != null ? computeTrend(curMortgagePayment, priorMortgagePayment) : null
     }
   };
 }

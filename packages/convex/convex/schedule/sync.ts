@@ -1,19 +1,20 @@
 'use node';
 
-import { JWT } from 'google-auth-library';
 import { v } from 'convex/values';
-import { action, internalAction, type ActionCtx } from '../_generated/server';
+import { JWT } from 'google-auth-library';
+
 import { internal } from '../_generated/api';
-import { currentWeekRange } from './week';
+import { action, type ActionCtx, internalAction } from '../_generated/server';
 import { normalizePrivateKey } from './credentials';
-import { shouldSkipSync } from './syncPolicy';
 import {
-  toScheduleEvent,
   type CalendarConfig,
   type GoogleEvent,
   type MemberConfig,
-  type ScheduleEventRow
+  type ScheduleEventRow,
+  toScheduleEvent
 } from './mapping';
+import { shouldSkipSync } from './syncPolicy';
+import { currentWeekRange } from './week';
 
 // An unforced refresh reuses existing data if the last sync is this recent.
 const FRESH_MS = 60_000; // 1 minute
@@ -39,16 +40,8 @@ function parseEnv() {
     process.env.GOOGLE_SA_KEY ?? '',
     '{}'
   );
-  const calendars = parseJsonEnv<CalendarConfig[]>(
-    'SCHEDULE_CALENDARS',
-    process.env.SCHEDULE_CALENDARS ?? '',
-    '[]'
-  );
-  const members = parseJsonEnv<MemberConfig[]>(
-    'SCHEDULE_MEMBERS',
-    process.env.SCHEDULE_MEMBERS ?? '',
-    '[]'
-  );
+  const calendars = parseJsonEnv<CalendarConfig[]>('SCHEDULE_CALENDARS', process.env.SCHEDULE_CALENDARS ?? '', '[]');
+  const members = parseJsonEnv<MemberConfig[]>('SCHEDULE_MEMBERS', process.env.SCHEDULE_MEMBERS ?? '', '[]');
   const tz = process.env.SCHEDULE_TZ ?? 'UTC';
   return { key, calendars, members, tz };
 }
@@ -56,9 +49,7 @@ function parseEnv() {
 // The core sync, as a plain helper so both `run` (internal) and `refresh`
 // (public) can call it directly — avoids a same-module action self-reference,
 // which would otherwise create a circular type and the runAction round-trip.
-async function performSync(
-  ctx: ActionCtx
-): Promise<{ count: number; lastSyncedAt: number }> {
+async function performSync(ctx: ActionCtx): Promise<{ count: number; lastSyncedAt: number }> {
   const { key, calendars, members, tz } = parseEnv();
   if (!key.client_email || !key.private_key) {
     throw new Error('GOOGLE_SA_KEY env var is missing or incomplete');
@@ -66,9 +57,7 @@ async function performSync(
 
   const privateKey = normalizePrivateKey(key.private_key);
   if (!privateKey.startsWith('-----BEGIN')) {
-    throw new Error(
-      'GOOGLE_SA_KEY private_key is not a valid PEM (check newline escaping in the env var)'
-    );
+    throw new Error('GOOGLE_SA_KEY private_key is not a valid PEM (check newline escaping in the env var)');
   }
 
   const auth = new JWT({
@@ -87,9 +76,7 @@ async function performSync(
   // per-calendar if partial syncs become acceptable.
   for (const calendar of calendars) {
     const url = new URL(
-      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(
-        calendar.calendarId
-      )}/events`
+      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendar.calendarId)}/events`
     );
     url.searchParams.set('singleEvents', 'true');
     url.searchParams.set('orderBy', 'startTime');
@@ -101,9 +88,7 @@ async function performSync(
       headers: { Authorization: `Bearer ${token}` }
     });
     if (!res.ok) {
-      throw new Error(
-        `Calendar fetch failed for ${calendar.calendarId}: ${res.status} ${await res.text()}`
-      );
+      throw new Error(`Calendar fetch failed for ${calendar.calendarId}: ${res.status} ${await res.text()}`);
     }
     const data = (await res.json()) as { items?: GoogleEvent[] };
     for (const event of data.items ?? []) {

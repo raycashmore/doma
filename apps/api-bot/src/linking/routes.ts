@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
-import type { BotConfig } from '../config.js';
+
 import { authenticateClerkRequest } from '../auth/clerk.js';
+import type { BotConfig } from '../config.js';
 import { jsonError, jsonOk } from '../http/json.js';
 import type { BotStorage } from '../storage/index.js';
 import { createPairingToken } from './pairing.js';
@@ -10,10 +11,7 @@ export type CreateLinkingRoutesOptions = {
   storage: BotStorage;
 };
 
-export function createLinkingRoutes({
-  config,
-  storage
-}: CreateLinkingRoutesOptions) {
+export function createLinkingRoutes({ config, storage }: CreateLinkingRoutesOptions) {
   const routes = new Hono();
 
   routes.post('/pairing-token', async (c) => {
@@ -57,10 +55,7 @@ export function createLinkingRoutes({
       return jsonError(c, 401, 'unauthorized');
     }
 
-    const link = await storage.getActiveChannelLinkForUser(
-      auth.userId,
-      'telegram'
-    );
+    const link = await storage.getActiveChannelLinkForUser(auth.userId, 'telegram');
 
     if (!link) {
       return jsonOk(c, {

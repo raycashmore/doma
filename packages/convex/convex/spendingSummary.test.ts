@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import {
-  excelDateToTimestamp,
-  parseSpendingSummaryRows
-} from './spendingSummary';
+
+import { excelDateToTimestamp, parseSpendingSummaryRows } from './spendingSummary';
 
 describe('parseSpendingSummaryRows', () => {
   it('imports every dated column from Spending summary as flexible category rows', () => {
