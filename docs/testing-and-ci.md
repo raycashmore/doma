@@ -13,7 +13,7 @@
 GitHub Actions (`.github/workflows/ci.yml`) runs on push to `main` and PRs:
 
 1. Install dependencies (`pnpm install --frozen-lockfile`)
-2. Format check (`pnpm format --check`)
+2. Format check (`pnpm format:check`)
 3. Lint (`pnpm lint`)
 4. Type check (`pnpm check-types`)
 5. Test (`pnpm test`)

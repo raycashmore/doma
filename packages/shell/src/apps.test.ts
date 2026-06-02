@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { APPS, getAppHref, getActiveAppId } from './apps';
+
+import { APPS, getActiveAppId, getAppHref } from './apps';
 
 const budget = APPS.find((a) => a.id === 'budget')!;
 

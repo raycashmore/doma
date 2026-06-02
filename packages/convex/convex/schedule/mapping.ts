@@ -43,15 +43,9 @@ function matchesToken(title: string, token: string): boolean {
 
 // Per-person calendar → that member. Shared calendar → members named in the
 // title, or the whole family when none are named.
-export function deriveWho(
-  title: string,
-  calendar: CalendarConfig,
-  members: MemberConfig[]
-): string[] {
+export function deriveWho(title: string, calendar: CalendarConfig, members: MemberConfig[]): string[] {
   if (calendar.who !== 'shared') return [calendar.who];
-  const matched = members.filter((m) =>
-    m.tokens.some((token) => matchesToken(title, token))
-  );
+  const matched = members.filter((m) => m.tokens.some((token) => matchesToken(title, token)));
   return matched.length > 0 ? matched.map((m) => m.id) : members.map((m) => m.id);
 }
 

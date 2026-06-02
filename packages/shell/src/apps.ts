@@ -1,24 +1,17 @@
 import {
-  Home,
-  PiggyBank,
-  Landmark,
   Calendar,
-  ListChecks,
-  ShoppingBasket,
   ChefHat,
-  type LucideIcon
+  Home,
+  Landmark,
+  ListChecks,
+  type LucideIcon,
+  PiggyBank,
+  ShoppingBasket
 } from 'lucide-react';
 
-export type AppId =
-  | 'home'
-  | 'budget'
-  | 'mortgage'
-  | 'schedule'
-  | 'todo'
-  | 'shopping'
-  | 'recipes';
+export type AppId = 'home' | 'budget' | 'mortgage' | 'schedule' | 'todo' | 'shopping' | 'recipes';
 
-export interface AppDescriptor {
+export type AppDescriptor = {
   id: AppId;
   label: string;
   /** Production path. In production, Vercel rewrites route this to the right zone. */
@@ -27,7 +20,7 @@ export interface AppDescriptor {
   enabled: boolean;
   /** Local dev port. Used to build absolute URLs in dev (where rewrites don't run). */
   devPort: number;
-}
+};
 
 export const APPS: AppDescriptor[] = [
   {

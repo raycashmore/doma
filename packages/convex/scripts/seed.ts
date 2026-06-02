@@ -12,13 +12,15 @@
 
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ConvexHttpClient } from 'convex/browser';
+
 import { api } from '@repo/convex';
 import { toCents } from '@repo/convex/helpers';
+import { ConvexHttpClient } from 'convex/browser';
 import XLSX from 'xlsx';
-import { getTargetConvexUrl } from './targetUrl';
+
 import { budgetCaptureDatesFromCaptureDate } from '../convex/budgetDisplayMonth';
 import { parseSpendingSummaryRows } from '../convex/spendingSummary';
+import { getTargetConvexUrl } from './targetUrl';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -43,7 +45,7 @@ function optNum(val: unknown): number | undefined {
   return isNaN(n) ? undefined : n;
 }
 
-interface BudgetRow {
+type BudgetRow = {
   date: number;
   captureDate: number;
   incomePrimary: number;
@@ -55,16 +57,16 @@ interface BudgetRow {
   oneOffs: number;
   sharedOut: number;
   rent: number;
-}
+};
 
-interface MortgageFields {
+type MortgageFields = {
   date: number;
   captureDate: number;
   fixedPayment: number;
   variablePayment: number;
   rateVar?: number;
   rateFixed?: number;
-}
+};
 
 function readBudgetRows(wb: XLSX.WorkBook): {
   budgetRows: BudgetRow[];
@@ -109,10 +111,7 @@ function readBudgetRows(wb: XLSX.WorkBook): {
   return { budgetRows, mortgageFieldsByDate };
 }
 
-function findMortgageFieldsAtOrBefore(
-  mortgageFields: MortgageFields[],
-  date: number
-): MortgageFields | undefined {
+function findMortgageFieldsAtOrBefore(mortgageFields: MortgageFields[], date: number): MortgageFields | undefined {
   let match: MortgageFields | undefined;
   for (const fields of mortgageFields) {
     if (fields.date > date) break;
@@ -167,9 +166,7 @@ async function main() {
       const result = await client.mutation(api.seed.seedCurrentAccounts, {
         rows: batch
       });
-      console.log(
-        `  currentAccounts: inserted ${result.inserted} (batch ${Math.floor(i / 100) + 1})`
-      );
+      console.log(`  currentAccounts: inserted ${result.inserted} (batch ${Math.floor(i / 100) + 1})`);
     }
     console.log(`  currentAccounts: ${rows.length} total rows`);
   }
@@ -193,9 +190,7 @@ async function main() {
       const result = await client.mutation(api.seed.seedCashAccounts, {
         rows: batch
       });
-      console.log(
-        `  cashAccounts: inserted ${result.inserted} (batch ${Math.floor(i / 100) + 1})`
-      );
+      console.log(`  cashAccounts: inserted ${result.inserted} (batch ${Math.floor(i / 100) + 1})`);
     }
     console.log(`  cashAccounts: ${rows.length} total rows`);
   }
@@ -224,9 +219,7 @@ async function main() {
       const result = await client.mutation(api.seed.seedUkAccounts, {
         rows: batch
       });
-      console.log(
-        `  ukAccounts: inserted ${result.inserted} (batch ${Math.floor(i / 100) + 1})`
-      );
+      console.log(`  ukAccounts: inserted ${result.inserted} (batch ${Math.floor(i / 100) + 1})`);
     }
     console.log(`  ukAccounts: ${rows.length} total rows`);
   }
@@ -254,9 +247,7 @@ async function main() {
       const result = await client.mutation(api.seed.seedSuperAccounts, {
         rows: batch
       });
-      console.log(
-        `  superAccounts: inserted ${result.inserted} (batch ${Math.floor(i / 100) + 1})`
-      );
+      console.log(`  superAccounts: inserted ${result.inserted} (batch ${Math.floor(i / 100) + 1})`);
     }
     console.log(`  superAccounts: ${rows.length} total rows`);
   }
@@ -290,9 +281,7 @@ async function main() {
       const result = await client.mutation(api.seed.seedInvestmentAccounts, {
         rows: batch
       });
-      console.log(
-        `  investmentAccounts: inserted ${result.inserted} (batch ${Math.floor(i / 100) + 1})`
-      );
+      console.log(`  investmentAccounts: inserted ${result.inserted} (batch ${Math.floor(i / 100) + 1})`);
     }
     console.log(`  investmentAccounts: ${rows.length} total rows`);
   }
@@ -301,9 +290,7 @@ async function main() {
   {
     const ws = wb.Sheets['Mortgage'];
     const data = XLSX.utils.sheet_to_json<any[]>(ws, { header: 1 });
-    const datedRows = data
-      .slice(1)
-      .filter((r: any[]) => r[0] && typeof r[0] === 'number');
+    const datedRows = data.slice(1).filter((r: any[]) => r[0] && typeof r[0] === 'number');
     const latestRow = datedRows.reduce<any[] | undefined>((latest, r) => {
       if (!latest) return r;
       return num(r[0]) > num(latest[0]) ? r : latest;
@@ -328,10 +315,7 @@ async function main() {
     const rows = datedRows.map((r: any[]) => {
       const captureDate = excelDateToTimestamp(num(r[0]));
       const dates = budgetCaptureDatesFromCaptureDate(captureDate);
-      const mortgageFields = findMortgageFieldsAtOrBefore(
-        mortgageFieldsByDate,
-        dates.date
-      );
+      const mortgageFields = findMortgageFieldsAtOrBefore(mortgageFieldsByDate, dates.date);
       if (!mortgageFields) {
         throw new Error(
           `Missing Sink or Swim mortgage fields at or before Mortgage row ${new Date(dates.date).toISOString()} (Excel date ${r[0]})`
@@ -355,9 +339,7 @@ async function main() {
       const result = await client.mutation(api.seed.seedMortgage, {
         rows: batch
       });
-      console.log(
-        `  mortgage: inserted ${result.inserted} (batch ${Math.floor(i / 100) + 1})`
-      );
+      console.log(`  mortgage: inserted ${result.inserted} (batch ${Math.floor(i / 100) + 1})`);
     }
     console.log(`  mortgage: ${rows.length} total rows`);
   }
@@ -371,9 +353,7 @@ async function main() {
       const result = await client.mutation(api.seed.seedBudget, {
         rows: batch
       });
-      console.log(
-        `  budget: inserted ${result.inserted} (batch ${Math.floor(i / 100) + 1})`
-      );
+      console.log(`  budget: inserted ${result.inserted} (batch ${Math.floor(i / 100) + 1})`);
     }
     console.log(`  budget: ${rows.length} total rows`);
   }
@@ -381,22 +361,15 @@ async function main() {
   // ── Spend Category Breakdown (Spending summary) ───────────
   {
     const ws = wb.Sheets['Spending summary'];
-    const data = ws
-      ? XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1 })
-      : [];
+    const data = ws ? XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1 }) : [];
     const rows = parseSpendingSummaryRows(data);
 
     for (let i = 0; i < rows.length; i += 100) {
       const batch = rows.slice(i, i + 100);
-      const result = await client.mutation(
-        api.seed.seedSpendCategoryBreakdown,
-        {
-          rows: batch
-        }
-      );
-      console.log(
-        `  spendCategoryBreakdown: inserted ${result.inserted} (batch ${Math.floor(i / 100) + 1})`
-      );
+      const result = await client.mutation(api.seed.seedSpendCategoryBreakdown, {
+        rows: batch
+      });
+      console.log(`  spendCategoryBreakdown: inserted ${result.inserted} (batch ${Math.floor(i / 100) + 1})`);
     }
     console.log(`  spendCategoryBreakdown: ${rows.length} total rows`);
   }
@@ -417,8 +390,7 @@ async function main() {
     for (let i = 1; i < data.length; i++) {
       const r = data[i];
       if (!r || !r[0]) continue;
-      if (typeof r[0] === 'string' && ['Total', 'Value', 'Net'].includes(r[0]))
-        continue;
+      if (typeof r[0] === 'string' && ['Total', 'Value', 'Net'].includes(r[0])) continue;
       if (typeof r[0] === 'string' && r[0] === 'Swyftx') break;
 
       if (typeof r[0] === 'number' && num(r[1]) > 0) {
@@ -443,9 +415,7 @@ async function main() {
       const result = await client.mutation(api.seed.seedCryptoTransactions, {
         rows: txns
       });
-      console.log(
-        `  cryptoTransactions (platform_a): inserted ${result.inserted}`
-      );
+      console.log(`  cryptoTransactions (platform_a): inserted ${result.inserted}`);
     }
     console.log(`  cryptoTransactions: ${txns.length} total rows`);
   }

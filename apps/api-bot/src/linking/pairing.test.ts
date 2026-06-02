@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { createMemoryStorage } from '../storage/memory.js';
 import { consumePairingToken, createPairingToken } from './pairing.js';
 
@@ -15,16 +16,12 @@ describe('pairing tokens', () => {
     });
 
     expect(pairing.token).toMatch(/^[A-Za-z0-9_-]{32}$/);
-    expect(pairing.deepLink).toBe(
-      `https://t.me/doma_bot?start=${pairing.token}`
-    );
+    expect(pairing.deepLink).toBe(`https://t.me/doma_bot?start=${pairing.token}`);
     expect(pairing.expiresAt).toBe(now + 10 * 60 * 1_000);
 
-    await expect(
-      consumePairingToken({ storage, token: pairing.token, now })
-    ).resolves.toEqual({ clerkUserId: 'user_123' });
-    await expect(
-      consumePairingToken({ storage, token: pairing.token, now })
-    ).resolves.toBeNull();
+    await expect(consumePairingToken({ storage, token: pairing.token, now })).resolves.toEqual({
+      clerkUserId: 'user_123'
+    });
+    await expect(consumePairingToken({ storage, token: pairing.token, now })).resolves.toBeNull();
   });
 });

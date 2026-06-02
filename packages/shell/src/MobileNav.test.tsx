@@ -1,7 +1,8 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
-import { MobileNav } from './MobileNav';
+
 import { UrlAuthProvider } from './auth';
+import { MobileNav } from './MobileNav';
 
 describe('MobileNav', () => {
   afterEach(cleanup);

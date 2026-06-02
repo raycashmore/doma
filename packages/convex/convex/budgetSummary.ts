@@ -1,31 +1,23 @@
 import type { Doc } from './_generated/dataModel';
-import {
-  budgetTotalIn,
-  budgetTotalOut,
-  budgetMortgagePortion
-} from './helpers';
-import {
-  buildMortgageByMonth,
-  utcYearMonthKey,
-  type MortgageRow
-} from './monthlyBreakdown';
+import { budgetMortgagePortion, budgetTotalIn, budgetTotalOut } from './helpers';
+import { buildMortgageByMonth, type MortgageRow, utcYearMonthKey } from './monthlyBreakdown';
 
 export type SummaryPeriod = '3M' | '6M' | '12M' | 'ALL';
 export type BudgetRow = Doc<'budget'>;
 
-export interface SummaryMetric {
+export type SummaryMetric = {
   value: number; // cents (or basis points for savingsRate)
   delta: number | null;
   deltaPct: number | null;
-}
+};
 
-export interface BudgetPageSummary {
+export type BudgetPageSummary = {
   avgSpend: SummaryMetric;
   avgIncome: SummaryMetric;
   savingsRate: SummaryMetric;
   netGain: SummaryMetric;
   periodLabel: string;
-}
+};
 
 const MS_PER_MONTH = 30 * 86_400_000;
 
@@ -53,17 +45,10 @@ function metric(current: number, prior: number | null): SummaryMetric {
   return { value: current, delta, deltaPct };
 }
 
-function computeWindow(
-  rows: BudgetRow[],
-  mortgageByMonth: Map<string, MortgageRow>
-) {
+function computeWindow(rows: BudgetRow[], mortgageByMonth: Map<string, MortgageRow>) {
   const ins = rows.map(budgetTotalIn);
   const outs = rows.map(
-    (r) =>
-      budgetTotalOut(r) +
-      budgetMortgagePortion(
-        mortgageByMonth.get(utcYearMonthKey(r.date)) ?? null
-      )
+    (r) => budgetTotalOut(r) + budgetMortgagePortion(mortgageByMonth.get(utcYearMonthKey(r.date)) ?? null)
   );
   const nets = ins.map((income, i) => income - outs[i]!);
   const avgIn = avg(ins);
@@ -71,8 +56,7 @@ function computeWindow(
   const totalIn = ins.reduce((s, x) => s + x, 0);
   const totalNet = nets.reduce((s, x) => s + x, 0);
   // basis points: 12.34% -> 1234
-  const savingsBp =
-    totalIn === 0 ? 0 : Math.round((totalNet / totalIn) * 10_000);
+  const savingsBp = totalIn === 0 ? 0 : Math.round((totalNet / totalIn) * 10_000);
   return {
     avgSpend: avgOut,
     avgIncome: avgIn,
@@ -111,16 +95,13 @@ export function summarizeBudgetForPeriod(
     const currentStart = now - window;
     const priorStart = currentStart - window;
     currentRows = sorted.filter((r) => r.date > currentStart && r.date <= now);
-    priorRows = sorted.filter(
-      (r) => r.date > priorStart && r.date <= currentStart
-    );
+    priorRows = sorted.filter((r) => r.date > priorStart && r.date <= currentStart);
   }
 
   const mortgageByMonth = buildMortgageByMonth(mortgageRows);
 
   const cur = computeWindow(currentRows, mortgageByMonth);
-  const prior =
-    priorRows.length > 0 ? computeWindow(priorRows, mortgageByMonth) : null;
+  const prior = priorRows.length > 0 ? computeWindow(priorRows, mortgageByMonth) : null;
 
   return {
     avgSpend: metric(cur.avgSpend, prior?.avgSpend ?? null),

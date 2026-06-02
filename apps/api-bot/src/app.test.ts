@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { BotConfig } from './config.js';
-import { authenticateClerkRequest } from './auth/clerk.js';
+
 import { createApp } from './app.js';
+import { authenticateClerkRequest } from './auth/clerk.js';
+import type { BotConfig } from './config.js';
 import { createMemoryStorage } from './storage/memory.js';
 
 vi.mock('./auth/clerk.js', () => ({

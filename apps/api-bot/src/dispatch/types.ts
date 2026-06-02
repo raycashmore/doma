@@ -12,22 +12,16 @@ export type CapabilityRequest = {
   };
 };
 
-export type CapabilityResponse =
-  | { kind: 'reply'; text: string }
-  | { kind: 'no_response' };
+export type CapabilityResponse = { kind: 'reply'; text: string } | { kind: 'no_response' };
 
-export type CapabilityHandler = (
-  request: CapabilityRequest
-) => Promise<CapabilityResponse>;
+export type CapabilityHandler = (request: CapabilityRequest) => Promise<CapabilityResponse>;
 
 export const CAPABILITY_FALLBACK_RESPONSE: CapabilityResponse = {
   kind: 'reply',
   text: 'I could not handle that just now.'
 };
 
-export function parseCapabilityResponse(
-  value: unknown
-): CapabilityResponse | null {
+export function parseCapabilityResponse(value: unknown): CapabilityResponse | null {
   if (typeof value !== 'object' || value === null) {
     return null;
   }

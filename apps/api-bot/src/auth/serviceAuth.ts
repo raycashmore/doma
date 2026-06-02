@@ -9,10 +9,7 @@ function constantTimeTokenEquals(value: string, expected: string) {
   return timingSafeEqual(valueDigest, expectedDigest);
 }
 
-export function isAuthorizedServiceRequest(
-  request: Request,
-  serviceToken: string
-) {
+export function isAuthorizedServiceRequest(request: Request, serviceToken: string) {
   if (serviceToken.length === 0) {
     return false;
   }

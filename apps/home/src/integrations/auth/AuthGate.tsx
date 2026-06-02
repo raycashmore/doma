@@ -1,12 +1,7 @@
-import { type ReactNode, useRef } from 'react';
-import {
-  ClerkProvider,
-  SignIn,
-  SignedIn,
-  SignedOut,
-  useClerk
-} from '@clerk/clerk-react';
+import { useRef } from 'react';
+import { ClerkProvider, SignIn, SignedIn, SignedOut, useClerk } from '@clerk/clerk-react';
 import { SignInLayout, UrlAuthProvider } from '@repo/shell';
+import type { ReactNode } from 'react';
 
 export type AuthGateProps = {
   publishableKey: string | undefined;
@@ -15,11 +10,7 @@ export type AuthGateProps = {
 
 function ClerkUrlAuth({ children }: { children: ReactNode }) {
   const clerk = useClerk();
-  return (
-    <UrlAuthProvider buildUrlWithAuth={(url) => clerk.buildUrlWithAuth(url)}>
-      {children}
-    </UrlAuthProvider>
-  );
+  return <UrlAuthProvider buildUrlWithAuth={(url) => clerk.buildUrlWithAuth(url)}>{children}</UrlAuthProvider>;
 }
 
 export function AuthGate({ publishableKey, children }: AuthGateProps) {
@@ -28,8 +19,7 @@ export function AuthGate({ publishableKey, children }: AuthGateProps) {
   if (!publishableKey) {
     if (typeof window !== 'undefined' && !warned.current) {
       console.warn(
-        '[doma] AuthGate is bypassed: VITE_CLERK_PUBLISHABLE_KEY is not set. ' +
-          'See docs/auth.md to enable sign-in.'
+        '[doma] AuthGate is bypassed: VITE_CLERK_PUBLISHABLE_KEY is not set. ' + 'See docs/auth.md to enable sign-in.'
       );
       warned.current = true;
     }

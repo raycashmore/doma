@@ -2,18 +2,15 @@ import { Bar } from '@visx/shape';
 import type { ScaleBand, ScaleLinear } from 'd3-scale';
 import type { BudgetDataPoint } from '@/lib/budget';
 
-interface BudgetChartBarsProps {
+type BudgetChartBarsProps = {
   data: Array<BudgetDataPoint>;
   xScale: ScaleBand<number>;
   yScale: ScaleLinear<number, number>;
   height: number;
-  onMouseMove: (
-    event: React.MouseEvent<SVGRectElement>,
-    datum: BudgetDataPoint
-  ) => void;
+  onMouseMove: (event: React.MouseEvent<SVGRectElement>, datum: BudgetDataPoint) => void;
   onMouseLeave: () => void;
   onBarClick?: (date: number) => void;
-}
+};
 
 const INCOME_FILL = '#5F946666';
 const MORTGAGE_FILL = '#3D2E227A';
@@ -50,9 +47,7 @@ export default function BudgetChartBars({
             rx={4}
             style={onBarClick ? { cursor: 'pointer' } : undefined}
             onClick={() => onBarClick?.(d.date)}
-            onMouseMove={(e) =>
-              onMouseMove(e as React.MouseEvent<SVGRectElement>, d)
-            }
+            onMouseMove={(e) => onMouseMove(e as React.MouseEvent<SVGRectElement>, d)}
             onMouseLeave={onMouseLeave}
           />
         );
@@ -74,9 +69,7 @@ export default function BudgetChartBars({
             rx={3}
             style={onBarClick ? { cursor: 'pointer' } : undefined}
             onClick={() => onBarClick?.(d.date)}
-            onMouseMove={(e) =>
-              onMouseMove(e as React.MouseEvent<SVGRectElement>, d)
-            }
+            onMouseMove={(e) => onMouseMove(e as React.MouseEvent<SVGRectElement>, d)}
             onMouseLeave={onMouseLeave}
           />
         );
@@ -99,9 +92,7 @@ export default function BudgetChartBars({
             rx={3}
             style={onBarClick ? { cursor: 'pointer' } : undefined}
             onClick={() => onBarClick?.(d.date)}
-            onMouseMove={(e) =>
-              onMouseMove(e as React.MouseEvent<SVGRectElement>, d)
-            }
+            onMouseMove={(e) => onMouseMove(e as React.MouseEvent<SVGRectElement>, d)}
             onMouseLeave={onMouseLeave}
           />
         );

@@ -1,10 +1,6 @@
 import { v } from 'convex/values';
-import {
-  internalMutation,
-  internalQuery,
-  query,
-  type QueryCtx
-} from '../_generated/server';
+
+import { internalMutation, internalQuery, query, type QueryCtx } from '../_generated/server';
 
 const eventValidator = v.object({
   googleEventId: v.string(),
@@ -67,10 +63,7 @@ export const currentWeek = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error('Not authenticated');
-    const events = await ctx.db
-      .query('scheduleEvents')
-      .withIndex('by_start')
-      .collect();
+    const events = await ctx.db.query('scheduleEvents').withIndex('by_start').collect();
     return { events, lastSyncedAt: await readLastSyncedAt(ctx) };
   }
 });

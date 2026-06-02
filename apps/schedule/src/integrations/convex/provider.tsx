@@ -1,9 +1,9 @@
 'use client';
 
-import { type ReactNode } from 'react';
+import { useAuth } from '@clerk/nextjs';
 import { ConvexProvider, ConvexReactClient } from 'convex/react';
 import { ConvexProviderWithClerk } from 'convex/react-clerk';
-import { useAuth } from '@clerk/nextjs';
+import { type ReactNode } from 'react';
 
 const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL;
 const CLERK_KEY = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
@@ -18,11 +18,7 @@ function getConvexClient(): ConvexReactClient {
   return _convex;
 }
 
-export default function AppConvexProvider({
-  children
-}: {
-  children: ReactNode;
-}) {
+export default function AppConvexProvider({ children }: { children: ReactNode }) {
   const convex = getConvexClient();
 
   if (CLERK_KEY) {

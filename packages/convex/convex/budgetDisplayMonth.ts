@@ -1,6 +1,4 @@
-export function budgetDisplayMonthEndFromCaptureDate(
-  captureDate: number
-): number {
+export function budgetDisplayMonthEndFromCaptureDate(captureDate: number): number {
   const date = new Date(captureDate);
   return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 0);
 }

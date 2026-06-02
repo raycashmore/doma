@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+
 import { createCommandDispatcher, DEFAULT_HELP } from './router.js';
 import type { CapabilityRequest } from './types.js';
 
@@ -26,17 +27,13 @@ describe('createCommandDispatcher', () => {
       capabilities: { schedule }
     });
 
-    const result = await dispatcher.dispatch(
-      request({ command: 'schedule', messageText: '/schedule tomorrow' })
-    );
+    const result = await dispatcher.dispatch(request({ command: 'schedule', messageText: '/schedule tomorrow' }));
 
     expect(result).toEqual({
       kind: 'reply',
       text: 'Scheduling is warming up.'
     });
-    expect(schedule).toHaveBeenCalledWith(
-      request({ command: 'schedule', messageText: '/schedule tomorrow' })
-    );
+    expect(schedule).toHaveBeenCalledWith(request({ command: 'schedule', messageText: '/schedule tomorrow' }));
   });
 
   it('returns default help for unknown commands', async () => {
@@ -44,9 +41,10 @@ describe('createCommandDispatcher', () => {
       capabilities: {}
     });
 
-    await expect(
-      dispatcher.dispatch(request({ command: 'unknown', messageText: '/unknown' }))
-    ).resolves.toEqual({ kind: 'reply', text: DEFAULT_HELP });
+    await expect(dispatcher.dispatch(request({ command: 'unknown', messageText: '/unknown' }))).resolves.toEqual({
+      kind: 'reply',
+      text: DEFAULT_HELP
+    });
   });
 
   it('returns default help for plain text', async () => {
@@ -69,9 +67,9 @@ describe('createCommandDispatcher', () => {
       }
     });
 
-    await expect(
-      dispatcher.dispatch(request({ command: 'schedule', messageText: '/schedule' }))
-    ).resolves.toEqual({ kind: 'no_response' });
+    await expect(dispatcher.dispatch(request({ command: 'schedule', messageText: '/schedule' }))).resolves.toEqual({
+      kind: 'no_response'
+    });
   });
 
   it('returns fallback reply when a capability throws', async () => {
@@ -83,9 +81,7 @@ describe('createCommandDispatcher', () => {
       }
     });
 
-    await expect(
-      dispatcher.dispatch(request({ command: 'schedule', messageText: '/schedule' }))
-    ).resolves.toEqual({
+    await expect(dispatcher.dispatch(request({ command: 'schedule', messageText: '/schedule' }))).resolves.toEqual({
       kind: 'reply',
       text: 'I could not handle that just now.'
     });

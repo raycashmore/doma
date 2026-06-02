@@ -1,8 +1,4 @@
-import type {
-  CapabilityHandler,
-  CapabilityRequest,
-  CapabilityResponse
-} from './types.js';
+import type { CapabilityHandler, CapabilityRequest, CapabilityResponse } from './types.js';
 import { CAPABILITY_FALLBACK_RESPONSE } from './types.js';
 
 export const DEFAULT_HELP = 'I can help with scheduling soon. Try /schedule.';
@@ -11,14 +7,10 @@ export type CreateCommandDispatcherOptions = {
   capabilities: Record<string, CapabilityHandler>;
 };
 
-export function createCommandDispatcher({
-  capabilities
-}: CreateCommandDispatcherOptions) {
+export function createCommandDispatcher({ capabilities }: CreateCommandDispatcherOptions) {
   return {
     async dispatch(request: CapabilityRequest): Promise<CapabilityResponse> {
-      const capability = request.command
-        ? capabilities[request.command]
-        : undefined;
+      const capability = request.command ? capabilities[request.command] : undefined;
 
       if (capability) {
         try {

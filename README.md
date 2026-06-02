@@ -1,8 +1,8 @@
 # Doma
 
-Doma: household management system. 
+Doma: household management system.
 
-A Turborepo monorepo with Vercel Multi-Zones, Convex, Clerk, and a shared bot 
+A Turborepo monorepo with Vercel Multi-Zones, Convex, Clerk, and a shared bot
 gateway for Telegram notifications.
 
 ## What lives here

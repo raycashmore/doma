@@ -15,10 +15,7 @@ function row(month: number) {
 describe('BudgetBreakdownTable', () => {
   it('renders all rows and relies on scrolling when the list is long', () => {
     const { container } = render(
-      <BudgetBreakdownTable
-        rows={[row(4), row(3), row(2), row(1), row(0), row(11), row(10)]}
-        onRowClick={() => {}}
-      />
+      <BudgetBreakdownTable rows={[row(4), row(3), row(2), row(1), row(0), row(11), row(10)]} onRowClick={() => {}} />
     );
 
     expect(screen.getByText('May 2026')).toBeDefined();
@@ -34,12 +31,7 @@ describe('BudgetBreakdownTable', () => {
     const onRowClick = vi.fn();
     const mayDate = row(4).date;
 
-    const { container } = render(
-      <BudgetBreakdownTable
-        rows={[row(4), row(3), row(2)]}
-        onRowClick={onRowClick}
-      />
-    );
+    const { container } = render(<BudgetBreakdownTable rows={[row(4), row(3), row(2)]} onRowClick={onRowClick} />);
 
     fireEvent.click(within(container).getByText('May 2026'));
     expect(onRowClick).toHaveBeenCalledWith(mayDate);

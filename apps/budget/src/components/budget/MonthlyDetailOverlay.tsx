@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 
-interface Props {
+type Props = {
   open: boolean;
   monthLabel: string;
   previousMonthLabel?: string;
@@ -12,7 +12,7 @@ interface Props {
   onNextMonth?: () => void;
   onClose: () => void;
   children: ReactNode;
-}
+};
 
 export default function MonthlyDetailOverlay({
   open,
@@ -39,14 +39,8 @@ export default function MonthlyDetailOverlay({
   if (!open || typeof document === 'undefined') return null;
 
   return createPortal(
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-6"
-      onClick={onClose}
-    >
-      <div
-        className="absolute inset-0 bg-[#2D2D2D]/60 backdrop-blur-sm"
-        aria-hidden
-      />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-6" onClick={onClose}>
+      <div className="absolute inset-0 bg-[#2D2D2D]/60 backdrop-blur-sm" aria-hidden />
       <div
         ref={dialogRef}
         role="dialog"
@@ -67,11 +61,7 @@ export default function MonthlyDetailOverlay({
               type="button"
               onClick={onPreviousMonth}
               disabled={!onPreviousMonth}
-              aria-label={
-                previousMonthLabel
-                  ? `Open ${previousMonthLabel}`
-                  : 'Open previous month'
-              }
+              aria-label={previousMonthLabel ? `Open ${previousMonthLabel}` : 'Open previous month'}
               title={previousMonthLabel ?? 'Previous month'}
               className="flex h-10 w-10 items-center justify-center rounded-full border border-warm-border bg-warm-bg-card-soft text-warm-text-secondary shadow-sm hover:border-warm-accent/40 hover:text-warm-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-warm-accent disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:border-warm-border disabled:hover:text-warm-text-secondary"
             >
@@ -81,9 +71,7 @@ export default function MonthlyDetailOverlay({
               type="button"
               onClick={onNextMonth}
               disabled={!onNextMonth}
-              aria-label={
-                nextMonthLabel ? `Open ${nextMonthLabel}` : 'Open next month'
-              }
+              aria-label={nextMonthLabel ? `Open ${nextMonthLabel}` : 'Open next month'}
               title={nextMonthLabel ?? 'Next month'}
               className="flex h-10 w-10 items-center justify-center rounded-full border border-warm-border bg-warm-bg-card-soft text-warm-text-secondary shadow-sm hover:border-warm-accent/40 hover:text-warm-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-warm-accent disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:border-warm-border disabled:hover:text-warm-text-secondary"
             >
@@ -99,9 +87,7 @@ export default function MonthlyDetailOverlay({
             </button>
           </div>
         </div>
-        <div className="min-h-0 flex-1 overflow-auto px-3.5 py-5 md:px-7 md:py-6">
-          {children}
-        </div>
+        <div className="min-h-0 flex-1 overflow-auto px-3.5 py-5 md:px-7 md:py-6">{children}</div>
       </div>
     </div>,
     document.body

@@ -29,15 +29,7 @@ describe('MonthSpendSection', () => {
   });
 
   it('shows an explicit empty state when no category rows exist', () => {
-    render(
-      <MonthSpendSection
-        credit1={10_000}
-        credit2={20_000}
-        credit3={30_000}
-        categories={[]}
-        oneOffs={4_000}
-      />
-    );
+    render(<MonthSpendSection credit1={10_000} credit2={20_000} credit3={30_000} categories={[]} oneOffs={4_000} />);
 
     expect(screen.getByText('No category data for this month.')).toBeDefined();
   });
@@ -45,8 +37,7 @@ describe('MonthSpendSection', () => {
   it('collapses long category lists and expands them on request', () => {
     const categories = [
       {
-        category:
-          'Extremely long household maintenance category name that should not overflow',
+        category: 'Extremely long household maintenance category name that should not overflow',
         amount: 12_345
       },
       { category: 'Category B', amount: 6_789 },
@@ -62,18 +53,10 @@ describe('MonthSpendSection', () => {
     ];
 
     render(
-      <MonthSpendSection
-        credit1={10_000}
-        credit2={20_000}
-        credit3={30_000}
-        categories={categories}
-        oneOffs={4_000}
-      />
+      <MonthSpendSection credit1={10_000} credit2={20_000} credit3={30_000} categories={categories} oneOffs={4_000} />
     );
 
-    const longLabel = screen.getByText(
-      'Extremely long household maintenance category name that should not overflow'
-    );
+    const longLabel = screen.getByText('Extremely long household maintenance category name that should not overflow');
     expect(longLabel.className).toContain('break-words');
     expect(screen.getByText('Category J')).toBeDefined();
     expect(screen.queryByText('Category K')).toBeNull();

@@ -6,8 +6,6 @@
 // Normalize the PEM before handing it to the signer so the action is robust to
 // however the key was stored.
 export function normalizePrivateKey(privateKey: string): string {
-  const normalized = privateKey.includes('\\n')
-    ? privateKey.replace(/\\n/g, '\n')
-    : privateKey;
+  const normalized = privateKey.includes('\\n') ? privateKey.replace(/\\n/g, '\n') : privateKey;
   return normalized.trim();
 }

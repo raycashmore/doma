@@ -1,10 +1,13 @@
+import './globals.css';
+
+import { AppFrame } from '@repo/shell';
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
-import { AppFrame } from '@repo/shell';
+
 import { AuthGate } from '@/integrations/auth/AuthGate';
 import AppConvexProvider from '@/integrations/convex/provider';
+
 import { dmSans, dmSerifDisplay } from './fonts';
-import './globals.css';
 
 const CLERK_KEY = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 const IS_DEV = process.env.NODE_ENV !== 'production';

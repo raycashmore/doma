@@ -1,17 +1,17 @@
 import { formatCurrency } from '@/lib/budget';
 
-export interface BreakdownRowData {
+export type BreakdownRowData = {
   date: number;
   income: number;
   spend: number;
   mortgage: number;
   net: number;
-}
+};
 
-interface Props {
+type Props = {
   rows: Array<BreakdownRowData> | undefined;
   onRowClick: (date: number) => void;
-}
+};
 
 function monthLabel(date: number): string {
   return new Date(date).toLocaleString('en-AU', {
@@ -24,10 +24,7 @@ function SkeletonRows() {
   return (
     <div className="flex flex-col gap-2 overflow-hidden">
       {Array.from({ length: 6 }).map((_, i) => (
-        <div
-          key={i}
-          className="h-10 rounded-xl bg-warm-bg-card-soft animate-pulse"
-        />
+        <div key={i} className="h-10 rounded-xl bg-warm-bg-card-soft animate-pulse" />
       ))}
     </div>
   );
@@ -36,9 +33,7 @@ function SkeletonRows() {
 export default function BudgetBreakdownTable({ rows, onRowClick }: Props) {
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-3xl border border-warm-border bg-warm-bg-card-soft p-5 md:p-6">
-      <h2 className="mb-3 text-[18px] leading-tight font-warm-display text-warm-text-primary">
-        Monthly breakdown
-      </h2>
+      <h2 className="mb-3 text-[18px] leading-tight font-warm-display text-warm-text-primary">Monthly breakdown</h2>
       {!rows ? (
         <SkeletonRows />
       ) : rows.length === 0 ? (

@@ -1,18 +1,15 @@
 import { KpiCard } from './KpiCard';
 import type { BudgetPageSummary } from '@repo/convex/budgetSummary';
 
-interface Props {
+type Props = {
   summary: BudgetPageSummary | undefined;
-}
+};
 
 function SkeletonRow() {
   return (
     <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4 md:gap-3.5">
       {[0, 1, 2, 3].map((i) => (
-        <div
-          key={i}
-          className="h-[88px] animate-pulse rounded-2xl bg-warm-bg-card-soft"
-        />
+        <div key={i} className="h-[88px] animate-pulse rounded-2xl bg-warm-bg-card-soft" />
       ))}
     </div>
   );

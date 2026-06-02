@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { BotConfig } from '../config.js';
+
 import { authenticateClerkRequest } from '../auth/clerk.js';
+import type { BotConfig } from '../config.js';
 import { createMemoryStorage } from '../storage/memory.js';
 import { consumePairingToken } from './pairing.js';
 import { createLinkingRoutes } from './routes.js';
@@ -56,9 +57,7 @@ describe('linking routes', () => {
     expect(body).toMatchObject({
       deepLink: `https://t.me/doma_bot?start=${body.token}`
     });
-    await expect(
-      consumePairingToken({ storage, token: body.token })
-    ).resolves.toEqual({ clerkUserId: 'user_123' });
+    await expect(consumePairingToken({ storage, token: body.token })).resolves.toEqual({ clerkUserId: 'user_123' });
   });
 
   it('rejects pairing token requests when pairing is disabled', async () => {
@@ -99,11 +98,7 @@ describe('linking routes', () => {
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ ok: true });
-    expect(revokeChannelLink).toHaveBeenCalledWith(
-      'user_123',
-      'telegram',
-      1_700_000_000_000
-    );
+    expect(revokeChannelLink).toHaveBeenCalledWith('user_123', 'telegram', 1_700_000_000_000);
   });
 
   it('returns disabled link status when pairing is unavailable', async () => {

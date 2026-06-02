@@ -11,12 +11,8 @@ export default function InsightsPanel() {
         <div className="flex items-center justify-center w-12 h-12 rounded-full bg-warm-bg-card text-warm-accent">
           <Sparkles size={22} />
         </div>
-        <p className="text-sm font-medium text-warm-text-primary">
-          Personalised insights coming soon
-        </p>
-        <p className="text-xs text-warm-text-secondary">
-          Tips about your spending will appear here.
-        </p>
+        <p className="text-sm font-medium text-warm-text-primary">Personalised insights coming soon</p>
+        <p className="text-xs text-warm-text-secondary">Tips about your spending will appear here.</p>
       </div>
     </aside>
   );

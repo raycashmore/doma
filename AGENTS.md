@@ -10,7 +10,7 @@ Use `pnpm` (`packageManager`: `pnpm@9.0.0`).
 - Use the repo scripts for build, lint, typecheck, tests, and Convex work. See [Commands](docs/agents/commands.md).
 - Before opening or updating a PR, run the docs/agent instruction audit. See [Pre-PR Docs Audit](docs/agents/pre-pr-doc-audit.md).
 - Before committing, follow [Git Workflow](docs/agents/git-workflow.md).
-- In TypeScript, prefer `type` aliases over `interface` unless interface-specific behavior is required.
+- Follow the [TypeScript & Code Conventions](docs/agents/typescript.md) when writing or editing code.
 
 ## Task-Specific Instructions
 

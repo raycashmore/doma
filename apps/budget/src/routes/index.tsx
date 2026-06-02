@@ -28,30 +28,17 @@ function monthLabel(date: number) {
 function BudgetPage() {
   const [period, setPeriod] = useState<TimePeriod>('12M');
   const [openMonth, setOpenMonth] = useState<number | null>(null);
-  const headerActions = useMemo(
-    () => <BudgetChartFilters selected={period} onChange={setPeriod} />,
-    [period]
-  );
+  const headerActions = useMemo(() => <BudgetChartFilters selected={period} onChange={setPeriod} />, [period]);
 
   useBudgetHeaderActions(headerActions);
 
   const summary = useQuery(api.queries.getBudgetPageSummary, { period });
   const chartData = useQuery(api.queries.listBudgetChart);
-  const periodLimit =
-    period === '3M'
-      ? 3
-      : period === '6M'
-        ? 6
-        : period === '12M'
-          ? 12
-          : undefined;
+  const periodLimit = period === '3M' ? 3 : period === '6M' ? 6 : period === '12M' ? 12 : undefined;
   const rows = useQuery(api.queries.getMonthlyBreakdown, {
     limit: periodLimit
   });
-  const detail = useQuery(
-    api.queries.getMonthlyDetail,
-    openMonth !== null ? { date: openMonth } : 'skip'
-  );
+  const detail = useQuery(api.queries.getMonthlyDetail, openMonth !== null ? { date: openMonth } : 'skip');
   const adjacentMonths = useMemo(() => {
     if (!rows || openMonth === null) {
       return { previous: null, next: null };
@@ -76,15 +63,8 @@ function BudgetPage() {
         <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
           <h2 className="sr-only">Budget overview</h2>
           <BudgetKpiCards summary={summary} />
-          <BudgetChart
-            data={chartData ?? []}
-            period={period}
-            onBarClick={(date) => setOpenMonth(date)}
-          />
-          <BudgetBreakdownTable
-            rows={rows}
-            onRowClick={(date) => setOpenMonth(date)}
-          />
+          <BudgetChart data={chartData ?? []} period={period} onBarClick={(date) => setOpenMonth(date)} />
+          <BudgetBreakdownTable rows={rows} onRowClick={(date) => setOpenMonth(date)} />
         </div>
 
         <InsightsPanel />
@@ -93,18 +73,10 @@ function BudgetPage() {
       <MonthlyDetailOverlay
         open={openMonth !== null && detail !== undefined && detail !== null}
         monthLabel={openMonth !== null ? monthLabel(openMonth) : ''}
-        previousMonthLabel={
-          previousMonth ? monthLabel(previousMonth.date) : undefined
-        }
-        nextMonthLabel={
-          nextMonth ? monthLabel(nextMonth.date) : undefined
-        }
-        onPreviousMonth={
-          previousMonth ? () => setOpenMonth(previousMonth.date) : undefined
-        }
-        onNextMonth={
-          nextMonth ? () => setOpenMonth(nextMonth.date) : undefined
-        }
+        previousMonthLabel={previousMonth ? monthLabel(previousMonth.date) : undefined}
+        nextMonthLabel={nextMonth ? monthLabel(nextMonth.date) : undefined}
+        onPreviousMonth={previousMonth ? () => setOpenMonth(previousMonth.date) : undefined}
+        onNextMonth={nextMonth ? () => setOpenMonth(nextMonth.date) : undefined}
         onClose={() => setOpenMonth(null)}
       >
         {detail ? (

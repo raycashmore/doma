@@ -1,18 +1,13 @@
-import {
-  HeadContent,
-  Outlet,
-  Scripts,
-  createRootRoute
-} from '@tanstack/react-router';
+import { HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-router';
 import { useState } from 'react';
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
 import { TanStackDevtools } from '@tanstack/react-devtools';
 
 import { AppFrame } from '@repo/shell';
-import { AuthGate } from '@/integrations/auth/AuthGate';
 import ConvexProvider from '../integrations/convex/provider';
 import appCss from '../styles.css?url';
 import type { ReactNode } from 'react';
+import { AuthGate } from '@/integrations/auth/AuthGate';
 import { BudgetHeaderActionsProvider } from '@/components/budget/BudgetHeaderActionsContext';
 import { getBudgetBaseUrl } from '@/config/basePath';
 
@@ -94,9 +89,7 @@ function RootDocument() {
             />
           </ConvexProvider>
         </AuthGate>
-        {IS_PROD ? (
-          <script dangerouslySetInnerHTML={{ __html: SERVICE_WORKER_SCRIPT }} />
-        ) : null}
+        {IS_PROD ? <script dangerouslySetInnerHTML={{ __html: SERVICE_WORKER_SCRIPT }} /> : null}
         <Scripts />
       </body>
     </html>

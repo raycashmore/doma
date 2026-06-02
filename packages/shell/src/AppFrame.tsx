@@ -1,10 +1,11 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { Sidebar } from './Sidebar';
+
+import type { AppId } from './apps';
 import { Header } from './Header';
 import { MobileNav } from './MobileNav';
-import type { AppId } from './apps';
+import { Sidebar } from './Sidebar';
 
 export type AppFrameProps = {
   appId: AppId;

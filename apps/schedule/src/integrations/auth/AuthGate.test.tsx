@@ -1,6 +1,7 @@
 import { cleanup, render, screen } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { AuthGate } from './AuthGate';
 
 type AuthState = { isLoaded: boolean; isSignedIn: boolean };
@@ -8,13 +9,11 @@ type AuthState = { isLoaded: boolean; isSignedIn: boolean };
 // Mutable so each test can drive the `useAuth()` gate through its states.
 let authState: AuthState = { isLoaded: true, isSignedIn: false };
 
-const signInSpy = vi.fn<(props: Record<string, unknown>) => ReactNode>(
-  (props) => (
-    <div data-testid="sign-in" data-props={JSON.stringify(props)}>
-      sign-in
-    </div>
-  )
-);
+const signInSpy = vi.fn<(props: Record<string, unknown>) => ReactNode>((props) => (
+  <div data-testid="sign-in" data-props={JSON.stringify(props)}>
+    sign-in
+  </div>
+));
 
 vi.mock('@clerk/nextjs', () => ({
   ClerkProvider: ({ children }: { children: ReactNode }) => <>{children}</>,

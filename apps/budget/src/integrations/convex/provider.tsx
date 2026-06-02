@@ -13,11 +13,7 @@ if (!CONVEX_URL) {
 
 const convex = new ConvexReactClient(CONVEX_URL);
 
-export default function AppConvexProvider({
-  children
-}: {
-  children: React.ReactNode;
-}) {
+export default function AppConvexProvider({ children }: { children: React.ReactNode }) {
   // When Clerk isn't configured yet, fall back to a plain ConvexProvider so
   // the app still boots during scaffold/dev. Once VITE_CLERK_PUBLISHABLE_KEY
   // is set, the ConvexProviderWithClerk path takes over and Convex queries

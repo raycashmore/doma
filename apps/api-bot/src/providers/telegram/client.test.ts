@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+
 import { sendTelegramMessage } from './client.js';
 
 describe('sendTelegramMessage', () => {
@@ -17,21 +18,21 @@ describe('sendTelegramMessage', () => {
     });
 
     expect(result).toEqual({ ok: true });
-    expect(fetch).toHaveBeenCalledWith(
-      'https://api.telegram.org/bottelegram-bot-token/sendMessage',
-      {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: '-100123',
-          text: 'Linked.'
-        })
-      }
-    );
+    expect(fetch).toHaveBeenCalledWith('https://api.telegram.org/bottelegram-bot-token/sendMessage', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: '-100123',
+        text: 'Linked.'
+      })
+    });
   });
 
   it('returns the response status as the error code when Telegram rejects it', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => new Response('{}', { status: 429 })));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('{}', { status: 429 }))
+    );
 
     await expect(
       sendTelegramMessage({

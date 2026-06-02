@@ -1,8 +1,8 @@
 'use client';
 
-import { type ReactNode } from 'react';
 import { ClerkProvider, SignIn, useAuth, useClerk } from '@clerk/nextjs';
-import { UrlAuthProvider, SignInLayout } from '@repo/shell';
+import { SignInLayout, UrlAuthProvider } from '@repo/shell';
+import { type ReactNode } from 'react';
 
 export type AuthGateProps = {
   publishableKey: string | undefined;
@@ -11,11 +11,7 @@ export type AuthGateProps = {
 
 function ClerkUrlAuth({ children }: { children: ReactNode }) {
   const clerk = useClerk();
-  return (
-    <UrlAuthProvider buildUrlWithAuth={(url) => clerk.buildUrlWithAuth(url)}>
-      {children}
-    </UrlAuthProvider>
-  );
+  return <UrlAuthProvider buildUrlWithAuth={(url) => clerk.buildUrlWithAuth(url)}>{children}</UrlAuthProvider>;
 }
 
 // Clerk v7's `@clerk/nextjs` dropped the client `<SignedIn>`/`<SignedOut>`
@@ -54,9 +50,7 @@ function ClerkAuthenticatedGate({ children }: { children: ReactNode }) {
 export function AuthGate({ publishableKey, children }: AuthGateProps) {
   if (!publishableKey) {
     if (process.env.NODE_ENV !== 'test') {
-      console.warn(
-        '[doma] AuthGate bypassed: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is not set.'
-      );
+      console.warn('[doma] AuthGate bypassed: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is not set.');
     }
     return <>{children}</>;
   }

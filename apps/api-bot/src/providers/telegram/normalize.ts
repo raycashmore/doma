@@ -11,9 +11,7 @@ function isFiniteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
 }
 
-export function normalizeTelegramUpdate(
-  update: TelegramUpdate
-): NormalizedInboundMessage | null {
+export function normalizeTelegramUpdate(update: TelegramUpdate): NormalizedInboundMessage | null {
   if (!isRecord(update) || !isFiniteNumber(update.update_id)) {
     return null;
   }

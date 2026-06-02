@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import {
-  summarizeBudgetForPeriod,
-  type SummaryPeriod,
-  type BudgetRow
-} from './budgetSummary';
+
+import { type BudgetRow, summarizeBudgetForPeriod, type SummaryPeriod } from './budgetSummary';
 
 function row(
   date: number,
@@ -46,10 +43,7 @@ describe('summarizeBudgetForPeriod', () => {
   });
 
   it('ALL period uses every row, prior window empty', () => {
-    const rows = [
-      row(month(1), 100_000, 0, 0, 30_000, 0, 0, 0, 0),
-      row(month(2), 200_000, 0, 0, 40_000, 0, 0, 0, 0)
-    ];
+    const rows = [row(month(1), 100_000, 0, 0, 30_000, 0, 0, 0, 0), row(month(2), 200_000, 0, 0, 40_000, 0, 0, 0, 0)];
     const r = summarizeBudgetForPeriod(rows, [], 'ALL', month(2));
     expect(r.avgIncome.value).toBe(150_000); // (100000 + 200000) / 2
     expect(r.avgSpend.value).toBe(35_000); // (30000 + 40000) / 2
@@ -68,9 +62,7 @@ describe('summarizeBudgetForPeriod', () => {
     const rows: BudgetRow[] = [];
     // 24 months of synthetic data, income doubling in second 12
     for (let i = 0; i < 24; i++) {
-      rows.push(
-        row(month(i + 1), i < 12 ? 100_000 : 200_000, 0, 0, 0, 0, 0, 0, 0)
-      );
+      rows.push(row(month(i + 1), i < 12 ? 100_000 : 200_000, 0, 0, 0, 0, 0, 0, 0));
     }
     const r = summarizeBudgetForPeriod(rows, [], '12M', month(24));
     expect(r.avgIncome.value).toBe(200_000);

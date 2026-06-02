@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
+
 import {
-  buildMortgageByMonth,
-  buildMonthlyBreakdown,
-  utcYearMonthKey,
   type BudgetRow,
-  type MortgageRow
+  buildMonthlyBreakdown,
+  buildMortgageByMonth,
+  type MortgageRow,
+  utcYearMonthKey
 } from './monthlyBreakdown';
 
 const MS = 86_400_000;
@@ -26,12 +27,7 @@ function b(date: number, inP: number, credit: number): BudgetRow {
   } as any;
 }
 
-function m(
-  date: number,
-  variablePayment = 0,
-  fixedPayment = 0,
-  creationTime = 0
-): MortgageRow {
+function m(date: number, variablePayment = 0, fixedPayment = 0, creationTime = 0): MortgageRow {
   return {
     _id: 'm' as any,
     _creationTime: creationTime,
@@ -50,9 +46,7 @@ function m(
 describe('buildMonthlyBreakdown', () => {
   it('derives mortgage from mortgage.variablePayment + mortgage.fixedPayment', () => {
     const out = buildMonthlyBreakdown([b(MS, 100, 30)], [m(MS, 1500, 2400)]);
-    expect(out).toEqual([
-      { date: MS, income: 100, spend: 30, mortgage: 3900, net: -3830 }
-    ]);
+    expect(out).toEqual([{ date: MS, income: 100, spend: 30, mortgage: 3900, net: -3830 }]);
   });
 
   it('returns zero mortgage when no matching mortgage row exists', () => {
@@ -64,10 +58,7 @@ describe('buildMonthlyBreakdown', () => {
     const budgetDate = Date.UTC(2025, 0, 31);
     const mortgageDate = Date.UTC(2025, 0, 1);
 
-    const out = buildMonthlyBreakdown(
-      [b(budgetDate, 100, 30)],
-      [m(mortgageDate, 1500, 2400)]
-    );
+    const out = buildMonthlyBreakdown([b(budgetDate, 100, 30)], [m(mortgageDate, 1500, 2400)]);
 
     expect(out[0]!.mortgage).toBe(3900);
   });

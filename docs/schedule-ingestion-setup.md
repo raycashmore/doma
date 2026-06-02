@@ -25,12 +25,12 @@ For each calendar to ingest (per-person and the shared/household one):
 
 In the Convex dashboard (Project → Settings → Environment Variables):
 
-| Variable | Value |
-| --- | --- |
-| `GOOGLE_SA_KEY` | the entire service-account JSON key, stringified |
-| `SCHEDULE_CALENDARS` | `[{"calendarId":"<id>","who":"<memberId>|shared"}, ...]` |
-| `SCHEDULE_MEMBERS` | `[{"id":"<memberId>","tokens":["<name>","<alias>"]}, ...]` |
-| `SCHEDULE_TZ` | IANA timezone, e.g. `Australia/Sydney` |
+| Variable             | Value                                                      |
+| -------------------- | ---------------------------------------------------------- | --------------- |
+| `GOOGLE_SA_KEY`      | the entire service-account JSON key, stringified           |
+| `SCHEDULE_CALENDARS` | `[{"calendarId":"<id>","who":"<memberId>                   | shared"}, ...]` |
+| `SCHEDULE_MEMBERS`   | `[{"id":"<memberId>","tokens":["<name>","<alias>"]}, ...]` |
+| `SCHEDULE_TZ`        | IANA timezone, e.g. `Australia/Sydney`                     |
 
 - A per-person calendar's `who` is that member's id; the shared calendar's `who`
   is the literal `shared`.

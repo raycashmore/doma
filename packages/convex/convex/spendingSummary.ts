@@ -1,11 +1,11 @@
 import { toCents } from './helpers';
 
-export interface SpendCategorySeedRow {
+export type SpendCategorySeedRow = {
   monthKey: string;
   sourceDate: number;
   category: string;
   amount: number;
-}
+};
 
 const MS_PER_DAY = 86_400_000;
 const EXCEL_EPOCH = Date.UTC(1899, 11, 30);
@@ -27,18 +27,13 @@ function num(val: unknown): number {
   return isNaN(n) ? 0 : n;
 }
 
-export function parseSpendingSummaryRows(
-  data: unknown[][]
-): SpendCategorySeedRow[] {
+export function parseSpendingSummaryRows(data: unknown[][]): SpendCategorySeedRow[] {
   const [header, ...categoryRows] = data;
   if (!header) return [];
 
   const datedColumns = header
     .map((value, index) => ({ value, index }))
-    .filter(
-      (column): column is { value: number; index: number } =>
-        typeof column.value === 'number'
-    );
+    .filter((column): column is { value: number; index: number } => typeof column.value === 'number');
 
   const rows: SpendCategorySeedRow[] = [];
   for (const row of categoryRows) {

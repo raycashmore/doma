@@ -10,5 +10,5 @@ export type {
   ChannelLinkRecord,
   NotificationAttemptRecord,
   PairingTokenRecord,
-  ProviderName,
+  ProviderName
 } from './types.js';

@@ -1,15 +1,13 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi, beforeEach } from 'vitest';
-import type { ReactNode } from 'react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthGate } from './AuthGate';
+import type { ReactNode } from 'react';
 
-const signInSpy = vi.fn<(props: Record<string, unknown>) => ReactNode>(
-  (props) => (
-    <div data-testid="sign-in" data-props={JSON.stringify(props)}>
-      sign-in
-    </div>
-  )
-);
+const signInSpy = vi.fn<(props: Record<string, unknown>) => ReactNode>((props) => (
+  <div data-testid="sign-in" data-props={JSON.stringify(props)}>
+    sign-in
+  </div>
+));
 
 vi.mock('@clerk/clerk-react', () => ({
   ClerkProvider: ({ children }: { children: ReactNode }) => <>{children}</>,

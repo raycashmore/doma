@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import {
-  deriveWho,
-  toScheduleEvent,
-  type CalendarConfig,
-  type GoogleEvent,
-  type MemberConfig
-} from './mapping';
+
+import { type CalendarConfig, deriveWho, type GoogleEvent, type MemberConfig, toScheduleEvent } from './mapping';
 
 const members: MemberConfig[] = [
   { id: 'memberA', tokens: ['Aria', 'mum'] },
@@ -21,11 +16,7 @@ describe('deriveWho', () => {
   });
 
   it('defaults shared events with no name token to the whole family', () => {
-    expect(deriveWho('Family dinner', shared, members)).toEqual([
-      'memberA',
-      'memberB',
-      'memberC'
-    ]);
+    expect(deriveWho('Family dinner', shared, members)).toEqual(['memberA', 'memberB', 'memberC']);
   });
 
   it('matches a name token in a shared event title (case-insensitive)', () => {
@@ -33,19 +24,12 @@ describe('deriveWho', () => {
   });
 
   it('matches multiple members named in one shared title', () => {
-    expect(deriveWho('Aria and Boyd brunch', shared, members)).toEqual([
-      'memberA',
-      'memberB'
-    ]);
+    expect(deriveWho('Aria and Boyd brunch', shared, members)).toEqual(['memberA', 'memberB']);
   });
 
   it('does not match a token embedded inside another word', () => {
     // "dad" token must not match "Dadaism"
-    expect(deriveWho('Dadaism exhibition', shared, members)).toEqual([
-      'memberA',
-      'memberB',
-      'memberC'
-    ]);
+    expect(deriveWho('Dadaism exhibition', shared, members)).toEqual(['memberA', 'memberB', 'memberC']);
   });
 });
 
@@ -132,9 +116,6 @@ describe('deriveWho token escaping', () => {
     expect(deriveWho('A+B study group', sharedCal, m)).toEqual(['memberX']);
     // "AAB" would match if "+" were treated as a quantifier (one-or-more A).
     // With escaping it does not, so no member is named -> the whole family.
-    expect(deriveWho('AAB study group', sharedCal, m)).toEqual([
-      'memberX',
-      'memberY'
-    ]);
+    expect(deriveWho('AAB study group', sharedCal, m)).toEqual(['memberX', 'memberY']);
   });
 });

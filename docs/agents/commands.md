@@ -11,6 +11,7 @@ pnpm lint          # Lint all apps
 pnpm check-types   # TypeScript type checking
 pnpm test          # Run tests across packages that define them
 pnpm format        # Format with Prettier
+pnpm format:check  # Check formatting without writing (used in CI)
 pnpm bot           # Start the bot gateway on :3002
 pnpm bot:test      # Run bot gateway tests
 pnpm convex        # Start Convex dev for @repo/convex

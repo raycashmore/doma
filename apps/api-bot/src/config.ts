@@ -14,7 +14,7 @@ function parseAppOrigin(value: string, ctx: z.RefinementCtx) {
     ) {
       ctx.addIssue({
         code: 'custom',
-        message: 'APP_ORIGIN must be an HTTP(S) origin',
+        message: 'APP_ORIGIN must be an HTTP(S) origin'
       });
 
       return z.NEVER;
@@ -24,7 +24,7 @@ function parseAppOrigin(value: string, ctx: z.RefinementCtx) {
   } catch {
     ctx.addIssue({
       code: 'custom',
-      message: 'APP_ORIGIN must be an HTTP(S) origin',
+      message: 'APP_ORIGIN must be an HTTP(S) origin'
     });
 
     return z.NEVER;
@@ -44,7 +44,7 @@ const botConfigSchema = z.object({
     .regex(/bot$/i),
   UPSTASH_REDIS_REST_URL: z.string().url().startsWith('https://'),
   UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
-  APP_ORIGIN: z.string().min(1).transform(parseAppOrigin),
+  APP_ORIGIN: z.string().min(1).transform(parseAppOrigin)
 });
 
 export type BotConfig = {
@@ -77,7 +77,7 @@ export function parseConfig(env: Record<string, unknown>): BotConfig {
     telegramBotUsername: result.data.TELEGRAM_BOT_USERNAME,
     upstashRedisRestUrl: result.data.UPSTASH_REDIS_REST_URL,
     upstashRedisRestToken: result.data.UPSTASH_REDIS_REST_TOKEN,
-    appOrigin: result.data.APP_ORIGIN,
+    appOrigin: result.data.APP_ORIGIN
   };
 }
 

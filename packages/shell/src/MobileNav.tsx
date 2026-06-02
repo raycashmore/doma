@@ -1,7 +1,8 @@
 'use client';
 
 import clsx from 'clsx';
-import { APPS, getAppHref, type AppDescriptor, type AppId } from './apps';
+
+import { type AppDescriptor, type AppId, APPS, getAppHref } from './apps';
 import { useUrlAuth } from './auth';
 
 const homeApp = APPS.find((a) => a.id === 'home')!;
@@ -36,9 +37,7 @@ export function MobileNav({ activeAppId, isDev }: MobileNavProps) {
             aria-current={isActive ? 'page' : undefined}
             className={clsx(
               'flex flex-1 flex-col items-center gap-1 rounded-xl py-1.5 text-[10px] transition-colors',
-              isActive
-                ? 'text-warm-accent'
-                : 'text-warm-text-tertiary hover:text-warm-text-on-dark'
+              isActive ? 'text-warm-accent' : 'text-warm-text-tertiary hover:text-warm-text-on-dark'
             )}
           >
             <Icon size={20} aria-hidden="true" />

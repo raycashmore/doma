@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+
 import { getScheduleBasePath } from './src/config/basePath';
 
 const isDev = process.env.NODE_ENV !== 'production';
