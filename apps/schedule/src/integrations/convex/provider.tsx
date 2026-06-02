@@ -12,7 +12,7 @@ const CLERK_KEY = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 let _convex: ConvexReactClient | null = null;
 function getConvexClient(): ConvexReactClient {
   if (!_convex) {
-    if (!CONVEX_URL) console.error('missing envar NEXT_PUBLIC_CONVEX_URL');
+    if (!CONVEX_URL && CLERK_KEY) console.error('missing envar NEXT_PUBLIC_CONVEX_URL');
     _convex = new ConvexReactClient(CONVEX_URL ?? 'http://localhost:3210');
   }
   return _convex;
