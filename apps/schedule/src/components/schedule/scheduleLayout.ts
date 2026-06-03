@@ -54,6 +54,10 @@ export type OverlapJoiner = {
   toMemberIndex: number;
 };
 
+// The backend emits generic member ids (memberA–memberD) or the literal
+// "shared". Real member names live only in Convex env `tokens`, never in git
+// (see docs/schedule-ingestion-setup.md). This map also acts as the allowlist:
+// any id outside it is ignored.
 const SOURCE_MEMBER_TO_GENERIC: Record<string, MemberId> = {
   memberA: 'memberA',
   memberB: 'memberB',
