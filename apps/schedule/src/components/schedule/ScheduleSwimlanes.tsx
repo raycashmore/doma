@@ -43,7 +43,6 @@ export function ScheduleSwimlanes({
     <div className="schedule-desktop">
       <div className="schedule-top">
         <div>
-          <p className="schedule-eyebrow">Week view</p>
           <h2>This week</h2>
         </div>
         <div className="schedule-next">

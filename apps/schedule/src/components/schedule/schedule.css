@@ -10,7 +10,11 @@
   }
 
   .schedule-shell {
+    position: relative;
+    display: flex;
+    flex-direction: column;
     min-height: calc(100dvh - 7rem);
+    max-height: calc(100dvh - 7rem);
     border-radius: 24px;
     background: var(--warm-bg-card);
     color: var(--warm-text-primary);
@@ -26,14 +30,19 @@
   }
 
   .schedule-sync {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    z-index: 5;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
+    gap: 10px;
     border: 1px solid var(--schedule-line-strong);
-    border-radius: 14px;
-    background: color-mix(in srgb, var(--warm-bg-card) 86%, white);
-    padding: 12px 14px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--warm-bg-card) 88%, white);
+    padding: 6px 7px 6px 12px;
+    box-shadow: 0 10px 24px rgb(20 17 12 / 8%);
   }
 
   .schedule-sync__title,
@@ -42,12 +51,16 @@
   }
 
   .schedule-sync__title {
+    max-width: 190px;
+    overflow: hidden;
     font-weight: 800;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .schedule-sync__meta {
     color: var(--warm-text-secondary);
-    font-size: 0.85rem;
+    font-size: 0.76rem;
   }
 
   .schedule-sync__meta--error {
@@ -58,13 +71,24 @@
     display: inline-flex;
     flex: 0 0 auto;
     align-items: center;
+    justify-content: center;
     gap: 8px;
+    width: 30px;
+    height: 30px;
     border-radius: 999px;
     background: var(--warm-accent);
     color: white;
     font-size: 0.85rem;
     font-weight: 800;
-    padding: 9px 13px;
+  }
+
+  .schedule-sync__button span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
   }
 
   .schedule-sync__button:disabled {
@@ -77,24 +101,19 @@
   }
 
   .schedule-desktop {
-    display: block;
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
     margin-top: 18px;
   }
 
   .schedule-top {
     display: grid;
-    grid-template-columns: minmax(180px, 1fr) auto minmax(280px, auto);
+    grid-template-columns: minmax(180px, 1fr) minmax(160px, auto) minmax(280px, auto);
     gap: 18px;
+    padding-right: min(360px, 34vw);
     align-items: center;
-  }
-
-  .schedule-eyebrow {
-    color: var(--warm-text-secondary);
-    font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 0;
-    margin: 0 0 2px;
-    text-transform: uppercase;
   }
 
   .schedule-top h2,
@@ -188,9 +207,12 @@
   }
 
   .swim-ruler {
+    flex: 0 0 auto;
     position: relative;
+    z-index: 4;
     height: 30px;
     margin: 16px 0 0 92px;
+    background: var(--warm-bg-card);
     color: var(--warm-text-secondary);
     font-size: 0.68rem;
   }
@@ -204,7 +226,11 @@
 
   .swim-days {
     display: grid;
+    min-height: 0;
+    overflow-y: auto;
     gap: 8px;
+    padding-right: 4px;
+    scrollbar-gutter: stable;
   }
 
   .swim-day {
@@ -238,6 +264,7 @@
 
   .swim-day--today .swim-day__track {
     border-color: color-mix(in srgb, var(--warm-accent) 40%, var(--schedule-line-strong));
+    border-width: 2px;
   }
 
   .swim-day__gridline,
@@ -519,12 +546,20 @@
   @media (max-width: 767px) {
     .schedule-shell {
       min-height: calc(100dvh - 5rem);
+      max-height: none;
       border-radius: 18px;
       padding: 16px;
     }
 
     .schedule-sync {
-      align-items: flex-start;
+      top: 16px;
+      right: 16px;
+      max-width: calc(100% - 32px);
+      padding: 5px;
+    }
+
+    .schedule-sync > div {
+      display: none;
     }
 
     .schedule-desktop {
@@ -539,6 +574,7 @@
     .schedule-mobile__head {
       display: grid;
       gap: 4px;
+      padding-right: 54px;
     }
 
     .schedule-mobile__head span {

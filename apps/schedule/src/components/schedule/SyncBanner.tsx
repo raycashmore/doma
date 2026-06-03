@@ -28,7 +28,7 @@ export function SyncBanner({ lastSyncedAt, isRefreshing, error, onRefresh }: Syn
       </div>
       <button className="schedule-sync__button" type="button" onClick={onRefresh} disabled={isRefreshing}>
         <RefreshCw aria-hidden size={14} className={isRefreshing ? 'schedule-sync__spinner' : undefined} />
-        Refresh
+        <span>Refresh</span>
       </button>
     </div>
   );
