@@ -26,3 +26,15 @@ Enabled via `babel-plugin-react-compiler`. Skip manual `useMemo`/`useCallback` â
 ## Convex Integration
 
 `ConvexProvider` wraps the app in `__root.tsx`, configured in `src/integrations/convex/`.
+
+## Schedule
+
+`apps/schedule` is a Next.js App Router app mounted as the Schedule zone. Its
+main page renders a read-only weekly swimlanes view from
+`api.schedule.queries.currentWeek` and calls `api.schedule.sync.refresh` on load
+and from the manual refresh button. Events link back to Google Calendar for
+edits; the app does not create or edit calendar events.
+
+For visual work without a Clerk session, run `pnpm --filter schedule dev:no-auth`.
+That mode uses generic fixture events and keeps real family schedule details out
+of committed code.

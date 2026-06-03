@@ -1,10 +1,12 @@
 @import 'tailwindcss';
 @import '@repo/tokens/tokens.css';
 @import '@repo/tokens/theme.css';
+@import '../components/schedule/schedule.css';
 
 /* Tailwind v4 only auto-scans this app's own source. Tell it to also pick up
    class names used by shared workspace packages. */
 @source "../../../../packages/shell/src/**/*.{ts,tsx}";
+@source "../components/schedule/**/*.{ts,tsx}";
 
 @custom-variant dark (&:is(.dark *));
 

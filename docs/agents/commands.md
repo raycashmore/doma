@@ -54,6 +54,9 @@ pnpm --filter home dev:no-auth  # Home app on :3000 without Clerk auth
 pnpm --filter budget dev        # Budget app on :3001
 pnpm --filter budget dev:no-auth # Budget app on :3001 without Clerk auth
 pnpm --filter budget test       # Budget app Vitest suite
+pnpm --filter schedule dev      # Schedule app on :3003
+pnpm --filter schedule dev:no-auth # Schedule app on :3003 with generic fixture data and no Clerk auth
+pnpm --filter schedule build    # Verify Schedule route/UI/build changes
 pnpm --filter api-bot dev       # Bot gateway on :3002
 pnpm --filter api-bot test      # Bot gateway Vitest suite
 pnpm --filter api-bot check-types # Bot gateway TypeScript check

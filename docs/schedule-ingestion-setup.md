@@ -34,6 +34,11 @@ In the Convex dashboard (Project → Settings → Environment Variables):
 
 - A per-person calendar's `who` is that member's id; the shared calendar's `who`
   is the literal `shared`.
+- **Member ids must be the generic `memberA`, `memberB`, `memberC`, `memberD`.**
+  The schedule UI maps those ids to its lane colours/labels and ignores any id
+  outside that set (the event falls back to the whole family). Put the real
+  names only in `tokens` — never use a real name as an `id`, so no real name
+  reaches committed frontend source.
 - `tokens` are the name words used to attribute a shared-calendar event to a
   member from its title (e.g. first name + nickname). No token match on a shared
   event → the whole family.
