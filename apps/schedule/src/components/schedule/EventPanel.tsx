@@ -49,9 +49,9 @@ export function EventPanel({ event, open, onClose }: EventPanelProps) {
               <a className="event-panel__sync" href={event.htmlLink} target="_blank" rel="noreferrer">
                 <CalendarDays aria-hidden size={24} />
                 <span>
-                  <strong>Synced from Google Calendar</strong>
+                  <strong>Google Calendar</strong>
                   <small>
-                    <Lock aria-hidden size={11} /> read-only
+                    <Lock aria-hidden size={11} /> Read-only sync
                   </small>
                 </span>
                 <ExternalLink aria-hidden size={16} />
