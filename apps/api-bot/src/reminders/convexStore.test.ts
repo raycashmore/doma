@@ -29,7 +29,9 @@ describe('createConvexScheduleReminderStore', () => {
       serviceToken: 'service-token'
     });
 
-    await expect(store.getDueReminderCandidates({ nowMs: 700, leadTimeMinutes: 30 })).resolves.toEqual([
+    await expect(
+      store.getDueReminderCandidates({ nowMs: 700, leadTimeMinutes: 30, lookbackMs: 15 * 60_000 })
+    ).resolves.toEqual([
       {
         reminderKey: 'event-1:1000:30',
         googleEventId: 'event-1',
@@ -50,7 +52,8 @@ describe('createConvexScheduleReminderStore', () => {
             {
               serviceToken: 'service-token',
               nowMs: 700,
-              leadTimeMinutes: 30
+              leadTimeMinutes: 30,
+              lookbackMs: 15 * 60_000
             }
           ]
         })

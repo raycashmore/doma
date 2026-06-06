@@ -362,6 +362,7 @@ Production checks:
 | `SCHEDULE_CAPABILITY_URL`              | Vercel Bot gateway, `.env.local`              | Schedule API route for `/schedule`, for example `https://schedule.example.com/schedule/api/bot/schedule` |
 | `SCHEDULE_REMINDER_RECIPIENT_USER_IDS` | Vercel Bot gateway, `.env.local`              | Comma-separated Clerk user IDs that should receive outbound event reminders                              |
 | `SCHEDULE_REMINDER_LEAD_TIME_MINUTES`  | Vercel Bot gateway, `.env.local`              | Optional; defaults to `30`                                                                               |
+| `SCHEDULE_REMINDER_LOOKBACK_MINUTES`   | Vercel Bot gateway, `.env.local`              | Optional; defaults to `15`; keep at least as long as the cron interval                                   |
 | `SCHEDULE_REMINDER_TZ`                 | Vercel Bot gateway, `.env.local`              | Optional; defaults to `Australia/Sydney`                                                                 |
 | `TELEGRAM_BOT_TOKEN`                   | Vercel Bot gateway, `.env.local`              | Bot token from BotFather                                                                                 |
 | `TELEGRAM_WEBHOOK_SECRET`              | Vercel Bot gateway, Telegram                  | Sent as Telegram's webhook secret token                                                                  |

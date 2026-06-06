@@ -40,6 +40,7 @@ const botConfigSchema = z.object({
   SCHEDULE_CAPABILITY_URL: z.string().url().optional(),
   SCHEDULE_REMINDER_RECIPIENT_USER_IDS: z.string().optional(),
   SCHEDULE_REMINDER_LEAD_TIME_MINUTES: z.coerce.number().int().positive().default(30),
+  SCHEDULE_REMINDER_LOOKBACK_MINUTES: z.coerce.number().int().positive().default(15),
   SCHEDULE_REMINDER_TZ: z.string().min(1).default('Australia/Sydney'),
   VERCEL_ENV: z.enum(['production', 'preview', 'development']).optional(),
   TELEGRAM_BOT_TOKEN: z.string().min(1),
@@ -62,6 +63,7 @@ export type BotConfig = {
   scheduleCapabilityUrl?: string;
   scheduleReminderRecipientUserIds: string[];
   scheduleReminderLeadTimeMinutes: number;
+  scheduleReminderLookbackMinutes: number;
   scheduleReminderTimeZone: string;
   pairingEnabled: boolean;
   telegramBotToken: string;
@@ -91,6 +93,7 @@ export function parseConfig(env: Record<string, unknown>): BotConfig {
       .map((userId) => userId.trim())
       .filter(Boolean),
     scheduleReminderLeadTimeMinutes: result.data.SCHEDULE_REMINDER_LEAD_TIME_MINUTES,
+    scheduleReminderLookbackMinutes: result.data.SCHEDULE_REMINDER_LOOKBACK_MINUTES,
     scheduleReminderTimeZone: result.data.SCHEDULE_REMINDER_TZ,
     pairingEnabled: result.data.VERCEL_ENV === 'production',
     telegramBotToken: result.data.TELEGRAM_BOT_TOKEN,

@@ -47,7 +47,7 @@ export function createConvexScheduleReminderStore({
   serviceToken: string;
 }): ScheduleReminderStore {
   return {
-    getDueReminderCandidates: ({ nowMs, leadTimeMinutes }) =>
+    getDueReminderCandidates: ({ nowMs, leadTimeMinutes, lookbackMs }) =>
       runConvexFunction<DueScheduleReminder[]>({
         convexUrl,
         kind: 'query',
@@ -55,7 +55,8 @@ export function createConvexScheduleReminderStore({
         args: {
           serviceToken,
           nowMs,
-          leadTimeMinutes
+          leadTimeMinutes,
+          lookbackMs
         }
       }),
     recordReminderAttempt: (attempt) =>

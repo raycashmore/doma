@@ -17,6 +17,7 @@ const testConfig: BotConfig = {
   scheduleCapabilityUrl: undefined,
   scheduleReminderRecipientUserIds: ['user_123'],
   scheduleReminderLeadTimeMinutes: 30,
+  scheduleReminderLookbackMinutes: 15,
   scheduleReminderTimeZone: 'Australia/Sydney',
   pairingEnabled: true,
   telegramBotToken: 'telegram-bot-token',

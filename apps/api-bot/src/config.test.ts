@@ -26,6 +26,7 @@ describe('parseConfig', () => {
       scheduleCapabilityUrl: undefined,
       scheduleReminderRecipientUserIds: [],
       scheduleReminderLeadTimeMinutes: 30,
+      scheduleReminderLookbackMinutes: 15,
       scheduleReminderTimeZone: 'Australia/Sydney',
       pairingEnabled: false,
       telegramBotToken: 'telegram-bot-token',
@@ -68,11 +69,13 @@ describe('parseConfig', () => {
       parseConfig({
         ...validEnv,
         SCHEDULE_REMINDER_LEAD_TIME_MINUTES: '15',
+        SCHEDULE_REMINDER_LOOKBACK_MINUTES: '20',
         SCHEDULE_REMINDER_TZ: 'UTC'
       })
     ).toEqual(
       expect.objectContaining({
         scheduleReminderLeadTimeMinutes: 15,
+        scheduleReminderLookbackMinutes: 20,
         scheduleReminderTimeZone: 'UTC'
       })
     );

@@ -19,6 +19,7 @@ import type * as schedule_config from "../schedule/config.js";
 import type * as schedule_credentials from "../schedule/credentials.js";
 import type * as schedule_mapping from "../schedule/mapping.js";
 import type * as schedule_queries from "../schedule/queries.js";
+import type * as schedule_reminders from "../schedule/reminders.js";
 import type * as schedule_sync from "../schedule/sync.js";
 import type * as schedule_syncPolicy from "../schedule/syncPolicy.js";
 import type * as schedule_week from "../schedule/week.js";
@@ -43,6 +44,7 @@ declare const fullApi: ApiFromModules<{
   "schedule/credentials": typeof schedule_credentials;
   "schedule/mapping": typeof schedule_mapping;
   "schedule/queries": typeof schedule_queries;
+  "schedule/reminders": typeof schedule_reminders;
   "schedule/sync": typeof schedule_sync;
   "schedule/syncPolicy": typeof schedule_syncPolicy;
   "schedule/week": typeof schedule_week;

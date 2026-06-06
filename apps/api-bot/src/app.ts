@@ -84,6 +84,7 @@ export function createApp(options: CreateAppOptions = {}) {
       cronSecret: config.cronSecret,
       recipientUserIds: config.scheduleReminderRecipientUserIds,
       leadTimeMinutes: config.scheduleReminderLeadTimeMinutes,
+      lookbackMs: config.scheduleReminderLookbackMinutes * 60_000,
       timeZone: config.scheduleReminderTimeZone,
       store: scheduleReminderStore,
       sendNotification: sendScheduleReminderNotification

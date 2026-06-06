@@ -47,6 +47,7 @@ describe('createScheduleReminderRoutes', () => {
       cronSecret: 'cron-secret',
       recipientUserIds: ['user_123'],
       leadTimeMinutes: 30,
+      lookbackMs: 15 * 60_000,
       store,
       sendNotification
     });
@@ -62,7 +63,8 @@ describe('createScheduleReminderRoutes', () => {
     });
     expect(store.getDueReminderCandidates).toHaveBeenCalledWith({
       nowMs,
-      leadTimeMinutes: 30
+      leadTimeMinutes: 30,
+      lookbackMs: 15 * 60_000
     });
     expect(sendNotification).toHaveBeenCalledWith({
       recipientUserId: 'user_123',
@@ -92,6 +94,7 @@ describe('createScheduleReminderRoutes', () => {
       cronSecret: 'cron-secret',
       recipientUserIds: ['user_123'],
       leadTimeMinutes: 30,
+      lookbackMs: 15 * 60_000,
       store,
       sendNotification: vi.fn(async () => ({ status: 'sent' as const }))
     });
@@ -106,7 +109,8 @@ describe('createScheduleReminderRoutes', () => {
     expect(response.status).toBe(200);
     expect(store.getDueReminderCandidates).toHaveBeenCalledWith({
       nowMs,
-      leadTimeMinutes: 30
+      leadTimeMinutes: 30,
+      lookbackMs: 15 * 60_000
     });
     vi.useRealTimers();
   });
@@ -119,6 +123,7 @@ describe('createScheduleReminderRoutes', () => {
       cronSecret: 'cron-secret',
       recipientUserIds: [],
       leadTimeMinutes: 30,
+      lookbackMs: 15 * 60_000,
       store,
       sendNotification
     });

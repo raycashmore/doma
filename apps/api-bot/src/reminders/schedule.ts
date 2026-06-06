@@ -17,7 +17,11 @@ export type DueScheduleReminder = {
 export type ScheduleReminderAttemptStatus = 'sent' | 'skipped' | 'failed';
 
 export type ScheduleReminderStore = {
-  getDueReminderCandidates: (request: { nowMs: number; leadTimeMinutes: number }) => Promise<DueScheduleReminder[]>;
+  getDueReminderCandidates: (request: {
+    nowMs: number;
+    leadTimeMinutes: number;
+    lookbackMs: number;
+  }) => Promise<DueScheduleReminder[]>;
   recordReminderAttempt: (attempt: {
     reminderKey: string;
     googleEventId: string;
@@ -41,6 +45,7 @@ export type CreateScheduleReminderRoutesOptions = {
   cronSecret?: string;
   recipientUserIds: string[];
   leadTimeMinutes: number;
+  lookbackMs: number;
   timeZone?: string;
   store: ScheduleReminderStore;
   sendNotification: ScheduleReminderNotificationSender;
@@ -90,6 +95,7 @@ function aggregateStatus(results: Array<{ status: ScheduleReminderAttemptStatus;
 async function runDueReminders({
   nowMs,
   leadTimeMinutes,
+  lookbackMs,
   recipientUserIds,
   timeZone,
   store,
@@ -97,6 +103,7 @@ async function runDueReminders({
 }: {
   nowMs: number;
   leadTimeMinutes: number;
+  lookbackMs: number;
   recipientUserIds: string[];
   timeZone: string;
   store: ScheduleReminderStore;
@@ -104,7 +111,8 @@ async function runDueReminders({
 }) {
   const candidates = await store.getDueReminderCandidates({
     nowMs,
-    leadTimeMinutes
+    leadTimeMinutes,
+    lookbackMs
   });
   const counts = {
     processed: 0,
@@ -152,6 +160,7 @@ export function createScheduleReminderRoutes({
   cronSecret,
   recipientUserIds,
   leadTimeMinutes,
+  lookbackMs,
   timeZone = 'Australia/Sydney',
   store,
   sendNotification
@@ -166,6 +175,7 @@ export function createScheduleReminderRoutes({
     const counts = await runDueReminders({
       nowMs: Date.now(),
       leadTimeMinutes,
+      lookbackMs,
       recipientUserIds,
       timeZone,
       store,
@@ -196,6 +206,7 @@ export function createScheduleReminderRoutes({
     const counts = await runDueReminders({
       nowMs,
       leadTimeMinutes,
+      lookbackMs,
       recipientUserIds,
       timeZone,
       store,

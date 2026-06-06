@@ -15,6 +15,7 @@ const config: BotConfig = {
   convexUrl: 'https://convex.example.com',
   scheduleReminderRecipientUserIds: [],
   scheduleReminderLeadTimeMinutes: 30,
+  scheduleReminderLookbackMinutes: 15,
   scheduleReminderTimeZone: 'Australia/Sydney',
   pairingEnabled: true,
   telegramBotToken: 'telegram-bot-token',
