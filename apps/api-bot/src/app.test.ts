@@ -15,10 +15,6 @@ const testConfig: BotConfig = {
   botServiceToken: 'service-token',
   convexUrl: 'https://convex.example.com',
   scheduleCapabilityUrl: undefined,
-  scheduleReminderRecipientUserIds: ['user_123'],
-  scheduleReminderLeadTimeMinutes: 30,
-  scheduleReminderLookbackMinutes: 15,
-  scheduleReminderTimeZone: 'Australia/Sydney',
   pairingEnabled: true,
   telegramBotToken: 'telegram-bot-token',
   telegramWebhookSecret: 'telegram-webhook-secret',
@@ -119,14 +115,10 @@ describe('api-bot app', () => {
     await expect(response.json()).resolves.toEqual({ error: 'unauthorized' });
   });
 
-  it('mounts schedule reminder routes', async () => {
+  it('does not mount the old schedule reminder cron route', async () => {
     const app = createApp({
       config: testConfig,
-      storage: createMemoryStorage(),
-      scheduleReminderStore: {
-        getDueReminderCandidates: vi.fn(async () => []),
-        recordReminderAttempt: vi.fn()
-      }
+      storage: createMemoryStorage()
     });
 
     const response = await app.request('/reminders/schedule/run', {
@@ -138,12 +130,6 @@ describe('api-bot app', () => {
       body: JSON.stringify({ nowMs: Date.parse('2026-06-06T10:00:00.000Z') })
     });
 
-    expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({
-      processed: 0,
-      sent: 0,
-      skipped: 0,
-      failed: 0
-    });
+    expect(response.status).toBe(404);
   });
 });

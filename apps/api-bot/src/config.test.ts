@@ -21,13 +21,8 @@ describe('parseConfig', () => {
       clerkSecretKey: 'clerk-secret-key',
       clerkPublishableKey: 'clerk-publishable-key',
       botServiceToken: 'service-token',
-      cronSecret: undefined,
       convexUrl: 'https://convex.example.com',
       scheduleCapabilityUrl: undefined,
-      scheduleReminderRecipientUserIds: [],
-      scheduleReminderLeadTimeMinutes: 30,
-      scheduleReminderLookbackMinutes: 15,
-      scheduleReminderTimeZone: 'Australia/Sydney',
       pairingEnabled: false,
       telegramBotToken: 'telegram-bot-token',
       telegramWebhookSecret: 'telegram-webhook-secret',
@@ -53,36 +48,6 @@ describe('parseConfig', () => {
         SCHEDULE_CAPABILITY_URL: 'https://schedule.example.com/schedule/api/bot/schedule'
       }).scheduleCapabilityUrl
     ).toBe('https://schedule.example.com/schedule/api/bot/schedule');
-  });
-
-  it('accepts schedule reminder recipient user ids', () => {
-    expect(
-      parseConfig({
-        ...validEnv,
-        SCHEDULE_REMINDER_RECIPIENT_USER_IDS: 'user_123, user_456'
-      }).scheduleReminderRecipientUserIds
-    ).toEqual(['user_123', 'user_456']);
-  });
-
-  it('accepts schedule reminder delivery overrides', () => {
-    expect(
-      parseConfig({
-        ...validEnv,
-        SCHEDULE_REMINDER_LEAD_TIME_MINUTES: '15',
-        SCHEDULE_REMINDER_LOOKBACK_MINUTES: '20',
-        SCHEDULE_REMINDER_TZ: 'UTC'
-      })
-    ).toEqual(
-      expect.objectContaining({
-        scheduleReminderLeadTimeMinutes: 15,
-        scheduleReminderLookbackMinutes: 20,
-        scheduleReminderTimeZone: 'UTC'
-      })
-    );
-  });
-
-  it('accepts an optional cron secret', () => {
-    expect(parseConfig({ ...validEnv, CRON_SECRET: 'cron-secret' }).cronSecret).toBe('cron-secret');
   });
 
   it('throws a stable config error when the schedule capability URL is invalid', () => {
