@@ -41,7 +41,7 @@ export const recordReminderAttempt = internalMutation({
     eventStart: v.number(),
     leadTimeMinutes: v.number(),
     attemptedAt: v.number(),
-    status: v.union(v.literal('sent'), v.literal('skipped'), v.literal('failed')),
+    status: v.union(v.literal('pending'), v.literal('sent'), v.literal('skipped'), v.literal('failed')),
     providerErrorCode: v.optional(v.string())
   },
   handler: async (ctx, attempt) => {
@@ -57,18 +57,41 @@ export const recordReminderAttempt = internalMutation({
           .withIndex('by_reminder_key', (q) => q.eq('reminderKey', attempt.reminderKey))
           .collect();
     const sentAttempt = existingAttempts.find((existingAttempt) => existingAttempt.status === 'sent');
+    const pendingAttempt = existingAttempts.find((existingAttempt) => existingAttempt.status === 'pending');
+
+    if (attempt.status === 'pending') {
+      const claimedAttempt = sentAttempt ?? pendingAttempt;
+
+      if (claimedAttempt) {
+        return { claimed: false as const, inserted: false as const, id: claimedAttempt._id };
+      }
+
+      const retryableAttempt = existingAttempts[0];
+      if (retryableAttempt) {
+        await ctx.db.patch(retryableAttempt._id, attempt);
+        return { claimed: true as const, inserted: false as const, id: retryableAttempt._id };
+      }
+
+      const id = await ctx.db.insert('scheduleReminderAttempts', attempt);
+      return { claimed: true as const, inserted: true as const, id };
+    }
 
     if (sentAttempt) {
-      return { inserted: false as const, id: sentAttempt._id };
+      return { claimed: false as const, inserted: false as const, id: sentAttempt._id };
+    }
+
+    if (pendingAttempt) {
+      await ctx.db.patch(pendingAttempt._id, attempt);
+      return { claimed: true as const, inserted: false as const, id: pendingAttempt._id };
     }
 
     const retryableAttempt = existingAttempts[0];
     if (retryableAttempt) {
       await ctx.db.patch(retryableAttempt._id, attempt);
-      return { inserted: false as const, id: retryableAttempt._id };
+      return { claimed: true as const, inserted: false as const, id: retryableAttempt._id };
     }
 
     const id = await ctx.db.insert('scheduleReminderAttempts', attempt);
-    return { inserted: true as const, id };
+    return { claimed: true as const, inserted: true as const, id };
   }
 });

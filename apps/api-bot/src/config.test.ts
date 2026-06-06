@@ -56,6 +56,13 @@ describe('parseConfig', () => {
     );
   });
 
+  it('does not require the unused Convex URL', () => {
+    const env: Record<string, string> = { ...validEnv };
+    delete env.CONVEX_URL;
+
+    expect(parseConfig(env).convexUrl).toBeUndefined();
+  });
+
   it('normalizes an app origin with a trailing slash', () => {
     expect(parseConfig({ ...validEnv, APP_ORIGIN: 'https://app.example.com/' }).appOrigin).toBe(
       'https://app.example.com'

@@ -27,7 +27,8 @@ export type DueReminderCandidate = {
   location?: string;
 };
 
-export type ScheduleReminderAttemptStatus = 'sent' | 'skipped' | 'failed';
+export type ScheduleReminderAttemptStatus = 'pending' | ScheduleReminderDeliveryStatus;
+export type ScheduleReminderDeliveryStatus = 'sent' | 'skipped' | 'failed';
 
 export type ScheduleReminderCycleCounts = {
   processed: number;
@@ -42,7 +43,7 @@ export type ScheduleReminderNotificationSender = (notification: {
   topic: 'schedule.reminder';
   message: string;
   metadata: Record<string, string>;
-}) => Promise<{ status: ScheduleReminderAttemptStatus; errorCode?: string }>;
+}) => Promise<{ status: ScheduleReminderDeliveryStatus; errorCode?: string }>;
 
 export type ScheduleReminderAttemptRecorder = (attempt: {
   reminderKey: string;
@@ -53,7 +54,7 @@ export type ScheduleReminderAttemptRecorder = (attempt: {
   attemptedAt: number;
   status: ScheduleReminderAttemptStatus;
   providerErrorCode?: string;
-}) => Promise<unknown>;
+}) => Promise<{ claimed?: boolean } | unknown>;
 
 type NotificationSendResult =
   | { status: 'sent'; provider?: string }
@@ -310,6 +311,25 @@ export async function runScheduleReminderCycle({
 
     const results = await Promise.all(
       pendingRecipientUserIds.map(async (recipientUserId) => {
+        const claimResult = await recordReminderAttempt({
+          reminderKey: candidate.reminderKey,
+          recipientUserId,
+          googleEventId: candidate.googleEventId,
+          eventStart: candidate.eventStart,
+          leadTimeMinutes: candidate.leadTimeMinutes,
+          attemptedAt: nowMs,
+          status: 'pending'
+        });
+
+        if (
+          typeof claimResult === 'object' &&
+          claimResult !== null &&
+          'claimed' in claimResult &&
+          !claimResult.claimed
+        ) {
+          return null;
+        }
+
         const result = await sendNotification({
           recipientUserId,
           topic: 'schedule.reminder',
@@ -336,6 +356,10 @@ export async function runScheduleReminderCycle({
     );
 
     for (const result of results) {
+      if (!result) {
+        continue;
+      }
+
       counts.processed += 1;
       counts[result.status] += 1;
     }
@@ -397,7 +421,7 @@ export const recordReminderAttempt = mutation({
     eventStart: v.number(),
     leadTimeMinutes: v.number(),
     attemptedAt: v.number(),
-    status: v.union(v.literal('sent'), v.literal('skipped'), v.literal('failed')),
+    status: v.union(v.literal('pending'), v.literal('sent'), v.literal('skipped'), v.literal('failed')),
     providerErrorCode: v.optional(v.string())
   },
   handler: async (ctx, { serviceToken, ...attempt }) => {
@@ -414,18 +438,41 @@ export const recordReminderAttempt = mutation({
           .withIndex('by_reminder_key', (q) => q.eq('reminderKey', attempt.reminderKey))
           .collect();
     const sentAttempt = existingAttempts.find((existingAttempt) => existingAttempt.status === 'sent');
+    const pendingAttempt = existingAttempts.find((existingAttempt) => existingAttempt.status === 'pending');
+
+    if (attempt.status === 'pending') {
+      const claimedAttempt = sentAttempt ?? pendingAttempt;
+
+      if (claimedAttempt) {
+        return { claimed: false as const, inserted: false as const, id: claimedAttempt._id };
+      }
+
+      const retryableAttempt = existingAttempts[0];
+      if (retryableAttempt) {
+        await ctx.db.patch(retryableAttempt._id, attempt);
+        return { claimed: true as const, inserted: false as const, id: retryableAttempt._id };
+      }
+
+      const id = await ctx.db.insert('scheduleReminderAttempts', attempt);
+      return { claimed: true as const, inserted: true as const, id };
+    }
 
     if (sentAttempt) {
-      return { inserted: false as const, id: sentAttempt._id };
+      return { claimed: false as const, inserted: false as const, id: sentAttempt._id };
+    }
+
+    if (pendingAttempt) {
+      await ctx.db.patch(pendingAttempt._id, attempt);
+      return { claimed: true as const, inserted: false as const, id: pendingAttempt._id };
     }
 
     const retryableAttempt = existingAttempts[0];
     if (retryableAttempt) {
       await ctx.db.patch(retryableAttempt._id, attempt);
-      return { inserted: false as const, id: retryableAttempt._id };
+      return { claimed: true as const, inserted: false as const, id: retryableAttempt._id };
     }
 
     const id = await ctx.db.insert('scheduleReminderAttempts', attempt);
-    return { inserted: true as const, id };
+    return { claimed: true as const, inserted: true as const, id };
   }
 });

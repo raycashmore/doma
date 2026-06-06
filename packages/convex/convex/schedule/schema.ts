@@ -30,7 +30,7 @@ export const scheduleReminderAttemptsTable = defineTable({
   eventStart: v.number(),
   leadTimeMinutes: v.number(),
   attemptedAt: v.number(),
-  status: v.union(v.literal('sent'), v.literal('skipped'), v.literal('failed')),
+  status: v.union(v.literal('pending'), v.literal('sent'), v.literal('skipped'), v.literal('failed')),
   providerErrorCode: v.optional(v.string())
 })
   .index('by_reminder_key', ['reminderKey'])

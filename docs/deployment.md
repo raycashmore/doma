@@ -357,7 +357,7 @@ Production checks:
 | `CLERK_SECRET_KEY`         | Vercel Bot gateway, `.env.local`              | Used to verify Clerk bearer tokens                                                                       |
 | `CLERK_PUBLISHABLE_KEY`    | Vercel Bot gateway, `.env.local`              | Clerk backend configuration                                                                              |
 | `BOT_SERVICE_TOKEN`        | Vercel Bot gateway, Schedule, Convex, callers | Shared bearer token for service-to-service sends and schedule bot reads                                  |
-| `CONVEX_URL`               | Vercel Bot gateway, `.env.local`              | Convex deployment URL used by the gateway's service clients                                              |
+| `CONVEX_URL`               | Vercel Bot gateway, `.env.local`              | Optional; Convex deployment URL for future gateway service clients                                       |
 | `SCHEDULE_CAPABILITY_URL`  | Vercel Bot gateway, `.env.local`              | Schedule API route for `/schedule`, for example `https://schedule.example.com/schedule/api/bot/schedule` |
 | `TELEGRAM_BOT_TOKEN`       | Vercel Bot gateway, `.env.local`              | Bot token from BotFather                                                                                 |
 | `TELEGRAM_WEBHOOK_SECRET`  | Vercel Bot gateway, Telegram                  | Sent as Telegram's webhook secret token                                                                  |
