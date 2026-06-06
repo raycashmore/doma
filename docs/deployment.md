@@ -357,13 +357,8 @@ Production checks:
 | `CLERK_SECRET_KEY`                     | Vercel Bot gateway, `.env.local`              | Used to verify Clerk bearer tokens                                                                       |
 | `CLERK_PUBLISHABLE_KEY`                | Vercel Bot gateway, `.env.local`              | Clerk backend configuration                                                                              |
 | `BOT_SERVICE_TOKEN`                    | Vercel Bot gateway, Schedule, Convex, callers | Shared bearer token for service-to-service sends and schedule bot reads                                  |
-| `CRON_SECRET`                          | Vercel Bot gateway                            | Sent by Vercel as the cron `Authorization` bearer token                                                  |
-| `CONVEX_URL`                           | Vercel Bot gateway, `.env.local`              | Convex deployment URL used by outbound schedule reminder runs                                            |
+| `CONVEX_URL`                           | Vercel Bot gateway, `.env.local`              | Convex deployment URL used by the gateway's service clients                                              |
 | `SCHEDULE_CAPABILITY_URL`              | Vercel Bot gateway, `.env.local`              | Schedule API route for `/schedule`, for example `https://schedule.example.com/schedule/api/bot/schedule` |
-| `SCHEDULE_REMINDER_RECIPIENT_USER_IDS` | Vercel Bot gateway, `.env.local`              | Comma-separated Clerk user IDs that should receive outbound event reminders                              |
-| `SCHEDULE_REMINDER_LEAD_TIME_MINUTES`  | Vercel Bot gateway, `.env.local`              | Optional; defaults to `30`                                                                               |
-| `SCHEDULE_REMINDER_LOOKBACK_MINUTES`   | Vercel Bot gateway, `.env.local`              | Optional; defaults to `15`; keep at least as long as the cron interval                                   |
-| `SCHEDULE_REMINDER_TZ`                 | Vercel Bot gateway, `.env.local`              | Optional; defaults to `Australia/Sydney`                                                                 |
 | `TELEGRAM_BOT_TOKEN`                   | Vercel Bot gateway, `.env.local`              | Bot token from BotFather                                                                                 |
 | `TELEGRAM_WEBHOOK_SECRET`              | Vercel Bot gateway, Telegram                  | Sent as Telegram's webhook secret token                                                                  |
 | `TELEGRAM_BOT_USERNAME`                | Vercel Bot gateway, `.env.local`              | Bot username, ending in `bot`, without `@`                                                               |
@@ -385,12 +380,24 @@ and the Convex
 Set the same value in the Bot gateway, Schedule app, and the target Convex
 deployment before enabling `SCHEDULE_CAPABILITY_URL`.
 
-Outbound schedule reminders run from the Bot gateway cron
-`/reminders/schedule/run` every 15 minutes. Vercel calls that path with
-`CRON_SECRET` as the `Authorization` bearer token. The runner asks Convex for
-due reminder candidates, sends provider-neutral notifications to each
-configured `SCHEDULE_REMINDER_RECIPIENT_USER_IDS` recipient, and records the
-reminder attempt in Convex so each event reminder is only attempted once.
+Outbound schedule reminders run from Convex cron, not Vercel Cron. This keeps
+the Bot gateway deployable on Vercel Hobby, where frequent cron schedules are
+rejected. Convex evaluates due reminders every 30 minutes, only sends during
+the configured local window `06:00 <= time < 22:00`, calls the Bot gateway's
+provider-neutral `/notifications/send` endpoint, and records the reminder
+attempt in Convex so each event reminder is only attempted once.
+
+Set these Convex env vars on every Convex deployment that should send schedule
+reminders:
+
+| Variable                               | Where it lives                   | Notes                                                                                 |
+| -------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------- |
+| `BOT_GATEWAY_ORIGIN`                   | Convex                           | Public Bot gateway origin, for example `https://bot.example.com`; no path or trailing slash |
+| `BOT_SERVICE_TOKEN`                    | Convex, Vercel Bot gateway       | Bearer token Convex sends to `/notifications/send`                                    |
+| `SCHEDULE_REMINDER_RECIPIENT_USER_IDS` | Convex                           | Comma-separated Clerk user IDs that should receive outbound event reminders           |
+| `SCHEDULE_REMINDER_LEAD_TIME_MINUTES`  | Convex                           | Optional; defaults to `30`                                                            |
+| `SCHEDULE_REMINDER_LOOKBACK_MINUTES`   | Convex                           | Optional; defaults to `30`; keep at least as long as the Convex cron interval         |
+| `SCHEDULE_REMINDER_TZ`                 | Convex                           | Optional; defaults to `Australia/Sydney`; also controls the 6am-10pm delivery window  |
 
 For local development:
 
