@@ -45,20 +45,27 @@ export const recordReminderAttempt = internalMutation({
     providerErrorCode: v.optional(v.string())
   },
   handler: async (ctx, attempt) => {
-    const existing = attempt.recipientUserId
+    const existingAttempts = attempt.recipientUserId
       ? await ctx.db
           .query('scheduleReminderAttempts')
           .withIndex('by_reminder_recipient', (q) =>
             q.eq('reminderKey', attempt.reminderKey).eq('recipientUserId', attempt.recipientUserId)
           )
-          .unique()
+          .collect()
       : await ctx.db
           .query('scheduleReminderAttempts')
           .withIndex('by_reminder_key', (q) => q.eq('reminderKey', attempt.reminderKey))
-          .unique();
+          .collect();
+    const sentAttempt = existingAttempts.find((existingAttempt) => existingAttempt.status === 'sent');
 
-    if (existing) {
-      return { inserted: false as const, id: existing._id };
+    if (sentAttempt) {
+      return { inserted: false as const, id: sentAttempt._id };
+    }
+
+    const retryableAttempt = existingAttempts[0];
+    if (retryableAttempt) {
+      await ctx.db.patch(retryableAttempt._id, attempt);
+      return { inserted: false as const, id: retryableAttempt._id };
     }
 
     const id = await ctx.db.insert('scheduleReminderAttempts', attempt);

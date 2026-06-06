@@ -14,6 +14,7 @@ export type ReminderEvent = {
 export type ReminderAttempt = {
   reminderKey: string;
   recipientUserId?: string;
+  status?: ScheduleReminderAttemptStatus;
 };
 
 export type DueReminderCandidate = {
@@ -111,10 +112,11 @@ export function formatScheduleReminderMessage(reminder: DueReminderCandidate, ti
   return lines.join('\n');
 }
 
-function attemptedRecipientIdsForReminder(attempts: ReminderAttempt[], reminderKey: string) {
+function sentRecipientIdsForReminder(attempts: ReminderAttempt[], reminderKey: string) {
   return new Set(
     attempts
       .filter((attempt) => attempt.reminderKey === reminderKey)
+      .filter((attempt) => attempt.status === 'sent')
       .map((attempt) => attempt.recipientUserId)
       .filter((recipientUserId): recipientUserId is string => Boolean(recipientUserId))
   );
@@ -277,9 +279,9 @@ export async function runScheduleReminderCycle({
 
   for (const candidate of candidates) {
     const message = formatScheduleReminderMessage(candidate, timeZone);
-    const attemptedRecipientIds = attemptedRecipientIdsForReminder(attempts, candidate.reminderKey);
+    const sentRecipientIds = sentRecipientIdsForReminder(attempts, candidate.reminderKey);
     const pendingRecipientUserIds = recipientUserIds.filter(
-      (recipientUserId) => !attemptedRecipientIds.has(recipientUserId)
+      (recipientUserId) => !sentRecipientIds.has(recipientUserId)
     );
 
     if (hasLegacyEventLevelAttempt(attempts, candidate.reminderKey)) {
@@ -400,20 +402,27 @@ export const recordReminderAttempt = mutation({
   },
   handler: async (ctx, { serviceToken, ...attempt }) => {
     assertServiceToken(serviceToken);
-    const existing = attempt.recipientUserId
+    const existingAttempts = attempt.recipientUserId
       ? await ctx.db
           .query('scheduleReminderAttempts')
           .withIndex('by_reminder_recipient', (q) =>
             q.eq('reminderKey', attempt.reminderKey).eq('recipientUserId', attempt.recipientUserId)
           )
-          .unique()
+          .collect()
       : await ctx.db
           .query('scheduleReminderAttempts')
           .withIndex('by_reminder_key', (q) => q.eq('reminderKey', attempt.reminderKey))
-          .unique();
+          .collect();
+    const sentAttempt = existingAttempts.find((existingAttempt) => existingAttempt.status === 'sent');
 
-    if (existing) {
-      return { inserted: false as const, id: existing._id };
+    if (sentAttempt) {
+      return { inserted: false as const, id: sentAttempt._id };
+    }
+
+    const retryableAttempt = existingAttempts[0];
+    if (retryableAttempt) {
+      await ctx.db.patch(retryableAttempt._id, attempt);
+      return { inserted: false as const, id: retryableAttempt._id };
     }
 
     const id = await ctx.db.insert('scheduleReminderAttempts', attempt);

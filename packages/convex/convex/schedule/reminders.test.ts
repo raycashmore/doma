@@ -76,7 +76,7 @@ describe('getDueReminderCandidates', () => {
     expect(
       getDueReminderCandidates({
         events: [candidate],
-        attempts: [{ reminderKey: reminderKeyForEvent(candidate, 30) }],
+        attempts: [{ reminderKey: reminderKeyForEvent(candidate, 30), status: 'sent' }],
         nowMs,
         leadTimeMinutes: 30
       })
@@ -306,7 +306,7 @@ describe('runScheduleReminderCycle', () => {
     await expect(
       runScheduleReminderCycle({
         events: [candidate],
-        attempts: [{ reminderKey: reminderKeyForEvent(candidate, 30), recipientUserId: 'user_done' }],
+        attempts: [{ reminderKey: reminderKeyForEvent(candidate, 30), recipientUserId: 'user_done', status: 'sent' }],
         nowMs,
         leadTimeMinutes: 30,
         lookbackMs: 30 * 60_000,
@@ -354,8 +354,8 @@ describe('runScheduleReminderCycle', () => {
       runScheduleReminderCycle({
         events: [candidate],
         attempts: [
-          { reminderKey, recipientUserId: 'user_one' },
-          { reminderKey, recipientUserId: 'user_two' }
+          { reminderKey, recipientUserId: 'user_one', status: 'sent' },
+          { reminderKey, recipientUserId: 'user_two', status: 'sent' }
         ],
         nowMs,
         leadTimeMinutes: 30,
@@ -375,6 +375,52 @@ describe('runScheduleReminderCycle', () => {
 
     expect(sendNotification).not.toHaveBeenCalled();
     expect(recordReminderAttempt).not.toHaveBeenCalled();
+  });
+
+  it('retries recipient reminders after a failed attempt', async () => {
+    const candidate = event();
+    const reminderKey = reminderKeyForEvent(candidate, 30);
+    const sendNotification = vi.fn(async () => ({ status: 'sent' as const }));
+    const recordReminderAttempt = vi.fn();
+
+    await expect(
+      runScheduleReminderCycle({
+        events: [candidate],
+        attempts: [{ reminderKey, recipientUserId: 'user_retry', status: 'failed' }],
+        nowMs,
+        leadTimeMinutes: 30,
+        lookbackMs: 30 * 60_000,
+        timeZone: 'Australia/Sydney',
+        recipientUserIds: ['user_retry'],
+        sendNotification,
+        recordReminderAttempt
+      })
+    ).resolves.toEqual({
+      processed: 1,
+      sent: 1,
+      skipped: 0,
+      failed: 0,
+      outsideDeliveryWindow: false
+    });
+
+    expect(sendNotification).toHaveBeenCalledWith({
+      recipientUserId: 'user_retry',
+      topic: 'schedule.reminder',
+      message: 'Reminder: School pickup starts at 8:30 pm.',
+      metadata: {
+        reminderKey,
+        googleEventId: 'event-1'
+      }
+    });
+    expect(recordReminderAttempt).toHaveBeenCalledWith({
+      reminderKey,
+      recipientUserId: 'user_retry',
+      googleEventId: 'event-1',
+      eventStart: nowMs + 30 * 60_000,
+      leadTimeMinutes: 30,
+      attemptedAt: nowMs,
+      status: 'sent'
+    });
   });
 });
 
