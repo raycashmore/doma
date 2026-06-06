@@ -385,7 +385,7 @@ Set the same value in the Bot gateway, Schedule app, and the target Convex
 deployment before enabling `SCHEDULE_CAPABILITY_URL`.
 
 Outbound schedule reminders run from the Bot gateway cron
-`/reminders/schedule/run` every five minutes. Vercel calls that path with
+`/reminders/schedule/run` every 15 minutes. Vercel calls that path with
 `CRON_SECRET` as the `Authorization` bearer token. The runner asks Convex for
 due reminder candidates, sends provider-neutral notifications to each
 configured `SCHEDULE_REMINDER_RECIPIENT_USER_IDS` recipient, and records the
