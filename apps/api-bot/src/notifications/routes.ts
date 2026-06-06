@@ -9,6 +9,18 @@ import { jsonError, jsonOk } from '../http/json.js';
 import type { TelegramMessageSender } from '../providers/telegram/client.js';
 import type { BotStorage } from '../storage/index.js';
 
+export type NotificationSendRequest = {
+  recipientUserId: string;
+  topic: string;
+  message: string;
+  metadata?: Record<string, string>;
+};
+
+export type NotificationSendResult =
+  | { status: 'sent'; provider: 'telegram'; errorCode?: undefined }
+  | { status: 'skipped'; reason: 'no_linked_channel' }
+  | { status: 'failed'; provider: 'telegram'; errorCode: string };
+
 export type CreateNotificationRoutesOptions = {
   serviceToken: string;
   storage: BotStorage;
@@ -38,6 +50,64 @@ async function sendNotification(sendTelegramMessage: TelegramMessageSender, chat
   }
 }
 
+export async function sendNotificationToLinkedTelegram({
+  storage,
+  sendTelegramMessage,
+  notification,
+  createdAt = Date.now()
+}: {
+  storage: BotStorage;
+  sendTelegramMessage: TelegramMessageSender;
+  notification: NotificationSendRequest;
+  createdAt?: number;
+}): Promise<NotificationSendResult> {
+  const link = await storage.getActiveChannelLinkForUser(notification.recipientUserId, 'telegram');
+
+  if (!link) {
+    await storage.saveNotificationAttempt({
+      id: randomUUID(),
+      recipientUserId: notification.recipientUserId,
+      provider: 'telegram',
+      topic: notification.topic,
+      status: 'skipped',
+      providerErrorCode: 'no_linked_channel',
+      createdAt
+    });
+
+    return {
+      status: 'skipped',
+      reason: 'no_linked_channel'
+    };
+  }
+
+  const sendResult = await sendNotification(sendTelegramMessage, link.providerChatId, notification.message);
+  const status = sendResult.ok ? 'sent' : 'failed';
+  const errorCode = sendResult.ok ? undefined : sendResult.errorCode;
+
+  await storage.saveNotificationAttempt({
+    id: randomUUID(),
+    recipientUserId: notification.recipientUserId,
+    provider: 'telegram',
+    topic: notification.topic,
+    status,
+    providerErrorCode: errorCode,
+    createdAt
+  });
+
+  if (status === 'failed') {
+    return {
+      status,
+      provider: 'telegram',
+      errorCode: errorCode ?? 'telegram_error'
+    };
+  }
+
+  return {
+    status,
+    provider: 'telegram'
+  };
+}
+
 export function createNotificationRoutes({
   serviceToken,
   storage,
@@ -62,45 +132,13 @@ export function createNotificationRoutes({
       return jsonError(c, 400, 'invalid_notification');
     }
 
-    const link = await storage.getActiveChannelLinkForUser(notification.data.recipientUserId, 'telegram');
-    const createdAt = Date.now();
-
-    if (!link) {
-      await storage.saveNotificationAttempt({
-        id: randomUUID(),
-        recipientUserId: notification.data.recipientUserId,
-        provider: 'telegram',
-        topic: notification.data.topic,
-        status: 'skipped',
-        providerErrorCode: 'no_linked_channel',
-        createdAt
-      });
-
-      return jsonOk(c, {
-        status: 'skipped',
-        reason: 'no_linked_channel'
-      });
-    }
-
-    const sendResult = await sendNotification(sendTelegramMessage, link.providerChatId, notification.data.message);
-    const status = sendResult.ok ? 'sent' : 'failed';
-    const errorCode = sendResult.ok ? undefined : sendResult.errorCode;
-
-    await storage.saveNotificationAttempt({
-      id: randomUUID(),
-      recipientUserId: notification.data.recipientUserId,
-      provider: 'telegram',
-      topic: notification.data.topic,
-      status,
-      providerErrorCode: errorCode,
-      createdAt
+    const result = await sendNotificationToLinkedTelegram({
+      storage,
+      sendTelegramMessage,
+      notification: notification.data
     });
 
-    return jsonOk(c, {
-      status,
-      provider: 'telegram',
-      errorCode
-    });
+    return jsonOk(c, result);
   });
 
   return routes;

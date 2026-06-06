@@ -13,7 +13,11 @@ const testConfig: BotConfig = {
   clerkSecretKey: 'clerk-secret-key',
   clerkPublishableKey: 'clerk-publishable-key',
   botServiceToken: 'service-token',
+  convexUrl: 'https://convex.example.com',
   scheduleCapabilityUrl: undefined,
+  scheduleReminderRecipientUserIds: ['user_123'],
+  scheduleReminderLeadTimeMinutes: 30,
+  scheduleReminderTimeZone: 'Australia/Sydney',
   pairingEnabled: true,
   telegramBotToken: 'telegram-bot-token',
   telegramWebhookSecret: 'telegram-webhook-secret',
@@ -112,5 +116,33 @@ describe('api-bot app', () => {
 
     expect(response.status).toBe(401);
     await expect(response.json()).resolves.toEqual({ error: 'unauthorized' });
+  });
+
+  it('mounts schedule reminder routes', async () => {
+    const app = createApp({
+      config: testConfig,
+      storage: createMemoryStorage(),
+      scheduleReminderStore: {
+        getDueReminderCandidates: vi.fn(async () => []),
+        recordReminderAttempt: vi.fn()
+      }
+    });
+
+    const response = await app.request('/reminders/schedule/run', {
+      method: 'POST',
+      headers: {
+        authorization: 'Bearer service-token',
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({ nowMs: Date.parse('2026-06-06T10:00:00.000Z') })
+    });
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      processed: 0,
+      sent: 0,
+      skipped: 0,
+      failed: 0
+    });
   });
 });

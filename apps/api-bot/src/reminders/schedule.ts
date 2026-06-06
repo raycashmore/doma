@@ -17,10 +17,7 @@ export type DueScheduleReminder = {
 export type ScheduleReminderAttemptStatus = 'sent' | 'skipped' | 'failed';
 
 export type ScheduleReminderStore = {
-  getDueReminderCandidates: (request: {
-    nowMs: number;
-    leadTimeMinutes: number;
-  }) => Promise<DueScheduleReminder[]>;
+  getDueReminderCandidates: (request: { nowMs: number; leadTimeMinutes: number }) => Promise<DueScheduleReminder[]>;
   recordReminderAttempt: (attempt: {
     reminderKey: string;
     googleEventId: string;
@@ -41,6 +38,7 @@ export type ScheduleReminderNotificationSender = (notification: {
 
 export type CreateScheduleReminderRoutesOptions = {
   serviceToken: string;
+  cronSecret?: string;
   recipientUserIds: string[];
   leadTimeMinutes: number;
   timeZone?: string;
@@ -73,6 +71,13 @@ export function formatScheduleReminderMessage(reminder: DueScheduleReminder, tim
 }
 
 function aggregateStatus(results: Array<{ status: ScheduleReminderAttemptStatus; errorCode?: string }>) {
+  if (results.length === 0) {
+    return {
+      status: 'skipped' as const,
+      errorCode: 'no_reminder_recipients'
+    };
+  }
+
   const failed = results.find((result) => result.status === 'failed');
   if (failed) return failed;
 
@@ -82,8 +87,69 @@ function aggregateStatus(results: Array<{ status: ScheduleReminderAttemptStatus;
   return { status: 'sent' as const };
 }
 
+async function runDueReminders({
+  nowMs,
+  leadTimeMinutes,
+  recipientUserIds,
+  timeZone,
+  store,
+  sendNotification
+}: {
+  nowMs: number;
+  leadTimeMinutes: number;
+  recipientUserIds: string[];
+  timeZone: string;
+  store: ScheduleReminderStore;
+  sendNotification: ScheduleReminderNotificationSender;
+}) {
+  const candidates = await store.getDueReminderCandidates({
+    nowMs,
+    leadTimeMinutes
+  });
+  const counts = {
+    processed: 0,
+    sent: 0,
+    skipped: 0,
+    failed: 0
+  };
+
+  for (const candidate of candidates) {
+    const message = formatScheduleReminderMessage(candidate, timeZone);
+    const results = await Promise.all(
+      recipientUserIds.map((recipientUserId) =>
+        sendNotification({
+          recipientUserId,
+          topic: 'schedule.reminder',
+          message,
+          metadata: {
+            reminderKey: candidate.reminderKey,
+            googleEventId: candidate.googleEventId
+          }
+        })
+      )
+    );
+    const result = aggregateStatus(results);
+
+    await store.recordReminderAttempt({
+      reminderKey: candidate.reminderKey,
+      googleEventId: candidate.googleEventId,
+      eventStart: candidate.eventStart,
+      leadTimeMinutes: candidate.leadTimeMinutes,
+      attemptedAt: nowMs,
+      status: result.status,
+      providerErrorCode: result.errorCode
+    });
+
+    counts.processed += 1;
+    counts[result.status] += 1;
+  }
+
+  return counts;
+}
+
 export function createScheduleReminderRoutes({
   serviceToken,
+  cronSecret,
   recipientUserIds,
   leadTimeMinutes,
   timeZone = 'Australia/Sydney',
@@ -91,6 +157,23 @@ export function createScheduleReminderRoutes({
   sendNotification
 }: CreateScheduleReminderRoutesOptions) {
   const routes = new Hono();
+
+  routes.get('/run', async (c) => {
+    if (!cronSecret || !isAuthorizedServiceRequest(c.req.raw, cronSecret)) {
+      return jsonError(c, 401, 'unauthorized');
+    }
+
+    const counts = await runDueReminders({
+      nowMs: Date.now(),
+      leadTimeMinutes,
+      recipientUserIds,
+      timeZone,
+      store,
+      sendNotification
+    });
+
+    return jsonOk(c, counts);
+  });
 
   routes.post('/run', async (c) => {
     if (!isAuthorizedServiceRequest(c.req.raw, serviceToken)) {
@@ -110,47 +193,14 @@ export function createScheduleReminderRoutes({
     }
 
     const nowMs = run.data.nowMs ?? Date.now();
-    const candidates = await store.getDueReminderCandidates({
+    const counts = await runDueReminders({
       nowMs,
-      leadTimeMinutes
+      leadTimeMinutes,
+      recipientUserIds,
+      timeZone,
+      store,
+      sendNotification
     });
-    const counts = {
-      processed: 0,
-      sent: 0,
-      skipped: 0,
-      failed: 0
-    };
-
-    for (const candidate of candidates) {
-      const message = formatScheduleReminderMessage(candidate, timeZone);
-      const results = await Promise.all(
-        recipientUserIds.map((recipientUserId) =>
-          sendNotification({
-            recipientUserId,
-            topic: 'schedule.reminder',
-            message,
-            metadata: {
-              reminderKey: candidate.reminderKey,
-              googleEventId: candidate.googleEventId
-            }
-          })
-        )
-      );
-      const result = aggregateStatus(results);
-
-      await store.recordReminderAttempt({
-        reminderKey: candidate.reminderKey,
-        googleEventId: candidate.googleEventId,
-        eventStart: candidate.eventStart,
-        leadTimeMinutes: candidate.leadTimeMinutes,
-        attemptedAt: nowMs,
-        status: result.status,
-        providerErrorCode: result.errorCode
-      });
-
-      counts.processed += 1;
-      counts[result.status] += 1;
-    }
 
     return jsonOk(c, counts);
   });

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createScheduleReminderRoutes, type ScheduleReminderStore } from './schedule.js';
 
@@ -35,11 +35,16 @@ function runRequest(token = 'service-token') {
 }
 
 describe('createScheduleReminderRoutes', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('sends due schedule reminders and records sent attempts', async () => {
     const store = createStore();
     const sendNotification = vi.fn(async () => ({ status: 'sent' as const }));
     const routes = createScheduleReminderRoutes({
       serviceToken: 'service-token',
+      cronSecret: 'cron-secret',
       recipientUserIds: ['user_123'],
       leadTimeMinutes: 30,
       store,
@@ -75,6 +80,67 @@ describe('createScheduleReminderRoutes', () => {
       leadTimeMinutes: 30,
       attemptedAt: nowMs,
       status: 'sent'
+    });
+  });
+
+  it('allows Vercel cron GET requests with cron bearer auth', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(nowMs);
+    const store = createStore();
+    const routes = createScheduleReminderRoutes({
+      serviceToken: 'service-token',
+      cronSecret: 'cron-secret',
+      recipientUserIds: ['user_123'],
+      leadTimeMinutes: 30,
+      store,
+      sendNotification: vi.fn(async () => ({ status: 'sent' as const }))
+    });
+
+    const response = await routes.request('/run', {
+      method: 'GET',
+      headers: {
+        authorization: 'Bearer cron-secret'
+      }
+    });
+
+    expect(response.status).toBe(200);
+    expect(store.getDueReminderCandidates).toHaveBeenCalledWith({
+      nowMs,
+      leadTimeMinutes: 30
+    });
+    vi.useRealTimers();
+  });
+
+  it('records skipped attempts when no recipients are configured', async () => {
+    const store = createStore();
+    const sendNotification = vi.fn(async () => ({ status: 'sent' as const }));
+    const routes = createScheduleReminderRoutes({
+      serviceToken: 'service-token',
+      cronSecret: 'cron-secret',
+      recipientUserIds: [],
+      leadTimeMinutes: 30,
+      store,
+      sendNotification
+    });
+
+    const response = await routes.request(runRequest());
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      processed: 1,
+      sent: 0,
+      skipped: 1,
+      failed: 0
+    });
+    expect(sendNotification).not.toHaveBeenCalled();
+    expect(store.recordReminderAttempt).toHaveBeenCalledWith({
+      reminderKey: `event-1:${eventStart}:30`,
+      googleEventId: 'event-1',
+      eventStart,
+      leadTimeMinutes: 30,
+      attemptedAt: nowMs,
+      status: 'skipped',
+      providerErrorCode: 'no_reminder_recipients'
     });
   });
 });
