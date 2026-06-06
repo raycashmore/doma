@@ -1,6 +1,6 @@
 # Triage Labels
 
-This repo uses Notion status values instead of GitHub-style labels. The skills speak in terms of five canonical triage roles. Map each role to the corresponding status value in the `Doma Backlog` database.
+This repo uses Notion status values instead of GitHub-style labels. The skills speak in terms of five canonical triage roles. Map each role to the corresponding status value in the `Doma Task Tracker` database.
 
 | Label in mattpocock/skills | Status in our tracker | Meaning                                  |
 | -------------------------- | --------------------- | ---------------------------------------- |
