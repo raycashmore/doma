@@ -3,9 +3,9 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   createBotGatewayNotificationSender,
   getDueReminderCandidates,
-  runScheduleReminderCycle,
   type ReminderEvent,
-  reminderKeyForEvent
+  reminderKeyForEvent,
+  runScheduleReminderCycle
 } from './reminders';
 
 const nowMs = Date.parse('2026-06-06T10:00:00.000Z');
@@ -327,7 +327,10 @@ describe('createBotGatewayNotificationSender', () => {
   });
 
   it('maps non-2xx api-bot responses to failed delivery results', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => Response.json({ error: 'unauthorized' }, { status: 401 })));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => Response.json({ error: 'unauthorized' }, { status: 401 }))
+    );
     const sendNotification = createBotGatewayNotificationSender({
       botGatewayOrigin: 'https://bot.example.com',
       serviceToken: 'service-token'
@@ -341,7 +344,10 @@ describe('createBotGatewayNotificationSender', () => {
   });
 
   it('maps malformed api-bot responses to failed delivery results', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => new Response('not json', { status: 200 })));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('not json', { status: 200 }))
+    );
     const sendNotification = createBotGatewayNotificationSender({
       botGatewayOrigin: 'https://bot.example.com',
       serviceToken: 'service-token'
