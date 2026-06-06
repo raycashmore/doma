@@ -13,9 +13,15 @@ const CLERK_KEY = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 const IS_DEV = process.env.NODE_ENV !== 'production';
 
 export const metadata: Metadata = {
-  title: 'Doma · Schedule',
+  applicationName: 'Schedule',
+  title: 'Schedule',
+  description: 'Family schedule',
   appleWebApp: { capable: true, title: 'Schedule', statusBarStyle: 'default' },
-  icons: [{ rel: 'icon', url: '/favicon.png' }]
+  formatDetection: { telephone: false },
+  icons: [
+    { rel: 'icon', url: '/favicon.png' },
+    { rel: 'apple-touch-icon', url: '/icons/apple-touch-icon.png', sizes: '180x180' }
+  ]
 };
 
 export const viewport: Viewport = {

@@ -35,7 +35,7 @@ export const Route = createRootRoute({
       { name: 'apple-mobile-web-app-capable', content: 'yes' },
       { name: 'apple-mobile-web-app-title', content: 'Budget' },
       { name: 'apple-mobile-web-app-status-bar-style', content: 'default' },
-      { title: 'Doma · Budget' }
+      { title: 'Budget' }
     ],
     links: [
       { rel: 'stylesheet', href: appCss },

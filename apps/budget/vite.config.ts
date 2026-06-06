@@ -45,7 +45,7 @@ const config = defineConfig(({ command }) => ({
       outDir: '.output/public',
       scope: BUDGET_BASE_URL,
       manifest: {
-        name: 'Doma Budget',
+        name: 'Budget',
         short_name: 'Budget',
         start_url: BUDGET_BASE_URL,
         scope: BUDGET_BASE_URL,

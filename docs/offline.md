@@ -33,5 +33,5 @@ When the first offline-needing app is built, choose the layer in that PR — not
 
 ## Follow-ups for the PWA shell itself
 
-- **PNG icons.** The Budget app now has 180/192/512 PNG icons and an `apple-touch-icon` link for iOS Add to Home Screen. Repeat this for each app as its brand mark settles.
+- **Schedule shell.** The Schedule app has an App Router manifest and 180/192/512 icons for installation on iOS and Android. It intentionally has no service worker yet; offline viewing of live event data is deferred.
 - **Per-app theme colors.** Currently all apps use `#f97316` (the orange accent). Once each sub-app gets a real brand mark, give it its own `theme_color` so the installed app's title bar reflects it.

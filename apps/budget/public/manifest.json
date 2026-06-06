@@ -1,6 +1,6 @@
 {
   "short_name": "Budget",
-  "name": "Doma Budget",
+  "name": "Budget",
   "start_url": "/budget/",
   "scope": "/budget/",
   "display": "standalone",
