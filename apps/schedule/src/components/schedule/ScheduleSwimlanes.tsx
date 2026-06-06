@@ -1,14 +1,19 @@
 import { Repeat } from 'lucide-react';
 
-import { DAY_LABELS, MEMBERS, SWIMLANE_START_MINUTES, SWIMLANE_TOTAL_MINUTES } from './scheduleData';
-import { getEventPosition, getOverlapJoiners, type ScheduleEvent } from './scheduleLayout';
+import { DAY_LABELS, type ScheduleMember, SWIMLANE_START_MINUTES, SWIMLANE_TOTAL_MINUTES } from './scheduleData';
+import { getEventPosition, type ScheduleEvent } from './scheduleLayout';
+
+const LANE_COUNT = 4;
+const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] as const;
 
 type ScheduleSwimlanesProps = {
   events: ScheduleEvent[];
+  members: ScheduleMember[];
   nextUp: ScheduleEvent | null;
   selectedEventId?: string;
   todayDay?: string;
   nowMinutes: number | null;
+  weekStartMs: number;
   onSelect: (event: ScheduleEvent) => void;
 };
 
@@ -18,11 +23,21 @@ function formatHour(hour: number): string {
   return `${hour - 12}pm`;
 }
 
-function memberIndex(memberId: string): number {
+function formatDayDate(weekStartMs: number, dayIndex: number): string {
+  const date = new Date(weekStartMs);
+  date.setDate(date.getDate() + dayIndex);
+  return `${date.getDate()} ${MONTH_LABELS[date.getMonth()]}`;
+}
+
+function memberIndex(members: ScheduleMember[], memberId: string): number {
   return Math.max(
     0,
-    MEMBERS.findIndex((member) => member.id === memberId)
+    members.findIndex((member) => member.id === memberId)
   );
+}
+
+function laneCenterTopPercent(index: number): number {
+  return ((index + 0.5) / LANE_COUNT) * 100;
 }
 
 function nowLeftPercent(nowMinutes: number): number {
@@ -31,14 +46,14 @@ function nowLeftPercent(nowMinutes: number): number {
 
 export function ScheduleSwimlanes({
   events,
+  members,
   nextUp,
   selectedEventId,
   todayDay,
   nowMinutes,
+  weekStartMs,
   onSelect
 }: ScheduleSwimlanesProps) {
-  const joiners = getOverlapJoiners(events);
-
   return (
     <div className="schedule-desktop">
       <div className="schedule-top">
@@ -51,7 +66,7 @@ export function ScheduleSwimlanes({
           <strong>{nextUp?.title ?? 'Nothing else today'}</strong>
         </div>
         <div className="schedule-legend">
-          {MEMBERS.map((member) => (
+          {members.map((member) => (
             <span key={member.id} className="schedule-legend__item">
               <span className={`schedule-avatar schedule-avatar--${member.colorClass}`}>{member.initials}</span>
               {member.label}
@@ -67,16 +82,16 @@ export function ScheduleSwimlanes({
         ))}
       </div>
       <div className="swim-days">
-        {DAY_LABELS.map((day) => {
+        {DAY_LABELS.map((day, dayIndex) => {
           const dayEvents = events.filter((event) => event.day === day);
-          const dayJoiners = joiners.filter((joiner) => joiner.day === day);
           const showNowLine =
             todayDay === day && nowMinutes !== null && nowMinutes >= SWIMLANE_START_MINUTES && nowMinutes <= 22 * 60;
           return (
             <div className={`swim-day${todayDay === day ? ' swim-day--today' : ''}`} key={day}>
               <div className="swim-day__label">
                 <strong>{day}</strong>
-                {todayDay === day ? <span>today</span> : null}
+                <span>{formatDayDate(weekStartMs, dayIndex)}</span>
+                {todayDay === day ? <small>today</small> : null}
               </div>
               <div className="swim-day__track">
                 {Array.from({ length: 17 }, (_, index) => (
@@ -87,8 +102,8 @@ export function ScheduleSwimlanes({
                     now
                   </span>
                 ) : null}
-                {MEMBERS.map((member, index) => (
-                  <div className="swim-lane" key={member.id} style={{ top: index * 24 + 8 }}>
+                {members.map((member, index) => (
+                  <div className="swim-lane" key={member.id} style={{ top: `${(index / LANE_COUNT) * 100}%` }}>
                     <span className={`schedule-avatar schedule-avatar--small schedule-avatar--${member.colorClass}`}>
                       {member.initials}
                     </span>
@@ -98,7 +113,8 @@ export function ScheduleSwimlanes({
                   event.who.map((memberId) => {
                     const position = getEventPosition(event);
                     if (position.widthPercent <= 0) return null;
-                    const member = MEMBERS.find((candidate) => candidate.id === memberId);
+                    const member = members.find((candidate) => candidate.id === memberId);
+                    const laneIndex = memberIndex(members, memberId);
                     return (
                       <button
                         className={`swim-event swim-event--${member?.colorClass ?? 'member-a'}${
@@ -109,7 +125,7 @@ export function ScheduleSwimlanes({
                         style={{
                           left: `${position.leftPercent}%`,
                           width: `${position.widthPercent}%`,
-                          top: memberIndex(memberId) * 24 + 6
+                          top: `${laneCenterTopPercent(laneIndex)}%`
                         }}
                         title={event.title}
                         onClick={() => onSelect(event)}
@@ -120,22 +136,6 @@ export function ScheduleSwimlanes({
                     );
                   })
                 )}
-                {dayJoiners.map((joiner) => {
-                  const left = ((joiner.startMinutes - SWIMLANE_START_MINUTES) / SWIMLANE_TOTAL_MINUTES) * 100;
-                  const width = ((joiner.endMinutes - joiner.startMinutes) / SWIMLANE_TOTAL_MINUTES) * 100;
-                  return (
-                    <span
-                      className="swim-joiner"
-                      key={joiner.id}
-                      style={{
-                        left: `${left}%`,
-                        width: `${width}%`,
-                        top: joiner.fromMemberIndex * 24 + 19,
-                        height: (joiner.toMemberIndex - joiner.fromMemberIndex) * 24
-                      }}
-                    />
-                  );
-                })}
               </div>
             </div>
           );

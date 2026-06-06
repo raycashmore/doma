@@ -1,10 +1,11 @@
 import { CalendarDays, ExternalLink, Lock, MapPin, Repeat, Users, X } from 'lucide-react';
 
-import { MEMBERS } from './scheduleData';
+import type { ScheduleMember } from './scheduleData';
 import type { ScheduleEvent } from './scheduleLayout';
 
 type EventPanelProps = {
   event: ScheduleEvent | null;
+  members: ScheduleMember[];
   open: boolean;
   onClose: () => void;
 };
@@ -22,11 +23,11 @@ function formatEventTime(event: ScheduleEvent): string {
   return `${formatTime(event.startMinutes)} - ${formatTime(event.endMinutes)}`;
 }
 
-function formatMembers(event: ScheduleEvent): string {
-  return event.who.map((id) => MEMBERS.find((member) => member.id === id)?.label ?? id).join(', ');
+function formatMembers(event: ScheduleEvent, members: ScheduleMember[]): string {
+  return event.who.map((id) => members.find((member) => member.id === id)?.label ?? id).join(', ');
 }
 
-export function EventPanel({ event, open, onClose }: EventPanelProps) {
+export function EventPanel({ event, members, open, onClose }: EventPanelProps) {
   return (
     <div className={`event-panel-host${open ? ' event-panel-host--open' : ''}`}>
       <button className="event-panel-scrim" type="button" aria-label="Close event detail" onClick={onClose} />
@@ -61,7 +62,7 @@ export function EventPanel({ event, open, onClose }: EventPanelProps) {
                   <Users aria-hidden size={16} />
                   <span>
                     <strong>Who is going</strong>
-                    {formatMembers(event)}
+                    {formatMembers(event, members)}
                   </span>
                 </div>
                 {event.location ? (

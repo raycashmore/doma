@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { EventPanel } from './EventPanel';
 import { MobileSchedule } from './MobileSchedule';
-import { DAY_LABELS, type DayLabel } from './scheduleData';
+import { DAY_LABELS, type DayLabel, resolveScheduleMembers } from './scheduleData';
 import { createFixtureScheduleEvents } from './scheduleFixture';
 import { getNextUpEvent, normalizeScheduleEvents, type ScheduleEvent } from './scheduleLayout';
 import { ScheduleSwimlanes } from './ScheduleSwimlanes';
@@ -48,6 +48,7 @@ export function ScheduleScreen() {
   );
   const lastSyncedAt = USE_DEV_FIXTURE ? Date.now() : (data?.lastSyncedAt ?? null);
   const events = useMemo(() => normalizeScheduleEvents(sourceEvents, weekStartMs), [sourceEvents, weekStartMs]);
+  const members = useMemo(() => resolveScheduleMembers(data?.members), [data?.members]);
   const nextUp = useMemo(() => getNextUpEvent(events, Date.now()), [events]);
 
   useEffect(() => {
@@ -93,20 +94,28 @@ export function ScheduleScreen() {
       />
       <ScheduleSwimlanes
         events={events}
+        members={members}
         nextUp={nextUp}
         selectedEventId={selectedEvent?.id}
         todayDay={todayDay}
         nowMinutes={nowMinutes}
+        weekStartMs={weekStartMs}
         onSelect={setSelectedEvent}
       />
       <MobileSchedule
         events={events}
+        members={members}
         nextUp={nextUp}
         selectedEventId={selectedEvent?.id}
         todayDay={todayDay}
         onSelect={setSelectedEvent}
       />
-      <EventPanel event={selectedEvent} open={selectedEvent !== null} onClose={() => setSelectedEvent(null)} />
+      <EventPanel
+        event={selectedEvent}
+        members={members}
+        open={selectedEvent !== null}
+        onClose={() => setSelectedEvent(null)}
+      />
     </section>
   );
 }

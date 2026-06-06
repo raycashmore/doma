@@ -25,23 +25,27 @@ For each calendar to ingest (per-person and the shared/household one):
 
 In the Convex dashboard (Project → Settings → Environment Variables):
 
-| Variable             | Value                                                      |
-| -------------------- | ---------------------------------------------------------- | --------------- |
-| `GOOGLE_SA_KEY`      | the entire service-account JSON key, stringified           |
-| `SCHEDULE_CALENDARS` | `[{"calendarId":"<id>","who":"<memberId>                   | shared"}, ...]` |
-| `SCHEDULE_MEMBERS`   | `[{"id":"<memberId>","tokens":["<name>","<alias>"]}, ...]` |
-| `SCHEDULE_TZ`        | IANA timezone, e.g. `Australia/Sydney`                     |
+| Variable             | Value                                                                                |
+| -------------------- | ------------------------------------------------------------------------------------ |
+| `GOOGLE_SA_KEY`      | the entire service-account JSON key, stringified                                     |
+| `SCHEDULE_CALENDARS` | `[{"calendarId":"<id>","who":"<memberId> or shared"}, ...]`                          |
+| `SCHEDULE_MEMBERS`   | `[{"id":"<memberId>","label":"<name>","initials":"<initials>","tokens":[...]}, ...]` |
+| `SCHEDULE_TZ`        | IANA timezone, e.g. `Australia/Sydney`                                               |
 
 - A per-person calendar's `who` is that member's id; the shared calendar's `who`
   is the literal `shared`.
 - **Member ids must be the generic `memberA`, `memberB`, `memberC`, `memberD`.**
-  The schedule UI maps those ids to its lane colours/labels and ignores any id
-  outside that set (the event falls back to the whole family). Put the real
-  names only in `tokens` — never use a real name as an `id`, so no real name
-  reaches committed frontend source.
+  The schedule UI maps those ids to its lane colours and ignores any id
+  outside that set (the event falls back to the first member). Put the real
+  names in `label` and/or `tokens` — never use a real name as an `id`, so no
+  real name reaches committed frontend source.
+- `label` and `initials` drive the real lane labels in the authenticated app.
+  `label` falls back to the first token, and `initials` falls back to initials
+  derived from that label. Omit both in test/dev fixture flows to keep generic
+  labels.
 - `tokens` are the name words used to attribute a shared-calendar event to a
   member from its title (e.g. first name + nickname). No token match on a shared
-  event → the whole family.
+  event → the first configured member.
 
 These values hold real names and ids and live **only** in Convex env — never in
 git (see `docs/agents/privacy.md`).

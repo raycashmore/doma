@@ -8,6 +8,8 @@ export type CalendarConfig = {
 
 export type MemberConfig = {
   id: string;
+  label?: string;
+  initials?: string;
   tokens: string[];
 };
 
@@ -41,12 +43,12 @@ function matchesToken(title: string, token: string): boolean {
   return new RegExp(`\\b${escaped}\\b`, 'i').test(title);
 }
 
-// Per-person calendar → that member. Shared calendar → members named in the
-// title, or the whole family when none are named.
+// Per-person calendar -> that member. Shared calendar -> members named in the
+// title, or the first configured member when none are named.
 export function deriveWho(title: string, calendar: CalendarConfig, members: MemberConfig[]): string[] {
   if (calendar.who !== 'shared') return [calendar.who];
   const matched = members.filter((m) => m.tokens.some((token) => matchesToken(title, token)));
-  return matched.length > 0 ? matched.map((m) => m.id) : members.map((m) => m.id);
+  return matched.length > 0 ? matched.map((m) => m.id) : members.slice(0, 1).map((m) => m.id);
 }
 
 export function toScheduleEvent(

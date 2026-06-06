@@ -9,12 +9,31 @@ export type ScheduleMember = {
   colorClass: string;
 };
 
+export type ScheduleMemberDisplay = {
+  id: string;
+  label: string;
+  initials: string;
+};
+
 export const MEMBERS = [
   { id: 'memberA', label: 'Member A', initials: 'A', colorClass: 'member-a' },
   { id: 'memberB', label: 'Member B', initials: 'B', colorClass: 'member-b' },
   { id: 'memberC', label: 'Member C', initials: 'C', colorClass: 'member-c' },
   { id: 'memberD', label: 'Member D', initials: 'D', colorClass: 'member-d' }
 ] satisfies ScheduleMember[];
+
+export function resolveScheduleMembers(memberDisplays?: ScheduleMemberDisplay[]): ScheduleMember[] {
+  if (!memberDisplays) return [...MEMBERS];
+  return MEMBERS.map((member) => {
+    const display = memberDisplays.find((candidate) => candidate.id === member.id);
+    if (!display) return member;
+    return {
+      ...member,
+      label: display.label,
+      initials: display.initials
+    };
+  });
+}
 
 export const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
 

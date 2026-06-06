@@ -1,11 +1,12 @@
 import { MapPin, Repeat } from 'lucide-react';
 import { useState } from 'react';
 
-import { DAY_LABELS, type DayLabel, MEMBERS } from './scheduleData';
+import { DAY_LABELS, type DayLabel, type ScheduleMember } from './scheduleData';
 import type { ScheduleEvent } from './scheduleLayout';
 
 type MobileScheduleProps = {
   events: ScheduleEvent[];
+  members: ScheduleMember[];
   nextUp: ScheduleEvent | null;
   selectedEventId?: string;
   todayDay?: DayLabel;
@@ -25,7 +26,14 @@ function formatEventTime(event: ScheduleEvent): string {
   return `${formatTime(event.startMinutes)} - ${formatTime(event.endMinutes)}`;
 }
 
-export function MobileSchedule({ events, nextUp, selectedEventId, todayDay = 'Mon', onSelect }: MobileScheduleProps) {
+export function MobileSchedule({
+  events,
+  members,
+  nextUp,
+  selectedEventId,
+  todayDay = 'Mon',
+  onSelect
+}: MobileScheduleProps) {
   const [day, setDay] = useState<DayLabel>(todayDay);
   const dayEvents = events.filter((event) => event.day === day).sort((a, b) => a.startMinutes - b.startMinutes);
 
@@ -54,7 +62,7 @@ export function MobileSchedule({ events, nextUp, selectedEventId, todayDay = 'Mo
       <div className="schedule-mobile__agenda">
         {dayEvents.length > 0 ? (
           dayEvents.map((event) => {
-            const member = MEMBERS.find((candidate) => candidate.id === event.who[0]);
+            const member = members.find((candidate) => candidate.id === event.who[0]);
             return (
               <button
                 className={`mobile-event mobile-event--${member?.colorClass ?? 'member-a'}${
