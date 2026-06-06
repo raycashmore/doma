@@ -16,15 +16,21 @@ export const runDueScheduleReminders = internalAction({
     const serviceToken = process.env.BOT_SERVICE_TOKEN;
     if (!serviceToken) throw new Error('BOT_SERVICE_TOKEN env var is required for schedule reminder delivery');
 
-    const { events, attempts } = await ctx.runQuery(reminderStore.reminderRunInputs);
     const nowMs = Date.now();
+    const leadTimeMinutes = parsePositiveIntegerEnv(process.env.SCHEDULE_REMINDER_LEAD_TIME_MINUTES, 30);
+    const lookbackMs = parsePositiveIntegerEnv(process.env.SCHEDULE_REMINDER_LOOKBACK_MINUTES, 30) * 60_000;
+    const { events, attempts } = await ctx.runQuery(reminderStore.reminderRunInputs, {
+      nowMs,
+      leadTimeMinutes,
+      lookbackMs
+    });
 
     return runScheduleReminderCycle({
       events,
       attempts,
       nowMs,
-      leadTimeMinutes: parsePositiveIntegerEnv(process.env.SCHEDULE_REMINDER_LEAD_TIME_MINUTES, 30),
-      lookbackMs: parsePositiveIntegerEnv(process.env.SCHEDULE_REMINDER_LOOKBACK_MINUTES, 30) * 60_000,
+      leadTimeMinutes,
+      lookbackMs,
       timeZone: process.env.SCHEDULE_REMINDER_TZ ?? 'Australia/Sydney',
       recipientUserIds: parseRecipientUserIds(process.env.SCHEDULE_REMINDER_RECIPIENT_USER_IDS),
       sendNotification: createBotGatewayNotificationSender({

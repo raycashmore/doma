@@ -25,6 +25,7 @@ export const scheduleSyncMetaTable = defineTable({
 
 export const scheduleReminderAttemptsTable = defineTable({
   reminderKey: v.string(),
+  recipientUserId: v.optional(v.string()),
   googleEventId: v.string(),
   eventStart: v.number(),
   leadTimeMinutes: v.number(),
@@ -33,4 +34,5 @@ export const scheduleReminderAttemptsTable = defineTable({
   providerErrorCode: v.optional(v.string())
 })
   .index('by_reminder_key', ['reminderKey'])
+  .index('by_reminder_recipient', ['reminderKey', 'recipientUserId'])
   .index('by_attempted_at', ['attemptedAt']);

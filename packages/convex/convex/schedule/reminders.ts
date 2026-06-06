@@ -13,6 +13,7 @@ export type ReminderEvent = {
 
 export type ReminderAttempt = {
   reminderKey: string;
+  recipientUserId?: string;
 };
 
 export type DueReminderCandidate = {
@@ -44,6 +45,7 @@ export type ScheduleReminderNotificationSender = (notification: {
 
 export type ScheduleReminderAttemptRecorder = (attempt: {
   reminderKey: string;
+  recipientUserId?: string;
   googleEventId: string;
   eventStart: number;
   leadTimeMinutes: number;
@@ -109,18 +111,17 @@ export function formatScheduleReminderMessage(reminder: DueReminderCandidate, ti
   return lines.join('\n');
 }
 
-function aggregateDeliveryStatus(results: Array<{ status: ScheduleReminderAttemptStatus; errorCode?: string }>) {
-  if (results.length === 0) {
-    return { status: 'skipped' as const, errorCode: 'no_reminder_recipients' };
-  }
+function attemptedRecipientIdsForReminder(attempts: ReminderAttempt[], reminderKey: string) {
+  return new Set(
+    attempts
+      .filter((attempt) => attempt.reminderKey === reminderKey)
+      .map((attempt) => attempt.recipientUserId)
+      .filter((recipientUserId): recipientUserId is string => Boolean(recipientUserId))
+  );
+}
 
-  const failed = results.find((result) => result.status === 'failed');
-  if (failed) return failed;
-
-  const skipped = results.find((result) => result.status === 'skipped');
-  if (skipped) return skipped;
-
-  return { status: 'sent' as const };
+function hasLegacyEventLevelAttempt(attempts: ReminderAttempt[], reminderKey: string) {
+  return attempts.some((attempt) => attempt.reminderKey === reminderKey && !attempt.recipientUserId);
 }
 
 export function parseRecipientUserIds(value: string | undefined) {
@@ -212,7 +213,9 @@ export function getDueReminderCandidates({
   leadTimeMinutes: number;
   lookbackMs?: number;
 }): DueReminderCandidate[] {
-  const attemptedKeys = new Set(attempts.map((attempt) => attempt.reminderKey));
+  const attemptedKeys = new Set(
+    attempts.filter((attempt) => !attempt.recipientUserId).map((attempt) => attempt.reminderKey)
+  );
   const leadTimeMs = leadTimeMinutes * 60_000;
   const earliestDueAt = nowMs - lookbackMs;
 
@@ -274,9 +277,38 @@ export async function runScheduleReminderCycle({
 
   for (const candidate of candidates) {
     const message = formatScheduleReminderMessage(candidate, timeZone);
+    const attemptedRecipientIds = attemptedRecipientIdsForReminder(attempts, candidate.reminderKey);
+    const pendingRecipientUserIds = recipientUserIds.filter(
+      (recipientUserId) => !attemptedRecipientIds.has(recipientUserId)
+    );
+
+    if (hasLegacyEventLevelAttempt(attempts, candidate.reminderKey)) {
+      continue;
+    }
+
+    if (recipientUserIds.length === 0) {
+      await recordReminderAttempt({
+        reminderKey: candidate.reminderKey,
+        googleEventId: candidate.googleEventId,
+        eventStart: candidate.eventStart,
+        leadTimeMinutes: candidate.leadTimeMinutes,
+        attemptedAt: nowMs,
+        status: 'skipped',
+        providerErrorCode: 'no_reminder_recipients'
+      });
+
+      counts.processed += 1;
+      counts.skipped += 1;
+      continue;
+    }
+
+    if (pendingRecipientUserIds.length === 0) {
+      continue;
+    }
+
     const results = await Promise.all(
-      recipientUserIds.map((recipientUserId) =>
-        sendNotification({
+      pendingRecipientUserIds.map(async (recipientUserId) => {
+        const result = await sendNotification({
           recipientUserId,
           topic: 'schedule.reminder',
           message,
@@ -284,23 +316,27 @@ export async function runScheduleReminderCycle({
             reminderKey: candidate.reminderKey,
             googleEventId: candidate.googleEventId
           }
-        })
-      )
+        });
+
+        await recordReminderAttempt({
+          reminderKey: candidate.reminderKey,
+          recipientUserId,
+          googleEventId: candidate.googleEventId,
+          eventStart: candidate.eventStart,
+          leadTimeMinutes: candidate.leadTimeMinutes,
+          attemptedAt: nowMs,
+          status: result.status,
+          ...(result.errorCode ? { providerErrorCode: result.errorCode } : {})
+        });
+
+        return result;
+      })
     );
-    const result = aggregateDeliveryStatus(results);
 
-    await recordReminderAttempt({
-      reminderKey: candidate.reminderKey,
-      googleEventId: candidate.googleEventId,
-      eventStart: candidate.eventStart,
-      leadTimeMinutes: candidate.leadTimeMinutes,
-      attemptedAt: nowMs,
-      status: result.status,
-      providerErrorCode: result.errorCode
-    });
-
-    counts.processed += 1;
-    counts[result.status] += 1;
+    for (const result of results) {
+      counts.processed += 1;
+      counts[result.status] += 1;
+    }
   }
 
   return counts;
@@ -320,15 +356,32 @@ export const dueReminderCandidates = query({
   },
   handler: async (ctx, { serviceToken, nowMs, leadTimeMinutes, lookbackMs }) => {
     assertServiceToken(serviceToken);
-    const events = await ctx.db.query('scheduleEvents').withIndex('by_start').collect();
-    const attempts = await ctx.db.query('scheduleReminderAttempts').collect();
+    const leadTimeMs = leadTimeMinutes * 60_000;
+    const reminderLookbackMs = lookbackMs ?? defaultLookbackMs;
+    const earliestDueAt = nowMs - reminderLookbackMs;
+    const events = (
+      await ctx.db
+        .query('scheduleEvents')
+        .withIndex('by_start', (q) => q.gt('start', nowMs).lte('start', nowMs + leadTimeMs))
+        .collect()
+    ).filter((event) => !event.allDay && event.start - leadTimeMs >= earliestDueAt);
+    const attempts = (
+      await Promise.all(
+        events.map((event) =>
+          ctx.db
+            .query('scheduleReminderAttempts')
+            .withIndex('by_reminder_key', (q) => q.eq('reminderKey', reminderKeyForEvent(event, leadTimeMinutes)))
+            .collect()
+        )
+      )
+    ).flat();
 
     return getDueReminderCandidates({
       events,
       attempts,
       nowMs,
       leadTimeMinutes,
-      lookbackMs
+      lookbackMs: reminderLookbackMs
     });
   }
 });
@@ -337,6 +390,7 @@ export const recordReminderAttempt = mutation({
   args: {
     serviceToken: v.string(),
     reminderKey: v.string(),
+    recipientUserId: v.optional(v.string()),
     googleEventId: v.string(),
     eventStart: v.number(),
     leadTimeMinutes: v.number(),
@@ -346,10 +400,17 @@ export const recordReminderAttempt = mutation({
   },
   handler: async (ctx, { serviceToken, ...attempt }) => {
     assertServiceToken(serviceToken);
-    const existing = await ctx.db
-      .query('scheduleReminderAttempts')
-      .withIndex('by_reminder_key', (q) => q.eq('reminderKey', attempt.reminderKey))
-      .unique();
+    const existing = attempt.recipientUserId
+      ? await ctx.db
+          .query('scheduleReminderAttempts')
+          .withIndex('by_reminder_recipient', (q) =>
+            q.eq('reminderKey', attempt.reminderKey).eq('recipientUserId', attempt.recipientUserId)
+          )
+          .unique()
+      : await ctx.db
+          .query('scheduleReminderAttempts')
+          .withIndex('by_reminder_key', (q) => q.eq('reminderKey', attempt.reminderKey))
+          .unique();
 
     if (existing) {
       return { inserted: false as const, id: existing._id };

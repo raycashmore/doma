@@ -385,7 +385,10 @@ the Bot gateway deployable on Vercel Hobby, where frequent cron schedules are
 rejected. Convex evaluates due reminders every 30 minutes, only sends during
 the configured local window `06:00 <= time < 22:00`, calls the Bot gateway's
 provider-neutral `/notifications/send` endpoint, and records the reminder
-attempt in Convex so each event reminder is only attempted once.
+attempt in Convex per recipient. A reminder that succeeds for one configured
+recipient can still be retried for another recipient whose delivery failed or
+has not been attempted. When no reminder recipients are configured, Convex
+records a skipped event-level attempt with `no_reminder_recipients`.
 
 Set these Convex env vars on every Convex deployment that should send schedule
 reminders:

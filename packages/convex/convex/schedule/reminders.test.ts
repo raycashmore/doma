@@ -188,6 +188,7 @@ describe('runScheduleReminderCycle', () => {
     });
     expect(recordReminderAttempt).toHaveBeenCalledWith({
       reminderKey: `event-1:${nowMs + 30 * 60_000}:30`,
+      recipientUserId: 'user_123',
       googleEventId: 'event-1',
       eventStart: nowMs + 30 * 60_000,
       leadTimeMinutes: 30,
@@ -258,6 +259,7 @@ describe('runScheduleReminderCycle', () => {
 
     expect(recordReminderAttempt).toHaveBeenCalledWith({
       reminderKey: `event-1:${nowMs + 30 * 60_000}:30`,
+      recipientUserId: 'user_123',
       googleEventId: 'event-1',
       eventStart: nowMs + 30 * 60_000,
       leadTimeMinutes: 30,
@@ -281,6 +283,85 @@ describe('runScheduleReminderCycle', () => {
         lookbackMs: 30 * 60_000,
         timeZone: 'Australia/Sydney',
         recipientUserIds: ['user_123'],
+        sendNotification,
+        recordReminderAttempt
+      })
+    ).resolves.toEqual({
+      processed: 0,
+      sent: 0,
+      skipped: 0,
+      failed: 0,
+      outsideDeliveryWindow: false
+    });
+
+    expect(sendNotification).not.toHaveBeenCalled();
+    expect(recordReminderAttempt).not.toHaveBeenCalled();
+  });
+
+  it('sends multi-recipient reminders only to recipients without an attempt', async () => {
+    const candidate = event();
+    const sendNotification = vi.fn(async () => ({ status: 'sent' as const }));
+    const recordReminderAttempt = vi.fn();
+
+    await expect(
+      runScheduleReminderCycle({
+        events: [candidate],
+        attempts: [{ reminderKey: reminderKeyForEvent(candidate, 30), recipientUserId: 'user_done' }],
+        nowMs,
+        leadTimeMinutes: 30,
+        lookbackMs: 30 * 60_000,
+        timeZone: 'Australia/Sydney',
+        recipientUserIds: ['user_done', 'user_pending'],
+        sendNotification,
+        recordReminderAttempt
+      })
+    ).resolves.toEqual({
+      processed: 1,
+      sent: 1,
+      skipped: 0,
+      failed: 0,
+      outsideDeliveryWindow: false
+    });
+
+    expect(sendNotification).toHaveBeenCalledOnce();
+    expect(sendNotification).toHaveBeenCalledWith({
+      recipientUserId: 'user_pending',
+      topic: 'schedule.reminder',
+      message: 'Reminder: School pickup starts at 8:30 pm.',
+      metadata: {
+        reminderKey: `event-1:${nowMs + 30 * 60_000}:30`,
+        googleEventId: 'event-1'
+      }
+    });
+    expect(recordReminderAttempt).toHaveBeenCalledWith({
+      reminderKey: `event-1:${nowMs + 30 * 60_000}:30`,
+      recipientUserId: 'user_pending',
+      googleEventId: 'event-1',
+      eventStart: nowMs + 30 * 60_000,
+      leadTimeMinutes: 30,
+      attemptedAt: nowMs,
+      status: 'sent'
+    });
+  });
+
+  it('does not send when every configured recipient already has an attempt', async () => {
+    const candidate = event();
+    const reminderKey = reminderKeyForEvent(candidate, 30);
+    const sendNotification = vi.fn(async () => ({ status: 'sent' as const }));
+    const recordReminderAttempt = vi.fn();
+
+    await expect(
+      runScheduleReminderCycle({
+        events: [candidate],
+        attempts: [
+          { reminderKey, recipientUserId: 'user_one' },
+          { reminderKey, recipientUserId: 'user_two' }
+        ],
+        nowMs,
+        leadTimeMinutes: 30,
+        lookbackMs: 30 * 60_000,
+        timeZone: 'Australia/Sydney',
+        recipientUserIds: ['user_one', 'user_two'],
         sendNotification,
         recordReminderAttempt
       })
