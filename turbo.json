@@ -1,6 +1,7 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
   "ui": "tui",
+  "globalEnv": ["BOT_SERVICE_TOKEN", "SCHEDULE_CAPABILITY_URL", "SCHEDULE_TZ"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

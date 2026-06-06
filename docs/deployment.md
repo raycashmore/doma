@@ -93,6 +93,7 @@ For Vercel Preview on Schedule, set:
 | `CONVEX_DEPLOY_KEY`                 | Convex preview deploy key     |
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk preview publishable key |
 | `CLERK_SECRET_KEY`                  | Clerk preview secret key      |
+| `BOT_SERVICE_TOKEN`                 | Shared bot service token      |
 
 Do not set a static `NEXT_PUBLIC_CONVEX_URL` for Schedule Preview. Next inlines
 `NEXT_PUBLIC_` variables at build time, so let `convex deploy --cmd` create the
@@ -351,17 +352,18 @@ Production checks:
 
 `apps/api-bot` requires these environment variables in local, preview, staging, and production:
 
-| Variable                   | Where it lives                   | Notes                                                      |
-| -------------------------- | -------------------------------- | ---------------------------------------------------------- |
-| `CLERK_SECRET_KEY`         | Vercel Bot gateway, `.env.local` | Used to verify Clerk bearer tokens                         |
-| `CLERK_PUBLISHABLE_KEY`    | Vercel Bot gateway, `.env.local` | Clerk backend configuration                                |
-| `BOT_SERVICE_TOKEN`        | Vercel Bot gateway, callers      | Shared bearer token for service-to-service sends           |
-| `TELEGRAM_BOT_TOKEN`       | Vercel Bot gateway, `.env.local` | Bot token from BotFather                                   |
-| `TELEGRAM_WEBHOOK_SECRET`  | Vercel Bot gateway, Telegram     | Sent as Telegram's webhook secret token                    |
-| `TELEGRAM_BOT_USERNAME`    | Vercel Bot gateway, `.env.local` | Bot username, ending in `bot`, without `@`                 |
-| `UPSTASH_REDIS_REST_URL`   | Vercel Bot gateway, `.env.local` | HTTPS Upstash REST URL                                     |
-| `UPSTASH_REDIS_REST_TOKEN` | Vercel Bot gateway, `.env.local` | Upstash REST token                                         |
-| `APP_ORIGIN`               | Vercel Bot gateway, `.env.local` | Public Home origin, for example `https://doma.example.com` |
+| Variable                   | Where it lives                                | Notes                                                                                                    |
+| -------------------------- | --------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `CLERK_SECRET_KEY`         | Vercel Bot gateway, `.env.local`              | Used to verify Clerk bearer tokens                                                                       |
+| `CLERK_PUBLISHABLE_KEY`    | Vercel Bot gateway, `.env.local`              | Clerk backend configuration                                                                              |
+| `BOT_SERVICE_TOKEN`        | Vercel Bot gateway, Schedule, Convex, callers | Shared bearer token for service-to-service sends and schedule bot reads                                  |
+| `SCHEDULE_CAPABILITY_URL`  | Vercel Bot gateway, `.env.local`              | Schedule API route for `/schedule`, for example `https://schedule.example.com/schedule/api/bot/schedule` |
+| `TELEGRAM_BOT_TOKEN`       | Vercel Bot gateway, `.env.local`              | Bot token from BotFather                                                                                 |
+| `TELEGRAM_WEBHOOK_SECRET`  | Vercel Bot gateway, Telegram                  | Sent as Telegram's webhook secret token                                                                  |
+| `TELEGRAM_BOT_USERNAME`    | Vercel Bot gateway, `.env.local`              | Bot username, ending in `bot`, without `@`                                                               |
+| `UPSTASH_REDIS_REST_URL`   | Vercel Bot gateway, `.env.local`              | HTTPS Upstash REST URL                                                                                   |
+| `UPSTASH_REDIS_REST_TOKEN` | Vercel Bot gateway, `.env.local`              | Upstash REST token                                                                                       |
+| `APP_ORIGIN`               | Vercel Bot gateway, `.env.local`              | Public Home origin, for example `https://doma.example.com`                                               |
 
 `VERCEL_ENV` is read from Vercel's system environment variables and should not
 be set by hand in the dashboard. Pairing links are created only when
@@ -370,6 +372,12 @@ webhook, status, unlink, and notification routes, but `/linking/pairing-token`
 returns `pairing_disabled`.
 
 Do not commit real bot tokens, Telegram IDs, chat IDs, or private message payloads. Notification attempts store metadata only; keep it that way when adding new channels or capabilities.
+
+Schedule's bot capability route (`/schedule/api/bot/schedule` in production)
+and the Convex
+`schedule.queries.currentWeekForBot` query both validate `BOT_SERVICE_TOKEN`.
+Set the same value in the Bot gateway, Schedule app, and the target Convex
+deployment before enabling `SCHEDULE_CAPABILITY_URL`.
 
 For local development:
 
