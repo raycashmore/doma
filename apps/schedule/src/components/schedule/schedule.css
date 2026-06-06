@@ -118,7 +118,8 @@
   .schedule-top h2,
   .schedule-mobile h2 {
     font-family: var(--warm-font-display);
-    font-size: 2rem;
+    font-weight: var(--warm-font-display-weight);
+    font-size: 1.625rem;
     line-height: 1;
     margin: 0;
   }
@@ -465,7 +466,8 @@
 
   .event-panel__hero h2 {
     font-family: var(--warm-font-display);
-    font-size: 2rem;
+    font-weight: var(--warm-font-display-weight);
+    font-size: 1.625rem;
     line-height: 1.05;
     margin: 10px 0 6px;
   }
@@ -726,7 +728,7 @@
     }
 
     .event-panel__hero h2 {
-      font-size: 1.8rem;
+      font-size: 1.625rem;
     }
   }
 

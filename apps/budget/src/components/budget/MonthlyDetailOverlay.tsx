@@ -52,9 +52,7 @@ export default function MonthlyDetailOverlay({
       >
         <div className="flex flex-none items-center justify-between gap-4 border-b border-warm-border px-3.5 pt-5 pb-4 md:px-7 md:pt-6 md:pb-5">
           <div className="min-w-0">
-            <h2 className="text-[32px] leading-none font-warm-display text-warm-text-primary md:text-[36px]">
-              {monthLabel}
-            </h2>
+            <h2 className="text-[28px] leading-none font-warm-display text-warm-text-primary">{monthLabel}</h2>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <button

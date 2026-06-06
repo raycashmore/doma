@@ -347,7 +347,7 @@ function SettingsShell({
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-2 py-8">
       <header className="flex flex-col gap-2 border-b border-warm-border pb-5">
         <p className="text-sm font-medium text-warm-accent">{status}</p>
-        <h2 className="text-3xl font-warm-display text-warm-text-on-dark">Notification settings</h2>
+        <h2 className="text-[26px] font-warm-display text-warm-text-on-dark">Notification settings</h2>
         <p className="max-w-2xl text-sm leading-6 text-warm-text-tertiary">{description}</p>
       </header>
 
