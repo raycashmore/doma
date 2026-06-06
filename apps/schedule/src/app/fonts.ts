@@ -1,4 +1,4 @@
-import { DM_Sans, DM_Serif_Display } from 'next/font/google';
+import { DM_Sans, Merriweather } from 'next/font/google';
 
 export const dmSans = DM_Sans({
   subsets: ['latin'],
@@ -7,9 +7,9 @@ export const dmSans = DM_Sans({
   display: 'swap'
 });
 
-export const dmSerifDisplay = DM_Serif_Display({
+export const merriweather = Merriweather({
   subsets: ['latin'],
-  weight: ['400'],
+  weight: ['800'],
   variable: '--warm-font-display',
   display: 'swap'
 });

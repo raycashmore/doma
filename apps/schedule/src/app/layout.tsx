@@ -7,7 +7,7 @@ import type { ReactNode } from 'react';
 import { AuthGate } from '@/integrations/auth/AuthGate';
 import AppConvexProvider from '@/integrations/convex/provider';
 
-import { dmSans, dmSerifDisplay } from './fonts';
+import { dmSans, merriweather } from './fonts';
 
 const CLERK_KEY = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 const IS_DEV = process.env.NODE_ENV !== 'production';
@@ -27,7 +27,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={`${dmSans.variable} ${dmSerifDisplay.variable}`}>
+    <html lang="en" className={`${dmSans.variable} ${merriweather.variable}`}>
       <body>
         <AuthGate publishableKey={CLERK_KEY}>
           <AppConvexProvider>

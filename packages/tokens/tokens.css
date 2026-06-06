@@ -52,8 +52,13 @@
   --warm-positive: #5f9466;
   --warm-negative: var(--warm-accent); /* matches accent for now; can diverge later */
 
-  --warm-font-display: 'DM Serif Display', 'Times New Roman', serif;
+  --warm-font-display: 'Merriweather', Georgia, serif;
+  --warm-font-display-weight: 700;
   --warm-font-body: 'DM Sans', system-ui, -apple-system, sans-serif;
+}
+
+.font-warm-display {
+  font-weight: var(--warm-font-display-weight);
 }
 
 .dark {

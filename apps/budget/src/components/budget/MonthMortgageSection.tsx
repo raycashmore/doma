@@ -21,10 +21,10 @@ export default function MonthMortgageSection({
     <section className="rounded-3xl bg-warm-section-mortgage p-5 flex-1 min-w-0 flex flex-col gap-3">
       <header className="flex items-start justify-between">
         <div>
-          <h3 className="text-[22px] leading-tight font-warm-display text-warm-text-primary">Mortgage</h3>
+          <h3 className="text-[21px] leading-tight font-warm-display text-warm-text-primary">Mortgage</h3>
         </div>
         <div className="flex flex-col items-end gap-0.5">
-          <span className="text-[22px] leading-tight font-warm-display text-warm-text-primary">
+          <span className="text-[21px] leading-tight font-warm-display text-warm-text-primary">
             {formatCurrency(fixedPayment + variablePayment)}
           </span>
           {trend ? <TrendBadge trend={trend} /> : null}

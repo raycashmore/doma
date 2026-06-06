@@ -15,7 +15,7 @@ export default function SummaryMini({ label, value, fill, trend }: Props) {
   return (
     <div className={`${fill} rounded-2xl px-4 py-3`}>
       <div className="text-[11px] uppercase tracking-wide text-warm-text-secondary font-semibold">{label}</div>
-      <div className="mt-1 text-2xl font-warm-display text-warm-text-primary">{formatCurrency(value)}</div>
+      <div className="mt-1 text-[22px] font-warm-display text-warm-text-primary">{formatCurrency(value)}</div>
       {trend ? <TrendRow trend={trend} /> : null}
     </div>
   );

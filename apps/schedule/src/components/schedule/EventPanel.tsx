@@ -85,12 +85,6 @@ export function EventPanel({ event, members, open, onClose }: EventPanelProps) {
                 ) : null}
               </div>
             </div>
-            <footer className="event-panel__foot">
-              <a className="event-panel__primary" href={event.htmlLink} target="_blank" rel="noreferrer">
-                <ExternalLink aria-hidden size={15} />
-                Open in Google Calendar
-              </a>
-            </footer>
           </>
         ) : null}
       </aside>
