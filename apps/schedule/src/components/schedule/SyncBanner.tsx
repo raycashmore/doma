@@ -21,7 +21,6 @@ export function SyncBanner({ lastSyncedAt, isRefreshing, error, onRefresh }: Syn
   return (
     <div className="schedule-sync" role="status">
       <div>
-        <span className="schedule-sync__title">Google Calendar</span>
         <span className={error ? 'schedule-sync__meta schedule-sync__meta--error' : 'schedule-sync__meta'}>
           {error ?? formatLastSyncedAt(lastSyncedAt)}
         </span>

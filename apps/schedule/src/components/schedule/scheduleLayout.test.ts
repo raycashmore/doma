@@ -61,6 +61,29 @@ describe('schedule layout helpers', () => {
     expect(events.every((event) => event.who.length === 4)).toBe(true);
   });
 
+  it('defaults unrecognized event ownership to the first member lane', () => {
+    const [event] = normalizeScheduleEvents(
+      [
+        {
+          _id: 'event1',
+          _creationTime: 1,
+          googleEventId: 'g1',
+          calendarId: 'cal',
+          start: new Date(2026, 5, 1, 9, 30).getTime(),
+          end: new Date(2026, 5, 1, 10, 45).getTime(),
+          allDay: false,
+          title: 'Unmatched shared title',
+          who: ['unknownMember'],
+          recurring: false,
+          htmlLink: 'https://calendar.google.com/event?eid=1'
+        }
+      ],
+      monday
+    );
+
+    expect(event?.who).toEqual(['memberA']);
+  });
+
   it('clamps event position to the 6am to 10pm ruler', () => {
     expect(getEventPosition({ startMinutes: 5 * 60, endMinutes: 7 * 60 })).toEqual({
       leftPercent: 0,

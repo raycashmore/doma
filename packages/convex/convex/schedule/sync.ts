@@ -5,14 +5,9 @@ import { JWT } from 'google-auth-library';
 
 import { internal } from '../_generated/api';
 import { action, type ActionCtx, internalAction } from '../_generated/server';
+import { parseJsonEnv, parseScheduleMembers } from './config';
 import { normalizePrivateKey } from './credentials';
-import {
-  type CalendarConfig,
-  type GoogleEvent,
-  type MemberConfig,
-  type ScheduleEventRow,
-  toScheduleEvent
-} from './mapping';
+import { type CalendarConfig, type GoogleEvent, type ScheduleEventRow, toScheduleEvent } from './mapping';
 import { shouldSkipSync } from './syncPolicy';
 import { currentWeekRange } from './week';
 
@@ -23,17 +18,6 @@ type RefreshResult =
   | { skipped: true; count: null; lastSyncedAt: number | null }
   | { skipped: false; count: number; lastSyncedAt: number };
 
-// Parse a JSON env var, naming the offending variable on malformed JSON so the
-// failure points at the env var to fix rather than surfacing a bare SyntaxError.
-function parseJsonEnv<T>(name: string, raw: string, fallback: string): T {
-  try {
-    return JSON.parse(raw || fallback) as T;
-  } catch (err) {
-    const detail = err instanceof Error ? err.message : String(err);
-    throw new Error(`${name} env var is not valid JSON: ${detail}`);
-  }
-}
-
 function parseEnv() {
   const key = parseJsonEnv<{ client_email: string; private_key: string }>(
     'GOOGLE_SA_KEY',
@@ -41,7 +25,7 @@ function parseEnv() {
     '{}'
   );
   const calendars = parseJsonEnv<CalendarConfig[]>('SCHEDULE_CALENDARS', process.env.SCHEDULE_CALENDARS ?? '', '[]');
-  const members = parseJsonEnv<MemberConfig[]>('SCHEDULE_MEMBERS', process.env.SCHEDULE_MEMBERS ?? '', '[]');
+  const members = parseScheduleMembers();
   const tz = process.env.SCHEDULE_TZ ?? 'UTC';
   return { key, calendars, members, tz };
 }

@@ -4,6 +4,7 @@ import {
   MEMBER_IDS,
   type MemberId,
   MEMBERS,
+  type ScheduleMember,
   SWIMLANE_END_MINUTES,
   SWIMLANE_START_MINUTES,
   SWIMLANE_TOTAL_MINUTES
@@ -57,7 +58,7 @@ export type OverlapJoiner = {
 // The backend emits generic member ids (memberA–memberD) or the literal
 // "shared". Real member names live only in Convex env `tokens`, never in git
 // (see docs/schedule-ingestion-setup.md). This map also acts as the allowlist:
-// any id outside it is ignored.
+// any id outside it falls back to the first lane.
 const SOURCE_MEMBER_TO_GENERIC: Record<string, MemberId> = {
   memberA: 'memberA',
   memberB: 'memberB',
@@ -86,7 +87,7 @@ function normalizeMembers(who: string[]): MemberId[] {
     return member ? [member] : [];
   });
   const uniqueMembers = [...new Set(mapped)];
-  return uniqueMembers.length > 0 ? uniqueMembers : [...MEMBER_IDS];
+  return uniqueMembers.length > 0 ? uniqueMembers : [MEMBER_IDS[0]];
 }
 
 function buildEventForDay(event: ConvexScheduleEvent, dayIndex: number): ScheduleEvent {
@@ -138,7 +139,7 @@ export function getEventPosition(event: Pick<ScheduleEvent, 'startMinutes' | 'en
   };
 }
 
-export function getOverlapJoiners(events: ScheduleEvent[]): OverlapJoiner[] {
+export function getOverlapJoiners(events: ScheduleEvent[], members: ScheduleMember[] = MEMBERS): OverlapJoiner[] {
   const joiners: OverlapJoiner[] = [];
   for (const [i, a] of events.entries()) {
     for (const b of events.slice(i + 1)) {
@@ -146,8 +147,8 @@ export function getOverlapJoiners(events: ScheduleEvent[]): OverlapJoiner[] {
       if (a.startMinutes >= b.endMinutes || b.startMinutes >= a.endMinutes) continue;
       if (a.who.some((member) => b.who.includes(member))) continue;
 
-      const aIndex = Math.min(...a.who.map((member) => MEMBERS.findIndex((candidate) => candidate.id === member)));
-      const bIndex = Math.min(...b.who.map((member) => MEMBERS.findIndex((candidate) => candidate.id === member)));
+      const aIndex = Math.min(...a.who.map((member) => members.findIndex((candidate) => candidate.id === member)));
+      const bIndex = Math.min(...b.who.map((member) => members.findIndex((candidate) => candidate.id === member)));
       joiners.push({
         id: `${a.id}-${b.id}`,
         day: a.day,

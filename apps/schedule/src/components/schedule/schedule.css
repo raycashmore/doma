@@ -37,15 +37,14 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
+    gap: 10px;
     border: 1px solid var(--schedule-line);
     border-radius: 999px;
     background: color-mix(in srgb, var(--warm-bg-card) 78%, white);
-    padding: 4px 5px 4px 10px;
+    padding: 4px 5px 4px 12px;
     box-shadow: 0 8px 18px rgb(20 17 12 / 6%);
   }
 
-  .schedule-sync__title,
   .schedule-sync__meta {
     display: block;
   }
@@ -55,25 +54,6 @@
     align-items: center;
     gap: 7px;
     min-width: 0;
-  }
-
-  .schedule-sync__title {
-    max-width: 128px;
-    overflow: hidden;
-    font-weight: 800;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .schedule-sync__title::after {
-    content: '';
-    display: inline-block;
-    width: 3px;
-    height: 3px;
-    margin: 0 0 0 7px;
-    border-radius: 999px;
-    background: var(--schedule-line-strong);
-    vertical-align: middle;
   }
 
   .schedule-sync__meta {
@@ -129,9 +109,9 @@
 
   .schedule-top {
     display: grid;
-    grid-template-columns: minmax(180px, 1fr) minmax(160px, auto) minmax(280px, auto);
+    grid-template-columns: minmax(220px, 1fr) minmax(220px, auto) minmax(220px, 1fr);
     gap: 18px;
-    padding-right: min(360px, 34vw);
+    padding-right: min(230px, 22vw);
     align-items: center;
   }
 
@@ -152,6 +132,7 @@
 
   .schedule-next {
     gap: 8px;
+    justify-self: center;
     color: var(--warm-text-secondary);
     font-size: 0.86rem;
   }
@@ -175,6 +156,7 @@
     flex-wrap: wrap;
     gap: 8px;
     justify-content: flex-end;
+    justify-self: end;
   }
 
   .schedule-legend__item {
@@ -230,7 +212,7 @@
     position: relative;
     z-index: 4;
     height: 30px;
-    margin: 16px 0 0 92px;
+    margin: 16px 0 0 66px;
     background: var(--warm-bg-card);
     color: var(--warm-text-secondary);
     font-size: 0.68rem;
@@ -254,7 +236,7 @@
 
   .swim-day {
     display: grid;
-    grid-template-columns: 82px minmax(0, 1fr);
+    grid-template-columns: 56px minmax(0, 1fr);
     min-height: 112px;
   }
 
@@ -262,11 +244,19 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
+    gap: 3px;
     color: var(--warm-text-secondary);
     font-size: 0.86rem;
   }
 
   .swim-day__label span {
+    color: var(--warm-text-secondary);
+    font-size: 0.64rem;
+    font-weight: 800;
+    text-transform: none;
+  }
+
+  .swim-day__label small {
     color: var(--warm-accent);
     font-size: 0.68rem;
     font-weight: 900;
@@ -289,8 +279,7 @@
   .swim-day__gridline,
   .swim-day__now,
   .swim-lane,
-  .swim-event,
-  .swim-joiner {
+  .swim-event {
     position: absolute;
   }
 
@@ -332,13 +321,19 @@
   .swim-lane {
     left: 0;
     right: 0;
-    height: 20px;
+    height: 25%;
     border-top: 1px solid rgb(29 26 20 / 5%);
   }
 
+  .swim-lane:first-of-type {
+    border-top: 0;
+  }
+
   .swim-lane .schedule-avatar {
-    margin-left: 6px;
-    margin-top: 1px;
+    position: absolute;
+    top: 50%;
+    left: 12px;
+    transform: translateY(-50%);
   }
 
   .swim-event {
@@ -356,7 +351,7 @@
     font-weight: 800;
     padding: 0 7px;
     text-align: left;
-    box-shadow: 0 7px 14px rgb(30 25 15 / 9%);
+    transform: translateY(-50%);
   }
 
   .swim-event::before,
@@ -377,15 +372,6 @@
   .swim-event--selected {
     outline: 2px solid var(--warm-accent);
     outline-offset: 2px;
-  }
-
-  .swim-joiner {
-    z-index: 1;
-    border: 1px dashed rgb(33 32 27 / 22%);
-    border-left-width: 2px;
-    border-right-width: 2px;
-    border-radius: 999px;
-    pointer-events: none;
   }
 
   .schedule-mobile {
@@ -571,13 +557,22 @@
     padding: 12px 14px;
   }
 
-  @media (max-width: 1100px) {
+  @media (max-width: 1700px) {
     .schedule-top {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(180px, 1fr) minmax(220px, auto) minmax(180px, 1fr);
+      padding-right: min(220px, 22vw);
     }
 
     .schedule-legend {
-      justify-content: flex-start;
+      display: none;
+    }
+  }
+
+  @media (max-width: 1100px) {
+    .schedule-top {
+      grid-template-columns: minmax(150px, 1fr) minmax(180px, auto) minmax(150px, 1fr);
+      gap: 12px;
+      padding-right: min(190px, 24vw);
     }
   }
 
