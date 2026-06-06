@@ -20,6 +20,7 @@ describe('parseConfig', () => {
       clerkSecretKey: 'clerk-secret-key',
       clerkPublishableKey: 'clerk-publishable-key',
       botServiceToken: 'service-token',
+      scheduleCapabilityUrl: undefined,
       pairingEnabled: false,
       telegramBotToken: 'telegram-bot-token',
       telegramWebhookSecret: 'telegram-webhook-secret',
@@ -36,6 +37,21 @@ describe('parseConfig', () => {
 
   it('normalizes a localhost app origin without changing the port', () => {
     expect(parseConfig({ ...validEnv, APP_ORIGIN: 'http://localhost:3000' }).appOrigin).toBe('http://localhost:3000');
+  });
+
+  it('accepts an optional schedule capability URL', () => {
+    expect(
+      parseConfig({
+        ...validEnv,
+        SCHEDULE_CAPABILITY_URL: 'https://schedule.example.com/schedule/api/bot/schedule'
+      }).scheduleCapabilityUrl
+    ).toBe('https://schedule.example.com/schedule/api/bot/schedule');
+  });
+
+  it('throws a stable config error when the schedule capability URL is invalid', () => {
+    expect(() => parseConfig({ ...validEnv, SCHEDULE_CAPABILITY_URL: 'not-a-url' })).toThrow(
+      new Error('Invalid bot gateway config')
+    );
   });
 
   it('normalizes an app origin with a trailing slash', () => {

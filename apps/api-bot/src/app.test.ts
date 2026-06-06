@@ -13,6 +13,7 @@ const testConfig: BotConfig = {
   clerkSecretKey: 'clerk-secret-key',
   clerkPublishableKey: 'clerk-publishable-key',
   botServiceToken: 'service-token',
+  scheduleCapabilityUrl: undefined,
   pairingEnabled: true,
   telegramBotToken: 'telegram-bot-token',
   telegramWebhookSecret: 'telegram-webhook-secret',
@@ -72,6 +73,27 @@ describe('api-bot app', () => {
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ ok: true });
+  });
+
+  it('registers configured runtime capabilities for Telegram webhooks', async () => {
+    const app = createApp({
+      config: {
+        ...testConfig,
+        scheduleCapabilityUrl: 'https://schedule.example.com/schedule/api/bot/schedule'
+      },
+      storage: createMemoryStorage()
+    });
+
+    const response = await app.request('/telegram/webhook', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-telegram-bot-api-secret-token': testConfig.telegramWebhookSecret
+      },
+      body: JSON.stringify({ update_id: 123 })
+    });
+
+    expect(response.status).toBe(200);
   });
 
   it('mounts notification routes', async () => {
