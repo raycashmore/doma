@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createApp } from './app.js';
+import defaultExport, { createApp } from './app.js';
 import { authenticateClerkRequest } from './auth/clerk.js';
 import type { BotConfig } from './config.js';
 import { createMemoryStorage } from './storage/memory.js';
@@ -39,6 +39,10 @@ describe('api-bot app', () => {
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ ok: true });
+  });
+
+  it('keeps src/app deployable as a Vercel serverless entrypoint', () => {
+    expect(defaultExport).toEqual(expect.any(Function));
   });
 
   it('mounts linking routes', async () => {

@@ -30,7 +30,8 @@ Prettier — see [`prettier.config.js`](../../prettier.config.js); don't hand-fo
 - **Named exports only.** Avoid default exports so import names stay consistent
   and refactors are safer. _Enforced:_ `import/no-default-export`, with
   exceptions for framework files that require a default export — Next.js
-  `app/` pages/layouts/route handlers/`middleware`, and `*.config.*` files.
+  `app/` pages/layouts/route handlers/`middleware`, Vercel serverless
+  entrypoints such as `api/` and `src/app.ts`, and `*.config.*` files.
 - **No barrel files.** Don't create `index.ts` files whose only job is to
   re-export a directory; they hurt tree-shaking and build speed. Import from the
   source module directly. _Convention._

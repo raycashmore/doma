@@ -61,6 +61,7 @@ export const config = [
       '**/app/**',
       '**/pages/**',
       '**/api/**',
+      '**/src/app.{js,ts}',
       '**/convex/**',
       '**/middleware.{js,ts}',
       '**/*.d.ts'
