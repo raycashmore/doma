@@ -227,7 +227,7 @@ function AuthenticatedNotificationsSettings() {
               </p>
             </div>
 
-            {linkStatus?.displayLabel ? (
+            {linkStatus.displayLabel ? (
               <p className="text-sm text-warm-text-secondary">Linked account: @{linkStatus.displayLabel}</p>
             ) : null}
 
@@ -384,7 +384,7 @@ function parseLinkStatus(body: unknown): LinkStatus | null {
     return null;
   }
 
-  const maybeStatus = body as Partial<LinkStatus>;
+  const maybeStatus = body as Partial<Omit<LinkStatus, 'provider'>> & { provider?: unknown };
 
   if (typeof maybeStatus.pairingEnabled !== 'boolean' || typeof maybeStatus.linked !== 'boolean') {
     return null;

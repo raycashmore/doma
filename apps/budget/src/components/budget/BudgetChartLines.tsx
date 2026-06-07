@@ -14,7 +14,7 @@ type BudgetChartLinesProps = {
   yScale: ScaleLinear<number, number>;
 };
 
-export default function BudgetChartLines({ spendTrend, sinkOrSwimTrend, xScale, yScale }: BudgetChartLinesProps) {
+export function BudgetChartLines({ spendTrend, sinkOrSwimTrend, xScale, yScale }: BudgetChartLinesProps) {
   const halfBand = xScale.bandwidth() / 2;
 
   return (

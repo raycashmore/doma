@@ -5,9 +5,9 @@ import { AxisBottom, AxisLeft } from '@visx/axis';
 import { GridRows } from '@visx/grid';
 import { useTooltip } from '@visx/tooltip';
 
-import BudgetChartBars from './BudgetChartBars';
-import BudgetChartLines from './BudgetChartLines';
-import BudgetChartTooltip from './BudgetChartTooltip';
+import { BudgetChartBars } from './BudgetChartBars';
+import { BudgetChartLines } from './BudgetChartLines';
+import { BudgetChartTooltip } from './BudgetChartTooltip';
 import type { BudgetDataPoint, TimePeriod } from '@/lib/budget';
 import { computeMovingAverage, filterByTimePeriod, formatCurrency } from '@/lib/budget';
 
@@ -217,7 +217,7 @@ function BudgetChartSvg({
   );
 }
 
-export default function BudgetChart({ data, period, onBarClick }: BudgetChartProps) {
+export function BudgetChart({ data, period, onBarClick }: BudgetChartProps) {
   const filtered = filterByTimePeriod(data, period);
   const isEmpty = filtered.length === 0;
 

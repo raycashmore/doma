@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import InsightsPanel from './InsightsPanel';
+import { InsightsPanel } from './InsightsPanel';
 
 describe('InsightsPanel', () => {
   it('hides the temporary encouragement card while keeping the coming soon state', () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import BudgetBreakdownTable from './BudgetBreakdownTable';
+import { BudgetBreakdownTable } from './BudgetBreakdownTable';
 
 function row(month: number) {
   return {

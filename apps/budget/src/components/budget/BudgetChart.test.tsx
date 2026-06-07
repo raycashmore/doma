@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
 
-import { BUDGET_CHART_CARD_CLASS, default as BudgetChart, formatYAxisTick, getBudgetChartLayout } from './BudgetChart';
+import { BUDGET_CHART_CARD_CLASS, BudgetChart, formatYAxisTick, getBudgetChartLayout } from './BudgetChart';
 
 describe('BudgetChart responsive layout', () => {
   it('keeps a drawable plot area at very narrow mobile widths', () => {

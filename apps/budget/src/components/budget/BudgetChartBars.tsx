@@ -16,7 +16,7 @@ const INCOME_FILL = '#5F946666';
 const MORTGAGE_FILL = '#3D2E227A';
 const DISCRETIONARY_FILL = '#D85A3670';
 
-export default function BudgetChartBars({
+export function BudgetChartBars({
   data,
   xScale,
   yScale,

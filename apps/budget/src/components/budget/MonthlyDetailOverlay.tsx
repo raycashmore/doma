@@ -14,7 +14,7 @@ type Props = {
   children: ReactNode;
 };
 
-export default function MonthlyDetailOverlay({
+export function MonthlyDetailOverlay({
   open,
   monthLabel,
   previousMonthLabel,

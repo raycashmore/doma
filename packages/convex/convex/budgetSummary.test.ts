@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { type BudgetRow, summarizeBudgetForPeriod, type SummaryPeriod } from './budgetSummary';
+import type { Id } from './_generated/dataModel';
+import { type BudgetRow, summarizeBudgetForPeriod } from './budgetSummary';
+
+const id = (value: string) => value as Id<'budget'>;
 
 function row(
   date: number,
@@ -14,7 +17,7 @@ function row(
   sharedOut: number
 ): BudgetRow {
   return {
-    _id: 'x' as any,
+    _id: id('x'),
     _creationTime: 0,
     date,
     incomePrimary,

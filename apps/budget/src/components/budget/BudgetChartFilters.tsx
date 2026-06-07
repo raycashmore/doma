@@ -13,7 +13,7 @@ type BudgetChartFiltersProps = {
   onChange: (period: TimePeriod) => void;
 };
 
-export default function BudgetChartFilters({ selected, onChange }: BudgetChartFiltersProps) {
+export function BudgetChartFilters({ selected, onChange }: BudgetChartFiltersProps) {
   return (
     <div role="tablist" className="inline-flex rounded-full border border-white/10 bg-white/8 p-1 backdrop-blur-sm">
       {PERIODS.map((p) => {

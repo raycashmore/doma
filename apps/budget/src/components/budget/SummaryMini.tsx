@@ -11,7 +11,7 @@ type Props = {
   trend?: Trend | null;
 };
 
-export default function SummaryMini({ label, value, fill, trend }: Props) {
+export function SummaryMini({ label, value, fill, trend }: Props) {
   return (
     <div className={`${fill} rounded-2xl px-4 py-3`}>
       <div className="text-[11px] uppercase tracking-wide text-warm-text-secondary font-semibold">{label}</div>

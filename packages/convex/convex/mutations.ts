@@ -397,7 +397,7 @@ export const updateBudget = mutation({
   },
   handler: async (ctx, args) => {
     const { id, ...fields } = args;
-    const patch: Record<string, any> = {};
+    const patch: Record<string, number> = {};
     for (const [key, val] of Object.entries(fields)) {
       if (val !== undefined) patch[key] = val;
     }

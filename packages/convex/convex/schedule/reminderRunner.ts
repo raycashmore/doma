@@ -1,5 +1,8 @@
+import type { FunctionReference } from 'convex/server';
+
 import { internal } from '../_generated/api';
 import { internalAction } from '../_generated/server';
+import type { ScheduleReminderAttemptRecorder } from './reminders';
 import {
   createBotGatewayNotificationSender,
   parseBotGatewayOrigin,
@@ -8,7 +11,24 @@ import {
   runScheduleReminderCycle
 } from './reminders';
 
-const reminderStore = (internal as any).schedule.reminderStore;
+type ReminderAttempt = Parameters<ScheduleReminderAttemptRecorder>[0];
+
+type ReminderStoreRefs = {
+  reminderRunInputs: FunctionReference<
+    'query',
+    'internal',
+    { nowMs: number; leadTimeMinutes: number; lookbackMs: number }
+  >;
+  recordReminderAttempt: FunctionReference<'mutation', 'internal', ReminderAttempt>;
+};
+
+const reminderStore: ReminderStoreRefs = (
+  internal as unknown as {
+    schedule: {
+      reminderStore: ReminderStoreRefs;
+    };
+  }
+).schedule.reminderStore;
 
 export const runDueScheduleReminders = internalAction({
   args: {},

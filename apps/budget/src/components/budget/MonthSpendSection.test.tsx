@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import MonthSpendSection from './MonthSpendSection';
+import { MonthSpendSection } from './MonthSpendSection';
 
 describe('MonthSpendSection', () => {
   it('shows credit card totals and category rows without the old category title', () => {

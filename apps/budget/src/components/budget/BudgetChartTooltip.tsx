@@ -17,7 +17,7 @@ function monthYear(date: number) {
   });
 }
 
-export default function BudgetChartTooltip({ date, spend, sinkOrSwim, mortgage, top, left }: BudgetChartTooltipProps) {
+export function BudgetChartTooltip({ date, spend, sinkOrSwim, mortgage, top, left }: BudgetChartTooltipProps) {
   return (
     <TooltipWithBounds
       top={top}
