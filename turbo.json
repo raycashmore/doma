@@ -1,6 +1,24 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
   "ui": "tui",
+  "globalEnv": [
+    "BOT_GATEWAY_ORIGIN",
+    "BOT_SERVICE_TOKEN",
+    "CLERK_JWT_ISSUER_DOMAIN",
+    "CONVEX_URL",
+    "GOOGLE_SA_KEY",
+    "NEXT_PUBLIC_CONVEX_URL",
+    "NODE_ENV",
+    "SCHEDULE_CALENDARS",
+    "SCHEDULE_CAPABILITY_URL",
+    "SCHEDULE_MEMBERS",
+    "SCHEDULE_REMINDER_LEAD_TIME_MINUTES",
+    "SCHEDULE_REMINDER_LOOKBACK_MINUTES",
+    "SCHEDULE_REMINDER_RECIPIENT_USER_IDS",
+    "SCHEDULE_REMINDER_TZ",
+    "SCHEDULE_TZ",
+    "VITE_CONVEX_URL"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

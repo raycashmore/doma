@@ -10,13 +10,7 @@ type Props = {
   trend?: Trend | null;
 };
 
-export default function MonthMortgageSection({
-  contribTotal: _contribTotal,
-  fixedPayment,
-  variablePayment,
-  paymentTotal,
-  trend
-}: Props) {
+export function MonthMortgageSection({ fixedPayment, variablePayment, paymentTotal, trend }: Props) {
   return (
     <section className="rounded-3xl bg-warm-section-mortgage p-5 flex-1 min-w-0 flex flex-col gap-3">
       <header className="flex items-start justify-between">

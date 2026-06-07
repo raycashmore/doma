@@ -1,6 +1,5 @@
 import js from '@eslint/js';
 import eslintConfigPrettier from 'eslint-config-prettier';
-import onlyWarn from 'eslint-plugin-only-warn';
 import simpleImportSort from 'eslint-plugin-simple-import-sort';
 import turboPlugin from 'eslint-plugin-turbo';
 import tseslint from 'typescript-eslint';
@@ -34,7 +33,7 @@ export const config = [
       turbo: turboPlugin
     },
     rules: {
-      'turbo/no-undeclared-env-vars': 'warn'
+      'turbo/no-undeclared-env-vars': 'error'
     }
   },
   {
@@ -43,16 +42,16 @@ export const config = [
     },
     rules: {
       // Prefer `type` aliases over `interface`.
-      '@typescript-eslint/consistent-type-definitions': ['warn', 'type'],
+      '@typescript-eslint/consistent-type-definitions': ['error', 'type'],
       // Use `import type { … }` for type-only imports (pairs with verbatimModuleSyntax).
       '@typescript-eslint/consistent-type-imports': [
-        'warn',
+        'error',
         { prefer: 'type-imports', fixStyle: 'separate-type-imports' }
       ],
-      'no-restricted-syntax': ['warn', noEnums, noDefaultExports],
+      'no-restricted-syntax': ['error', noEnums, noDefaultExports],
       // Keep imports and exports sorted (autofixable).
-      'simple-import-sort/imports': 'warn',
-      'simple-import-sort/exports': 'warn'
+      'simple-import-sort/imports': 'error',
+      'simple-import-sort/exports': 'error'
     }
   },
   {
@@ -67,12 +66,7 @@ export const config = [
       '**/*.d.ts'
     ],
     rules: {
-      'no-restricted-syntax': ['warn', noEnums]
-    }
-  },
-  {
-    plugins: {
-      onlyWarn
+      'no-restricted-syntax': ['error', noEnums]
     }
   },
   {

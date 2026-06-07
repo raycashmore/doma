@@ -22,3 +22,17 @@ export const scheduleSyncMetaTable = defineTable({
   key: v.literal('default'),
   lastSyncedAt: v.number() // epoch ms
 }).index('by_key', ['key']);
+
+export const scheduleReminderAttemptsTable = defineTable({
+  reminderKey: v.string(),
+  recipientUserId: v.optional(v.string()),
+  googleEventId: v.string(),
+  eventStart: v.number(),
+  leadTimeMinutes: v.number(),
+  attemptedAt: v.number(),
+  status: v.union(v.literal('pending'), v.literal('sent'), v.literal('skipped'), v.literal('failed')),
+  providerErrorCode: v.optional(v.string())
+})
+  .index('by_reminder_key', ['reminderKey'])
+  .index('by_reminder_recipient', ['reminderKey', 'recipientUserId'])
+  .index('by_attempted_at', ['attemptedAt']);

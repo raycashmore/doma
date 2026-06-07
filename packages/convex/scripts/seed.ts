@@ -27,6 +27,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const client = new ConvexHttpClient(getTargetConvexUrl());
 const XLSX_PATH = path.resolve(__dirname, 'CREAM.xlsx');
 
+type SpreadsheetRow = unknown[];
+
 function excelDateToTimestamp(excelDate: number): number {
   const MS_PER_DAY = 86400000;
   const EXCEL_EPOCH = new Date(Date.UTC(1899, 11, 30)).getTime();
@@ -73,7 +75,7 @@ function readBudgetRows(wb: XLSX.WorkBook): {
   mortgageFieldsByDate: MortgageFields[];
 } {
   const ws = wb.Sheets['Sink or Swim'];
-  const data = XLSX.utils.sheet_to_json<any[]>(ws, { header: 1 });
+  const data = XLSX.utils.sheet_to_json<SpreadsheetRow>(ws, { header: 1 });
   // Columns: Date(0) | Credit 2(1) | Credit 1(2) | Spend(3=derived) | Sink or swim(4) |
   //          Income Primary(5) | Income Secondary(6) | Variable(7) | Fixed(8) | Rent(9) |
   //          Rate Var(10) | Rate Fixed(11) | blank(12) | Credit 3(13) |
@@ -145,13 +147,13 @@ async function main() {
   // ── Current Accounts ──────────────────────────────────────
   {
     const ws = wb.Sheets['Current'];
-    const data = XLSX.utils.sheet_to_json<any[]>(ws, { header: 1 });
+    const data = XLSX.utils.sheet_to_json<SpreadsheetRow>(ws, { header: 1 });
     // Columns: Date(0) | Current Secondary(1) | Shared(2) | Current Primary(3) |
     //          Other(4) | Total(5=derived) | Currency(6)
     const rows = data
       .slice(1)
-      .filter((r: any[]) => r[0] && typeof r[0] === 'number')
-      .map((r: any[]) => ({
+      .filter((r: SpreadsheetRow) => r[0] && typeof r[0] === 'number')
+      .map((r: SpreadsheetRow) => ({
         date: excelDateToTimestamp(num(r[0])),
         currentSecondary: toCents(num(r[1])),
         shared: toCents(num(r[2])),
@@ -174,11 +176,11 @@ async function main() {
   // ── Cash Accounts ─────────────────────────────────────────
   {
     const ws = wb.Sheets['Cash'];
-    const data = XLSX.utils.sheet_to_json<any[]>(ws, { header: 1 });
+    const data = XLSX.utils.sheet_to_json<SpreadsheetRow>(ws, { header: 1 });
     const rows = data
       .slice(1)
-      .filter((r: any[]) => r[0] && typeof r[0] === 'number')
-      .map((r: any[]) => ({
+      .filter((r: SpreadsheetRow) => r[0] && typeof r[0] === 'number')
+      .map((r: SpreadsheetRow) => ({
         date: excelDateToTimestamp(num(r[0])),
         saver: toCents(num(r[1])),
         highInterest: toCents(num(r[2]))
@@ -198,11 +200,11 @@ async function main() {
   // ── UK Accounts ───────────────────────────────────────────
   {
     const ws = wb.Sheets['UK'];
-    const data = XLSX.utils.sheet_to_json<any[]>(ws, { header: 1 });
+    const data = XLSX.utils.sheet_to_json<SpreadsheetRow>(ws, { header: 1 });
     const rows = data
       .slice(1)
-      .filter((r: any[]) => r[0] && typeof r[0] === 'number')
-      .map((r: any[]) => ({
+      .filter((r: SpreadsheetRow) => r[0] && typeof r[0] === 'number')
+      .map((r: SpreadsheetRow) => ({
         date: excelDateToTimestamp(num(r[0])),
         currentGbp: toCents(num(r[1])),
         saverGbp: toCents(num(r[2])),
@@ -227,11 +229,11 @@ async function main() {
   // ── Super Accounts ────────────────────────────────────────
   {
     const ws = wb.Sheets['Super'];
-    const data = XLSX.utils.sheet_to_json<any[]>(ws, { header: 1 });
+    const data = XLSX.utils.sheet_to_json<SpreadsheetRow>(ws, { header: 1 });
     const rows = data
       .slice(1)
-      .filter((r: any[]) => r[0] && typeof r[0] === 'number')
-      .map((r: any[]) => ({
+      .filter((r: SpreadsheetRow) => r[0] && typeof r[0] === 'number')
+      .map((r: SpreadsheetRow) => ({
         date: excelDateToTimestamp(num(r[0])),
         pension: toCents(num(r[1])),
         // r[2] = Pension AUD (derived)
@@ -255,11 +257,11 @@ async function main() {
   // ── Investment Accounts ───────────────────────────────────
   {
     const ws = wb.Sheets['Investments'];
-    const data = XLSX.utils.sheet_to_json<any[]>(ws, { header: 1 });
+    const data = XLSX.utils.sheet_to_json<SpreadsheetRow>(ws, { header: 1 });
     const rows = data
       .slice(1)
-      .filter((r: any[]) => r[0] && typeof r[0] === 'number')
-      .map((r: any[]) => ({
+      .filter((r: SpreadsheetRow) => r[0] && typeof r[0] === 'number')
+      .map((r: SpreadsheetRow) => ({
         date: excelDateToTimestamp(num(r[0])),
         managedFund1: toCents(num(r[1])),
         investmentLoan: toCents(num(r[2])),
@@ -289,9 +291,9 @@ async function main() {
   // ── Mortgage ──────────────────────────────────────────────
   {
     const ws = wb.Sheets['Mortgage'];
-    const data = XLSX.utils.sheet_to_json<any[]>(ws, { header: 1 });
-    const datedRows = data.slice(1).filter((r: any[]) => r[0] && typeof r[0] === 'number');
-    const latestRow = datedRows.reduce<any[] | undefined>((latest, r) => {
+    const data = XLSX.utils.sheet_to_json<SpreadsheetRow>(ws, { header: 1 });
+    const datedRows = data.slice(1).filter((r: SpreadsheetRow) => r[0] && typeof r[0] === 'number');
+    const latestRow = datedRows.reduce<SpreadsheetRow | undefined>((latest, r) => {
       if (!latest) return r;
       return num(r[0]) > num(latest[0]) ? r : latest;
     }, undefined);
@@ -312,7 +314,7 @@ async function main() {
       console.log(`  mortgageConfig: upserted ${result.upserted}`);
     }
 
-    const rows = datedRows.map((r: any[]) => {
+    const rows = datedRows.map((r: SpreadsheetRow) => {
       const captureDate = excelDateToTimestamp(num(r[0]));
       const dates = budgetCaptureDatesFromCaptureDate(captureDate);
       const mortgageFields = findMortgageFieldsAtOrBefore(mortgageFieldsByDate, dates.date);
@@ -377,7 +379,7 @@ async function main() {
   // ── Crypto Transactions ───────────────────────────────────
   {
     const ws = wb.Sheets['Crypto'];
-    const data = XLSX.utils.sheet_to_json<any[]>(ws, { header: 1 });
+    const data = XLSX.utils.sheet_to_json<SpreadsheetRow>(ws, { header: 1 });
 
     const txns: Array<{
       platform: 'platform_a' | 'platform_b';
@@ -423,7 +425,7 @@ async function main() {
   // ── Crypto Summaries ──────────────────────────────────────
   {
     const ws = wb.Sheets['Crypto'];
-    const data = XLSX.utils.sheet_to_json<any[]>(ws, { header: 1 });
+    const data = XLSX.utils.sheet_to_json<SpreadsheetRow>(ws, { header: 1 });
 
     const summaries: Array<{
       platform: 'platform_a' | 'platform_b';

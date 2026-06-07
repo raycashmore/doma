@@ -22,7 +22,7 @@ Use `pnpm` (`packageManager`: `pnpm@9.0.0`).
 
 ### Issue tracker
 
-Issues and PRDs for this repo live in Ray's Notion workspace in the `Doma Backlog` database. See `docs/agents/issue-tracker.md`.
+Issues and PRDs for this repo live in Ray's Notion workspace in the `Doma Task Tracker` database. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 

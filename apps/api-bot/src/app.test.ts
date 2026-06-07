@@ -13,6 +13,8 @@ const testConfig: BotConfig = {
   clerkSecretKey: 'clerk-secret-key',
   clerkPublishableKey: 'clerk-publishable-key',
   botServiceToken: 'service-token',
+  convexUrl: 'https://convex.example.com',
+  scheduleCapabilityUrl: undefined,
   pairingEnabled: true,
   telegramBotToken: 'telegram-bot-token',
   telegramWebhookSecret: 'telegram-webhook-secret',
@@ -74,6 +76,27 @@ describe('api-bot app', () => {
     await expect(response.json()).resolves.toEqual({ ok: true });
   });
 
+  it('registers configured runtime capabilities for Telegram webhooks', async () => {
+    const app = createApp({
+      config: {
+        ...testConfig,
+        scheduleCapabilityUrl: 'https://schedule.example.com/schedule/api/bot/schedule'
+      },
+      storage: createMemoryStorage()
+    });
+
+    const response = await app.request('/telegram/webhook', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-telegram-bot-api-secret-token': testConfig.telegramWebhookSecret
+      },
+      body: JSON.stringify({ update_id: 123 })
+    });
+
+    expect(response.status).toBe(200);
+  });
+
   it('mounts notification routes', async () => {
     const app = createApp({
       config: testConfig,
@@ -90,5 +113,23 @@ describe('api-bot app', () => {
 
     expect(response.status).toBe(401);
     await expect(response.json()).resolves.toEqual({ error: 'unauthorized' });
+  });
+
+  it('does not mount the old schedule reminder cron route', async () => {
+    const app = createApp({
+      config: testConfig,
+      storage: createMemoryStorage()
+    });
+
+    const response = await app.request('/reminders/schedule/run', {
+      method: 'POST',
+      headers: {
+        authorization: 'Bearer service-token',
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({ nowMs: Date.parse('2026-06-06T10:00:00.000Z') })
+    });
+
+    expect(response.status).toBe(404);
   });
 });

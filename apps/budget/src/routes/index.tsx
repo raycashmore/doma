@@ -3,16 +3,16 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from 'convex/react';
 import { api } from '@repo/convex';
 import type { TimePeriod } from '@/lib/budget';
-import BudgetChart from '@/components/budget/BudgetChart';
-import BudgetChartFilters from '@/components/budget/BudgetChartFilters';
-import BudgetKpiCards from '@/components/budget/BudgetKpiCards';
-import BudgetBreakdownTable from '@/components/budget/BudgetBreakdownTable';
-import InsightsPanel from '@/components/budget/InsightsPanel';
-import MonthlyDetailOverlay from '@/components/budget/MonthlyDetailOverlay';
-import MonthIncomeSection from '@/components/budget/MonthIncomeSection';
-import MonthSpendSection from '@/components/budget/MonthSpendSection';
-import MonthMortgageSection from '@/components/budget/MonthMortgageSection';
+import { BudgetBreakdownTable } from '@/components/budget/BudgetBreakdownTable';
+import { BudgetChart } from '@/components/budget/BudgetChart';
+import { BudgetChartFilters } from '@/components/budget/BudgetChartFilters';
 import { useBudgetHeaderActions } from '@/components/budget/BudgetHeaderActionsContext';
+import { BudgetKpiCards } from '@/components/budget/BudgetKpiCards';
+import { InsightsPanel } from '@/components/budget/InsightsPanel';
+import { MonthIncomeSection } from '@/components/budget/MonthIncomeSection';
+import { MonthMortgageSection } from '@/components/budget/MonthMortgageSection';
+import { MonthSpendSection } from '@/components/budget/MonthSpendSection';
+import { MonthlyDetailOverlay } from '@/components/budget/MonthlyDetailOverlay';
 
 export const Route = createFileRoute('/')({
   component: BudgetPage

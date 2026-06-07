@@ -9,7 +9,7 @@
 import { defineSchema, defineTable } from 'convex/server';
 import { v } from 'convex/values';
 
-import { scheduleEventsTable, scheduleSyncMetaTable } from './schedule/schema';
+import { scheduleEventsTable, scheduleReminderAttemptsTable, scheduleSyncMetaTable } from './schedule/schema';
 
 export default defineSchema({
   // ============================================================
@@ -161,5 +161,6 @@ export default defineSchema({
   // SCHEDULE EVENTS — Google Calendar ingestion (current week)
   // ============================================================
   scheduleEvents: scheduleEventsTable,
-  scheduleSyncMeta: scheduleSyncMetaTable
+  scheduleSyncMeta: scheduleSyncMetaTable,
+  scheduleReminderAttempts: scheduleReminderAttemptsTable
 });

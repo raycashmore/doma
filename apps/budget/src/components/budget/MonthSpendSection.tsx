@@ -17,7 +17,7 @@ type Props = {
   trend?: Trend | null;
 };
 
-export default function MonthSpendSection({ credit1, credit2, credit3, categories, oneOffs, trend }: Props) {
+export function MonthSpendSection({ credit1, credit2, credit3, categories, oneOffs, trend }: Props) {
   const [expanded, setExpanded] = useState(false);
   const creditCardPrimary = credit1 + credit3;
   const total = creditCardPrimary + credit2 + oneOffs;

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import type { Doc, Id } from './_generated/dataModel';
 import {
   type BudgetRow,
   computeTrend,
@@ -9,9 +10,13 @@ import {
 } from './monthDetail';
 
 const MS = 86_400_000;
+const budgetId = (value: string) => value as Id<'budget'>;
+const mortgageId = (value: string) => value as Id<'mortgage'>;
+const mortgageConfigId = (value: string) => value as Id<'mortgageConfig'>;
+const spendCategoryBreakdownId = (value: string) => value as Id<'spendCategoryBreakdown'>;
 
 const budgetRow: BudgetRow = {
-  _id: 'b' as any,
+  _id: budgetId('b'),
   _creationTime: 0,
   date: MS * 100,
   incomePrimary: 800_000,
@@ -27,7 +32,7 @@ const budgetRow: BudgetRow = {
 
 const priorBudgetRow: BudgetRow = {
   ...budgetRow,
-  _id: 'b-prior' as any,
+  _id: budgetId('b-prior'),
   date: MS * 70,
   incomePrimary: 700_000,
   incomeSecondary: 50_000,
@@ -39,7 +44,7 @@ const priorBudgetRow: BudgetRow = {
 };
 
 const mortgageRow: MortgageRow = {
-  _id: 'm' as any,
+  _id: mortgageId('m'),
   _creationTime: 0,
   date: MS * 100,
   debt1: 30_000_000,
@@ -52,8 +57,8 @@ const mortgageRow: MortgageRow = {
   offset2: 2_500_000
 };
 
-const mortgageConfig = {
-  _id: 'cfg' as any,
+const mortgageConfig: Doc<'mortgageConfig'> = {
+  _id: mortgageConfigId('cfg'),
   _creationTime: 0,
   key: 'default' as const,
   price: 80_000_000,
@@ -67,7 +72,7 @@ const mortgageConfig = {
 
 const priorMortgageRow: MortgageRow = {
   ...mortgageRow,
-  _id: 'm-prior' as any,
+  _id: mortgageId('m-prior'),
   date: MS * 70,
   fixedPayment: 240_000,
   variablePayment: 150_000
@@ -75,7 +80,7 @@ const priorMortgageRow: MortgageRow = {
 
 const categoryRows: SpendCategoryBreakdownRow[] = [
   {
-    _id: 'sc-small' as any,
+    _id: spendCategoryBreakdownId('sc-small'),
     _creationTime: 0,
     monthKey: '1970-04',
     sourceDate: MS * 100,
@@ -83,7 +88,7 @@ const categoryRows: SpendCategoryBreakdownRow[] = [
     amount: 12_000
   },
   {
-    _id: 'sc-large' as any,
+    _id: spendCategoryBreakdownId('sc-large'),
     _creationTime: 0,
     monthKey: '1970-04',
     sourceDate: MS * 100,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import SummaryMini from './SummaryMini';
+import { SummaryMini } from './SummaryMini';
 
 describe('SummaryMini', () => {
   it('renders label and value', () => {

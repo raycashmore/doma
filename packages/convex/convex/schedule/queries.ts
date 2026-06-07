@@ -72,3 +72,18 @@ export const currentWeek = query({
     };
   }
 });
+
+export const currentWeekForBot = query({
+  args: { serviceToken: v.string() },
+  handler: async (ctx, { serviceToken }) => {
+    const expectedToken = process.env.BOT_SERVICE_TOKEN;
+    if (!expectedToken || serviceToken !== expectedToken) throw new Error('Unauthorized');
+
+    const events = await ctx.db.query('scheduleEvents').withIndex('by_start').collect();
+    return {
+      events,
+      members: displayMembersFromConfig(parseScheduleMembers()),
+      lastSyncedAt: await readLastSyncedAt(ctx)
+    };
+  }
+});

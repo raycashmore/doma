@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import type { Id, TableNames } from './_generated/dataModel';
 import {
   budgetMortgagePortion,
   budgetTotalOut,
@@ -14,6 +15,8 @@ import {
   toCents,
   ukTotalAud
 } from './helpers';
+
+const id = <TableName extends TableNames>(value: string) => value as Id<TableName>;
 
 describe('toCents', () => {
   it('converts whole dollars to cents', () => {
@@ -48,7 +51,7 @@ describe('rate-boundary rounding (returns integer cents)', () => {
     // 100,000 pence (£1000) * 1.95 = 195,000 cents
     expect(
       superPensionAud({
-        _id: 'x' as any,
+        _id: id<'superAccounts'>('x'),
         _creationTime: 0,
         date: 0,
         pension: 100_000,
@@ -64,7 +67,7 @@ describe('rate-boundary rounding (returns integer cents)', () => {
     // 100 pence * 1.234 = 123.4 cents -> 123
     expect(
       superPensionAud({
-        _id: 'x' as any,
+        _id: id<'superAccounts'>('x'),
         _creationTime: 0,
         date: 0,
         pension: 100,
@@ -77,7 +80,7 @@ describe('rate-boundary rounding (returns integer cents)', () => {
     expect(
       Number.isInteger(
         superPensionAud({
-          _id: 'x' as any,
+          _id: id<'superAccounts'>('x'),
           _creationTime: 0,
           date: 0,
           pension: 99,
@@ -92,7 +95,7 @@ describe('rate-boundary rounding (returns integer cents)', () => {
 
   it('ukTotalAud returns integer cents', () => {
     const row = {
-      _id: 'x' as any,
+      _id: id<'ukAccounts'>('x'),
       _creationTime: 0,
       date: 0,
       currentGbp: 10_000,
@@ -107,7 +110,7 @@ describe('rate-boundary rounding (returns integer cents)', () => {
 
   it('investmentTotal returns integer cents', () => {
     const row = {
-      _id: 'x' as any,
+      _id: id<'investmentAccounts'>('x'),
       _creationTime: 0,
       date: 0,
       managedFund1: 1_000_000,
@@ -131,7 +134,7 @@ describe('rate-boundary rounding (returns integer cents)', () => {
 
 describe('refactored mortgage and budget helpers', () => {
   const mortgage = {
-    _id: 'm' as any,
+    _id: id<'mortgage'>('m'),
     _creationTime: 0,
     date: 0,
     debt1: 30_000_000,
@@ -145,7 +148,7 @@ describe('refactored mortgage and budget helpers', () => {
   };
 
   const config = {
-    _id: 'cfg' as any,
+    _id: id<'mortgageConfig'>('cfg'),
     _creationTime: 0,
     key: 'default' as const,
     price: 80_000_000,
@@ -160,7 +163,7 @@ describe('refactored mortgage and budget helpers', () => {
   it('uses sharedOut for budget total out', () => {
     expect(
       budgetTotalOut({
-        _id: 'b' as any,
+        _id: id<'budget'>('b'),
         _creationTime: 0,
         date: 0,
         incomePrimary: 0,
@@ -172,14 +175,14 @@ describe('refactored mortgage and budget helpers', () => {
         oneOffs: 40_000,
         sharedOut: 50_000,
         rent: 0
-      } as any)
+      })
     ).toBe(150_000);
   });
 
   it('includes currency in current account totals', () => {
     expect(
       currentAccountTotal({
-        _id: 'c' as any,
+        _id: id<'currentAccounts'>('c'),
         _creationTime: 0,
         date: 0,
         currentSecondary: 10_000,
@@ -187,17 +190,17 @@ describe('refactored mortgage and budget helpers', () => {
         currentPrimary: 30_000,
         other: 40_000,
         currency: 50_000
-      } as any)
+      })
     ).toBe(150_000);
   });
 
   it('derives mortgage payment total from mortgage fixed and variable payment fields', () => {
-    expect(mortgagePaymentTotal(mortgage as any)).toBe(390_000);
-    expect(budgetMortgagePortion(mortgage as any)).toBe(390_000);
+    expect(mortgagePaymentTotal(mortgage)).toBe(390_000);
+    expect(budgetMortgagePortion(mortgage)).toBe(390_000);
   });
 
   it('derives equity from mortgage config price', () => {
-    expect(mortgageEquity(mortgage as any, config)).toBe(40_000_000);
+    expect(mortgageEquity(mortgage, config)).toBe(40_000_000);
   });
 
   it('normalizes missing config to zeros for totals guards', () => {
@@ -213,6 +216,6 @@ describe('refactored mortgage and budget helpers', () => {
   });
 
   it('derives principal paid from payment minus interest estimate', () => {
-    expect(mortgagePrincipalPaid(mortgage as any)).toBe(0);
+    expect(mortgagePrincipalPaid(mortgage)).toBe(0);
   });
 });

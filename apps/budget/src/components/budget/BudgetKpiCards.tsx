@@ -15,7 +15,7 @@ function SkeletonRow() {
   );
 }
 
-export default function BudgetKpiCards({ summary }: Props) {
+export function BudgetKpiCards({ summary }: Props) {
   if (!summary) return <SkeletonRow />;
 
   return (

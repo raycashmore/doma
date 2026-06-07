@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import type { Id } from './_generated/dataModel';
 import {
   type BudgetRow,
   buildMonthlyBreakdown,
@@ -9,10 +10,12 @@ import {
 } from './monthlyBreakdown';
 
 const MS = 86_400_000;
+const budgetId = (value: string) => value as Id<'budget'>;
+const mortgageId = (value: string) => value as Id<'mortgage'>;
 
 function b(date: number, inP: number, credit: number): BudgetRow {
   return {
-    _id: 'b' as any,
+    _id: budgetId('b'),
     _creationTime: 0,
     date,
     incomePrimary: inP,
@@ -24,12 +27,12 @@ function b(date: number, inP: number, credit: number): BudgetRow {
     oneOffs: 0,
     sharedOut: 0,
     rent: 0
-  } as any;
+  };
 }
 
 function m(date: number, variablePayment = 0, fixedPayment = 0, creationTime = 0): MortgageRow {
   return {
-    _id: 'm' as any,
+    _id: mortgageId('m'),
     _creationTime: creationTime,
     date,
     debt1: 0,
@@ -40,7 +43,7 @@ function m(date: number, variablePayment = 0, fixedPayment = 0, creationTime = 0
     rateFixed: undefined,
     offset1: 0,
     offset2: 0
-  } as any;
+  };
 }
 
 describe('buildMonthlyBreakdown', () => {

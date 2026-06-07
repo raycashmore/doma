@@ -9,7 +9,7 @@ type Props = {
   trend?: Trend | null;
 };
 
-export default function MonthIncomeSection({ primary, secondary, billContrib, trend }: Props) {
+export function MonthIncomeSection({ primary, secondary, billContrib, trend }: Props) {
   return (
     <section className="rounded-3xl bg-warm-section-income p-5 flex-1 min-w-0 flex flex-col gap-3">
       <header className="flex items-start justify-between">
