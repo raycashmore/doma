@@ -1,12 +1,13 @@
 'use client';
 
 import clsx from 'clsx';
-import { Home, LogOut } from 'lucide-react';
+import { Home, LogOut, Settings } from 'lucide-react';
 
 import { type AppDescriptor, type AppId, APPS, getAppHref } from './apps';
 import { useUrlAuth } from './auth';
 
 const homeApp = APPS.find((a) => a.id === 'home')!;
+const settingsPath = '/settings/notifications';
 
 export type SidebarProps = {
   activeAppId: AppId;
@@ -21,6 +22,8 @@ export function Sidebar({ activeAppId, isDev, onSignOut }: SidebarProps) {
     const href = getAppHref(app, isDev);
     return urlAuth && href.startsWith('http') ? urlAuth(href) : href;
   };
+  const settingsHref = isDev ? `http://localhost:${homeApp.devPort}${settingsPath}` : settingsPath;
+  const settingsLinkHref = urlAuth && settingsHref.startsWith('http') ? urlAuth(settingsHref) : settingsHref;
 
   return (
     <nav aria-label="App navigation" className="hidden md:flex flex-col items-end w-14 py-6 text-warm-text-on-dark">
@@ -63,6 +66,14 @@ export function Sidebar({ activeAppId, isDev, onSignOut }: SidebarProps) {
           );
         })}
       </ul>
+
+      <a
+        href={settingsLinkHref}
+        aria-label="Notification settings"
+        className="flex items-center justify-center w-12 h-12 rounded-[14px] text-warm-text-tertiary transition-colors hover:bg-warm-bg-dark-muted hover:text-warm-text-on-dark"
+      >
+        <Settings size={20} aria-hidden="true" />
+      </a>
 
       {onSignOut ? (
         <button
