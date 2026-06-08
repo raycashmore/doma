@@ -52,6 +52,38 @@ _Avoid_: Special event, alert, calendar noise
 An unusual or non-routine daily requirement that deserves extra attention in a **morning briefing**. A **special requirement** may come from the **daily requirements calendar** or from ordinary schedule context when it affects readiness.
 _Avoid_: Normal event, recurring requirement
 
+**List**:
+A reusable checklist container for marking off arbitrary things, including todo lists, shopping lists, and other one-off or repeated lists. A **list** is the canonical capability; todo and shopping are examples rather than separate app concepts or special templates.
+_Avoid_: Todo app, Shopping app, list template
+
+**List property**:
+A field definition owned by a **list** and available to every item in that list, such as due date, priority, quantity, store section, or instructions. List properties can be added, renamed, reordered, and removed after items exist; items may leave a list property blank, but they do not invent unrelated property definitions on their own.
+_Avoid_: Item schema, ad hoc item property
+
+**List property type**:
+The kind of value a **list property** accepts. The initial property types are text, number, date, select, and checkbox.
+_Avoid_: Formula field, file field, reminder field
+
+**List item**:
+A checkable entry inside a **list**. A **list item** has its own completion state, a manual order while active, and may store values for the list's properties.
+_Avoid_: Task, shopping row
+
+**Completed list item**:
+A **list item** that has been marked done but remains part of the list until it is explicitly cleared or removed. Completion is a visible state, not automatic deletion; completed list items are shown separately in completion-time order.
+_Avoid_: Deleted item, archived item
+
+**Personal list**:
+A **list** visible and editable only by the household user who created it.
+_Avoid_: Private workspace, owner-only project
+
+**Shared list**:
+A **list** visible and editable by every household user. Shared lists do not use invites, roles, or per-user permissions.
+_Avoid_: Team list, collaborative workspace
+
+**Household user**:
+A signed-in Doma user who is allowed to use the app. Household users can all read and edit shared lists; personal lists remain limited to their creator.
+_Avoid_: Team member, collaborator, invited user
+
 ## Example Dialogue
 
 Dev: "The card spend by category for April does not add up to the credit-card budget total. Is that invalid?"
@@ -77,3 +109,43 @@ Domain expert: "No. A morning briefing is a household readiness summary. It shou
 Dev: "If the daily requirements calendar is empty today, should we warn the recipient?"
 
 Domain expert: "No, that is a quiet day. Warn only when the daily requirements calendar is not configured or the schedule data is stale enough to undermine trust."
+
+Dev: "Should Doma have separate Todo and Shopping apps?"
+
+Domain expert: "No. Use Lists as the app and model todo and shopping as list use cases."
+
+Dev: "Should todo and shopping lists be special templates?"
+
+Domain expert: "No. They are ordinary lists that can use different names and properties."
+
+Dev: "Can one item add a due date while another item adds a quantity field?"
+
+Domain expert: "No. Add due date or quantity as list properties, then each item can choose whether it has a value for them."
+
+Dev: "If a list already has items, can I still change its properties?"
+
+Domain expert: "Yes. List properties stay editable; removing one removes that field from the list and its items."
+
+Dev: "Should list properties support reminders, attachments, and formulas in the first version?"
+
+Domain expert: "No. Start with text, number, date, select, and checkbox properties."
+
+Dev: "Does a shared list need invites or editor/viewer roles?"
+
+Domain expert: "No. A personal list belongs to its creator; a shared list is editable by every household user."
+
+Dev: "Does Lists need a separate team or household membership model?"
+
+Domain expert: "No. Use the allowed household users: shared lists are for everyone, personal lists are for the creator."
+
+Dev: "If two household users edit the same item field at the same time, should Lists show a merge conflict?"
+
+Domain expert: "No. Lists use simple live updates; the latest focused edit wins."
+
+Dev: "When an item is checked off, should it disappear?"
+
+Domain expert: "No. It becomes a completed list item and remains visible until someone explicitly clears or removes it."
+
+Dev: "How should items be sorted?"
+
+Domain expert: "Active list items use manual order; completed list items sit separately by completion time."
