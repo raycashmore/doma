@@ -30,6 +30,7 @@ export const morningBriefingValidator = v.object({
 });
 
 export const briefingGenerationStatusValidator = v.union(
+  v.literal('ai'),
   v.literal('deterministic'),
   v.literal('fallback'),
   v.literal('setupProblem')

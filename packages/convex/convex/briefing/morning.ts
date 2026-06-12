@@ -25,7 +25,7 @@ export type MorningBriefingEvent = ScheduleEventRow;
 export type DeterministicMorningBriefing = {
   briefingKind: BriefingKind;
   localDate: string;
-  generationStatus: 'deterministic' | 'fallback' | 'setupProblem';
+  generationStatus: 'ai' | 'deterministic' | 'fallback' | 'setupProblem';
   briefing: MorningBriefing;
   message: string;
   sourceIds: string[];
@@ -79,7 +79,9 @@ function emptyBriefing(headline: string): MorningBriefing {
   };
 }
 
-function formatBriefing(briefing: MorningBriefing) {
+export function formatMorningBriefing(briefing: MorningBriefing) {
+  if (!briefing.shouldSend) return '';
+
   const sections = ['Morning briefing'];
   const items = [
     ...briefing.routineItems,
@@ -118,7 +120,7 @@ export function createDeterministicMorningBriefing({
       generationStatus: 'setupProblem',
       sourceIds: [],
       briefing,
-      message: formatBriefing(briefing)
+      message: formatMorningBriefing(briefing)
     };
   }
 
@@ -145,7 +147,7 @@ export function createDeterministicMorningBriefing({
       generationStatus: 'deterministic',
       sourceIds: routineItems.flatMap((item) => item.sourceIds),
       briefing,
-      message: formatBriefing(briefing)
+      message: formatMorningBriefing(briefing)
     };
   }
 
@@ -156,7 +158,7 @@ export function createDeterministicMorningBriefing({
     generationStatus: 'deterministic',
     sourceIds: [],
     briefing,
-    message: formatBriefing(briefing)
+    message: formatMorningBriefing(briefing)
   };
 }
 
