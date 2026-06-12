@@ -9,6 +9,7 @@
 import { defineSchema, defineTable } from 'convex/server';
 import { v } from 'convex/values';
 
+import { briefingDeliveryAttemptsTable, briefingsTable } from './briefing/schema';
 import { scheduleEventsTable, scheduleReminderAttemptsTable, scheduleSyncMetaTable } from './schedule/schema';
 
 export default defineSchema({
@@ -162,5 +163,11 @@ export default defineSchema({
   // ============================================================
   scheduleEvents: scheduleEventsTable,
   scheduleSyncMeta: scheduleSyncMetaTable,
-  scheduleReminderAttempts: scheduleReminderAttemptsTable
+  scheduleReminderAttempts: scheduleReminderAttemptsTable,
+
+  // ============================================================
+  // BRIEFINGS — Date-centric household readiness summaries
+  // ============================================================
+  briefings: briefingsTable,
+  briefingDeliveryAttempts: briefingDeliveryAttemptsTable
 });

@@ -45,6 +45,7 @@ yarn-error.log*
 /docs/superpowers/
 design/*.local/
 packages/convex/scripts/*.xlsx
+packages/convex/scripts/archive/
 packages/convex/scripts/README.md
 .playwright-mcp
 .claude
