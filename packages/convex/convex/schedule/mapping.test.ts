@@ -37,6 +37,7 @@ describe('toScheduleEvent', () => {
   const base: GoogleEvent = {
     id: 'evt-1',
     summary: 'Swim',
+    description: 'Bring towel and goggles',
     htmlLink: 'https://calendar.google.com/evt-1',
     start: { dateTime: '2026-05-26T16:00:00Z' },
     end: { dateTime: '2026-05-26T17:00:00Z' }
@@ -54,6 +55,31 @@ describe('toScheduleEvent', () => {
       recurring: false,
       htmlLink: 'https://calendar.google.com/evt-1'
     });
+  });
+
+  it('stores sanitized descriptions only for daily requirements events', () => {
+    const requirementsCalendar: CalendarConfig = {
+      calendarId: 'requirements-calendar',
+      who: 'shared',
+      kind: 'dailyRequirements'
+    };
+    const event: GoogleEvent = {
+      id: 'evt-requirement',
+      summary: 'Child A sports uniform',
+      description: '<p>Wear sports uniform&nbsp;</p><p>Bring hat &amp; water bottle</p>',
+      htmlLink: 'https://calendar.google.com/evt-requirement',
+      start: { date: '2026-05-26' },
+      end: { date: '2026-05-27' }
+    };
+
+    expect(toScheduleEvent(event, requirementsCalendar, members, 'UTC')).toMatchObject({
+      googleEventId: 'evt-requirement',
+      kind: 'dailyRequirements',
+      description: 'Wear sports uniform\nBring hat & water bottle',
+      who: ['memberA']
+    });
+
+    expect(toScheduleEvent(event, personal, members, 'UTC')).not.toHaveProperty('description');
   });
 
   const allDay: GoogleEvent = {

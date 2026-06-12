@@ -375,6 +375,17 @@
     outline-offset: 2px;
   }
 
+  .swim-event--daily-requirements {
+    border-color: var(--schedule-line-strong);
+    color: var(--warm-text-secondary);
+    font-weight: 750;
+  }
+
+  .swim-event--daily-requirements::before {
+    background: rgb(236 233 226 / 92%);
+    opacity: 1;
+  }
+
   .schedule-mobile {
     display: none;
   }
@@ -537,6 +548,10 @@
     text-transform: uppercase;
   }
 
+  .event-panel__row--notes {
+    white-space: pre-line;
+  }
+
   @media (max-width: 1700px) {
     .schedule-top {
       grid-template-columns: minmax(180px, 1fr) minmax(220px, auto) minmax(180px, 1fr);
@@ -671,6 +686,15 @@
 
     .mobile-event--selected {
       outline: 2px solid var(--warm-accent);
+    }
+
+    .mobile-event--daily-requirements {
+      background: rgb(246 244 239 / 72%);
+      color: var(--warm-text-secondary);
+    }
+
+    .mobile-event--daily-requirements::before {
+      background: rgb(164 158 145 / 76%);
     }
 
     .event-panel {

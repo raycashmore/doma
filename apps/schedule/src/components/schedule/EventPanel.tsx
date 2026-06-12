@@ -1,4 +1,4 @@
-import { CalendarDays, ExternalLink, Lock, MapPin, Repeat, Users, X } from 'lucide-react';
+import { CalendarDays, ExternalLink, Lock, MapPin, NotebookText, Repeat, Users, X } from 'lucide-react';
 
 import type { ScheduleMember } from './scheduleData';
 import type { ScheduleEvent } from './scheduleLayout';
@@ -71,6 +71,15 @@ export function EventPanel({ event, members, open, onClose }: EventPanelProps) {
                     <span>
                       <strong>Where</strong>
                       {event.location}
+                    </span>
+                  </div>
+                ) : null}
+                {event.kind === 'dailyRequirements' && event.description ? (
+                  <div className="event-panel__row event-panel__row--notes">
+                    <NotebookText aria-hidden size={16} />
+                    <span>
+                      <strong>Requirement notes</strong>
+                      {event.description}
                     </span>
                   </div>
                 ) : null}

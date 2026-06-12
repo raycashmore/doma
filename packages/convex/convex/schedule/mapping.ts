@@ -4,6 +4,7 @@ export type CalendarConfig = {
   calendarId: string;
   // A member id for a per-person calendar, or the literal "shared".
   who: string;
+  kind?: 'dailyRequirements';
 };
 
 export type MemberConfig = {
@@ -17,6 +18,7 @@ export type MemberConfig = {
 export type GoogleEvent = {
   id: string;
   summary?: string;
+  description?: string;
   location?: string;
   htmlLink: string;
   status?: string;
@@ -32,6 +34,8 @@ export type ScheduleEventRow = {
   end: number;
   allDay: boolean;
   title: string;
+  kind?: 'dailyRequirements';
+  description?: string;
   location?: string;
   who: string[];
   recurring: boolean;
@@ -41,6 +45,40 @@ export type ScheduleEventRow = {
 function matchesToken(title: string, token: string): boolean {
   const escaped = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   return new RegExp(`\\b${escaped}\\b`, 'i').test(title);
+}
+
+function decodeHtmlEntity(entity: string): string {
+  const namedEntities: Record<string, string> = {
+    amp: '&',
+    apos: "'",
+    gt: '>',
+    lt: '<',
+    nbsp: ' ',
+    quot: '"'
+  };
+  if (entity.startsWith('#x')) {
+    const codePoint = Number.parseInt(entity.slice(2), 16);
+    return Number.isNaN(codePoint) ? `&${entity};` : String.fromCodePoint(codePoint);
+  }
+  if (entity.startsWith('#')) {
+    const codePoint = Number.parseInt(entity.slice(1), 10);
+    return Number.isNaN(codePoint) ? `&${entity};` : String.fromCodePoint(codePoint);
+  }
+  return namedEntities[entity] ?? `&${entity};`;
+}
+
+export function sanitizeRequirementDescription(description: string): string {
+  return description
+    .replace(/\r\n?/g, '\n')
+    .replace(/<\s*br\s*\/?>/gi, '\n')
+    .replace(/<\s*\/p\s*>\s*<\s*p[^>]*>/gi, '\n')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (_, entity: string) => decodeHtmlEntity(entity.toLowerCase()))
+    .split('\n')
+    .map((line) => line.replace(/[ \t]+/g, ' ').trim())
+    .filter(Boolean)
+    .join('\n')
+    .trim();
 }
 
 // Per-person calendar -> that member. Shared calendar -> members named in the
@@ -80,6 +118,11 @@ export function toScheduleEvent(
     recurring: Boolean(ev.recurringEventId),
     htmlLink: ev.htmlLink
   };
+  if (calendar.kind === 'dailyRequirements') {
+    row.kind = 'dailyRequirements';
+    const description = ev.description ? sanitizeRequirementDescription(ev.description) : '';
+    if (description) row.description = description;
+  }
   if (ev.location) row.location = ev.location;
   return row;
 }

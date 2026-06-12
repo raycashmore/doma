@@ -19,6 +19,8 @@ export type ConvexScheduleEvent = {
   end: number;
   allDay: boolean;
   title: string;
+  kind?: 'dailyRequirements';
+  description?: string;
   location?: string;
   who: string[];
   recurring: boolean;
@@ -35,6 +37,8 @@ export type ScheduleEvent = {
   endMinutes: number;
   allDay: boolean;
   title: string;
+  kind?: 'dailyRequirements';
+  description?: string;
   location?: string;
   who: MemberId[];
   recurring: boolean;
@@ -105,6 +109,8 @@ function buildEventForDay(event: ConvexScheduleEvent, dayIndex: number): Schedul
     endMinutes: event.allDay ? SWIMLANE_END_MINUTES : minutesSinceLocalMidnight(event.end),
     allDay: event.allDay,
     title: event.title,
+    kind: event.kind,
+    description: event.description,
     location: event.location,
     who: normalizeMembers(event.who),
     recurring: event.recurring,

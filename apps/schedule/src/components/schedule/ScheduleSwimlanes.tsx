@@ -118,8 +118,8 @@ export function ScheduleSwimlanes({
                     return (
                       <button
                         className={`swim-event swim-event--${member?.colorClass ?? 'member-a'}${
-                          selectedEventId === event.id ? ' swim-event--selected' : ''
-                        }`}
+                          event.kind === 'dailyRequirements' ? ' swim-event--daily-requirements' : ''
+                        }${selectedEventId === event.id ? ' swim-event--selected' : ''}`}
                         key={`${event.id}-${memberId}`}
                         type="button"
                         style={{

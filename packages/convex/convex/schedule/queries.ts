@@ -10,6 +10,8 @@ const eventValidator = v.object({
   end: v.number(),
   allDay: v.boolean(),
   title: v.string(),
+  kind: v.optional(v.literal('dailyRequirements')),
+  description: v.optional(v.string()),
   location: v.optional(v.string()),
   who: v.array(v.string()),
   recurring: v.boolean(),

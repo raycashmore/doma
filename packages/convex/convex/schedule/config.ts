@@ -1,4 +1,4 @@
-import type { MemberConfig } from './mapping';
+import type { CalendarConfig, MemberConfig } from './mapping';
 
 export type ScheduleDisplayMember = {
   id: string;
@@ -40,4 +40,12 @@ export function displayMembersFromConfig(members: MemberConfig[]): ScheduleDispl
 
 export function parseScheduleMembers(): MemberConfig[] {
   return parseJsonEnv<MemberConfig[]>('SCHEDULE_MEMBERS', process.env.SCHEDULE_MEMBERS ?? '', '[]');
+}
+
+export function parseScheduleCalendarsFromRaw(raw: string): CalendarConfig[] {
+  return parseJsonEnv<CalendarConfig[]>('SCHEDULE_CALENDARS', raw, '[]');
+}
+
+export function parseScheduleCalendars(): CalendarConfig[] {
+  return parseScheduleCalendarsFromRaw(process.env.SCHEDULE_CALENDARS ?? '');
 }
