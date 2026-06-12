@@ -101,6 +101,75 @@ describe('api-bot app', () => {
     expect(response.status).toBe(200);
   });
 
+  it('routes /briefing to the configured schedule capability', async () => {
+    const storage = createMemoryStorage();
+    await storage.upsertChannelLink({
+      clerkUserId: 'user_123',
+      provider: 'telegram',
+      providerUserId: '789',
+      providerChatId: '123',
+      status: 'active',
+      createdAt: 1,
+      updatedAt: 1
+    });
+    const fetch = vi.fn(async () =>
+      Response.json({
+        kind: 'reply',
+        text: 'Morning briefing\n\nNormal day. No special requirements found.'
+      })
+    );
+    vi.stubGlobal('fetch', fetch);
+    const app = createApp({
+      config: {
+        ...testConfig,
+        scheduleCapabilityUrl: 'https://schedule.example.com/schedule/api/bot/schedule'
+      },
+      storage,
+      sendTelegramMessage: vi.fn()
+    });
+
+    const response = await app.request('/telegram/webhook', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-telegram-bot-api-secret-token': testConfig.telegramWebhookSecret
+      },
+      body: JSON.stringify({
+        update_id: 123,
+        message: {
+          message_id: 1,
+          date: 1_700_000_000,
+          text: '/briefing',
+          from: {
+            id: 789,
+            is_bot: false,
+            first_name: 'Member'
+          },
+          chat: {
+            id: 123,
+            type: 'private'
+          }
+        }
+      })
+    });
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      ok: true,
+      dispatchResult: {
+        kind: 'reply',
+        text: 'Morning briefing\n\nNormal day. No special requirements found.'
+      }
+    });
+    expect(fetch).toHaveBeenCalledWith(
+      'https://schedule.example.com/schedule/api/bot/schedule',
+      expect.objectContaining({
+        method: 'POST',
+        body: expect.stringContaining('"command":"briefing"')
+      })
+    );
+  });
+
   it('mounts notification routes', async () => {
     const app = createApp({
       config: testConfig,

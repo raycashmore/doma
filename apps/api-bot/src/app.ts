@@ -9,7 +9,7 @@ import type { CapabilityHandler } from './dispatch/types.js';
 import { jsonOk } from './http/json.js';
 import { createLinkingRoutes } from './linking/routes.js';
 import { createNotificationRoutes } from './notifications/routes.js';
-import { sendTelegramMessage } from './providers/telegram/client.js';
+import { sendTelegramMessage, type TelegramMessageSender } from './providers/telegram/client.js';
 import { createTelegramWebhookRoutes } from './providers/telegram/webhook.js';
 import { type BotStorage, createRuntimeStorage } from './storage/index.js';
 
@@ -17,6 +17,7 @@ export type CreateAppOptions = {
   config?: BotConfig;
   storage?: BotStorage;
   capabilities?: Record<string, CapabilityHandler>;
+  sendTelegramMessage?: TelegramMessageSender;
 };
 
 let runtimeApp: BotApp | undefined;
@@ -27,6 +28,10 @@ function createRuntimeCapabilities(config: BotConfig): Record<string, Capability
   }
 
   return {
+    briefing: createHttpCapability({
+      endpointUrl: config.scheduleCapabilityUrl,
+      serviceToken: config.botServiceToken
+    }),
     schedule: createHttpCapability({
       endpointUrl: config.scheduleCapabilityUrl,
       serviceToken: config.botServiceToken
@@ -38,12 +43,14 @@ export function createApp(options: CreateAppOptions = {}) {
   const config = options.config ?? getConfig();
   const storage = options.storage ?? createRuntimeStorage(config);
   const capabilities = options.capabilities ?? createRuntimeCapabilities(config);
-  const sendTelegram = ({ chatId, text }: { chatId: string; text: string }) =>
-    sendTelegramMessage({
-      botToken: config.telegramBotToken,
-      chatId,
-      text
-    });
+  const sendTelegram =
+    options.sendTelegramMessage ??
+    (({ chatId, text }: { chatId: string; text: string }) =>
+      sendTelegramMessage({
+        botToken: config.telegramBotToken,
+        chatId,
+        text
+      }));
   const app = new Hono();
 
   app.get('/health', (c) => jsonOk(c, { ok: true }));

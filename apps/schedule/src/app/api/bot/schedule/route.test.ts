@@ -2,11 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const convex = vi.hoisted(() => {
   const query = vi.fn();
+  const action = vi.fn();
+  const mutation = vi.fn();
   const client = vi.fn(function ConvexHttpClient() {
-    return { query };
+    return { action, mutation, query };
   });
 
-  return { client, query };
+  return { action, client, mutation, query };
 });
 
 vi.mock('@repo/convex', () => ({
@@ -14,6 +16,13 @@ vi.mock('@repo/convex', () => ({
     schedule: {
       queries: {
         currentWeekForBot: 'schedule.queries.currentWeekForBot'
+      }
+    },
+    briefing: {
+      generation: {
+        briefingForBot: 'briefing.generation.briefingForBot',
+        generateAndStoreMorningBriefingForBot: 'briefing.generation.generateAndStoreMorningBriefingForBot',
+        recordBriefingDeliveryForBot: 'briefing.generation.recordBriefingDeliveryForBot'
       }
     }
   }
@@ -42,7 +51,9 @@ async function post(request: Request) {
 describe('schedule bot route', () => {
   beforeEach(() => {
     vi.resetModules();
+    convex.action.mockReset();
     convex.client.mockClear();
+    convex.mutation.mockReset();
     convex.query.mockReset();
     process.env.BOT_SERVICE_TOKEN = 'service-token';
     process.env.NEXT_PUBLIC_CONVEX_URL = 'https://convex.example.com';
@@ -130,5 +141,88 @@ describe('schedule bot route', () => {
     });
     expect(convex.client).toHaveBeenCalledWith('https://convex.example.com');
     expect(convex.query).toHaveBeenCalledWith('schedule.queries.currentWeekForBot', { serviceToken: 'service-token' });
+  });
+
+  it("replays today's stored morning briefing and records delivery", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-05T22:00:00.000Z'));
+    convex.query.mockResolvedValue({
+      briefingKey: 'morning:2026-06-06',
+      localDate: '2026-06-06',
+      message: 'Morning briefing\n\nNormal day. No special requirements found.',
+      generationStatus: 'deterministic'
+    });
+    convex.mutation.mockResolvedValue({ inserted: true });
+
+    const response = await post(
+      capabilityRequest({
+        command: 'briefing',
+        messageText: '/briefing',
+        receivedAt: Date.parse('2026-06-05T22:00:00.000Z'),
+        userId: 'user_123'
+      })
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      kind: 'reply',
+      text: 'Morning briefing\n\nNormal day. No special requirements found.'
+    });
+    expect(convex.query).toHaveBeenCalledWith('briefing.generation.briefingForBot', {
+      serviceToken: 'service-token',
+      briefingKind: 'morning',
+      localDate: '2026-06-06'
+    });
+    expect(convex.action).not.toHaveBeenCalled();
+    expect(convex.mutation).toHaveBeenCalledWith('briefing.generation.recordBriefingDeliveryForBot', {
+      serviceToken: 'service-token',
+      briefingKey: 'morning:2026-06-06',
+      recipientUserId: 'user_123',
+      attemptedAt: Date.parse('2026-06-05T22:00:00.000Z'),
+      status: 'sent'
+    });
+  });
+
+  it("generates today's morning briefing when none is stored", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-05T22:00:00.000Z'));
+    convex.query.mockResolvedValue(null);
+    convex.action.mockResolvedValue({
+      briefing: {
+        briefingKey: 'morning:2026-06-06',
+        localDate: '2026-06-06',
+        message: "Morning briefing\n\nToday's requirements\n- memberA: Bring sports bag",
+        generationStatus: 'ai'
+      }
+    });
+    convex.mutation.mockResolvedValue({ inserted: true });
+
+    const response = await post(
+      capabilityRequest({
+        command: 'briefing',
+        messageText: '/schedule briefing',
+        receivedAt: Date.parse('2026-06-05T22:00:00.000Z'),
+        userId: 'user_123'
+      })
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      kind: 'reply',
+      text: "Morning briefing\n\nToday's requirements\n- memberA: Bring sports bag"
+    });
+    expect(convex.action).toHaveBeenCalledWith('briefing.generation.generateAndStoreMorningBriefingForBot', {
+      serviceToken: 'service-token',
+      localDate: '2026-06-06',
+      timeZone: 'Australia/Sydney',
+      generatedAt: Date.parse('2026-06-05T22:00:00.000Z')
+    });
+    expect(convex.mutation).toHaveBeenCalledWith('briefing.generation.recordBriefingDeliveryForBot', {
+      serviceToken: 'service-token',
+      briefingKey: 'morning:2026-06-06',
+      recipientUserId: 'user_123',
+      attemptedAt: Date.parse('2026-06-05T22:00:00.000Z'),
+      status: 'sent'
+    });
   });
 });

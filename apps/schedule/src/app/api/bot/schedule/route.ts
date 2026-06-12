@@ -1,6 +1,7 @@
 import { api } from '@repo/convex';
 import { ConvexHttpClient } from 'convex/browser';
 
+import type { BotMorningBriefing } from '@/bot/capability';
 import { handleScheduleCapabilityRequest, parseBotCapabilityRequest } from '@/bot/capability';
 
 export const runtime = 'nodejs';
@@ -13,6 +14,36 @@ function bearerToken(request: Request): string | null {
 
 function json(body: unknown, status = 200) {
   return Response.json(body, { status });
+}
+
+function isBotMorningBriefing(value: unknown): value is BotMorningBriefing {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const briefing = value as Record<string, unknown>;
+  return (
+    typeof briefing.briefingKey === 'string' &&
+    typeof briefing.localDate === 'string' &&
+    typeof briefing.message === 'string' &&
+    (briefing.generationStatus === 'ai' ||
+      briefing.generationStatus === 'deterministic' ||
+      briefing.generationStatus === 'fallback' ||
+      briefing.generationStatus === 'setupProblem')
+  );
+}
+
+function generatedBriefingFromResult(value: unknown) {
+  if (typeof value !== 'object' || value === null) {
+    throw new Error('Invalid generated briefing result');
+  }
+
+  const result = value as Record<string, unknown>;
+  if (isBotMorningBriefing(result.briefing)) {
+    return result.briefing;
+  }
+
+  throw new Error('Invalid generated briefing result');
 }
 
 export async function POST(request: Request) {
@@ -43,7 +74,35 @@ export async function POST(request: Request) {
   const client = new ConvexHttpClient(convexUrl);
   const result = await handleScheduleCapabilityRequest(capabilityRequest, {
     timeZone: process.env.SCHEDULE_TZ,
-    loadCurrentWeek: () => client.query(api.schedule.queries.currentWeekForBot, { serviceToken })
+    loadCurrentWeek: () => client.query(api.schedule.queries.currentWeekForBot, { serviceToken }),
+    loadMorningBriefing: async ({ localDate }) => {
+      const briefing = await client.query(api.briefing.generation.briefingForBot, {
+        serviceToken,
+        briefingKind: 'morning',
+        localDate
+      });
+      if (briefing === null) return null;
+      if (isBotMorningBriefing(briefing)) return briefing;
+      throw new Error('Invalid morning briefing result');
+    },
+    generateMorningBriefing: async ({ localDate, timeZone, generatedAt }) => {
+      return generatedBriefingFromResult(
+        await client.action(api.briefing.generation.generateAndStoreMorningBriefingForBot, {
+          serviceToken,
+          localDate,
+          timeZone,
+          generatedAt
+        })
+      );
+    },
+    markMorningBriefingDelivered: ({ briefingKey, recipientUserId, attemptedAt }) =>
+      client.mutation(api.briefing.generation.recordBriefingDeliveryForBot, {
+        serviceToken,
+        briefingKey,
+        recipientUserId,
+        attemptedAt,
+        status: 'sent'
+      })
   });
 
   return json(result);

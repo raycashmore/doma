@@ -2,7 +2,15 @@ import type { FunctionReference } from 'convex/server';
 import { v } from 'convex/values';
 
 import { internal } from '../_generated/api';
-import { internalAction, internalMutation, internalQuery, type MutationCtx } from '../_generated/server';
+import {
+  action,
+  internalAction,
+  internalMutation,
+  internalQuery,
+  mutation,
+  type MutationCtx,
+  query
+} from '../_generated/server';
 import { parseScheduleCalendars } from '../schedule/config';
 import type { ScheduleEventRow } from '../schedule/mapping';
 import { createAiMorningBriefing, createOpenAiMorningBriefingProvider, type MorningBriefingAiProvider } from './ai';
@@ -20,6 +28,12 @@ type StoreGeneratedMorningBriefingArgs = {
 };
 
 type GenerationRefs = {
+  generateAndStoreMorningBriefing: FunctionReference<
+    'action',
+    'internal',
+    { localDate: string; timeZone?: string; generatedAt: number },
+    unknown
+  >;
   morningBriefingEvents: FunctionReference<'query', 'internal', Record<string, never>, ScheduleEventRow[]>;
   storeGeneratedMorningBriefing: FunctionReference<'mutation', 'internal', StoreGeneratedMorningBriefingArgs, unknown>;
 };
@@ -31,6 +45,58 @@ const generationRefs: GenerationRefs = (
     };
   }
 ).briefing.generation;
+
+function assertAuthorizedServiceToken(serviceToken: string) {
+  const expectedToken = process.env.BOT_SERVICE_TOKEN;
+  if (!expectedToken || serviceToken !== expectedToken) {
+    throw new Error('Unauthorized');
+  }
+}
+
+function toBotMorningBriefing(briefing: {
+  briefingKey: string;
+  localDate: string;
+  generationStatus: DeterministicMorningBriefing['generationStatus'];
+  message: string;
+}) {
+  return {
+    briefingKey: briefing.briefingKey,
+    localDate: briefing.localDate,
+    generationStatus: briefing.generationStatus,
+    message: briefing.message
+  };
+}
+
+function botMorningBriefingFromStoreResult(value: unknown) {
+  if (typeof value !== 'object' || value === null || !('briefing' in value)) {
+    throw new Error('Invalid generated briefing result');
+  }
+
+  const { briefing } = value as { briefing: unknown };
+  if (typeof briefing !== 'object' || briefing === null) {
+    throw new Error('Invalid generated briefing result');
+  }
+
+  const row = briefing as Record<string, unknown>;
+  if (
+    typeof row.briefingKey !== 'string' ||
+    typeof row.localDate !== 'string' ||
+    typeof row.message !== 'string' ||
+    (row.generationStatus !== 'ai' &&
+      row.generationStatus !== 'deterministic' &&
+      row.generationStatus !== 'fallback' &&
+      row.generationStatus !== 'setupProblem')
+  ) {
+    throw new Error('Invalid generated briefing result');
+  }
+
+  return toBotMorningBriefing({
+    briefingKey: row.briefingKey,
+    localDate: row.localDate,
+    generationStatus: row.generationStatus,
+    message: row.message
+  });
+}
 
 async function storeGeneratedBriefing(
   ctx: { db: MutationCtx['db'] },
@@ -121,6 +187,81 @@ export const generateAndStoreMorningBriefing = internalAction({
       briefing: briefing.briefing,
       sourceIds: briefing.sourceIds
     });
+  }
+});
+
+export const briefingForBot = query({
+  args: {
+    serviceToken: v.string(),
+    briefingKind: v.literal('morning'),
+    localDate: v.string()
+  },
+  handler: async (ctx, { serviceToken, briefingKind, localDate }) => {
+    assertAuthorizedServiceToken(serviceToken);
+
+    const briefing = await ctx.db
+      .query('briefings')
+      .withIndex('by_briefing_key', (q) => q.eq('briefingKey', morningBriefingKey({ briefingKind, localDate })))
+      .unique();
+
+    return briefing ? toBotMorningBriefing(briefing) : null;
+  }
+});
+
+export const generateAndStoreMorningBriefingForBot = action({
+  args: {
+    serviceToken: v.string(),
+    localDate: v.string(),
+    timeZone: v.optional(v.string()),
+    generatedAt: v.number()
+  },
+  handler: async (ctx, { serviceToken, localDate, timeZone, generatedAt }) => {
+    assertAuthorizedServiceToken(serviceToken);
+
+    const result = await ctx.runAction(generationRefs.generateAndStoreMorningBriefing, {
+      localDate,
+      timeZone,
+      generatedAt
+    });
+
+    return {
+      briefing: botMorningBriefingFromStoreResult(result)
+    };
+  }
+});
+
+export const recordBriefingDeliveryForBot = mutation({
+  args: {
+    serviceToken: v.string(),
+    briefingKey: v.string(),
+    recipientUserId: v.string(),
+    attemptedAt: v.number(),
+    status: v.union(v.literal('sent'), v.literal('skipped'), v.literal('failed')),
+    providerErrorCode: v.optional(v.string())
+  },
+  handler: async (ctx, { serviceToken, ...attempt }) => {
+    assertAuthorizedServiceToken(serviceToken);
+
+    const existingAttempts = await ctx.db
+      .query('briefingDeliveryAttempts')
+      .withIndex('by_briefing_recipient', (q) =>
+        q.eq('briefingKey', attempt.briefingKey).eq('recipientUserId', attempt.recipientUserId)
+      )
+      .collect();
+    const sentAttempt = existingAttempts.find((existingAttempt) => existingAttempt.status === 'sent');
+
+    if (sentAttempt) {
+      return { inserted: false as const, id: sentAttempt._id };
+    }
+
+    const retryableAttempt = existingAttempts[0];
+    if (retryableAttempt) {
+      await ctx.db.patch(retryableAttempt._id, attempt);
+      return { inserted: false as const, id: retryableAttempt._id };
+    }
+
+    const id = await ctx.db.insert('briefingDeliveryAttempts', attempt);
+    return { inserted: true as const, id };
   }
 });
 
