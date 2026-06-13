@@ -67,7 +67,7 @@ function decodeHtmlEntity(entity: string): string {
   return namedEntities[entity] ?? `&${entity};`;
 }
 
-export function sanitizeRequirementDescription(description: string): string {
+export function sanitizeEventDescription(description: string): string {
   return description
     .replace(/\r\n?/g, '\n')
     .replace(/<\s*br\s*\/?>/gi, '\n')
@@ -120,9 +120,9 @@ export function toScheduleEvent(
   };
   if (calendar.kind === 'dailyRequirements') {
     row.kind = 'dailyRequirements';
-    const description = ev.description ? sanitizeRequirementDescription(ev.description) : '';
-    if (description) row.description = description;
   }
+  const description = ev.description ? sanitizeEventDescription(ev.description) : '';
+  if (description) row.description = description;
   if (ev.location) row.location = ev.location;
   return row;
 }

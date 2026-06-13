@@ -32,7 +32,7 @@ describe('createAiMorningBriefing', () => {
       const requirement = sources.find((source) => source.kind === 'dailyRequirements');
       const ordinaryEvent = sources.find((source) => source.title === 'Dentist');
       expect(requirement).toMatchObject({ description: 'Bring sports bag' });
-      expect(ordinaryEvent).not.toHaveProperty('description');
+      expect(ordinaryEvent).toMatchObject({ description: 'Leave early for parking' });
       return {
         shouldSend: true,
         headline: 'One thing to prep',
@@ -64,7 +64,12 @@ describe('createAiMorningBriefing', () => {
             title: 'Sports uniform',
             description: 'Bring sports bag'
           }),
-          event({ googleEventId: 'ordinary-1', calendarId: 'calendar-a', title: 'Dentist' })
+          event({
+            googleEventId: 'ordinary-1',
+            calendarId: 'calendar-a',
+            title: 'Dentist',
+            description: 'Leave early for parking'
+          })
         ],
         provider
       })

@@ -222,7 +222,7 @@ function toAiSource(event: MorningBriefingEvent): MorningBriefingAiSource {
     recurring: event.recurring
   };
   if (event.location) source.location = event.location;
-  if (event.kind === 'dailyRequirements' && event.description) source.description = event.description;
+  if (event.description) source.description = event.description;
   return source;
 }
 

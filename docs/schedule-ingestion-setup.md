@@ -50,10 +50,10 @@ In the Convex dashboard (Project → Settings → Environment Variables):
   household requirements, such as clothing expectations, items to bring,
   preparation notes, or timing constraints. Morning briefings treat these
   calendars as the authoritative source for actions.
-- Daily requirements event descriptions are stored after basic sanitization:
-  HTML tags are removed, common entities are decoded, whitespace is normalized,
-  and blank lines are dropped. Ordinary schedule calendar descriptions are not
-  stored.
+- Event descriptions are stored after basic sanitization: HTML tags are
+  removed, common entities are decoded, whitespace is normalized, and blank
+  lines are dropped. Morning briefings can use descriptions from any listed
+  calendar as readiness context.
 
 These values hold real names, calendar ids, and sometimes school details. Keep
 them **only** in Convex env — never in git (see `docs/agents/privacy.md`). Use
