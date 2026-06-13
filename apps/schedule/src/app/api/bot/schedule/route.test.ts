@@ -150,6 +150,7 @@ describe('schedule bot route', () => {
       briefingKey: 'morning:2026-06-06',
       localDate: '2026-06-06',
       message: 'Morning briefing\n\nNormal day. No special requirements found.',
+      shouldSend: true,
       generationStatus: 'deterministic'
     });
     convex.mutation.mockResolvedValue({ inserted: true });
@@ -192,6 +193,7 @@ describe('schedule bot route', () => {
         briefingKey: 'morning:2026-06-06',
         localDate: '2026-06-06',
         message: "Morning briefing\n\nToday's requirements\n- memberA: Bring sports bag",
+        shouldSend: true,
         generationStatus: 'ai'
       }
     });

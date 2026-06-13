@@ -57,12 +57,14 @@ function toBotMorningBriefing(briefing: {
   briefingKey: string;
   localDate: string;
   generationStatus: DeterministicMorningBriefing['generationStatus'];
+  shouldSend: boolean;
   message: string;
 }) {
   return {
     briefingKey: briefing.briefingKey,
     localDate: briefing.localDate,
     generationStatus: briefing.generationStatus,
+    shouldSend: briefing.shouldSend,
     message: briefing.message
   };
 }
@@ -82,6 +84,7 @@ function botMorningBriefingFromStoreResult(value: unknown) {
     typeof row.briefingKey !== 'string' ||
     typeof row.localDate !== 'string' ||
     typeof row.message !== 'string' ||
+    !isBotMorningBriefingRecord(row.briefing) ||
     (row.generationStatus !== 'ai' &&
       row.generationStatus !== 'deterministic' &&
       row.generationStatus !== 'fallback' &&
@@ -94,6 +97,7 @@ function botMorningBriefingFromStoreResult(value: unknown) {
     briefingKey: row.briefingKey,
     localDate: row.localDate,
     generationStatus: row.generationStatus,
+    shouldSend: row.briefing.shouldSend,
     message: row.message
   });
 }
@@ -127,17 +131,48 @@ async function storeGeneratedBriefing(
   return { inserted: true as const, id, briefing: row };
 }
 
-function morningBriefingProviderFromEnv(): MorningBriefingAiProvider {
+function isBotMorningBriefingRecord(value: unknown): value is { shouldSend: boolean } {
+  return typeof value === 'object' && value !== null && 'shouldSend' in value && typeof value.shouldSend === 'boolean';
+}
+
+function morningBriefingProviderFromEnv(): MorningBriefingAiProvider | null {
   const apiKey = process.env.OPENAI_API_KEY;
   const model = process.env.MORNING_BRIEFING_AI_MODEL;
 
   if (!apiKey || !model) {
-    return async () => {
-      throw new Error('OPENAI_API_KEY and MORNING_BRIEFING_AI_MODEL are required for AI morning briefing generation');
-    };
+    return null;
   }
 
   return createOpenAiMorningBriefingProvider({ apiKey, model });
+}
+
+export async function createMorningBriefing({
+  localDate,
+  timeZone,
+  calendarConfigs,
+  events,
+  provider
+}: {
+  localDate: string;
+  timeZone: string;
+  calendarConfigs: ReturnType<typeof parseScheduleCalendars>;
+  events: ScheduleEventRow[];
+  provider: MorningBriefingAiProvider | null;
+}) {
+  return provider
+    ? await createAiMorningBriefing({
+        localDate,
+        timeZone,
+        calendarConfigs,
+        events,
+        provider
+      })
+    : createDeterministicMorningBriefing({
+        localDate,
+        timeZone,
+        calendarConfigs,
+        events
+      });
 }
 
 export const morningBriefingEvents = internalQuery({
@@ -170,11 +205,13 @@ export const generateAndStoreMorningBriefing = internalAction({
   },
   handler: async (ctx, { localDate, timeZone, generatedAt }) => {
     const resolvedTimeZone = timeZone ?? process.env.SCHEDULE_TZ ?? 'Australia/Sydney';
-    const briefing = await createAiMorningBriefing({
+    const calendarConfigs = parseScheduleCalendars();
+    const events = await ctx.runQuery(generationRefs.morningBriefingEvents);
+    const briefing = await createMorningBriefing({
       localDate,
       timeZone: resolvedTimeZone,
-      calendarConfigs: parseScheduleCalendars(),
-      events: await ctx.runQuery(generationRefs.morningBriefingEvents),
+      calendarConfigs,
+      events,
       provider: morningBriefingProviderFromEnv()
     });
 
@@ -204,7 +241,15 @@ export const briefingForBot = query({
       .withIndex('by_briefing_key', (q) => q.eq('briefingKey', morningBriefingKey({ briefingKind, localDate })))
       .unique();
 
-    return briefing ? toBotMorningBriefing(briefing) : null;
+    return briefing
+      ? toBotMorningBriefing({
+          briefingKey: briefing.briefingKey,
+          localDate: briefing.localDate,
+          generationStatus: briefing.generationStatus,
+          shouldSend: briefing.briefing.shouldSend,
+          message: briefing.message
+        })
+      : null;
   }
 });
 
@@ -262,35 +307,5 @@ export const recordBriefingDeliveryForBot = mutation({
 
     const id = await ctx.db.insert('briefingDeliveryAttempts', attempt);
     return { inserted: true as const, id };
-  }
-});
-
-export const generateAndStoreDeterministicMorningBriefing = internalMutation({
-  args: {
-    localDate: v.string(),
-    timeZone: v.optional(v.string()),
-    generatedAt: v.number()
-  },
-  handler: async (ctx, { localDate, timeZone, generatedAt }) => {
-    const briefing = createDeterministicMorningBriefing({
-      localDate,
-      timeZone: timeZone ?? process.env.SCHEDULE_TZ ?? 'Australia/Sydney',
-      calendarConfigs: parseScheduleCalendars(),
-      events: await ctx.db.query('scheduleEvents').withIndex('by_start').collect()
-    });
-    return await storeGeneratedBriefing(ctx, { ...briefing, generatedAt });
-  }
-});
-
-export const briefingForLocalDate = internalQuery({
-  args: {
-    briefingKind: v.literal('morning'),
-    localDate: v.string()
-  },
-  handler: async (ctx, { briefingKind, localDate }) => {
-    return await ctx.db
-      .query('briefings')
-      .withIndex('by_briefing_key', (q) => q.eq('briefingKey', morningBriefingKey({ briefingKind, localDate })))
-      .unique();
   }
 });

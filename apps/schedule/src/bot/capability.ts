@@ -24,6 +24,7 @@ export type BotMorningBriefing = {
   briefingKey: string;
   localDate: string;
   message: string;
+  shouldSend: boolean;
   generationStatus: 'ai' | 'deterministic' | 'fallback' | 'setupProblem';
 };
 
@@ -162,9 +163,12 @@ export async function handleScheduleCapabilityRequest(
       attemptedAt: nowMs
     });
 
+    const text =
+      briefing.shouldSend && briefing.message.trim().length > 0 ? briefing.message : 'Nothing to flag this morning.';
+
     return {
       kind: 'reply',
-      text: briefing.message
+      text
     };
   }
 

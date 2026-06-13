@@ -55,6 +55,7 @@ describe('handleScheduleCapabilityRequest', () => {
       briefingKey: 'morning:2026-06-06',
       localDate: '2026-06-06',
       message: 'Morning briefing\n\nNormal day. No special requirements found.',
+      shouldSend: true,
       generationStatus: 'deterministic'
     };
     const markMorningBriefingDelivered = vi.fn(async () => undefined);
@@ -94,6 +95,7 @@ describe('handleScheduleCapabilityRequest', () => {
       briefingKey: 'morning:2026-06-06',
       localDate: '2026-06-06',
       message: "Morning briefing\n\nToday's requirements\n- memberA: Bring sports bag",
+      shouldSend: true,
       generationStatus: 'ai'
     };
     const generateMorningBriefing = vi.fn(async () => briefing);
@@ -153,6 +155,7 @@ describe('handleScheduleCapabilityRequest', () => {
             briefingKey: 'morning:2026-06-06',
             localDate: '2026-06-06',
             message: "Morning briefing\n\nI couldn't summarise the day automatically.\n\nNo daily requirements found.",
+            shouldSend: true,
             generationStatus: 'fallback'
           }),
           generateMorningBriefing,
@@ -183,6 +186,7 @@ describe('handleScheduleCapabilityRequest', () => {
             briefingKey: 'morning:2026-06-06',
             localDate: '2026-06-06',
             message: 'Morning briefing\n\nNormal day. No special requirements found.',
+            shouldSend: true,
             generationStatus: 'deterministic'
           }),
           generateMorningBriefing: async () => {

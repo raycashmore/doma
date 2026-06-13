@@ -30,6 +30,7 @@ export const briefingDeliveryRunInputs = internalQuery({
             briefingKey: briefing.briefingKey,
             localDate: briefing.localDate,
             generationStatus: briefing.generationStatus,
+            shouldSend: briefing.briefing.shouldSend,
             message: briefing.message
           }
         : null,

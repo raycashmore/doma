@@ -417,8 +417,11 @@ Morning briefing operations:
 - If no `MORNING_BRIEFING_RECIPIENT_USER_IDS` are configured, the scheduled run
   no-ops. `/briefing` can still be used on demand by a linked Telegram user.
 - Convex generates one briefing per local date and reuses it for retries and
-  replay. A recipient with a sent delivery attempt is not sent the same briefing
-  again.
+  replay. A recipient with a sent or skipped delivery attempt is not processed
+  for the same briefing again.
+- If AI suppresses a quiet briefing or produces an empty message, scheduled
+  delivery records the recipient as skipped instead of sending an empty
+  notification.
 - If schedule sync fails but cached schedule data exists, Doma can still send
   the briefing. When the cache is older than 12 hours, it appends:
   `Note: schedule data may be stale because the latest calendar sync failed.`

@@ -8,6 +8,7 @@ const briefing: BotMorningBriefing = {
   briefingKey: 'morning:2026-06-13',
   localDate: '2026-06-13',
   generationStatus: 'ai',
+  shouldSend: true,
   message: 'Morning briefing\n\nBring the library bag.'
 };
 
@@ -310,5 +311,54 @@ describe('runMorningBriefingDeliveryCycle', () => {
     });
 
     expect(sendNotification).not.toHaveBeenCalled();
+  });
+
+  it('records suppressed or empty briefings as skipped without sending an empty notification', async () => {
+    const suppressedBriefing: BotMorningBriefing = {
+      briefingKey: 'morning:2026-06-13',
+      localDate: '2026-06-13',
+      generationStatus: 'ai',
+      shouldSend: false,
+      message: ''
+    };
+    const syncSchedule = vi.fn(async () => ({ ok: true as const, lastSyncedAt: dueAtMs }));
+    const loadBriefing = vi.fn(async () => suppressedBriefing);
+    const generateBriefing = vi.fn();
+    const sendNotification = vi.fn(async () => ({ status: 'sent' as const }));
+    const recordDeliveryAttempt = vi.fn(async () => ({ claimed: true as const }));
+
+    await expect(
+      runMorningBriefingDeliveryCycle({
+        nowMs: dueAtMs,
+        timeZone,
+        recipientUserIds: ['user_123'],
+        attempts: [],
+        lastSyncedAt: dueAtMs,
+        syncSchedule,
+        loadBriefing,
+        generateBriefing,
+        sendNotification,
+        recordDeliveryAttempt
+      })
+    ).resolves.toMatchObject({
+      processed: 1,
+      sent: 0,
+      skipped: 1,
+      failed: 0
+    });
+
+    expect(sendNotification).not.toHaveBeenCalled();
+    expect(recordDeliveryAttempt).toHaveBeenCalledWith({
+      briefingKey: suppressedBriefing.briefingKey,
+      recipientUserId: 'user_123',
+      attemptedAt: dueAtMs,
+      status: 'pending'
+    });
+    expect(recordDeliveryAttempt).toHaveBeenCalledWith({
+      briefingKey: suppressedBriefing.briefingKey,
+      recipientUserId: 'user_123',
+      attemptedAt: dueAtMs,
+      status: 'skipped'
+    });
   });
 });

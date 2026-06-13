@@ -106,6 +106,7 @@ function botMorningBriefingFromStoreResult(value: unknown): BotMorningBriefing {
     typeof row.briefingKey !== 'string' ||
     typeof row.localDate !== 'string' ||
     typeof row.message !== 'string' ||
+    typeof row.shouldSend !== 'boolean' ||
     (row.generationStatus !== 'ai' &&
       row.generationStatus !== 'deterministic' &&
       row.generationStatus !== 'fallback' &&
@@ -118,6 +119,7 @@ function botMorningBriefingFromStoreResult(value: unknown): BotMorningBriefing {
     briefingKey: row.briefingKey,
     localDate: row.localDate,
     generationStatus: row.generationStatus,
+    shouldSend: row.shouldSend,
     message: row.message
   };
 }

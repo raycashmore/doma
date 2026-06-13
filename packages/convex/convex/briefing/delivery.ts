@@ -2,6 +2,7 @@ export type BotMorningBriefing = {
   briefingKey: string;
   localDate: string;
   generationStatus: 'ai' | 'deterministic' | 'fallback' | 'setupProblem';
+  shouldSend: boolean;
   message: string;
 };
 
@@ -93,10 +94,12 @@ function emptyCounts(overrides: Partial<MorningBriefingDeliveryCounts> = {}): Mo
   };
 }
 
-function sentRecipientIds(attempts: BriefingDeliveryAttempt[], briefingKey: string) {
+function completedRecipientIds(attempts: BriefingDeliveryAttempt[], briefingKey: string) {
   return new Set(
     attempts
-      .filter((attempt) => attempt.briefingKey === briefingKey && attempt.status === 'sent')
+      .filter(
+        (attempt) => attempt.briefingKey === briefingKey && (attempt.status === 'sent' || attempt.status === 'skipped')
+      )
       .map((attempt) => attempt.recipientUserId)
   );
 }
@@ -155,9 +158,12 @@ export async function runMorningBriefingDeliveryCycle({
       generatedAt: nowMs
     }));
   const counts = emptyCounts({ syncFailed, staleCache, generated });
-  const sentRecipients = sentRecipientIds(attempts, briefing.briefingKey);
-  const pendingRecipientUserIds = recipientUserIds.filter((recipientUserId) => !sentRecipients.has(recipientUserId));
+  const completedRecipients = completedRecipientIds(attempts, briefing.briefingKey);
+  const pendingRecipientUserIds = recipientUserIds.filter(
+    (recipientUserId) => !completedRecipients.has(recipientUserId)
+  );
   const message = staleCache ? withStaleScheduleNote(briefing.message) : briefing.message;
+  const shouldSend = briefing.shouldSend && message.trim().length > 0;
 
   for (const recipientUserId of pendingRecipientUserIds) {
     const claimResult = await recordDeliveryAttempt({
@@ -168,6 +174,19 @@ export async function runMorningBriefingDeliveryCycle({
     });
 
     if (typeof claimResult === 'object' && claimResult !== null && 'claimed' in claimResult && !claimResult.claimed) {
+      continue;
+    }
+
+    if (!shouldSend) {
+      await recordDeliveryAttempt({
+        briefingKey: briefing.briefingKey,
+        recipientUserId,
+        attemptedAt: nowMs,
+        status: 'skipped'
+      });
+
+      counts.processed += 1;
+      counts.skipped += 1;
       continue;
     }
 
