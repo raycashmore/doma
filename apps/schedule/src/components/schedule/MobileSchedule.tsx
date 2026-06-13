@@ -66,8 +66,8 @@ export function MobileSchedule({
             return (
               <button
                 className={`mobile-event mobile-event--${member?.colorClass ?? 'member-a'}${
-                  selectedEventId === event.id ? ' mobile-event--selected' : ''
-                }`}
+                  event.kind === 'dailyRequirements' ? ' mobile-event--daily-requirements' : ''
+                }${selectedEventId === event.id ? ' mobile-event--selected' : ''}`}
                 key={`${event.id}-${event.day}`}
                 type="button"
                 onClick={() => onSelect(event)}

@@ -38,7 +38,9 @@ Store only raw inputs in the database. All computed values are calculated at rea
 
 ## Schema Conventions
 
-- **11 tables** defined in `schema.ts`: 9 financial tables plus `scheduleEvents` and `scheduleSyncMeta` (read-only Google Calendar data — see [Schedule ingestion](#schedule-ingestion))
+- Financial tables store source finance data; schedule tables cache read-only
+  Google Calendar data; briefing tables store generated morning briefings and
+  per-recipient delivery attempts.
 - **Date field:** All financial tables indexed by `date` (Unix timestamp in milliseconds) with a `by_date` index
 - **Crypto tables:** Use `by_platform` indexing in addition to date
 - **Derived field comments:** Schema marks derived fields with `// DERIVED: ...` comments
@@ -84,6 +86,26 @@ cron:
 Config + secrets are Convex env vars (`GOOGLE_SA_KEY`, `SCHEDULE_CALENDARS`,
 `SCHEDULE_MEMBERS`, `SCHEDULE_TZ`); never in git. Setup:
 [`docs/schedule-ingestion-setup.md`](schedule-ingestion-setup.md).
+
+## Morning briefing
+
+The `briefing/` module stores one generated morning briefing per
+`briefingKind + localDate`, initially `morning:<YYYY-MM-DD>`. The briefing uses
+daily requirements events as the action source and ordinary schedule events as
+timing context. It records delivery attempts per recipient so scheduled
+delivery and `/briefing` replay stay idempotent.
+
+Scheduled delivery runs from Convex cron during the local
+`07:30 <= time < 08:30` retry window. The runner forces schedule sync before
+generation when possible, reuses an existing stored briefing for retries, sends
+through the bot gateway's provider-neutral `/notifications/send` endpoint, and
+marks suppressed or empty briefings as skipped instead of sending an empty
+notification. It adds a stale-data note when the latest sync failed and cached
+schedule data is older than 12 hours.
+
+Setup and operations live in [Deployment](deployment.md). Daily requirements
+calendar setup lives in
+[Schedule ingestion setup](schedule-ingestion-setup.md).
 
 ## Helper Functions (`helpers.ts`)
 

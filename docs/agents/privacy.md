@@ -16,3 +16,10 @@ webhook secrets, private message text, and notification payloads as private.
 Tests and docs should use generic IDs and messages. Telegram account linking
 must only accept private chats; never store a group or supergroup chat as a
 finance notification destination.
+
+For schedule and morning briefing work, also treat calendar IDs, service-account
+keys, real member names, school names, event descriptions, requirement notes,
+recipient user IDs, AI model credentials, and generated briefing text as
+private. Committed examples should use generic labels such as `memberA`,
+`requirements-calendar`, `user_123`, `bot.example.com`, and neutral requirement
+text like "Bring sports bag."

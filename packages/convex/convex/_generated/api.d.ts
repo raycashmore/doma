@@ -8,6 +8,9 @@
  * @module
  */
 
+import type * as briefing_ai from "../briefing/ai.js";
+import type * as briefing_generation from "../briefing/generation.js";
+import type * as briefing_morning from "../briefing/morning.js";
 import type * as budgetDisplayMonth from "../budgetDisplayMonth.js";
 import type * as budgetSummary from "../budgetSummary.js";
 import type * as crons from "../crons.js";
@@ -36,6 +39,9 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "briefing/ai": typeof briefing_ai;
+  "briefing/generation": typeof briefing_generation;
+  "briefing/morning": typeof briefing_morning;
   budgetDisplayMonth: typeof budgetDisplayMonth;
   budgetSummary: typeof budgetSummary;
   crons: typeof crons;

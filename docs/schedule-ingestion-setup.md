@@ -25,12 +25,12 @@ For each calendar to ingest (per-person and the shared/household one):
 
 In the Convex dashboard (Project → Settings → Environment Variables):
 
-| Variable             | Value                                                                                |
-| -------------------- | ------------------------------------------------------------------------------------ |
-| `GOOGLE_SA_KEY`      | the entire service-account JSON key, stringified                                     |
-| `SCHEDULE_CALENDARS` | `[{"calendarId":"<id>","who":"<memberId> or shared"}, ...]`                          |
-| `SCHEDULE_MEMBERS`   | `[{"id":"<memberId>","label":"<name>","initials":"<initials>","tokens":[...]}, ...]` |
-| `SCHEDULE_TZ`        | IANA timezone, e.g. `Australia/Sydney`                                               |
+| Variable             | Value                                                                                  |
+| -------------------- | -------------------------------------------------------------------------------------- |
+| `GOOGLE_SA_KEY`      | the entire service-account JSON key, stringified                                       |
+| `SCHEDULE_CALENDARS` | `[{"calendarId":"<id>","who":"<memberId> or shared","kind":"dailyRequirements"}, ...]` |
+| `SCHEDULE_MEMBERS`   | `[{"id":"<memberId>","label":"<name>","initials":"<initials>","tokens":[...]}, ...]`   |
+| `SCHEDULE_TZ`        | IANA timezone, e.g. `Australia/Sydney`                                                 |
 
 - A per-person calendar's `who` is that member's id; the shared calendar's `who`
   is the literal `shared`.
@@ -46,9 +46,18 @@ In the Convex dashboard (Project → Settings → Environment Variables):
 - `tokens` are the name words used to attribute a shared-calendar event to a
   member from its title (e.g. first name + nickname). No token match on a shared
   event → the first configured member.
+- Add `"kind":"dailyRequirements"` to calendars that carry day-specific
+  household requirements, such as clothing expectations, items to bring,
+  preparation notes, or timing constraints. Morning briefings treat these
+  calendars as the authoritative source for actions.
+- Daily requirements event descriptions are stored after basic sanitization:
+  HTML tags are removed, common entities are decoded, whitespace is normalized,
+  and blank lines are dropped. Ordinary schedule calendar descriptions are not
+  stored.
 
-These values hold real names and ids and live **only** in Convex env — never in
-git (see `docs/agents/privacy.md`).
+These values hold real names, calendar ids, and sometimes school details. Keep
+them **only** in Convex env — never in git (see `docs/agents/privacy.md`). Use
+generic member ids, calendar ids, and requirement text in committed examples.
 
 ## 4. Verify
 

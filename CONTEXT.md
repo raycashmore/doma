@@ -36,6 +36,22 @@ _Avoid_: Display date, month date
 The month-and-year period used for source data that is not shifted into a budget display month. Spending summary category analytics use calendar month; day-of-month differences in that source do not create separate periods.
 _Avoid_: Exact source date, statement date
 
+**Morning briefing**:
+A once-per-morning household readiness summary focused on what needs attention before the day gets moving. It is distinct from event reminders because it highlights daily actions, risks, and context rather than notifying about each upcoming event.
+_Avoid_: Morning schedule briefing, schedule reminder, calendar notification, event alert
+
+**Daily requirements calendar**:
+A curated calendar source for day-specific household requirements such as special events, clothing expectations, items to bring, preparation notes, and timing constraints. Its event descriptions are treated as the source of detailed readiness information, distinct from ordinary family schedule events.
+_Avoid_: Family calendar, school calendar, event reminder feed
+
+**Routine requirement**:
+A recurring or expected daily requirement that still changes what someone should wear, bring, prepare, remember, coordinate, or leave earlier for. A **routine requirement** should be mentioned calmly without being framed as unusual.
+_Avoid_: Special event, alert, calendar noise
+
+**Special requirement**:
+An unusual or non-routine daily requirement that deserves extra attention in a **morning briefing**. A **special requirement** may come from the **daily requirements calendar** or from ordinary schedule context when it affects readiness.
+_Avoid_: Normal event, recurring requirement
+
 ## Example Dialogue
 
 Dev: "The card spend by category for April does not add up to the credit-card budget total. Is that invalid?"
@@ -53,3 +69,11 @@ Domain expert: "Yes. The budget capture is shown under April, and the April spen
 Dev: "Should the card spend by category panel total add up the visible categories?"
 
 Domain expert: "No. Keep the panel total as the budget card spend subtotal. The category rows are context only."
+
+Dev: "Is the morning briefing just a schedule reminder?"
+
+Domain expert: "No. A morning briefing is a household readiness summary. It should surface routine and special requirements that affect the day, not repeat every calendar notification."
+
+Dev: "If the daily requirements calendar is empty today, should we warn the recipient?"
+
+Domain expert: "No, that is a quiet day. Warn only when the daily requirements calendar is not configured or the schedule data is stale enough to undermine trust."

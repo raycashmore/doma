@@ -380,28 +380,59 @@ and the Convex
 Set the same value in the Bot gateway, Schedule app, and the target Convex
 deployment before enabling `SCHEDULE_CAPABILITY_URL`.
 
-Outbound schedule reminders run from Convex cron, not Vercel Cron. This keeps
+The Schedule capability supports these Telegram commands:
+
+| Command              | Behavior                                                                       |
+| -------------------- | ------------------------------------------------------------------------------ |
+| `/briefing`          | Replays today's stored morning briefing, or generates and stores one on demand |
+| `/schedule briefing` | Alias for `/briefing`                                                          |
+| `/schedule upcoming` | Pull-based list of upcoming schedule events                                    |
+
+Doma no longer sends proactive event-level schedule reminders.
+
+Morning briefing delivery runs from Convex cron, not Vercel Cron. This keeps
 the Bot gateway deployable on Vercel Hobby, where frequent cron schedules are
-rejected. Convex evaluates due reminders every 30 minutes, only sends during
-the configured local window `06:00 <= time < 22:00`, calls the Bot gateway's
-provider-neutral `/notifications/send` endpoint, and records the reminder
-attempt in Convex per recipient. A reminder that succeeds for one configured
-recipient does not suppress another recipient. Sent recipient attempts are
-terminal; failed or skipped recipient attempts remain retryable. When no
-reminder recipients are configured, Convex records a skipped event-level attempt
-with `no_reminder_recipients`.
+rejected. Convex checks the delivery cycle every 10 minutes, only sends during
+the local morning retry window `07:30 <= time < 08:30`, forces a schedule sync
+before generation when possible, falls back to cached schedule data when needed,
+calls the Bot gateway's provider-neutral `/notifications/send` endpoint, and
+records the briefing delivery attempt in Convex per recipient.
 
-Set these Convex env vars on every Convex deployment that should send schedule
-reminders:
+Set these Convex env vars on every Convex deployment that should send morning
+briefings:
 
-| Variable                               | Where it lives             | Notes                                                                                       |
-| -------------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------- |
-| `BOT_GATEWAY_ORIGIN`                   | Convex                     | Public Bot gateway origin, for example `https://bot.example.com`; no path or trailing slash |
-| `BOT_SERVICE_TOKEN`                    | Convex, Vercel Bot gateway | Bearer token Convex sends to `/notifications/send`                                          |
-| `SCHEDULE_REMINDER_RECIPIENT_USER_IDS` | Convex                     | Comma-separated Clerk user IDs that should receive outbound event reminders                 |
-| `SCHEDULE_REMINDER_LEAD_TIME_MINUTES`  | Convex                     | Optional; defaults to `30`                                                                  |
-| `SCHEDULE_REMINDER_LOOKBACK_MINUTES`   | Convex                     | Optional; defaults to `30`; keep at least as long as the Convex cron interval               |
-| `SCHEDULE_REMINDER_TZ`                 | Convex                     | Optional; defaults to `Australia/Sydney`; also controls the 6am-10pm delivery window        |
+| Variable                              | Where it lives             | Notes                                                                                          |
+| ------------------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------- |
+| `BOT_GATEWAY_ORIGIN`                  | Convex                     | Public Bot gateway origin, for example `https://bot.example.com`; no path or trailing slash    |
+| `BOT_SERVICE_TOKEN`                   | Convex, Vercel Bot gateway | Bearer token Convex sends to `/notifications/send` and Schedule validates for bot capability   |
+| `MORNING_BRIEFING_RECIPIENT_USER_IDS` | Convex                     | Comma-separated Clerk user IDs that should receive scheduled morning briefings                 |
+| `MORNING_BRIEFING_TZ`                 | Convex                     | Optional; falls back to `SCHEDULE_TZ`, then `Australia/Sydney`                                 |
+| `MORNING_BRIEFING_AI_MODEL`           | Convex                     | Required with `OPENAI_API_KEY` for AI generation; otherwise generation uses deterministic text |
+| `OPENAI_API_KEY`                      | Convex                     | Required with `MORNING_BRIEFING_AI_MODEL` for AI generation                                    |
+
+Morning briefing operations:
+
+- A scheduled delivery outside `07:30 <= time < 08:30` in
+  `MORNING_BRIEFING_TZ` no-ops.
+- If no `MORNING_BRIEFING_RECIPIENT_USER_IDS` are configured, the scheduled run
+  no-ops. `/briefing` can still be used on demand by a linked Telegram user.
+- Convex generates one briefing per local date and reuses it for retries and
+  replay. A recipient with a sent or skipped delivery attempt is not processed
+  for the same briefing again.
+- If AI suppresses a quiet briefing or produces an empty message, scheduled
+  delivery records the recipient as skipped instead of sending an empty
+  notification.
+- If schedule sync fails but cached schedule data exists, Doma can still send
+  the briefing. When the cache is older than 12 hours, it appends:
+  `Note: schedule data may be stale because the latest calendar sync failed.`
+- If AI generation fails, Doma stores and sends a deterministic fallback rather
+  than retrying generation for the same local date.
+- If no daily requirements calendar is configured, the briefing is a setup
+  problem, not a quiet day. Configure at least one calendar with
+  `"kind":"dailyRequirements"` in `SCHEDULE_CALENDARS`.
+
+Historical `scheduleReminderAttempts` rows are retained for audit context. Do
+not delete them as part of deploying morning briefing delivery.
 
 For local development:
 

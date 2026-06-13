@@ -26,6 +26,21 @@ export function createFixtureScheduleEvents(weekStartMs: number): ConvexSchedule
       _id: 'fixture-2',
       _creationTime: 1,
       googleEventId: 'fixture-google-2',
+      calendarId: 'requirements-calendar',
+      start: dayMs(weekStartMs, 0, 0),
+      end: dayMs(weekStartMs, 1, 0),
+      allDay: true,
+      title: 'Child A sports uniform',
+      kind: 'dailyRequirements',
+      description: 'Bring hat and water bottle',
+      who: ['memberC'],
+      recurring: false,
+      htmlLink: 'https://calendar.google.com/'
+    },
+    {
+      _id: 'fixture-3',
+      _creationTime: 1,
+      googleEventId: 'fixture-google-3',
       calendarId: 'fixture',
       start: dayMs(weekStartMs, 0, 16),
       end: dayMs(weekStartMs, 0, 17, 30),
@@ -37,9 +52,9 @@ export function createFixtureScheduleEvents(weekStartMs: number): ConvexSchedule
       htmlLink: 'https://calendar.google.com/'
     },
     {
-      _id: 'fixture-3',
+      _id: 'fixture-4',
       _creationTime: 1,
-      googleEventId: 'fixture-google-3',
+      googleEventId: 'fixture-google-4',
       calendarId: 'fixture',
       start: dayMs(weekStartMs, 0, 16, 15),
       end: dayMs(weekStartMs, 0, 17),
@@ -51,9 +66,9 @@ export function createFixtureScheduleEvents(weekStartMs: number): ConvexSchedule
       htmlLink: 'https://calendar.google.com/'
     },
     {
-      _id: 'fixture-4',
+      _id: 'fixture-5',
       _creationTime: 1,
-      googleEventId: 'fixture-google-4',
+      googleEventId: 'fixture-google-5',
       calendarId: 'fixture',
       start: dayMs(weekStartMs, 0, 18, 30),
       end: dayMs(weekStartMs, 0, 19, 30),
@@ -65,9 +80,9 @@ export function createFixtureScheduleEvents(weekStartMs: number): ConvexSchedule
       htmlLink: 'https://calendar.google.com/'
     },
     {
-      _id: 'fixture-5',
+      _id: 'fixture-6',
       _creationTime: 1,
-      googleEventId: 'fixture-google-5',
+      googleEventId: 'fixture-google-6',
       calendarId: 'fixture',
       start: dayMs(weekStartMs, 2, 17),
       end: dayMs(weekStartMs, 2, 18, 30),
@@ -79,9 +94,9 @@ export function createFixtureScheduleEvents(weekStartMs: number): ConvexSchedule
       htmlLink: 'https://calendar.google.com/'
     },
     {
-      _id: 'fixture-6',
+      _id: 'fixture-7',
       _creationTime: 1,
-      googleEventId: 'fixture-google-6',
+      googleEventId: 'fixture-google-7',
       calendarId: 'fixture',
       start: dayMs(weekStartMs, 5, 0),
       end: dayMs(weekStartMs, 7, 0),

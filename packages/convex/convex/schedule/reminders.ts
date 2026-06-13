@@ -40,7 +40,7 @@ export type ScheduleReminderCycleCounts = {
 
 export type ScheduleReminderNotificationSender = (notification: {
   recipientUserId: string;
-  topic: 'schedule.reminder';
+  topic: 'schedule.reminder' | 'briefing.morning';
   message: string;
   metadata: Record<string, string>;
 }) => Promise<{ status: ScheduleReminderDeliveryStatus; errorCode?: string }>;
@@ -141,7 +141,7 @@ export function parsePositiveIntegerEnv(value: string | undefined, fallback: num
 
 export function parseBotGatewayOrigin() {
   const value = process.env.BOT_GATEWAY_ORIGIN;
-  if (!value) throw new Error('BOT_GATEWAY_ORIGIN env var is required for schedule reminder delivery');
+  if (!value) throw new Error('BOT_GATEWAY_ORIGIN env var is required for bot notification delivery');
 
   const url = new URL(value);
   if (

@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
+  type BotMorningBriefing,
   type BotScheduleEvent,
   formatUpcomingEvents,
   handleScheduleCapabilityRequest,
@@ -49,6 +50,157 @@ describe('formatUpcomingEvents', () => {
 });
 
 describe('handleScheduleCapabilityRequest', () => {
+  it("replays today's stored morning briefing for /briefing and marks the recipient delivered", async () => {
+    const briefing: BotMorningBriefing = {
+      briefingKey: 'morning:2026-06-06',
+      localDate: '2026-06-06',
+      message: 'Morning briefing\n\nNormal day. No special requirements found.',
+      shouldSend: true,
+      generationStatus: 'deterministic'
+    };
+    const markMorningBriefingDelivered = vi.fn(async () => undefined);
+
+    await expect(
+      handleScheduleCapabilityRequest(
+        {
+          userId: 'user_123',
+          command: 'briefing',
+          messageText: '/briefing',
+          receivedAt: nowMs
+        },
+        {
+          nowMs,
+          timeZone: 'Australia/Sydney',
+          loadCurrentWeek: async () => ({ events: [] }),
+          loadMorningBriefing: async () => briefing,
+          generateMorningBriefing: async () => {
+            throw new Error('should not regenerate an existing briefing');
+          },
+          markMorningBriefingDelivered
+        }
+      )
+    ).resolves.toEqual({
+      kind: 'reply',
+      text: 'Morning briefing\n\nNormal day. No special requirements found.'
+    });
+    expect(markMorningBriefingDelivered).toHaveBeenCalledWith({
+      briefingKey: 'morning:2026-06-06',
+      recipientUserId: 'user_123',
+      attemptedAt: nowMs
+    });
+  });
+
+  it("generates today's morning briefing on demand when none is stored", async () => {
+    const briefing: BotMorningBriefing = {
+      briefingKey: 'morning:2026-06-06',
+      localDate: '2026-06-06',
+      message: "Morning briefing\n\nToday's requirements\n- memberA: Bring sports bag",
+      shouldSend: true,
+      generationStatus: 'ai'
+    };
+    const generateMorningBriefing = vi.fn(async () => briefing);
+    const markMorningBriefingDelivered = vi.fn(async () => undefined);
+
+    await expect(
+      handleScheduleCapabilityRequest(
+        {
+          userId: 'user_123',
+          command: 'briefing',
+          messageText: '/briefing',
+          receivedAt: nowMs
+        },
+        {
+          nowMs,
+          timeZone: 'Australia/Sydney',
+          loadCurrentWeek: async () => ({ events: [] }),
+          loadMorningBriefing: async () => null,
+          generateMorningBriefing,
+          markMorningBriefingDelivered
+        }
+      )
+    ).resolves.toEqual({
+      kind: 'reply',
+      text: "Morning briefing\n\nToday's requirements\n- memberA: Bring sports bag"
+    });
+    expect(generateMorningBriefing).toHaveBeenCalledWith({
+      localDate: '2026-06-06',
+      timeZone: 'Australia/Sydney',
+      generatedAt: nowMs
+    });
+    expect(markMorningBriefingDelivered).toHaveBeenCalledWith({
+      briefingKey: 'morning:2026-06-06',
+      recipientUserId: 'user_123',
+      attemptedAt: nowMs
+    });
+  });
+
+  it('replays a stored fallback briefing without regenerating it', async () => {
+    const generateMorningBriefing = vi.fn(async () => {
+      throw new Error('should not regenerate a stored fallback');
+    });
+
+    await expect(
+      handleScheduleCapabilityRequest(
+        {
+          userId: 'user_123',
+          command: 'briefing',
+          messageText: '/briefing',
+          receivedAt: nowMs
+        },
+        {
+          nowMs,
+          timeZone: 'Australia/Sydney',
+          loadCurrentWeek: async () => ({ events: [] }),
+          loadMorningBriefing: async () => ({
+            briefingKey: 'morning:2026-06-06',
+            localDate: '2026-06-06',
+            message: "Morning briefing\n\nI couldn't summarise the day automatically.\n\nNo daily requirements found.",
+            shouldSend: true,
+            generationStatus: 'fallback'
+          }),
+          generateMorningBriefing,
+          markMorningBriefingDelivered: async () => undefined
+        }
+      )
+    ).resolves.toEqual({
+      kind: 'reply',
+      text: "Morning briefing\n\nI couldn't summarise the day automatically.\n\nNo daily requirements found."
+    });
+    expect(generateMorningBriefing).not.toHaveBeenCalled();
+  });
+
+  it('aliases /schedule briefing to the morning briefing behavior', async () => {
+    await expect(
+      handleScheduleCapabilityRequest(
+        {
+          userId: 'user_123',
+          command: 'schedule',
+          messageText: '/schedule briefing',
+          receivedAt: nowMs
+        },
+        {
+          nowMs,
+          timeZone: 'Australia/Sydney',
+          loadCurrentWeek: async () => ({ events: [] }),
+          loadMorningBriefing: async () => ({
+            briefingKey: 'morning:2026-06-06',
+            localDate: '2026-06-06',
+            message: 'Morning briefing\n\nNormal day. No special requirements found.',
+            shouldSend: true,
+            generationStatus: 'deterministic'
+          }),
+          generateMorningBriefing: async () => {
+            throw new Error('should not regenerate an existing briefing');
+          },
+          markMorningBriefingDelivered: async () => undefined
+        }
+      )
+    ).resolves.toEqual({
+      kind: 'reply',
+      text: 'Morning briefing\n\nNormal day. No special requirements found.'
+    });
+  });
+
   it('answers /schedule upcoming with loaded schedule data', async () => {
     await expect(
       handleScheduleCapabilityRequest(

@@ -36,6 +36,36 @@ describe('schedule layout helpers', () => {
     });
   });
 
+  it('preserves daily requirements kind and notes for the event panel', () => {
+    const [event] = normalizeScheduleEvents(
+      [
+        {
+          _id: 'event1',
+          _creationTime: 1,
+          googleEventId: 'g1',
+          calendarId: 'requirements-calendar',
+          start: new Date(2026, 5, 1, 0, 0).getTime(),
+          end: new Date(2026, 5, 2, 0, 0).getTime(),
+          allDay: true,
+          title: 'Child A sports uniform',
+          description: 'Bring hat and water bottle',
+          kind: 'dailyRequirements',
+          who: ['memberA'],
+          recurring: false,
+          htmlLink: 'https://calendar.google.com/event?eid=1'
+        }
+      ],
+      monday
+    );
+
+    expect(event).toMatchObject({
+      kind: 'dailyRequirements',
+      description: 'Bring hat and water bottle',
+      startMinutes: 360,
+      endMinutes: 1320
+    });
+  });
+
   it('treats all-day end dates as exclusive when spanning days', () => {
     const events = normalizeScheduleEvents(
       [

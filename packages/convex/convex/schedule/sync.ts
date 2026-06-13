@@ -5,9 +5,9 @@ import { JWT } from 'google-auth-library';
 
 import { internal } from '../_generated/api';
 import { action, type ActionCtx, internalAction } from '../_generated/server';
-import { parseJsonEnv, parseScheduleMembers } from './config';
+import { parseJsonEnv, parseScheduleCalendars, parseScheduleMembers } from './config';
 import { normalizePrivateKey } from './credentials';
-import { type CalendarConfig, type GoogleEvent, type ScheduleEventRow, toScheduleEvent } from './mapping';
+import { type GoogleEvent, type ScheduleEventRow, toScheduleEvent } from './mapping';
 import { shouldSkipSync } from './syncPolicy';
 import { currentWeekRange } from './week';
 
@@ -24,7 +24,7 @@ function parseEnv() {
     process.env.GOOGLE_SA_KEY ?? '',
     '{}'
   );
-  const calendars = parseJsonEnv<CalendarConfig[]>('SCHEDULE_CALENDARS', process.env.SCHEDULE_CALENDARS ?? '', '[]');
+  const calendars = parseScheduleCalendars();
   const members = parseScheduleMembers();
   const tz = process.env.SCHEDULE_TZ ?? 'UTC';
   return { key, calendars, members, tz };

@@ -20,10 +20,29 @@ export type BotScheduleData = {
   events: BotScheduleEvent[];
 };
 
+export type BotMorningBriefing = {
+  briefingKey: string;
+  localDate: string;
+  message: string;
+  shouldSend: boolean;
+  generationStatus: 'ai' | 'deterministic' | 'fallback' | 'setupProblem';
+};
+
 export type HandleScheduleCapabilityOptions = {
   nowMs?: number;
   timeZone?: string;
   loadCurrentWeek: () => Promise<BotScheduleData>;
+  loadMorningBriefing?: (input: { localDate: string }) => Promise<BotMorningBriefing | null>;
+  generateMorningBriefing?: (input: {
+    localDate: string;
+    timeZone: string;
+    generatedAt: number;
+  }) => Promise<BotMorningBriefing>;
+  markMorningBriefingDelivered?: (input: {
+    briefingKey: string;
+    recipientUserId: string;
+    attemptedAt: number;
+  }) => Promise<unknown>;
 };
 
 const MAX_EVENTS = 5;
@@ -53,6 +72,29 @@ export function parseBotCapabilityRequest(value: unknown): BotCapabilityRequest 
 function isUpcomingAsk(text: string): boolean {
   const normalized = text.trim().toLowerCase();
   return normalized === '/schedule' || /^\/schedule(?:@\w+)?\s+upcoming\b/.test(normalized);
+}
+
+function isBriefingAsk(text: string): boolean {
+  const normalized = text.trim().toLowerCase();
+  return /^\/briefing(?:@\w+)?(?:\s|$)/.test(normalized) || /^\/schedule(?:@\w+)?\s+briefing\b/.test(normalized);
+}
+
+function formatLocalDate(ms: number, timeZone: string) {
+  const parts = new Intl.DateTimeFormat('en-AU', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(new Date(ms));
+  const year = parts.find((part) => part.type === 'year')?.value;
+  const month = parts.find((part) => part.type === 'month')?.value;
+  const day = parts.find((part) => part.type === 'day')?.value;
+
+  if (!year || !month || !day) {
+    throw new Error('Could not format local date');
+  }
+
+  return `${year}-${month}-${day}`;
 }
 
 function formatDayTime(ms: number, timeZone: string): string {
@@ -96,8 +138,40 @@ export function formatUpcomingEvents(events: BotScheduleEvent[], nowMs: number, 
 
 export async function handleScheduleCapabilityRequest(
   request: BotCapabilityRequest,
-  { loadCurrentWeek, nowMs = Date.now(), timeZone = 'Australia/Sydney' }: HandleScheduleCapabilityOptions
+  {
+    loadCurrentWeek,
+    loadMorningBriefing,
+    generateMorningBriefing,
+    markMorningBriefingDelivered,
+    nowMs = Date.now(),
+    timeZone = 'Australia/Sydney'
+  }: HandleScheduleCapabilityOptions
 ): Promise<BotCapabilityResponse> {
+  if (isBriefingAsk(request.messageText)) {
+    if (!loadMorningBriefing || !generateMorningBriefing || !markMorningBriefingDelivered) {
+      return { kind: 'reply', text: 'I could not load the morning briefing just now.' };
+    }
+
+    const localDate = formatLocalDate(nowMs, timeZone);
+    const briefing =
+      (await loadMorningBriefing({ localDate })) ??
+      (await generateMorningBriefing({ localDate, timeZone, generatedAt: nowMs }));
+
+    await markMorningBriefingDelivered({
+      briefingKey: briefing.briefingKey,
+      recipientUserId: request.userId,
+      attemptedAt: nowMs
+    });
+
+    const text =
+      briefing.shouldSend && briefing.message.trim().length > 0 ? briefing.message : 'Nothing to flag this morning.';
+
+    return {
+      kind: 'reply',
+      text
+    };
+  }
+
   if (!isUpcomingAsk(request.messageText)) {
     return { kind: 'reply', text: 'Try /schedule upcoming to see the next events.' };
   }
