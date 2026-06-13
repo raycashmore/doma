@@ -378,30 +378,31 @@ Schedule's bot capability route (`/schedule/api/bot/schedule` in production)
 and the Convex
 `schedule.queries.currentWeekForBot` query both validate `BOT_SERVICE_TOKEN`.
 Set the same value in the Bot gateway, Schedule app, and the target Convex
-deployment before enabling `SCHEDULE_CAPABILITY_URL`.
+deployment before enabling `SCHEDULE_CAPABILITY_URL`. This keeps
+`/schedule upcoming` as a pull-based command; Doma no longer sends proactive
+event-level schedule reminders.
 
-Outbound schedule reminders run from Convex cron, not Vercel Cron. This keeps
+Morning briefing delivery runs from Convex cron, not Vercel Cron. This keeps
 the Bot gateway deployable on Vercel Hobby, where frequent cron schedules are
-rejected. Convex evaluates due reminders every 30 minutes, only sends during
-the configured local window `06:00 <= time < 22:00`, calls the Bot gateway's
-provider-neutral `/notifications/send` endpoint, and records the reminder
-attempt in Convex per recipient. A reminder that succeeds for one configured
-recipient does not suppress another recipient. Sent recipient attempts are
-terminal; failed or skipped recipient attempts remain retryable. When no
-reminder recipients are configured, Convex records a skipped event-level attempt
-with `no_reminder_recipients`.
+rejected. Convex checks the delivery cycle every 10 minutes, only sends during
+the local morning retry window, forces a schedule sync before generation when
+possible, falls back to cached schedule data when needed, calls the Bot
+gateway's provider-neutral `/notifications/send` endpoint, and records the
+briefing delivery attempt in Convex per recipient.
 
-Set these Convex env vars on every Convex deployment that should send schedule
-reminders:
+Set these Convex env vars on every Convex deployment that should send morning
+briefings:
 
-| Variable                               | Where it lives             | Notes                                                                                       |
-| -------------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------- |
-| `BOT_GATEWAY_ORIGIN`                   | Convex                     | Public Bot gateway origin, for example `https://bot.example.com`; no path or trailing slash |
-| `BOT_SERVICE_TOKEN`                    | Convex, Vercel Bot gateway | Bearer token Convex sends to `/notifications/send`                                          |
-| `SCHEDULE_REMINDER_RECIPIENT_USER_IDS` | Convex                     | Comma-separated Clerk user IDs that should receive outbound event reminders                 |
-| `SCHEDULE_REMINDER_LEAD_TIME_MINUTES`  | Convex                     | Optional; defaults to `30`                                                                  |
-| `SCHEDULE_REMINDER_LOOKBACK_MINUTES`   | Convex                     | Optional; defaults to `30`; keep at least as long as the Convex cron interval               |
-| `SCHEDULE_REMINDER_TZ`                 | Convex                     | Optional; defaults to `Australia/Sydney`; also controls the 6am-10pm delivery window        |
+| Variable                              | Where it lives             | Notes                                                                                       |
+| ------------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------- |
+| `BOT_GATEWAY_ORIGIN`                  | Convex                     | Public Bot gateway origin, for example `https://bot.example.com`; no path or trailing slash |
+| `BOT_SERVICE_TOKEN`                   | Convex, Vercel Bot gateway | Bearer token Convex sends to `/notifications/send`                                          |
+| `MORNING_BRIEFING_RECIPIENT_USER_IDS` | Convex                     | Comma-separated Clerk user IDs that should receive morning briefings                        |
+| `MORNING_BRIEFING_TZ`                 | Convex                     | Optional; falls back to `SCHEDULE_TZ`, then `Australia/Sydney`                              |
+| `MORNING_BRIEFING_AI_MODEL`           | Convex                     | Optional; defaults to the briefing generator's configured model                             |
+
+Historical `scheduleReminderAttempts` rows are retained for audit context. Do
+not delete them as part of deploying morning briefing delivery.
 
 For local development:
 
