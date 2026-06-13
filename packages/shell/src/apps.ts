@@ -1,15 +1,6 @@
-import {
-  Calendar,
-  ChefHat,
-  Home,
-  Landmark,
-  ListChecks,
-  type LucideIcon,
-  PiggyBank,
-  ShoppingBasket
-} from 'lucide-react';
+import { Calendar, ChefHat, Home, Landmark, ListChecks, type LucideIcon, PiggyBank } from 'lucide-react';
 
-export type AppId = 'home' | 'budget' | 'mortgage' | 'schedule' | 'todo' | 'shopping' | 'recipes';
+export type AppId = 'home' | 'budget' | 'mortgage' | 'schedule' | 'lists' | 'recipes';
 
 export type AppDescriptor = {
   id: AppId;
@@ -56,20 +47,12 @@ export const APPS: AppDescriptor[] = [
     devPort: 3003
   },
   {
-    id: 'todo',
-    label: 'Todo',
-    href: '/todo',
+    id: 'lists',
+    label: 'Lists',
+    href: '/lists',
     icon: ListChecks,
-    enabled: false,
+    enabled: true,
     devPort: 3004
-  },
-  {
-    id: 'shopping',
-    label: 'Shopping',
-    href: '/shopping',
-    icon: ShoppingBasket,
-    enabled: false,
-    devPort: 3005
   },
   {
     id: 'recipes',

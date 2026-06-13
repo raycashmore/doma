@@ -9,6 +9,7 @@ Doma is a Vercel Multi-Zones monorepo. `apps/home` owns the apex domain and rewr
 | `apps/home`                  | TanStack Start       | Apex zone, port 3000; owns `vercel.json` rewrites                                       |
 | `apps/budget`                | TanStack Start       | Mounts at `/budget`, port 3001                                                          |
 | `apps/schedule`              | Next.js (App Router) | Mounts at `/schedule`, port 3003                                                        |
+| `apps/lists`                 | SvelteKit            | Mounts at `/lists`, port 3004; native Svelte shell using shared tokens                  |
 | `apps/api-bot`               | Hono on Vercel       | Shared bot gateway for Telegram delivery and chat                                       |
 | `apps/api-*`                 | (per-experiment)     | Convention for non-Convex backends                                                      |
 | `packages/convex`            | —                    | Shared Convex schema/functions (`@repo/convex`)                                         |
@@ -20,9 +21,9 @@ Doma is a Vercel Multi-Zones monorepo. `apps/home` owns the apex domain and rewr
 
 ## Multi-Zones
 
-`apps/home/vercel.json` rewrites paths to other Vercel projects. TanStack Start sub-apps build with `base: '/<path>/'` (Vite) plus `basepath: '/<path>'` (TanStack Router) so asset URLs and route matching agree. Next.js sub-apps (e.g. `schedule`) achieve the same with `basePath` set to the mount path — **in production only**, unset in dev — so cross-port dev links to `localhost:<port>/` still resolve. (Next derives the asset prefix from `basePath`, so assets serve under the mount path without a separate `assetPrefix`.) Cross-app navigation is real browser navigation; same apex domain means a single Clerk cookie covers every zone.
+`apps/home/vercel.json` rewrites paths to other Vercel projects. TanStack Start sub-apps build with `base: '/<path>/'` (Vite) plus `basepath: '/<path>'` (TanStack Router) so asset URLs and route matching agree. Next.js sub-apps (e.g. `schedule`) achieve the same with `basePath` set to the mount path — **in production only**, unset in dev — so cross-port dev links to `localhost:<port>/` still resolve. (Next derives the asset prefix from `basePath`, so assets serve under the mount path without a separate `assetPrefix`.) SvelteKit sub-apps (e.g. `lists`) use `kit.paths.base` in production and an empty base in dev for the same reason. Cross-app navigation is real browser navigation; same apex domain means a single Clerk cookie covers every zone.
 
-**Local dev does not apply Vercel rewrites.** Each app runs on its own port (Home 3000, Budget 3001, Bot gateway 3002, Schedule 3003). Visit UI apps directly. Home's Vite dev server proxies `/api/bot/*` to the bot gateway so the notification settings page can use the same same-origin path in local dev and production.
+**Local dev does not apply Vercel rewrites.** Each app runs on its own port (Home 3000, Budget 3001, Bot gateway 3002, Schedule 3003, Lists 3004). Visit UI apps directly. Home's Vite dev server proxies `/api/bot/*` to the bot gateway so the notification settings page can use the same same-origin path in local dev and production.
 
 ### Cross-origin Clerk session sync in dev
 
@@ -60,7 +61,7 @@ TanStack Start apps use `vite-plugin-pwa` with `scope` set to their mount path; 
 
 ## Auth
 
-Clerk per zone, restricted-mode allowlist. The Clerk cookie is set on the apex domain, so every zone shares the session. Each app owns an `AuthGate` adapter (`apps/<app>/src/integrations/auth/AuthGate.tsx`) that wraps its Clerk SDK and composes `@repo/shell`'s `UrlAuthProvider` + `SignInLayout`. The gate is a passthrough until the app's Clerk publishable key is set (`VITE_CLERK_PUBLISHABLE_KEY` for Vite apps, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` for Next.js), then becomes a sign-in gate. See `docs/auth.md`.
+Clerk per zone, restricted-mode allowlist. The Clerk cookie is set on the apex domain, so every zone shares the session. React apps own an `AuthGate` adapter (`apps/<app>/src/integrations/auth/AuthGate.tsx`) that wraps their Clerk SDK and composes `@repo/shell`'s `UrlAuthProvider` + `SignInLayout`. Lists uses Clerk's browser SDK from its native Svelte layout instead of importing the React shell package. Gates are a passthrough until the app's Clerk publishable key is set (`VITE_CLERK_PUBLISHABLE_KEY` for Vite/SvelteKit apps, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` for Next.js), then become sign-in gates. See `docs/auth.md`.
 
 ## Path aliases
 

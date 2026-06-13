@@ -35,6 +35,18 @@
     {
       "source": "/schedule/:path*",
       "destination": "https://schedule.rayandromana.com/schedule/:path*"
+    },
+    {
+      "source": "/lists",
+      "destination": "https://lists.rayandromana.com/lists"
+    },
+    {
+      "source": "/lists/",
+      "destination": "https://lists.rayandromana.com/lists"
+    },
+    {
+      "source": "/lists/:path*",
+      "destination": "https://lists.rayandromana.com/lists/:path*"
     }
   ]
 }

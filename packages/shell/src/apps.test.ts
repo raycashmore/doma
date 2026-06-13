@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { APPS, getActiveAppId, getAppHref } from './apps';
 
 const budget = APPS.find((a) => a.id === 'budget')!;
+const lists = APPS.find((a) => a.id === 'lists')!;
 
 describe('getAppHref', () => {
   it('returns the production subpath when not in dev', () => {
@@ -12,12 +13,18 @@ describe('getAppHref', () => {
   it('returns the localhost dev-port URL when in dev', () => {
     expect(getAppHref(budget, true)).toBe('http://localhost:3001/');
   });
+
+  it('returns the Lists zone path and dev port', () => {
+    expect(getAppHref(lists, false)).toBe('/lists');
+    expect(getAppHref(lists, true)).toBe('http://localhost:3004/');
+  });
 });
 
 describe('getActiveAppId', () => {
   it('maps the first path segment to an app id', () => {
     expect(getActiveAppId('/budget')).toBe('budget');
     expect(getActiveAppId('/schedule/anything')).toBe('schedule');
+    expect(getActiveAppId('/lists')).toBe('lists');
     expect(getActiveAppId('/')).toBe('home');
   });
 

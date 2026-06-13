@@ -23,10 +23,10 @@ We use Clerk for sign-in across all zones. One Clerk application; the cookie is 
 
 ## How it flows
 
-- Each app passes `import.meta.env.VITE_CLERK_PUBLISHABLE_KEY` to `<AuthGate>` from `@repo/shell`.
+- React/Vite apps pass `import.meta.env.VITE_CLERK_PUBLISHABLE_KEY` to `<AuthGate>` from `@repo/shell`; the SvelteKit Lists app reads the same env var and mounts Clerk through `@clerk/clerk-js`.
 - When the key is set, `<AuthGate>` mounts `<ClerkProvider>` and uses `<SignedIn>` / `<SignedOut>` to gate children. Unauthed users see a sign-in-only screen for approved accounts.
-- When the key is **not** set, `<AuthGate>` is a passthrough so the app still boots during scaffold/dev. A one-time console warning fires. This makes initial scaffold work usable without immediately requiring you to create the Clerk app.
-- The repo exposes that bypass explicitly as `pnpm --filter home dev:no-auth` and `pnpm --filter budget dev:no-auth` so agents and browser tests can render the apps without going through Clerk first.
+- When the key is **not** set, each app's gate is a passthrough so the app still boots during scaffold/dev. A one-time console warning fires. This makes initial scaffold work usable without immediately requiring you to create the Clerk app.
+- The repo exposes that bypass explicitly as `pnpm --filter home dev:no-auth`, `pnpm --filter budget dev:no-auth`, `pnpm --filter schedule dev:no-auth`, and `pnpm --filter lists dev:no-auth` so agents and browser tests can render the apps without going through Clerk first.
 - `apps/budget/src/integrations/convex/provider.tsx` uses `ConvexProviderWithClerk` (forwarding the Clerk JWT) when the key is set, and a plain `ConvexProvider` otherwise.
 - `packages/convex/convex/auth.config.ts` declares the JWT issuer so Convex can verify the token server-side. The issuer comes from `CLERK_JWT_ISSUER_DOMAIN` on the Convex side.
 - Sensitive Convex queries should call `ctx.auth.getUserIdentity()` and reject when null.
