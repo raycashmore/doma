@@ -8,6 +8,10 @@ type ReminderRunnerRefs = {
   runDueScheduleReminders: FunctionReference<'action', 'internal', Record<string, never>, unknown>;
 };
 
+type BriefingDeliveryRunnerRefs = {
+  runDueMorningBriefingDelivery: FunctionReference<'action', 'internal', Record<string, never>, unknown>;
+};
+
 const reminderRunner: ReminderRunnerRefs = (
   internal as unknown as {
     schedule: {
@@ -16,6 +20,15 @@ const reminderRunner: ReminderRunnerRefs = (
   }
 ).schedule.reminderRunner;
 
+const briefingDeliveryRunner: BriefingDeliveryRunnerRefs = (
+  internal as unknown as {
+    briefing: {
+      deliveryRunner: BriefingDeliveryRunnerRefs;
+    };
+  }
+).briefing.deliveryRunner;
+
 crons.interval('schedule reminder delivery', { minutes: 30 }, reminderRunner.runDueScheduleReminders);
+crons.interval('morning briefing delivery', { minutes: 10 }, briefingDeliveryRunner.runDueMorningBriefingDelivery);
 
 export default crons;
