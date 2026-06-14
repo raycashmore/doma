@@ -460,7 +460,7 @@ The pattern repeats:
 
 4. Redeploy Home.
 5. If the new app uses Convex, set the right public Convex URL env var for stable environments (`VITE_CONVEX_URL` for Vite, `NEXT_PUBLIC_CONVEX_URL` for Next.js). For Vercel Preview, set `CONVEX_DEPLOY_KEY` and run the app build through `convex deploy --cmd` so the generated preview URL is injected during the build. If the app does not use Convex, set only the Clerk vars.
-6. Enable the app in `packages/shell/src/apps.ts` (flip `enabled: false` to `true`) and ship a shell update. The new icon appears in the sidebar.
+6. Add or enable the app in `packages/app-registry/src/index.ts` and attach a React icon in `packages/shell/src/apps.ts`. Ship the registry/shell update so the app appears in shared navigation.
 
 ## Environment-variable reference
 

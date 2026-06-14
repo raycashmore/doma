@@ -1,0 +1,33 @@
+{
+  "name": "lists",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "dotenv -e ../../.env.local -- vite dev --port 3004",
+    "dev:no-auth": "dotenv -e ../../.env.local -- sh -c 'VITE_CLERK_PUBLISHABLE_KEY= vite dev --port 3004'",
+    "build": "vite build",
+    "preview": "vite preview --port 3004",
+    "check-types": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "lint": "eslint --fix .",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "@clerk/clerk-js": "^6.16.1",
+    "@repo/app-registry": "workspace:*",
+    "@repo/tokens": "workspace:*",
+    "@sveltejs/adapter-vercel": "^6.3.3",
+    "@sveltejs/kit": "^2.65.0",
+    "@sveltejs/vite-plugin-svelte": "^7.1.2",
+    "dotenv-cli": "^11.0.0",
+    "svelte": "^5.56.3",
+    "vite": "^8.0.16"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^22.10.2",
+    "eslint": "^9.39.1",
+    "svelte-check": "^4.6.0",
+    "typescript": "^6.0.3"
+  }
+}

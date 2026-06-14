@@ -38,3 +38,15 @@ edits; the app does not create or edit calendar events.
 For visual work without a Clerk session, run `pnpm --filter schedule dev:no-auth`.
 That mode uses generic fixture events and keeps real family schedule details out
 of committed code.
+
+## Lists
+
+`apps/lists` is a SvelteKit app mounted as the Lists zone. It uses shared Doma
+tokens directly and keeps a native Svelte shell layout rather than depending on
+the React `@repo/shell` package. Cross-app navigation comes from the shared
+`@repo/app-registry` metadata so Lists stays aligned with the React shell without
+importing React. The scaffold renders a fixture-backed Lists screen with the
+first-version layout shape: list picker, central item pane, and item detail
+space.
+
+For visual work without a Clerk session, run `pnpm --filter lists dev:no-auth`.
