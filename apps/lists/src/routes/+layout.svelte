@@ -1,19 +1,50 @@
 <script lang="ts">
   import '../styles.css';
 
+  import { setupAuth, setupConvex } from 'convex-svelte';
+  import type { Snippet } from 'svelte';
   import { onMount } from 'svelte';
 
   import { dev } from '$app/environment';
   import { base } from '$app/paths';
-  import { type ClerkAuthState,loadClerkSession } from '$lib/auth';
+  import { type ClerkAuthState, loadClerkSession } from '$lib/auth';
+  import ConvexAuthGate from '$lib/ConvexAuthGate.svelte';
   import { appNavItems, getAppHref } from '$lib/navigation';
 
+  let { children }: { children: Snippet } = $props();
   let signInElement: HTMLDivElement;
-  let authState: ClerkAuthState = { status: 'loading' };
+  let authState = $state<ClerkAuthState>({ status: 'loading' });
+  const clerkPublishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefined;
+  const convexUrl = import.meta.env.VITE_CONVEX_URL as string | undefined;
+  const shouldUseConvexAuth = Boolean(clerkPublishableKey);
+  const isMissingConvexUrl = shouldUseConvexAuth && !convexUrl;
+
+  if (convexUrl) {
+    setupConvex(convexUrl);
+    setupAuth(() => ({
+      isLoading: authState.status === 'loading',
+      isAuthenticated: authState.status === 'ready' && Boolean(authState.session),
+      fetchAccessToken: async ({ forceRefreshToken }) => {
+        if (authState.status !== 'ready' || !authState.session) return null;
+        return authState.session.getToken({
+          template: 'convex',
+          skipCache: forceRefreshToken
+        });
+      }
+    }));
+  }
 
   onMount(async () => {
+    if (isMissingConvexUrl) {
+      authState = {
+        status: 'error',
+        message: 'Lists is missing its Convex URL.'
+      };
+      return;
+    }
+
     try {
-      authState = await loadClerkSession(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY, signInElement);
+      authState = await loadClerkSession(clerkPublishableKey, signInElement);
     } catch (error) {
       authState = {
         status: 'error',
@@ -69,8 +100,12 @@
       <section class="auth-panel">
         <div class="sign-in-copy">Sign in to open Lists.</div>
       </section>
+    {:else if shouldUseConvexAuth}
+      <ConvexAuthGate>
+        {@render children()}
+      </ConvexAuthGate>
     {:else}
-      <slot />
+      {@render children()}
     {/if}
   </main>
 </div>
