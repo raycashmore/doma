@@ -9,7 +9,8 @@ const config = {
   kit: {
     adapter: adapter(),
     paths: {
-      base: isProduction ? '/lists' : ''
+      base: isProduction ? '/lists' : '',
+      relative: false
     }
   }
 };
