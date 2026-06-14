@@ -77,6 +77,15 @@ button {
   min-width: 0;
 }
 
+.auth-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: #fafafa;
+}
+
 .auth-panel {
   min-height: 100vh;
   display: grid;
@@ -90,10 +99,10 @@ button {
 }
 
 .sign-in-host:not(:empty) {
-  min-height: 100vh;
   display: grid;
   place-items: center;
-  padding: 24px;
+  width: 100%;
+  max-width: 448px;
 }
 
 .sign-in-host:not(:empty) + .auth-panel {

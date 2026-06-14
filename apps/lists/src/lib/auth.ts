@@ -1,3 +1,6 @@
+import type { Clerk } from '@clerk/clerk-js';
+import { loadClerkJsScript, loadClerkUIScript } from '@clerk/shared/loadClerkJsScript';
+
 export type ClerkSession = {
   userName: string;
   getToken: (options: { template?: 'convex'; skipCache?: boolean }) => Promise<string | null>;
@@ -10,6 +13,29 @@ export type ClerkAuthState =
   | { status: 'disabled' }
   | { status: 'error'; message: string };
 
+type ClerkBrowser = InstanceType<typeof Clerk>;
+type ClerkUIConstructor = NonNullable<Parameters<ClerkBrowser['load']>[0]>['ui'] extends {
+  ClerkUI?: infer T;
+}
+  ? Exclude<Awaited<T>, undefined>
+  : never;
+type ClerkWindow = Window & {
+  Clerk?: ClerkBrowser;
+  __internal_ClerkUICtor?: ClerkUIConstructor;
+};
+
+async function loadClerkBrowserScript(publishableKey: string): Promise<ClerkBrowser> {
+  const clerkWindow = window as ClerkWindow;
+  await Promise.all([
+    clerkWindow.Clerk ? Promise.resolve() : loadClerkJsScript({ publishableKey }),
+    clerkWindow.__internal_ClerkUICtor ? Promise.resolve() : loadClerkUIScript({ publishableKey })
+  ]);
+
+  if (!clerkWindow.Clerk) throw new Error('Unable to load Lists sign-in.');
+  if (!clerkWindow.__internal_ClerkUICtor) throw new Error('Unable to load Lists sign-in.');
+  return clerkWindow.Clerk;
+}
+
 export async function loadClerkSession(
   publishableKey: string | undefined,
   signInElement: HTMLDivElement
@@ -19,9 +45,8 @@ export async function loadClerkSession(
     return { status: 'disabled' };
   }
 
-  const { Clerk } = await import('@clerk/clerk-js');
-  const clerk = new Clerk(publishableKey);
-  await clerk.load();
+  const clerk = await loadClerkBrowserScript(publishableKey);
+  await clerk.load({ ui: { ClerkUI: (window as ClerkWindow).__internal_ClerkUICtor } });
 
   if (!clerk.user || !clerk.session) {
     clerk.mountSignIn(signInElement);
@@ -34,7 +59,7 @@ export async function loadClerkSession(
     status: 'ready',
     session: {
       userName: clerk.user.fullName ?? clerk.user.primaryEmailAddress?.emailAddress ?? 'Household user',
-      getToken: session.getToken,
+      getToken: (options) => session.getToken(options),
       signOut: async () => {
         await clerk.signOut();
       }
