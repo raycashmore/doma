@@ -18,6 +18,7 @@ import type * as budgetDisplayMonth from "../budgetDisplayMonth.js";
 import type * as budgetSummary from "../budgetSummary.js";
 import type * as crons from "../crons.js";
 import type * as helpers from "../helpers.js";
+import type * as lists_auth from "../lists/auth.js";
 import type * as monthDetail from "../monthDetail.js";
 import type * as monthlyBreakdown from "../monthlyBreakdown.js";
 import type * as mutations from "../mutations.js";
@@ -52,6 +53,7 @@ declare const fullApi: ApiFromModules<{
   budgetSummary: typeof budgetSummary;
   crons: typeof crons;
   helpers: typeof helpers;
+  "lists/auth": typeof lists_auth;
   monthDetail: typeof monthDetail;
   monthlyBreakdown: typeof monthlyBreakdown;
   mutations: typeof mutations;

@@ -38,11 +38,11 @@
     },
     {
       "source": "/lists",
-      "destination": "https://lists.rayandromana.com/lists"
+      "destination": "https://lists.rayandromana.com/lists/"
     },
     {
       "source": "/lists/",
-      "destination": "https://lists.rayandromana.com/lists"
+      "destination": "https://lists.rayandromana.com/lists/"
     },
     {
       "source": "/lists/:path*",

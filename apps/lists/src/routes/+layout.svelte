@@ -1,19 +1,51 @@
 <script lang="ts">
   import '../styles.css';
 
+  import { setupAuth, setupConvex } from 'convex-svelte';
+  import type { Snippet } from 'svelte';
   import { onMount } from 'svelte';
 
   import { dev } from '$app/environment';
   import { base } from '$app/paths';
-  import { type ClerkAuthState,loadClerkSession } from '$lib/auth';
+  import { type ClerkAuthState, loadClerkSession } from '$lib/auth';
+  import ConvexAuthGate from '$lib/ConvexAuthGate.svelte';
   import { appNavItems, getAppHref } from '$lib/navigation';
 
-  let signInElement: HTMLDivElement;
-  let authState: ClerkAuthState = { status: 'loading' };
+  let { children }: { children: Snippet } = $props();
+  let signInElement = $state<HTMLDivElement>();
+  let authState = $state<ClerkAuthState>({ status: 'loading' });
+  const clerkPublishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefined;
+  const convexUrl = import.meta.env.VITE_CONVEX_URL as string | undefined;
+  const shouldUseConvexAuth = Boolean(clerkPublishableKey);
+  const isMissingConvexUrl = shouldUseConvexAuth && !convexUrl;
+
+  if (convexUrl) {
+    setupConvex(convexUrl);
+    setupAuth(() => ({
+      isLoading: authState.status === 'loading',
+      isAuthenticated: authState.status === 'ready' && Boolean(authState.session),
+      fetchAccessToken: async ({ forceRefreshToken }) => {
+        if (authState.status !== 'ready' || !authState.session) return null;
+        return authState.session.getToken({
+          template: 'convex',
+          skipCache: forceRefreshToken
+        });
+      }
+    }));
+  }
 
   onMount(async () => {
+    if (isMissingConvexUrl) {
+      authState = {
+        status: 'error',
+        message: 'Lists is missing its Convex URL.'
+      };
+      return;
+    }
+
     try {
-      authState = await loadClerkSession(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY, signInElement);
+      if (!signInElement) throw new Error('Unable to load Lists sign-in.');
+      authState = await loadClerkSession(clerkPublishableKey, signInElement);
     } catch (error) {
       authState = {
         status: 'error',
@@ -38,54 +70,60 @@
   />
 </svelte:head>
 
-<div class="app-shell">
-  <nav aria-label="App navigation" class="rail">
-    <a class="home-mark" href={resolveAppHref(homeNavItem)} aria-label="Home">
-      <span>D</span>
-    </a>
-
-    <div class="rail-links">
-      {#each appNavItems.slice(1) as item (item.id)}
-        <a
-          class:active={item.id === activeAppId}
-          href={resolveAppHref(item)}
-          aria-label={item.label}
-          aria-current={item.id === activeAppId ? 'page' : undefined}
-        >
-          {item.label.slice(0, 1)}
-        </a>
-      {/each}
-    </div>
-  </nav>
-
-  <main class="content-frame">
+{#if authState.status !== 'disabled' && (authState.status !== 'ready' || !authState.session)}
+  <main class="auth-screen">
     <div class="sign-in-host" bind:this={signInElement}></div>
 
     {#if authState.status === 'loading'}
       <section class="auth-panel" aria-live="polite">Loading Lists...</section>
     {:else if authState.status === 'error'}
       <section class="auth-panel" role="alert">{authState.message}</section>
-    {:else if authState.status === 'ready' && !authState.session}
-      <section class="auth-panel">
-        <div class="sign-in-copy">Sign in to open Lists.</div>
-      </section>
-    {:else}
-      <slot />
     {/if}
   </main>
-</div>
+{:else}
+  <div class="app-shell">
+    <nav aria-label="App navigation" class="rail">
+      <a class="home-mark" href={resolveAppHref(homeNavItem)} aria-label="Home">
+        <span>D</span>
+      </a>
 
-<div class="mobile-nav" aria-label="App navigation">
-  {#each appNavItems as item (item.id)}
-    <a
-      class:active={item.id === activeAppId}
-      href={resolveAppHref(item)}
-      aria-current={item.id === activeAppId ? 'page' : undefined}
-    >
-      {item.label}
-    </a>
-  {/each}
-</div>
+      <div class="rail-links">
+        {#each appNavItems.slice(1) as item (item.id)}
+          <a
+            class:active={item.id === activeAppId}
+            href={resolveAppHref(item)}
+            aria-label={item.label}
+            aria-current={item.id === activeAppId ? 'page' : undefined}
+          >
+            {item.label.slice(0, 1)}
+          </a>
+        {/each}
+      </div>
+    </nav>
+
+    <main class="content-frame">
+      {#if shouldUseConvexAuth}
+        <ConvexAuthGate>
+          {@render children()}
+        </ConvexAuthGate>
+      {:else}
+        {@render children()}
+      {/if}
+    </main>
+  </div>
+
+  <div class="mobile-nav" aria-label="App navigation">
+    {#each appNavItems as item (item.id)}
+      <a
+        class:active={item.id === activeAppId}
+        href={resolveAppHref(item)}
+        aria-current={item.id === activeAppId ? 'page' : undefined}
+      >
+        {item.label}
+      </a>
+    {/each}
+  </div>
+{/if}
 
 {#if base}
   <span class="base-path" aria-hidden="true">{base}</span>
