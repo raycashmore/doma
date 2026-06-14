@@ -12,6 +12,7 @@ gateway for Telegram notifications.
 - `apps/budget` is the budgeting app mounted at `/budget`.
 - `apps/schedule` is the family scheduler mounted at `/schedule` (the first
   Next.js zone; the others are TanStack Start).
+- `apps/lists` is the SvelteKit Lists app mounted at `/lists`.
 - `apps/api-bot` is the bot gateway for Telegram linking, outbound
   notifications, and inbound command handling.
 
@@ -20,16 +21,19 @@ gateway for Telegram notifications.
 - `apps/home` — apex zone, summary/settings shell (port 3000)
 - `apps/budget` — Budget app at `/budget` (port 3001)
 - `apps/schedule` — Schedule app at `/schedule`, Next.js App Router (port 3003)
+- `apps/lists` — Lists app at `/lists`, SvelteKit (port 3004)
 - `apps/api-bot` — Hono bot gateway for Telegram/webhook flows (port 3002)
 - `apps/api-*` — convention for other non-Convex backend experiments
 
 ## Packages
 
 - `@repo/convex` — shared Convex schema/functions
+- `@repo/app-registry` — framework-neutral app metadata and navigation helpers
 - `@repo/tokens` — design tokens (Tailwind v4)
 - `@repo/shell` — shared React Sidebar + AppFrame + MobileNav + auth context
-  (`UrlAuthProvider`/`SignInLayout`); framework-neutral, so both TanStack Start
-  and Next.js apps consume it. Each app supplies its own Clerk `AuthGate` adapter.
+  (`UrlAuthProvider`/`SignInLayout`). TanStack Start and Next.js apps consume it;
+  Svelte apps use their own shell layout and the shared app registry. Each app
+  supplies its own Clerk `AuthGate` adapter.
 - `@repo/ui` — shared React primitives
 
 ## Commands
@@ -58,6 +62,9 @@ pnpm --filter budget test          # Budget Vitest suite
 pnpm --filter schedule dev         # Schedule on :3003 (Next.js)
 pnpm --filter schedule test        # Schedule Vitest suite
 pnpm --filter schedule build       # Verify Schedule build
+pnpm --filter lists dev            # Lists on :3004 (SvelteKit)
+pnpm --filter lists dev:no-auth    # Lists without Clerk auth
+pnpm --filter lists build          # Verify Lists build
 pnpm --filter api-bot dev          # Bot gateway on :3002
 pnpm --filter api-bot test         # Bot gateway Vitest suite
 pnpm --filter api-bot check-types  # Bot gateway TypeScript check
@@ -70,6 +77,7 @@ Run the UI apps directly by port in local dev:
 - Home: `http://localhost:3000`
 - Budget: `http://localhost:3001`
 - Schedule: `http://localhost:3003`
+- Lists: `http://localhost:3004`
 - Bot gateway: `http://localhost:3002`
 
 Home proxies `/api/bot/*` to the bot gateway in local development, so the

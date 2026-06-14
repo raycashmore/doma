@@ -4,20 +4,21 @@ Doma is a Vercel Multi-Zones monorepo. `apps/home` owns the apex domain and rewr
 
 ## Monorepo layout
 
-| Path                         | Framework            | Notes                                                                                   |
-| ---------------------------- | -------------------- | --------------------------------------------------------------------------------------- |
-| `apps/home`                  | TanStack Start       | Apex zone, port 3000; owns `vercel.json` rewrites                                       |
-| `apps/budget`                | TanStack Start       | Mounts at `/budget`, port 3001                                                          |
-| `apps/schedule`              | Next.js (App Router) | Mounts at `/schedule`, port 3003                                                        |
-| `apps/lists`                 | SvelteKit            | Mounts at `/lists`, port 3004; native Svelte shell using shared tokens                  |
-| `apps/api-bot`               | Hono on Vercel       | Shared bot gateway for Telegram delivery and chat                                       |
-| `apps/api-*`                 | (per-experiment)     | Convention for non-Convex backends                                                      |
-| `packages/convex`            | —                    | Shared Convex schema/functions (`@repo/convex`)                                         |
-| `packages/tokens`            | —                    | Tailwind v4 design tokens (`@repo/tokens`)                                              |
-| `packages/shell`             | React                | Shared Sidebar + AppFrame + MobileNav + auth context (`@repo/shell`); framework-neutral |
-| `packages/ui`                | React                | Shadcn primitives (`@repo/ui`)                                                          |
-| `packages/eslint-config`     | —                    | Shared ESLint configs                                                                   |
-| `packages/typescript-config` | —                    | Shared TypeScript configs                                                               |
+| Path                         | Framework            | Notes                                                                        |
+| ---------------------------- | -------------------- | ---------------------------------------------------------------------------- |
+| `apps/home`                  | TanStack Start       | Apex zone, port 3000; owns `vercel.json` rewrites                            |
+| `apps/budget`                | TanStack Start       | Mounts at `/budget`, port 3001                                               |
+| `apps/schedule`              | Next.js (App Router) | Mounts at `/schedule`, port 3003                                             |
+| `apps/lists`                 | SvelteKit            | Mounts at `/lists`, port 3004; native Svelte shell using shared tokens       |
+| `apps/api-bot`               | Hono on Vercel       | Shared bot gateway for Telegram delivery and chat                            |
+| `apps/api-*`                 | (per-experiment)     | Convention for non-Convex backends                                           |
+| `packages/convex`            | —                    | Shared Convex schema/functions (`@repo/convex`)                              |
+| `packages/app-registry`      | —                    | Framework-neutral app metadata and navigation helpers (`@repo/app-registry`) |
+| `packages/tokens`            | —                    | Tailwind v4 design tokens (`@repo/tokens`)                                   |
+| `packages/shell`             | React                | Shared Sidebar + AppFrame + MobileNav + auth context (`@repo/shell`)         |
+| `packages/ui`                | React                | Shadcn primitives (`@repo/ui`)                                               |
+| `packages/eslint-config`     | —                    | Shared ESLint configs                                                        |
+| `packages/typescript-config` | —                    | Shared TypeScript configs                                                    |
 
 ## Multi-Zones
 
@@ -27,7 +28,7 @@ Doma is a Vercel Multi-Zones monorepo. `apps/home` owns the apex domain and rewr
 
 ### Cross-origin Clerk session sync in dev
 
-Each dev port is a separate browser origin, so Clerk's session cookie doesn't carry across them. Each app's `AuthGate` adapter feeds Clerk's `buildUrlWithAuth` into the shell's framework-neutral `UrlAuthProvider`; `Sidebar` and `MobileNav` consume it via `useUrlAuth()` to append a short-lived `__clerk_db_jwt` to cross-origin links — clicking the Budget icon while signed in on Home lands you on Budget already authed. The context lives in `packages/shell/src/auth.tsx` (`UrlAuthContext`); the Clerk wiring lives in each app (Budget uses `@clerk/clerk-react`, Schedule uses `@clerk/nextjs`). In production all zones share the apex cookie and the URL builder is a no-op for same-origin paths.
+Each dev port is a separate browser origin, so Clerk's session cookie doesn't carry across them. Each app's `AuthGate` adapter feeds Clerk's `buildUrlWithAuth` into the shell's `UrlAuthProvider`; `Sidebar` and `MobileNav` consume it via `useUrlAuth()` to append a short-lived `__clerk_db_jwt` to cross-origin links — clicking the Budget icon while signed in on Home lands you on Budget already authed. The app metadata and URL helpers live in the framework-neutral `@repo/app-registry` package; the React shell attaches icons and auth-link behavior on top. The context lives in `packages/shell/src/auth.tsx` (`UrlAuthContext`); the Clerk wiring lives in each app (Budget uses `@clerk/clerk-react`, Schedule uses `@clerk/nextjs`). In production all zones share the apex cookie and the URL builder is a no-op for same-origin paths.
 
 _A Caddy reverse-proxy was explored as an alternative (single origin → one cookie), but TanStack Start + Nitro + Vite's `base` option don't play well together: `/<base>/@react-refresh`, `/<base>/@vite/client`, `/<base>/@id/...` all 404 in dev even with `base` set, breaking the proxy approach. The `clerk.buildUrlWithAuth` route is simpler and doesn't fight the framework._
 

@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@clerk/clerk-js": "^6.16.1",
+    "@repo/app-registry": "workspace:*",
     "@repo/tokens": "workspace:*",
     "@sveltejs/adapter-vercel": "^6.3.3",
     "@sveltejs/kit": "^2.65.0",
