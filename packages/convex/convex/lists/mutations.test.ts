@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   assertCanEditList,
@@ -6,8 +6,8 @@ import {
   createListHandler,
   createUniqueListPublicId,
   deleteListHandler,
-  renameListHandler,
-  renameListFields
+  renameListFields,
+  renameListHandler
 } from './mutations';
 
 type TestListRow = {
@@ -91,6 +91,10 @@ function createMutationCtx(identity: { subject: string } | null, rows: readonly 
   return { ctx, insertedRows, patchedRows, deletedIds, publicIdLookups };
 }
 
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 describe('assertCanEditList', () => {
   it('allows editing a shared list', () => {
     expect(() => assertCanEditList({ visibility: 'shared', createdByUserId: 'user_a' }, 'user_b')).not.toThrow();
@@ -135,7 +139,7 @@ describe('createList', () => {
 
   it('inserts the list row and returns its canonical path', async () => {
     const { ctx, insertedRows, publicIdLookups } = createMutationCtx({ subject: 'user_123' });
-    const now = vi.spyOn(Date, 'now').mockReturnValue(1700000000000);
+    vi.spyOn(Date, 'now').mockReturnValue(1700000000000);
 
     await expect(
       createListHandler(ctx as never, {
@@ -166,8 +170,6 @@ describe('createList', () => {
     expect(insertedRow).toBeDefined();
     expect(insertedRow!.publicId).toEqual(expect.stringMatching(/^list_[a-z0-9]+$/));
     expect(publicIdLookups).toHaveLength(1);
-
-    now.mockRestore();
   });
 });
 
@@ -202,7 +204,7 @@ describe('renameList', () => {
 
   it('allows editing a shared list even when owned by another user', async () => {
     const { ctx, patchedRows } = createMutationCtx({ subject: 'user_b' }, [sharedList]);
-    const now = vi.spyOn(Date, 'now').mockReturnValue(1700000000000);
+    vi.spyOn(Date, 'now').mockReturnValue(1700000000000);
 
     await expect(
       renameListHandler(ctx as never, { publicId: sharedList.publicId, name: 'Shared shopping 2' })
@@ -225,8 +227,6 @@ describe('renameList', () => {
         }
       }
     ]);
-
-    now.mockRestore();
   });
 });
 

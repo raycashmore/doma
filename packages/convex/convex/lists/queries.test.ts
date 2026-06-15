@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  filterVisibleLists,
-  pickVisibleListByPublicId,
-  readVisibleListByPublicId,
-  readVisibleLists
-} from './queries';
+import { filterVisibleLists, pickVisibleListByPublicId, readVisibleListByPublicId, readVisibleLists } from './queries';
 
 const sharedList = {
   publicId: 'list_shared',
@@ -52,8 +47,7 @@ function createQueryCtx(
               }
             });
             return {
-              unique: async () =>
-                rows.find((row) => row.publicId === requestedPublicId) ?? null
+              unique: async () => rows.find((row) => row.publicId === requestedPublicId) ?? null
             };
           }
         };
@@ -71,12 +65,8 @@ describe('filterVisibleLists', () => {
 
 describe('pickVisibleListByPublicId', () => {
   it('returns a shared or owned list when it is visible to the caller', () => {
-    expect(pickVisibleListByPublicId([sharedList, personalList], 'list_shared', 'user_b')).toEqual(
-      sharedList
-    );
-    expect(
-      pickVisibleListByPublicId([sharedList, personalList], 'list_personal', 'user_a')
-    ).toEqual(personalList);
+    expect(pickVisibleListByPublicId([sharedList, personalList], 'list_shared', 'user_b')).toEqual(sharedList);
+    expect(pickVisibleListByPublicId([sharedList, personalList], 'list_personal', 'user_a')).toEqual(personalList);
   });
 
   it('returns null when a personal list is not visible to the caller', () => {

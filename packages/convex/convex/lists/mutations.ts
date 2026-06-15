@@ -1,14 +1,12 @@
 import { v } from 'convex/values';
 import { customAlphabet } from 'nanoid/non-secure';
 
-import type { Doc } from '../_generated/dataModel';
 import { mutation, type MutationCtx } from '../_generated/server';
 import { buildListPublicId, slugifyListName } from './model';
 
 const createSeed = customAlphabet('abcdefghjkmnpqrstuvwxyz23456789', 8);
 const CREATE_LIST_PUBLIC_ID_ATTEMPTS = 3;
 
-type ListRow = Doc<'lists'>;
 type ListsMutationCtx = Pick<MutationCtx, 'auth' | 'db'>;
 
 export function assertCanEditList(
@@ -36,10 +34,7 @@ async function findListByPublicId(ctx: Pick<ListsMutationCtx, 'db'>, publicId: s
     .unique();
 }
 
-export async function createUniqueListPublicId(
-  ctx: Pick<ListsMutationCtx, 'db'>,
-  createId: () => string = createSeed
-) {
+export async function createUniqueListPublicId(ctx: Pick<ListsMutationCtx, 'db'>, createId: () => string = createSeed) {
   for (let attempt = 0; attempt < CREATE_LIST_PUBLIC_ID_ATTEMPTS; attempt += 1) {
     const publicId = buildListPublicId(createId());
     const existing = await findListByPublicId(ctx, publicId);
