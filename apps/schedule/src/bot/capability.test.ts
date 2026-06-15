@@ -54,7 +54,7 @@ describe('handleScheduleCapabilityRequest', () => {
     const briefing: BotMorningBriefing = {
       briefingKey: 'morning:2026-06-06',
       localDate: '2026-06-06',
-      message: 'Morning briefing\n\nNormal day. No special requirements found.',
+      message: 'Morning briefing\nNormal day. No special requirements found.',
       shouldSend: true,
       generationStatus: 'deterministic'
     };
@@ -81,7 +81,7 @@ describe('handleScheduleCapabilityRequest', () => {
       )
     ).resolves.toEqual({
       kind: 'reply',
-      text: 'Morning briefing\n\nNormal day. No special requirements found.'
+      text: 'Morning briefing\nNormal day. No special requirements found.'
     });
     expect(markMorningBriefingDelivered).toHaveBeenCalledWith({
       briefingKey: 'morning:2026-06-06',
@@ -94,7 +94,7 @@ describe('handleScheduleCapabilityRequest', () => {
     const briefing: BotMorningBriefing = {
       briefingKey: 'morning:2026-06-06',
       localDate: '2026-06-06',
-      message: "Morning briefing\n\nToday's requirements\n- memberA: Bring sports bag",
+      message: "Morning briefing\nToday's requirements\nPack / bring\n- memberA: Bring sports bag",
       shouldSend: true,
       generationStatus: 'ai'
     };
@@ -120,7 +120,7 @@ describe('handleScheduleCapabilityRequest', () => {
       )
     ).resolves.toEqual({
       kind: 'reply',
-      text: "Morning briefing\n\nToday's requirements\n- memberA: Bring sports bag"
+      text: "Morning briefing\nToday's requirements\nPack / bring\n- memberA: Bring sports bag"
     });
     expect(generateMorningBriefing).toHaveBeenCalledWith({
       localDate: '2026-06-06',
@@ -154,7 +154,7 @@ describe('handleScheduleCapabilityRequest', () => {
           loadMorningBriefing: async () => ({
             briefingKey: 'morning:2026-06-06',
             localDate: '2026-06-06',
-            message: "Morning briefing\n\nI couldn't summarise the day automatically.\n\nNo daily requirements found.",
+            message: "Morning briefing\nI couldn't summarise the day automatically.\nNo daily requirements found.",
             shouldSend: true,
             generationStatus: 'fallback'
           }),
@@ -164,7 +164,7 @@ describe('handleScheduleCapabilityRequest', () => {
       )
     ).resolves.toEqual({
       kind: 'reply',
-      text: "Morning briefing\n\nI couldn't summarise the day automatically.\n\nNo daily requirements found."
+      text: "Morning briefing\nI couldn't summarise the day automatically.\nNo daily requirements found."
     });
     expect(generateMorningBriefing).not.toHaveBeenCalled();
   });
@@ -185,7 +185,7 @@ describe('handleScheduleCapabilityRequest', () => {
           loadMorningBriefing: async () => ({
             briefingKey: 'morning:2026-06-06',
             localDate: '2026-06-06',
-            message: 'Morning briefing\n\nNormal day. No special requirements found.',
+            message: 'Morning briefing\nNormal day. No special requirements found.',
             shouldSend: true,
             generationStatus: 'deterministic'
           }),
@@ -197,7 +197,7 @@ describe('handleScheduleCapabilityRequest', () => {
       )
     ).resolves.toEqual({
       kind: 'reply',
-      text: 'Morning briefing\n\nNormal day. No special requirements found.'
+      text: 'Morning briefing\nNormal day. No special requirements found.'
     });
   });
 

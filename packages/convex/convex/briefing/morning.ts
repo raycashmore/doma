@@ -82,21 +82,47 @@ function emptyBriefing(headline: string): MorningBriefing {
 export function formatMorningBriefing(briefing: MorningBriefing) {
   if (!briefing.shouldSend) return '';
 
-  const sections = ['Morning briefing'];
-  const items = [
-    ...briefing.routineItems,
-    ...briefing.importantItems,
-    ...briefing.timingNotes,
-    ...briefing.uncertaintyNotes
-  ];
+  const lines = ['Morning briefing', briefing.headline];
+  const groupedRoutineItems = new Set<BriefingItem>();
+  const beforeLeaving = briefing.routineItems.filter((item) =>
+    hasAnyTag(item, ['wear', 'remember', 'prepare', 'leaveEarlier'])
+  );
+  beforeLeaving.forEach((item) => groupedRoutineItems.add(item));
 
-  if (items.length > 0) {
-    sections.push([briefing.headline, ...items.map((item) => `- ${item.text}`)].join('\n'));
-  } else {
-    sections.push(briefing.headline);
-  }
+  const packBring = briefing.routineItems.filter((item) => {
+    if (groupedRoutineItems.has(item) || !hasAnyTag(item, ['bring'])) return false;
+    groupedRoutineItems.add(item);
+    return true;
+  });
 
-  return sections.join('\n\n');
+  const coordinatedRoutineItems = briefing.routineItems.filter((item) => {
+    if (groupedRoutineItems.has(item) || !hasAnyTag(item, ['coordinate'])) return false;
+    groupedRoutineItems.add(item);
+    return true;
+  });
+  const ungroupedRoutineItems = briefing.routineItems.filter((item) => {
+    if (groupedRoutineItems.has(item)) return false;
+    groupedRoutineItems.add(item);
+    return true;
+  });
+
+  appendSection(lines, 'Watchouts', briefing.importantItems);
+  appendSection(lines, 'Before leaving', [...beforeLeaving, ...ungroupedRoutineItems]);
+  appendSection(lines, 'Pack / bring', packBring);
+  appendSection(lines, 'Logistics', [...coordinatedRoutineItems, ...briefing.timingNotes]);
+  appendSection(lines, 'Unclear', briefing.uncertaintyNotes);
+
+  return lines.join('\n');
+}
+
+function appendSection(lines: string[], heading: string, items: BriefingItem[]) {
+  if (items.length === 0) return;
+
+  lines.push(heading, ...items.map((item) => `- ${item.text}`));
+}
+
+function hasAnyTag(item: BriefingItem, tags: BriefingItem['tags']) {
+  return tags.some((tag) => item.tags.includes(tag));
 }
 
 export function createDeterministicMorningBriefing({
@@ -133,7 +159,7 @@ export function createDeterministicMorningBriefing({
       return {
         text: requirementText(requirement),
         kind: 'routine',
-        tags: ['bring'],
+        tags: requirementTags(requirement),
         sourceIds: [sourceId]
       };
     });
@@ -167,18 +193,36 @@ function requirementText(event: MorningBriefingEvent) {
   return `${event.who.join(', ')}: ${detail}`;
 }
 
+function requirementTags(event: MorningBriefingEvent): BriefingItem['tags'] {
+  const detail = (event.description?.trim() || event.title.trim()).toLowerCase();
+
+  if (/\b(wear|uniform|clothes|shoes)\b/.test(detail)) return ['wear'];
+  if (/\b(remember|homework|prepare|prep|check)\b/.test(detail)) return ['remember'];
+  if (/\b(leave early|leave earlier|early)\b/.test(detail)) return ['leaveEarlier'];
+  if (/\b(drop|pickup|pick up|handoff|collect)\b/.test(detail)) return ['coordinate'];
+
+  return ['bring'];
+}
+
 export function formatMorningBriefingFallback({ events }: { events: MorningBriefingEvent[] }) {
   const dailyRequirements = events.filter((event) => event.kind === 'dailyRequirements');
-  const lines = ['Morning briefing', "I couldn't summarise the day automatically."];
-
-  if (dailyRequirements.length === 0) {
-    lines.push('No daily requirements found.');
-  } else {
-    lines.push("Today's requirements:", ...dailyRequirements.map((requirement) => `- ${requirementText(requirement)}`));
-  }
+  const routineItems = dailyRequirements.map((requirement): BriefingItem => {
+    const sourceId = sourceIdForEvent(requirement);
+    return {
+      text: requirementText(requirement),
+      kind: 'routine',
+      tags: requirementTags(requirement),
+      sourceIds: [sourceId]
+    };
+  });
+  const briefing: MorningBriefing = {
+    ...emptyBriefing("I couldn't summarise the day automatically."),
+    routineItems
+  };
+  const message = formatMorningBriefing(briefing);
 
   return {
-    message: lines.join('\n\n').replace(/\n\n- /g, '\n- '),
-    sourceIds: dailyRequirements.map(sourceIdForEvent)
+    message: dailyRequirements.length === 0 ? `${message}\nNo daily requirements found.` : message,
+    sourceIds: routineItems.flatMap((item) => item.sourceIds)
   };
 }

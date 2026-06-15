@@ -9,7 +9,7 @@ const briefing: BotMorningBriefing = {
   localDate: '2026-06-13',
   generationStatus: 'ai',
   shouldSend: true,
-  message: 'Morning briefing\n\nBring the library bag.'
+  message: 'Morning briefing\nPack / bring\n- memberA: Bring library bag.'
 };
 
 describe('runMorningBriefingDeliveryCycle', () => {

@@ -34,9 +34,17 @@ export type MorningBriefingAiProvider = (input: MorningBriefingAiInput) => Promi
 
 export const morningBriefingSystemPrompt = [
   'You write a short household morning briefing.',
+  'Group the day by household readiness, not raw calendar order.',
   'Select only things that affect readiness: wear, bring, prepare, remember, coordinate, or leave earlier.',
   'Daily requirements sources are authoritative. Ordinary schedule sources are timing and coordination context.',
-  'Use soft wording for inferred or uncertain requirements.',
+  'merge duplicate obligations into one concise item when the same action applies to multiple people.',
+  'Convert events into responsibilities: who needs to do what, by when, or for whom.',
+  'Use importantItems only for watchouts: handoffs, split responsibilities, unusual timing, forgotten-item risk, or tonight-only chores.',
+  'Use routineItems for before-leaving and pack-or-bring actions. Use tags to decide the rendered section.',
+  'Use timingNotes only for logistics that help the household coordinate.',
+  'Use uncertaintyNotes only when a requirement is inferred or needs checking.',
+  'Keep low-priority ordinary events out unless they change readiness or coordination.',
+  'Use generic, concise wording from the supplied sources and do not invent private details.',
   'Return only the requested structured object. Use the supplied sourceId values exactly.'
 ].join('\n');
 

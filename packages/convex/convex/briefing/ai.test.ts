@@ -4,7 +4,8 @@ import {
   createAiMorningBriefing,
   createOpenAiMorningBriefingProvider,
   type MorningBriefingAiProvider,
-  morningBriefingOutputJsonSchema
+  morningBriefingOutputJsonSchema,
+  morningBriefingSystemPrompt
 } from './ai';
 import type { MorningBriefingEvent } from './morning';
 
@@ -30,24 +31,24 @@ describe('createAiMorningBriefing', () => {
   it('uses a valid structured AI response and preserves source traceability', async () => {
     const provider: MorningBriefingAiProvider = async ({ sources }) => {
       const requirement = sources.find((source) => source.kind === 'dailyRequirements');
-      const ordinaryEvent = sources.find((source) => source.title === 'Dentist');
+      const ordinaryEvent = sources.find((source) => source.title === 'Activity handoff');
       expect(requirement).toMatchObject({ description: 'Bring sports bag' });
-      expect(ordinaryEvent).toMatchObject({ description: 'Leave early for parking' });
+      expect(ordinaryEvent).toMatchObject({ description: 'adultA drops off; adultB picks up' });
       return {
         shouldSend: true,
-        headline: 'One thing to prep',
+        headline: 'One handoff to confirm',
         routineItems: [],
         importantItems: [
           {
-            text: 'memberA needs sports gear.',
+            text: 'memberA handoff: adultA drops off; adultB picks up.',
             kind: 'important',
-            tags: ['bring'],
-            sourceIds: [requirement?.sourceId ?? 'missing-source']
+            tags: ['coordinate'],
+            sourceIds: [ordinaryEvent?.sourceId ?? 'missing-source']
           }
         ],
         timingNotes: [],
         uncertaintyNotes: [],
-        sourceIdsIgnored: [ordinaryEvent?.sourceId ?? 'missing-source']
+        sourceIdsIgnored: [requirement?.sourceId ?? 'missing-source']
       };
     };
 
@@ -67,8 +68,8 @@ describe('createAiMorningBriefing', () => {
           event({
             googleEventId: 'ordinary-1',
             calendarId: 'calendar-a',
-            title: 'Dentist',
-            description: 'Leave early for parking'
+            title: 'Activity handoff',
+            description: 'adultA drops off; adultB picks up'
           })
         ],
         provider
@@ -77,20 +78,21 @@ describe('createAiMorningBriefing', () => {
       briefingKind: 'morning',
       localDate,
       generationStatus: 'ai',
-      sourceIds: ['requirements-calendar:requirements-1:1781218800000'],
+      sourceIds: ['calendar-a:ordinary-1:1781218800000'],
       briefing: {
-        headline: 'One thing to prep',
+        headline: 'One handoff to confirm',
         importantItems: [
           {
-            text: 'memberA needs sports gear.',
+            text: 'memberA handoff: adultA drops off; adultB picks up.',
             kind: 'important',
-            tags: ['bring'],
-            sourceIds: ['requirements-calendar:requirements-1:1781218800000']
+            tags: ['coordinate'],
+            sourceIds: ['calendar-a:ordinary-1:1781218800000']
           }
         ],
-        sourceIdsIgnored: ['calendar-a:ordinary-1:1781218800000']
+        sourceIdsIgnored: ['requirements-calendar:requirements-1:1781218800000']
       },
-      message: 'Morning briefing\n\nOne thing to prep\n- memberA needs sports gear.'
+      message:
+        'Morning briefing\nOne handoff to confirm\nWatchouts\n- memberA handoff: adultA drops off; adultB picks up.'
     });
   });
 
@@ -119,7 +121,7 @@ describe('createAiMorningBriefing', () => {
     ).resolves.toMatchObject({
       generationStatus: 'setupProblem',
       message:
-        "Morning briefing\n\nDaily requirements calendar is not configured yet, so I can't check day-specific requirements."
+        "Morning briefing\nDaily requirements calendar is not configured yet, so I can't check day-specific requirements."
     });
     expect(providerCalled).toBe(false);
   });
@@ -160,7 +162,7 @@ describe('createAiMorningBriefing', () => {
       generationStatus: 'fallback',
       sourceIds: ['requirements-calendar:requirements-1:1781218800000'],
       message:
-        "Morning briefing\n\nI couldn't summarise the day automatically.\n\nToday's requirements:\n- memberA: Bring sports bag"
+        "Morning briefing\nI couldn't summarise the day automatically.\nPack / bring\n- memberA: Bring sports bag"
     });
   });
 
@@ -187,7 +189,7 @@ describe('createAiMorningBriefing', () => {
       generationStatus: 'fallback',
       sourceIds: ['requirements-calendar:requirements-1:1781218800000'],
       message:
-        "Morning briefing\n\nI couldn't summarise the day automatically.\n\nToday's requirements:\n- memberA: Bring sports bag"
+        "Morning briefing\nI couldn't summarise the day automatically.\nPack / bring\n- memberA: Bring sports bag"
     });
   });
 
@@ -226,7 +228,7 @@ describe('createAiMorningBriefing', () => {
     ).resolves.toMatchObject({
       generationStatus: 'fallback',
       message:
-        "Morning briefing\n\nI couldn't summarise the day automatically.\n\nToday's requirements:\n- memberA: Bring sports bag"
+        "Morning briefing\nI couldn't summarise the day automatically.\nPack / bring\n- memberA: Bring sports bag"
     });
   });
 
@@ -254,7 +256,7 @@ describe('createAiMorningBriefing', () => {
         shouldSend: true,
         headline: 'Normal day. No special requirements found.'
       },
-      message: 'Morning briefing\n\nNormal day. No special requirements found.'
+      message: 'Morning briefing\nNormal day. No special requirements found.'
     });
   });
 
@@ -284,6 +286,16 @@ describe('createAiMorningBriefing', () => {
       },
       message: ''
     });
+  });
+});
+
+describe('morningBriefingSystemPrompt', () => {
+  it('instructs the model to compress noise into readiness groups', () => {
+    expect(morningBriefingSystemPrompt).toContain('Group the day by household readiness');
+    expect(morningBriefingSystemPrompt).toContain('merge duplicate obligations');
+    expect(morningBriefingSystemPrompt).toContain('Convert events into responsibilities');
+    expect(morningBriefingSystemPrompt).toContain('Use importantItems only for watchouts');
+    expect(morningBriefingSystemPrompt).toContain('Use timingNotes only for logistics');
   });
 });
 

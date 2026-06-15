@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   collectMorningBriefingEvents,
   createDeterministicMorningBriefing,
+  formatMorningBriefing,
   formatMorningBriefingFallback,
   type MorningBriefingEvent,
   morningBriefingKey
@@ -25,6 +26,120 @@ function event(overrides: Partial<MorningBriefingEvent> = {}): MorningBriefingEv
     ...overrides
   };
 }
+
+describe('formatMorningBriefing', () => {
+  it('preserves readiness groups instead of flattening every item', () => {
+    expect(
+      formatMorningBriefing({
+        shouldSend: true,
+        headline: 'Busy coordination day: school items, activity packing, and evening chores.',
+        importantItems: [
+          {
+            text: 'memberA handoff: adultA drops off at 4pm; adultB picks up at 7pm.',
+            kind: 'important',
+            tags: ['coordinate'],
+            sourceIds: ['calendar-a:event-important:1']
+          }
+        ],
+        routineItems: [
+          {
+            text: 'memberA: wear sport clothes.',
+            kind: 'routine',
+            tags: ['wear'],
+            sourceIds: ['requirements-calendar:event-wear:1']
+          },
+          {
+            text: 'memberA and memberB: bring homework.',
+            kind: 'routine',
+            tags: ['remember', 'bring'],
+            sourceIds: ['requirements-calendar:event-homework:1']
+          },
+          {
+            text: 'memberA: water bottle and snack.',
+            kind: 'routine',
+            tags: ['bring'],
+            sourceIds: ['requirements-calendar:event-pack:1']
+          },
+          {
+            text: 'adultA handles activity drop-off and pickup.',
+            kind: 'routine',
+            tags: ['coordinate'],
+            sourceIds: ['calendar-a:event-coordinate:1']
+          }
+        ],
+        timingNotes: [],
+        uncertaintyNotes: [
+          {
+            text: 'Check whether rehearsal needs special shoes.',
+            kind: 'uncertain',
+            tags: [],
+            sourceIds: ['calendar-a:event-uncertain:1']
+          }
+        ],
+        sourceIdsIgnored: []
+      })
+    ).toBe(`Morning briefing
+Busy coordination day: school items, activity packing, and evening chores.
+Watchouts
+- memberA handoff: adultA drops off at 4pm; adultB picks up at 7pm.
+Before leaving
+- memberA: wear sport clothes.
+- memberA and memberB: bring homework.
+Pack / bring
+- memberA: water bottle and snack.
+Logistics
+- adultA handles activity drop-off and pickup.
+Unclear
+- Check whether rehearsal needs special shoes.`);
+  });
+
+  it('returns an empty message when AI suppresses the briefing', () => {
+    expect(
+      formatMorningBriefing({
+        shouldSend: false,
+        headline: 'No briefing needed.',
+        routineItems: [],
+        importantItems: [],
+        timingNotes: [],
+        uncertaintyNotes: [],
+        sourceIdsIgnored: []
+      })
+    ).toBe('');
+  });
+
+  it('renders an untagged routine item exactly once', () => {
+    const message = formatMorningBriefing({
+      shouldSend: true,
+      headline: 'Routine details need review.',
+      routineItems: [
+        {
+          text: 'memberA: confirm classroom note.',
+          kind: 'routine',
+          tags: [],
+          sourceIds: ['requirements-calendar:event-untagged:1']
+        },
+        {
+          text: 'memberA: pack lunch box.',
+          kind: 'routine',
+          tags: ['bring'],
+          sourceIds: ['requirements-calendar:event-bring:1']
+        }
+      ],
+      importantItems: [],
+      timingNotes: [],
+      uncertaintyNotes: [],
+      sourceIdsIgnored: []
+    });
+
+    expect(message).toBe(`Morning briefing
+Routine details need review.
+Before leaving
+- memberA: confirm classroom note.
+Pack / bring
+- memberA: pack lunch box.`);
+    expect(message.match(/memberA: confirm classroom note\./g)).toHaveLength(1);
+  });
+});
 
 describe('createDeterministicMorningBriefing', () => {
   it('treats missing daily requirements calendar config as a setup problem', () => {
@@ -50,7 +165,7 @@ describe('createDeterministicMorningBriefing', () => {
         sourceIdsIgnored: []
       },
       message:
-        "Morning briefing\n\nDaily requirements calendar is not configured yet, so I can't check day-specific requirements."
+        "Morning briefing\nDaily requirements calendar is not configured yet, so I can't check day-specific requirements."
     });
   });
 
@@ -87,8 +202,44 @@ describe('createDeterministicMorningBriefing', () => {
         ],
         sourceIdsIgnored: []
       },
-      message: "Morning briefing\n\nToday's requirements\n- memberA: Bring sports bag"
+      message: "Morning briefing\nToday's requirements\nPack / bring\n- memberA: Bring sports bag"
     });
+  });
+
+  it('tags deterministic daily requirements by obvious action words', () => {
+    expect(
+      createDeterministicMorningBriefing({
+        localDate,
+        timeZone,
+        calendarConfigs: [{ calendarId: 'requirements-calendar', who: 'shared', kind: 'dailyRequirements' }],
+        events: [
+          event({
+            googleEventId: 'requirements-1',
+            calendarId: 'requirements-calendar',
+            kind: 'dailyRequirements',
+            description: 'Wear sport clothes'
+          }),
+          event({
+            googleEventId: 'requirements-2',
+            calendarId: 'requirements-calendar',
+            kind: 'dailyRequirements',
+            description: 'Remember homework'
+          }),
+          event({
+            googleEventId: 'requirements-3',
+            calendarId: 'requirements-calendar',
+            kind: 'dailyRequirements',
+            description: 'Bring water bottle'
+          })
+        ]
+      }).message
+    ).toBe(`Morning briefing
+Today's requirements
+Before leaving
+- memberA: Wear sport clothes
+- memberA: Remember homework
+Pack / bring
+- memberA: Bring water bottle`);
   });
 
   it('returns deterministic weekday quiet output when no actionable items exist', () => {
@@ -99,7 +250,7 @@ describe('createDeterministicMorningBriefing', () => {
         calendarConfigs: [{ calendarId: 'requirements-calendar', who: 'shared', kind: 'dailyRequirements' }],
         events: []
       }).message
-    ).toBe('Morning briefing\n\nNormal day. No special requirements found.');
+    ).toBe('Morning briefing\nNormal day. No special requirements found.');
   });
 });
 
@@ -148,14 +299,14 @@ describe('formatMorningBriefingFallback', () => {
       })
     ).toEqual({
       message:
-        "Morning briefing\n\nI couldn't summarise the day automatically.\n\nToday's requirements:\n- memberA: Bring sports bag",
+        "Morning briefing\nI couldn't summarise the day automatically.\nPack / bring\n- memberA: Bring sports bag",
       sourceIds: ['requirements-calendar:requirements-1:1781218800000']
     });
   });
 
   it('uses deterministic empty fallback text when no daily requirements exist', () => {
     expect(formatMorningBriefingFallback({ events: [event({ googleEventId: 'ordinary-1' })] })).toEqual({
-      message: "Morning briefing\n\nI couldn't summarise the day automatically.\n\nNo daily requirements found.",
+      message: "Morning briefing\nI couldn't summarise the day automatically.\nNo daily requirements found.",
       sourceIds: []
     });
   });
