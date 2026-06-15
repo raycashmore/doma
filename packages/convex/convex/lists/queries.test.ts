@@ -30,6 +30,15 @@ describe('filterVisibleLists', () => {
 });
 
 describe('pickVisibleListByPublicId', () => {
+  it('returns a shared or owned list when it is visible to the caller', () => {
+    expect(pickVisibleListByPublicId([sharedList, personalList], 'list_shared', 'user_b')).toEqual(
+      sharedList
+    );
+    expect(
+      pickVisibleListByPublicId([sharedList, personalList], 'list_personal', 'user_a')
+    ).toEqual(personalList);
+  });
+
   it('returns null when a personal list is not visible to the caller', () => {
     expect(pickVisibleListByPublicId([sharedList, personalList], 'list_personal', 'user_b')).toBeNull();
   });

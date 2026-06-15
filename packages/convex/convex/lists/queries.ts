@@ -27,7 +27,7 @@ export const listVisibleToMe = query({
     const currentUserId = await requireUserId(ctx);
     const rows = await ctx.db.query('lists').collect();
 
-    return filterVisibleLists(rows, currentUserId).sort((a, b) => a.createdAt - b.createdAt);
+    return filterVisibleLists(rows, currentUserId);
   }
 });
 
