@@ -79,6 +79,10 @@ function emptyBriefing(headline: string): MorningBriefing {
   };
 }
 
+export function fallbackMorningBriefingHeadline(dailyRequirementCount: number) {
+  return dailyRequirementCount > 0 ? "Today's requirements" : 'No daily requirements found.';
+}
+
 export function formatMorningBriefing(briefing: MorningBriefing) {
   if (!briefing.shouldSend) return '';
 
@@ -216,13 +220,13 @@ export function formatMorningBriefingFallback({ events }: { events: MorningBrief
     };
   });
   const briefing: MorningBriefing = {
-    ...emptyBriefing("I couldn't summarise the day automatically."),
+    ...emptyBriefing(fallbackMorningBriefingHeadline(dailyRequirements.length)),
     routineItems
   };
   const message = formatMorningBriefing(briefing);
 
   return {
-    message: dailyRequirements.length === 0 ? `${message}\nNo daily requirements found.` : message,
+    message,
     sourceIds: routineItems.flatMap((item) => item.sourceIds)
   };
 }
