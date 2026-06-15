@@ -51,7 +51,7 @@ const config = defineConfig(({ command }) => ({
         scope: BUDGET_BASE_URL,
         display: 'standalone',
         background_color: '#ffffff',
-        theme_color: '#f97316',
+        theme_color: '#2d2d2d',
         icons: [
           {
             src: `${BUDGET_BASE_URL}icons/icon.svg`,
