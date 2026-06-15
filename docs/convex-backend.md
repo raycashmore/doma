@@ -95,6 +95,21 @@ daily requirements events as the action source and ordinary schedule events as
 timing context. It records delivery attempts per recipient so scheduled
 delivery and `/briefing` replay stay idempotent.
 
+Morning briefing messages render as compact readiness summaries, not raw event
+feeds. Busy days lead with the shape of the day, then include these sections
+when relevant:
+
+- `Watchouts` for handoffs, unusual timing, split responsibilities, forgotten
+  item risk, or tonight-only chores.
+- `Before leaving` for wear, remember, preparation, and leave-earlier actions.
+- `Pack / bring` for items that need to leave the house.
+- `Logistics` for coordination details from ordinary schedule events.
+- `Unclear` for inferred requirements that need checking.
+
+Docs and tests must use generic member, calendar, and event labels. Generated
+briefing text can contain private household schedule details, so do not copy it
+into committed fixtures.
+
 Scheduled delivery runs from Convex cron during the local
 `07:30 <= time < 08:30` retry window. The runner forces schedule sync before
 generation when possible, reuses an existing stored briefing for retries, sends
