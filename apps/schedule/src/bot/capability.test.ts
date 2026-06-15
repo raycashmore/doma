@@ -154,7 +154,7 @@ describe('handleScheduleCapabilityRequest', () => {
           loadMorningBriefing: async () => ({
             briefingKey: 'morning:2026-06-06',
             localDate: '2026-06-06',
-            message: "Morning briefing\nI couldn't summarise the day automatically.\nNo daily requirements found.",
+            message: 'Morning briefing\nNo daily requirements found.',
             shouldSend: true,
             generationStatus: 'fallback'
           }),
@@ -164,7 +164,7 @@ describe('handleScheduleCapabilityRequest', () => {
       )
     ).resolves.toEqual({
       kind: 'reply',
-      text: "Morning briefing\nI couldn't summarise the day automatically.\nNo daily requirements found."
+      text: 'Morning briefing\nNo daily requirements found.'
     });
     expect(generateMorningBriefing).not.toHaveBeenCalled();
   });

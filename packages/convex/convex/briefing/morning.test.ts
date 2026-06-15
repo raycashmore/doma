@@ -298,15 +298,14 @@ describe('formatMorningBriefingFallback', () => {
         ]
       })
     ).toEqual({
-      message:
-        "Morning briefing\nI couldn't summarise the day automatically.\nPack / bring\n- memberA: Bring sports bag",
+      message: "Morning briefing\nToday's requirements\nPack / bring\n- memberA: Bring sports bag",
       sourceIds: ['requirements-calendar:requirements-1:1781218800000']
     });
   });
 
   it('uses deterministic empty fallback text when no daily requirements exist', () => {
     expect(formatMorningBriefingFallback({ events: [event({ googleEventId: 'ordinary-1' })] })).toEqual({
-      message: "Morning briefing\nI couldn't summarise the day automatically.\nNo daily requirements found.",
+      message: 'Morning briefing\nNo daily requirements found.',
       sourceIds: []
     });
   });

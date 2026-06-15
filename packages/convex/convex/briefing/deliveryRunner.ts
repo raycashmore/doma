@@ -7,7 +7,9 @@ import {
   parseBotGatewayOrigin,
   parseRecipientUserIds
 } from '../schedule/reminders';
+import { botMorningBriefingFromStoreResult } from './botBriefing';
 import { type BotMorningBriefing, type BriefingDeliveryAttempt, runMorningBriefingDeliveryCycle } from './delivery';
+import { serializeError } from './errors';
 
 type BriefingDeliveryAttemptRecord = {
   briefingKey: string;
@@ -91,39 +93,6 @@ function formatLocalDate(ms: number, timeZone: string) {
   return `${year}-${month}-${day}`;
 }
 
-function botMorningBriefingFromStoreResult(value: unknown): BotMorningBriefing {
-  if (typeof value !== 'object' || value === null || !('briefing' in value)) {
-    throw new Error('Invalid generated briefing result');
-  }
-
-  const { briefing } = value as { briefing: unknown };
-  if (typeof briefing !== 'object' || briefing === null) {
-    throw new Error('Invalid generated briefing result');
-  }
-
-  const row = briefing as Record<string, unknown>;
-  if (
-    typeof row.briefingKey !== 'string' ||
-    typeof row.localDate !== 'string' ||
-    typeof row.message !== 'string' ||
-    typeof row.shouldSend !== 'boolean' ||
-    (row.generationStatus !== 'ai' &&
-      row.generationStatus !== 'deterministic' &&
-      row.generationStatus !== 'fallback' &&
-      row.generationStatus !== 'setupProblem')
-  ) {
-    throw new Error('Invalid generated briefing result');
-  }
-
-  return {
-    briefingKey: row.briefingKey,
-    localDate: row.localDate,
-    generationStatus: row.generationStatus,
-    shouldSend: row.shouldSend,
-    message: row.message
-  };
-}
-
 export const runDueMorningBriefingDelivery = internalAction({
   args: {},
   handler: async (ctx) => {
@@ -133,37 +102,85 @@ export const runDueMorningBriefingDelivery = internalAction({
     const nowMs = Date.now();
     const timeZone = process.env.MORNING_BRIEFING_TZ ?? process.env.SCHEDULE_TZ ?? 'Australia/Sydney';
     const localDate = formatLocalDate(nowMs, timeZone);
+    const recipientUserIds = parseRecipientUserIds(process.env.MORNING_BRIEFING_RECIPIENT_USER_IDS);
     const inputs = await ctx.runQuery(deliveryStore.briefingDeliveryRunInputs, { localDate });
 
-    return await runMorningBriefingDeliveryCycle({
-      nowMs,
+    console.info('[briefing.delivery] Starting morning delivery run', {
+      localDate,
       timeZone,
-      recipientUserIds: parseRecipientUserIds(process.env.MORNING_BRIEFING_RECIPIENT_USER_IDS),
-      attempts: inputs.attempts,
-      lastSyncedAt: inputs.lastSyncedAt,
-      syncSchedule: async () => {
-        try {
-          const result = await ctx.runAction(scheduleSync.run, {});
-          return { ok: true as const, lastSyncedAt: result.lastSyncedAt };
-        } catch {
-          return { ok: false as const, lastSyncedAt: inputs.lastSyncedAt };
-        }
-      },
-      loadBriefing: async () => inputs.briefing,
-      generateBriefing: async ({ localDate: date, timeZone: tz, generatedAt }) => {
-        const result = await ctx.runAction(generation.generateAndStoreMorningBriefing, {
-          localDate: date,
-          timeZone: tz,
-          generatedAt
-        });
-
-        return botMorningBriefingFromStoreResult(result);
-      },
-      sendNotification: createBotGatewayNotificationSender({
-        botGatewayOrigin: parseBotGatewayOrigin(),
-        serviceToken
-      }),
-      recordDeliveryAttempt: (attempt) => ctx.runMutation(deliveryStore.recordBriefingDeliveryAttempt, attempt)
+      recipientCount: recipientUserIds.length,
+      existingBriefing: inputs.briefing !== null,
+      attemptCount: inputs.attempts.length,
+      lastSyncedAt: inputs.lastSyncedAt
     });
+
+    try {
+      const result = await runMorningBriefingDeliveryCycle({
+        nowMs,
+        timeZone,
+        recipientUserIds,
+        attempts: inputs.attempts,
+        lastSyncedAt: inputs.lastSyncedAt,
+        syncSchedule: async () => {
+          try {
+            const syncResult = await ctx.runAction(scheduleSync.run, {});
+            return { ok: true as const, lastSyncedAt: syncResult.lastSyncedAt };
+          } catch (error) {
+            console.warn('[briefing.delivery] Schedule sync failed during morning delivery run', {
+              localDate,
+              ...serializeError(error)
+            });
+            return { ok: false as const, lastSyncedAt: inputs.lastSyncedAt };
+          }
+        },
+        loadBriefing: async () => inputs.briefing,
+        generateBriefing: async ({ localDate: date, timeZone: tz, generatedAt }) => {
+          try {
+            const generated = await ctx.runAction(generation.generateAndStoreMorningBriefing, {
+              localDate: date,
+              timeZone: tz,
+              generatedAt
+            });
+            const briefing = botMorningBriefingFromStoreResult(generated);
+
+            console.info('[briefing.delivery] Generated morning briefing for delivery', {
+              localDate: briefing.localDate,
+              generationStatus: briefing.generationStatus,
+              shouldSend: briefing.shouldSend,
+              messageLength: briefing.message.length
+            });
+
+            return briefing;
+          } catch (error) {
+            console.error('[briefing.delivery] Failed to generate morning briefing for delivery', {
+              localDate: date,
+              timeZone: tz,
+              generatedAt,
+              ...serializeError(error)
+            });
+            throw error;
+          }
+        },
+        sendNotification: createBotGatewayNotificationSender({
+          botGatewayOrigin: parseBotGatewayOrigin(),
+          serviceToken
+        }),
+        recordDeliveryAttempt: (attempt) => ctx.runMutation(deliveryStore.recordBriefingDeliveryAttempt, attempt)
+      });
+
+      console.info('[briefing.delivery] Completed morning delivery run', {
+        localDate,
+        ...result
+      });
+
+      return result;
+    } catch (error) {
+      console.error('[briefing.delivery] Morning delivery run failed', {
+        localDate,
+        timeZone,
+        ...serializeError(error)
+      });
+      throw error;
+    }
   }
 });

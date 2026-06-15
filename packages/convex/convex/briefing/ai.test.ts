@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
   createAiMorningBriefing,
@@ -126,7 +126,7 @@ describe('createAiMorningBriefing', () => {
     expect(providerCalled).toBe(false);
   });
 
-  it('falls back when the AI response has an invalid item shape', async () => {
+  it('falls back to a neutral requirements summary when the AI response has an invalid item shape', async () => {
     await expect(
       createAiMorningBriefing({
         localDate,
@@ -160,13 +160,25 @@ describe('createAiMorningBriefing', () => {
       })
     ).resolves.toMatchObject({
       generationStatus: 'fallback',
+      briefing: {
+        headline: "Today's requirements",
+        routineItems: [
+          {
+            text: 'memberA: Bring sports bag',
+            kind: 'routine',
+            tags: ['bring'],
+            sourceIds: ['requirements-calendar:requirements-1:1781218800000']
+          }
+        ]
+      },
       sourceIds: ['requirements-calendar:requirements-1:1781218800000'],
-      message:
-        "Morning briefing\nI couldn't summarise the day automatically.\nPack / bring\n- memberA: Bring sports bag"
+      message: "Morning briefing\nToday's requirements\nPack / bring\n- memberA: Bring sports bag"
     });
   });
 
-  it('falls back when the AI provider fails', async () => {
+  it('logs and falls back to a neutral requirements summary when the AI provider fails', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
     await expect(
       createAiMorningBriefing({
         localDate,
@@ -187,10 +199,36 @@ describe('createAiMorningBriefing', () => {
       })
     ).resolves.toMatchObject({
       generationStatus: 'fallback',
+      briefing: {
+        headline: "Today's requirements",
+        routineItems: [
+          {
+            text: 'memberA: Bring sports bag',
+            kind: 'routine',
+            tags: ['bring'],
+            sourceIds: ['requirements-calendar:requirements-1:1781218800000']
+          }
+        ]
+      },
       sourceIds: ['requirements-calendar:requirements-1:1781218800000'],
-      message:
-        "Morning briefing\nI couldn't summarise the day automatically.\nPack / bring\n- memberA: Bring sports bag"
+      message: "Morning briefing\nToday's requirements\nPack / bring\n- memberA: Bring sports bag"
     });
+
+    expect(errorSpy).toHaveBeenCalledWith(
+      '[briefing.ai] Falling back after morning briefing AI provider failure',
+      expect.objectContaining({
+        localDate,
+        timeZone,
+        sourceCount: 1,
+        requirementSourceCount: 1,
+        scheduleSourceCount: 0,
+        error: expect.objectContaining({
+          message: 'provider unavailable'
+        })
+      })
+    );
+
+    errorSpy.mockRestore();
   });
 
   it('falls back when AI source references are not valid known source IDs', async () => {
@@ -227,8 +265,7 @@ describe('createAiMorningBriefing', () => {
       })
     ).resolves.toMatchObject({
       generationStatus: 'fallback',
-      message:
-        "Morning briefing\nI couldn't summarise the day automatically.\nPack / bring\n- memberA: Bring sports bag"
+      message: "Morning briefing\nToday's requirements\nPack / bring\n- memberA: Bring sports bag"
     });
   });
 

@@ -14,6 +14,7 @@ import {
 import { parseScheduleCalendars } from '../schedule/config';
 import type { ScheduleEventRow } from '../schedule/mapping';
 import { createAiMorningBriefing, createOpenAiMorningBriefingProvider, type MorningBriefingAiProvider } from './ai';
+import { botMorningBriefingFromStoreResult } from './botBriefing';
 import { createDeterministicMorningBriefing, type DeterministicMorningBriefing, morningBriefingKey } from './morning';
 import { briefingGenerationStatusValidator, briefingKindValidator, morningBriefingValidator } from './schema';
 
@@ -69,39 +70,6 @@ function toBotMorningBriefing(briefing: {
   };
 }
 
-function botMorningBriefingFromStoreResult(value: unknown) {
-  if (typeof value !== 'object' || value === null || !('briefing' in value)) {
-    throw new Error('Invalid generated briefing result');
-  }
-
-  const { briefing } = value as { briefing: unknown };
-  if (typeof briefing !== 'object' || briefing === null) {
-    throw new Error('Invalid generated briefing result');
-  }
-
-  const row = briefing as Record<string, unknown>;
-  if (
-    typeof row.briefingKey !== 'string' ||
-    typeof row.localDate !== 'string' ||
-    typeof row.message !== 'string' ||
-    !isBotMorningBriefingRecord(row.briefing) ||
-    (row.generationStatus !== 'ai' &&
-      row.generationStatus !== 'deterministic' &&
-      row.generationStatus !== 'fallback' &&
-      row.generationStatus !== 'setupProblem')
-  ) {
-    throw new Error('Invalid generated briefing result');
-  }
-
-  return toBotMorningBriefing({
-    briefingKey: row.briefingKey,
-    localDate: row.localDate,
-    generationStatus: row.generationStatus,
-    shouldSend: row.briefing.shouldSend,
-    message: row.message
-  });
-}
-
 async function storeGeneratedBriefing(
   ctx: { db: MutationCtx['db'] },
   { generatedAt, ...briefing }: DeterministicMorningBriefing & { generatedAt: number }
@@ -129,10 +97,6 @@ async function storeGeneratedBriefing(
 
   const id = await ctx.db.insert('briefings', row);
   return { inserted: true as const, id, briefing: row };
-}
-
-function isBotMorningBriefingRecord(value: unknown): value is { shouldSend: boolean } {
-  return typeof value === 'object' && value !== null && 'shouldSend' in value && typeof value.shouldSend === 'boolean';
 }
 
 function morningBriefingProviderFromEnv(): MorningBriefingAiProvider | null {

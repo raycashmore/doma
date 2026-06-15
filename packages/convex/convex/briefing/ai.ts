@@ -1,10 +1,11 @@
 import type { CalendarConfig } from '../schedule/mapping';
+import { serializeError } from './errors';
 import {
   collectMorningBriefingEvents,
   createDeterministicMorningBriefing,
+  createMorningBriefingFallback,
   type DeterministicMorningBriefing,
   formatMorningBriefing,
-  formatMorningBriefingFallback,
   type MorningBriefing,
   type MorningBriefingEvent,
   sourceIdForEvent
@@ -136,27 +137,36 @@ export async function createAiMorningBriefing({
     timeZone,
     sources: localEvents.map(toAiSource)
   };
+  const sourceSummary = summarizeSources(input.sources);
   let briefing: MorningBriefing | null;
   try {
-    briefing = parseAiBriefing(await provider(input), new Set(input.sources.map((source) => source.sourceId)));
-  } catch {
+    const aiResponse = await provider(input);
+    briefing = parseAiBriefing(aiResponse, new Set(input.sources.map((source) => source.sourceId)));
+
+    if (!briefing) {
+      console.error('[briefing.ai] Falling back after invalid morning briefing AI response', {
+        localDate,
+        timeZone,
+        ...sourceSummary,
+        responseShape: describeAiResponseShape(aiResponse)
+      });
+    }
+  } catch (error) {
+    console.error('[briefing.ai] Falling back after morning briefing AI provider failure', {
+      localDate,
+      timeZone,
+      ...sourceSummary,
+      error: serializeError(error)
+    });
     briefing = null;
   }
   if (!briefing) {
-    const fallback = formatMorningBriefingFallback({ events: localEvents });
+    const fallback = createMorningBriefingFallback({ events: localEvents });
     return {
       briefingKind: 'morning',
       localDate,
       generationStatus: 'fallback',
-      briefing: {
-        shouldSend: true,
-        headline: "I couldn't summarise the day automatically.",
-        routineItems: [],
-        importantItems: [],
-        timingNotes: [],
-        uncertaintyNotes: [],
-        sourceIdsIgnored: []
-      },
+      briefing: fallback.briefing,
       message: fallback.message,
       sourceIds: fallback.sourceIds
     };
@@ -308,4 +318,31 @@ function isBriefingTag(value: unknown): value is MorningBriefing['routineItems']
     value === 'coordinate' ||
     value === 'leaveEarlier'
   );
+}
+
+function summarizeSources(sources: MorningBriefingAiSource[]) {
+  return {
+    sourceCount: sources.length,
+    requirementSourceCount: sources.filter((source) => source.kind === 'dailyRequirements').length,
+    scheduleSourceCount: sources.filter((source) => source.kind === 'schedule').length
+  };
+}
+
+function describeAiResponseShape(value: unknown) {
+  if (!isRecord(value)) {
+    return {
+      type: Array.isArray(value) ? 'array' : typeof value
+    };
+  }
+
+  return {
+    keys: Object.keys(value).sort(),
+    shouldSendType: typeof value.shouldSend,
+    headlineType: typeof value.headline,
+    routineItemsCount: Array.isArray(value.routineItems) ? value.routineItems.length : null,
+    importantItemsCount: Array.isArray(value.importantItems) ? value.importantItems.length : null,
+    timingNotesCount: Array.isArray(value.timingNotes) ? value.timingNotes.length : null,
+    uncertaintyNotesCount: Array.isArray(value.uncertaintyNotes) ? value.uncertaintyNotes.length : null,
+    sourceIdsIgnoredCount: Array.isArray(value.sourceIdsIgnored) ? value.sourceIdsIgnored.length : null
+  };
 }
