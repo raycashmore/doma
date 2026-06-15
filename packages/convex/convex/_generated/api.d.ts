@@ -27,6 +27,7 @@ import type * as crons from "../crons.js";
 import type * as helpers from "../helpers.js";
 import type * as lists_auth from "../lists/auth.js";
 import type * as lists_model from "../lists/model.js";
+import type * as lists_mutations from "../lists/mutations.js";
 import type * as lists_queries from "../lists/queries.js";
 import type * as monthDetail from "../monthDetail.js";
 import type * as monthlyBreakdown from "../monthlyBreakdown.js";
@@ -68,6 +69,7 @@ declare const fullApi: ApiFromModules<{
   helpers: typeof helpers;
   "lists/auth": typeof lists_auth;
   "lists/model": typeof lists_model;
+  "lists/mutations": typeof lists_mutations;
   "lists/queries": typeof lists_queries;
   monthDetail: typeof monthDetail;
   monthlyBreakdown: typeof monthlyBreakdown;
