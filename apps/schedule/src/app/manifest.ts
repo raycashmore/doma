@@ -11,7 +11,7 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: SCHEDULE_BASE_URL,
     display: 'standalone',
     background_color: '#f7efe3',
-    theme_color: '#f97316',
+    theme_color: '#2d2d2d',
     orientation: 'portrait',
     icons: [
       {

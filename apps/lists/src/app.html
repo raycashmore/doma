@@ -3,7 +3,22 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#d85a36" />
+    <meta name="theme-color" content="#2d2d2d" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Lists" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="manifest" href="%sveltekit.assets%/manifest.webmanifest" />
+    <link rel="icon" href="%sveltekit.assets%/favicon.png" />
+    <link rel="apple-touch-icon" href="%sveltekit.assets%/icons/apple-touch-icon.png" sizes="180x180" />
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker
+            .register('%sveltekit.assets%/sw.js', { scope: '%sveltekit.assets%/' })
+            .catch(() => {});
+        });
+      }
+    </script>
     %sveltekit.head%
   </head>
   <body data-sveltekit-preload-data="hover">
