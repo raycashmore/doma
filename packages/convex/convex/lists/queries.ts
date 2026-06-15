@@ -21,26 +21,33 @@ async function requireUserId(ctx: Pick<QueryCtx, 'auth'>) {
   return identity.subject;
 }
 
+export async function readVisibleLists(ctx: Pick<QueryCtx, 'auth' | 'db'>) {
+  const currentUserId = await requireUserId(ctx);
+  const rows = await ctx.db.query('lists').collect();
+
+  return filterVisibleLists(rows, currentUserId);
+}
+
+export async function readVisibleListByPublicId(
+  ctx: Pick<QueryCtx, 'auth' | 'db'>,
+  { publicId }: { publicId: string }
+) {
+  const currentUserId = await requireUserId(ctx);
+  const row = await ctx.db
+    .query('lists')
+    .withIndex('by_public_id', (q) => q.eq('publicId', publicId))
+    .unique();
+
+  if (!row) return null;
+  return pickVisibleListByPublicId([row], publicId, currentUserId);
+}
+
 export const listVisibleToMe = query({
   args: {},
-  handler: async (ctx) => {
-    const currentUserId = await requireUserId(ctx);
-    const rows = await ctx.db.query('lists').collect();
-
-    return filterVisibleLists(rows, currentUserId);
-  }
+  handler: readVisibleLists
 });
 
 export const getVisibleListByPublicId = query({
   args: { publicId: v.string() },
-  handler: async (ctx, { publicId }) => {
-    const currentUserId = await requireUserId(ctx);
-    const row = await ctx.db
-      .query('lists')
-      .withIndex('by_public_id', (q) => q.eq('publicId', publicId))
-      .unique();
-
-    if (!row) return null;
-    return pickVisibleListByPublicId([row], publicId, currentUserId);
-  }
+  handler: readVisibleListByPublicId
 });
