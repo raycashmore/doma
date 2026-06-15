@@ -158,15 +158,7 @@ export function createDeterministicMorningBriefing({
   const dailyRequirements = localEvents.filter((event) => event.kind === 'dailyRequirements');
 
   if (dailyRequirements.length > 0) {
-    const routineItems = dailyRequirements.map((requirement): BriefingItem => {
-      const sourceId = sourceIdForEvent(requirement);
-      return {
-        text: requirementText(requirement),
-        kind: 'routine',
-        tags: requirementTags(requirement),
-        sourceIds: [sourceId]
-      };
-    });
+    const routineItems = requirementRoutineItems(dailyRequirements);
     const briefing: MorningBriefing = {
       ...emptyBriefing("Today's requirements"),
       routineItems
@@ -208,9 +200,8 @@ function requirementTags(event: MorningBriefingEvent): BriefingItem['tags'] {
   return ['bring'];
 }
 
-export function formatMorningBriefingFallback({ events }: { events: MorningBriefingEvent[] }) {
-  const dailyRequirements = events.filter((event) => event.kind === 'dailyRequirements');
-  const routineItems = dailyRequirements.map((requirement): BriefingItem => {
+export function requirementRoutineItems(events: MorningBriefingEvent[]) {
+  return events.map((requirement): BriefingItem => {
     const sourceId = sourceIdForEvent(requirement);
     return {
       text: requirementText(requirement),
@@ -219,6 +210,11 @@ export function formatMorningBriefingFallback({ events }: { events: MorningBrief
       sourceIds: [sourceId]
     };
   });
+}
+
+export function createMorningBriefingFallback({ events }: { events: MorningBriefingEvent[] }) {
+  const dailyRequirements = events.filter((event) => event.kind === 'dailyRequirements');
+  const routineItems = requirementRoutineItems(dailyRequirements);
   const briefing: MorningBriefing = {
     ...emptyBriefing(fallbackMorningBriefingHeadline(dailyRequirements.length)),
     routineItems
@@ -226,7 +222,16 @@ export function formatMorningBriefingFallback({ events }: { events: MorningBrief
   const message = formatMorningBriefing(briefing);
 
   return {
+    briefing,
     message,
     sourceIds: routineItems.flatMap((item) => item.sourceIds)
+  };
+}
+
+export function formatMorningBriefingFallback({ events }: { events: MorningBriefingEvent[] }) {
+  const { message, sourceIds } = createMorningBriefingFallback({ events });
+  return {
+    message,
+    sourceIds
   };
 }

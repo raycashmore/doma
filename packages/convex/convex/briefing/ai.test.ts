@@ -160,6 +160,17 @@ describe('createAiMorningBriefing', () => {
       })
     ).resolves.toMatchObject({
       generationStatus: 'fallback',
+      briefing: {
+        headline: "Today's requirements",
+        routineItems: [
+          {
+            text: 'memberA: Bring sports bag',
+            kind: 'routine',
+            tags: ['bring'],
+            sourceIds: ['requirements-calendar:requirements-1:1781218800000']
+          }
+        ]
+      },
       sourceIds: ['requirements-calendar:requirements-1:1781218800000'],
       message: "Morning briefing\nToday's requirements\nPack / bring\n- memberA: Bring sports bag"
     });
@@ -188,6 +199,17 @@ describe('createAiMorningBriefing', () => {
       })
     ).resolves.toMatchObject({
       generationStatus: 'fallback',
+      briefing: {
+        headline: "Today's requirements",
+        routineItems: [
+          {
+            text: 'memberA: Bring sports bag',
+            kind: 'routine',
+            tags: ['bring'],
+            sourceIds: ['requirements-calendar:requirements-1:1781218800000']
+          }
+        ]
+      },
       sourceIds: ['requirements-calendar:requirements-1:1781218800000'],
       message: "Morning briefing\nToday's requirements\nPack / bring\n- memberA: Bring sports bag"
     });

@@ -1,11 +1,11 @@
 import type { CalendarConfig } from '../schedule/mapping';
+import { serializeError } from './errors';
 import {
   collectMorningBriefingEvents,
   createDeterministicMorningBriefing,
+  createMorningBriefingFallback,
   type DeterministicMorningBriefing,
-  fallbackMorningBriefingHeadline,
   formatMorningBriefing,
-  formatMorningBriefingFallback,
   type MorningBriefing,
   type MorningBriefingEvent,
   sourceIdForEvent
@@ -161,22 +161,12 @@ export async function createAiMorningBriefing({
     briefing = null;
   }
   if (!briefing) {
-    const fallback = formatMorningBriefingFallback({ events: localEvents });
+    const fallback = createMorningBriefingFallback({ events: localEvents });
     return {
       briefingKind: 'morning',
       localDate,
       generationStatus: 'fallback',
-      briefing: {
-        shouldSend: true,
-        headline: fallbackMorningBriefingHeadline(
-          localEvents.filter((event) => event.kind === 'dailyRequirements').length
-        ),
-        routineItems: [],
-        importantItems: [],
-        timingNotes: [],
-        uncertaintyNotes: [],
-        sourceIdsIgnored: []
-      },
+      briefing: fallback.briefing,
       message: fallback.message,
       sourceIds: fallback.sourceIds
     };
@@ -335,20 +325,6 @@ function summarizeSources(sources: MorningBriefingAiSource[]) {
     sourceCount: sources.length,
     requirementSourceCount: sources.filter((source) => source.kind === 'dailyRequirements').length,
     scheduleSourceCount: sources.filter((source) => source.kind === 'schedule').length
-  };
-}
-
-function serializeError(error: unknown) {
-  if (error instanceof Error) {
-    return {
-      name: error.name,
-      message: error.message,
-      stack: error.stack
-    };
-  }
-
-  return {
-    message: String(error)
   };
 }
 

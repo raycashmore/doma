@@ -237,7 +237,7 @@ describe('runMorningBriefingDeliveryCycle', () => {
     expect(sendNotification).toHaveBeenCalledWith({
       recipientUserId: 'user_123',
       topic: 'briefing.morning',
-      message: `${briefing.message}\n\nNote: schedule data may be stale because the latest calendar sync failed.`,
+      message: `${briefing.message}\nNote: schedule data may be stale because the latest calendar sync failed.`,
       metadata: {
         briefingKey: briefing.briefingKey,
         localDate: briefing.localDate,

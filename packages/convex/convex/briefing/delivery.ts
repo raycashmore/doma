@@ -105,7 +105,7 @@ function completedRecipientIds(attempts: BriefingDeliveryAttempt[], briefingKey:
 }
 
 function withStaleScheduleNote(message: string) {
-  return `${message}\n\nNote: schedule data may be stale because the latest calendar sync failed.`;
+  return `${message}\nNote: schedule data may be stale because the latest calendar sync failed.`;
 }
 
 export async function runMorningBriefingDeliveryCycle({

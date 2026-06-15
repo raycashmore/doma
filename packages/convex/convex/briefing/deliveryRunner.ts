@@ -9,6 +9,7 @@ import {
 } from '../schedule/reminders';
 import { botMorningBriefingFromStoreResult } from './botBriefing';
 import { type BotMorningBriefing, type BriefingDeliveryAttempt, runMorningBriefingDeliveryCycle } from './delivery';
+import { serializeError } from './errors';
 
 type BriefingDeliveryAttemptRecord = {
   briefingKey: string;
@@ -92,20 +93,6 @@ function formatLocalDate(ms: number, timeZone: string) {
   return `${year}-${month}-${day}`;
 }
 
-function errorDetails(error: unknown) {
-  if (error instanceof Error) {
-    return {
-      name: error.name,
-      message: error.message,
-      stack: error.stack
-    };
-  }
-
-  return {
-    message: String(error)
-  };
-}
-
 export const runDueMorningBriefingDelivery = internalAction({
   args: {},
   handler: async (ctx) => {
@@ -141,7 +128,7 @@ export const runDueMorningBriefingDelivery = internalAction({
           } catch (error) {
             console.warn('[briefing.delivery] Schedule sync failed during morning delivery run', {
               localDate,
-              ...errorDetails(error)
+              ...serializeError(error)
             });
             return { ok: false as const, lastSyncedAt: inputs.lastSyncedAt };
           }
@@ -169,7 +156,7 @@ export const runDueMorningBriefingDelivery = internalAction({
               localDate: date,
               timeZone: tz,
               generatedAt,
-              ...errorDetails(error)
+              ...serializeError(error)
             });
             throw error;
           }
@@ -191,7 +178,7 @@ export const runDueMorningBriefingDelivery = internalAction({
       console.error('[briefing.delivery] Morning delivery run failed', {
         localDate,
         timeZone,
-        ...errorDetails(error)
+        ...serializeError(error)
       });
       throw error;
     }
