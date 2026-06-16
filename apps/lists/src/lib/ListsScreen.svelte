@@ -5,15 +5,14 @@
   import { browser } from '$app/environment';
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
+  import { page } from '$app/state';
   import { activeItems, completedItems, selectedItemProperties } from '$lib/lists-fixtures';
   import { buildListHref, buildListsHomeHref, readLastListPublicId, writeLastListPublicId } from '$lib/lists-routing';
 
   let {
-    selectedPublicId = null,
-    selectedSlug = null
+    selectedPublicId = null
   }: {
     selectedPublicId?: string | null;
-    selectedSlug?: string | null;
   } = $props();
 
   const visibleLists = useQuery(api.lists.queries.listVisibleToMe, () => ({}));
@@ -78,11 +77,15 @@
   });
 
   $effect(() => {
+    if (!browser) return;
     const row = selectedList.data;
     if (!row || !selectedPublicId) return;
-    if (selectedSlug === row.slug) return;
+    if (row.publicId !== selectedPublicId) return;
 
-    void goto(buildListHref(base, row), { replaceState: true, noScroll: true, keepFocus: true });
+    const canonicalHref = buildListHref(base, row);
+    if (page.url.pathname === canonicalHref) return;
+
+    void goto(canonicalHref, { replaceState: true, noScroll: true, keepFocus: true });
   });
 
   $effect(() => {

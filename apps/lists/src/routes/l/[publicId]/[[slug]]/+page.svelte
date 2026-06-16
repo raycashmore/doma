@@ -3,4 +3,4 @@
   import ListsScreen from '$lib/ListsScreen.svelte';
 </script>
 
-<ListsScreen selectedPublicId={page.params.publicId} selectedSlug={page.params.slug ?? null} />
+<ListsScreen selectedPublicId={page.params.publicId} />
