@@ -91,8 +91,7 @@ describe('createAiMorningBriefing', () => {
         ],
         sourceIdsIgnored: ['requirements-calendar:requirements-1:1781218800000']
       },
-      message:
-        'Morning briefing\nOne handoff to confirm\nWatchouts\n- memberA handoff: adultA drops off; adultB picks up.'
+      message: 'Today:\nOne handoff to confirm\n\nWatchouts\n- handoff: adultA drops off; adultB picks up.'
     });
   });
 
@@ -120,8 +119,7 @@ describe('createAiMorningBriefing', () => {
       })
     ).resolves.toMatchObject({
       generationStatus: 'setupProblem',
-      message:
-        "Morning briefing\nDaily requirements calendar is not configured yet, so I can't check day-specific requirements."
+      message: "Today:\nDaily requirements calendar is not configured yet, so I can't check day-specific requirements."
     });
     expect(providerCalled).toBe(false);
   });
@@ -172,7 +170,7 @@ describe('createAiMorningBriefing', () => {
         ]
       },
       sourceIds: ['requirements-calendar:requirements-1:1781218800000'],
-      message: "Morning briefing\nToday's requirements\nPack / bring\n- memberA: Bring sports bag"
+      message: "Today:\nToday's requirements\n\nPack / bring\n- Bring sports bag"
     });
   });
 
@@ -211,7 +209,7 @@ describe('createAiMorningBriefing', () => {
         ]
       },
       sourceIds: ['requirements-calendar:requirements-1:1781218800000'],
-      message: "Morning briefing\nToday's requirements\nPack / bring\n- memberA: Bring sports bag"
+      message: "Today:\nToday's requirements\n\nPack / bring\n- Bring sports bag"
     });
 
     expect(errorSpy).toHaveBeenCalledWith(
@@ -267,7 +265,7 @@ describe('createAiMorningBriefing', () => {
       })
     ).resolves.toMatchObject({
       generationStatus: 'fallback',
-      message: "Morning briefing\nToday's requirements\nPack / bring\n- memberA: Bring sports bag"
+      message: "Today:\nToday's requirements\n\nPack / bring\n- Bring sports bag"
     });
 
     expect(errorSpy).toHaveBeenCalledWith(
@@ -338,12 +336,14 @@ describe('createAiMorningBriefing', () => {
       },
       sourceIds: ['requirements-calendar:requirements-1:1781218800000', 'calendar-a:ordinary-1:1781218800000'],
       message: [
-        'Morning briefing',
+        'Today:',
         'One thing to prep',
+        '',
         'Watchouts',
         '- Confirm the activity handoff.',
+        '',
         'Pack / bring',
-        '- memberA needs sports gear.'
+        '- someone needs sports gear.'
       ].join('\n')
     });
 
@@ -406,7 +406,7 @@ describe('createAiMorningBriefing', () => {
         sourceIdsIgnored: ['calendar-a:ordinary-1:1781218800000']
       },
       sourceIds: ['requirements-calendar:requirements-1:1781218800000'],
-      message: ['Morning briefing', 'One thing to prep', 'Pack / bring', '- memberA needs sports gear.'].join('\n')
+      message: ['Today:', 'One thing to prep', '', 'Pack / bring', '- someone needs sports gear.'].join('\n')
     });
 
     expect(errorSpy).not.toHaveBeenCalled();
@@ -438,7 +438,7 @@ describe('createAiMorningBriefing', () => {
         shouldSend: true,
         headline: 'Normal day. No special requirements found.'
       },
-      message: 'Morning briefing\nNormal day. No special requirements found.'
+      message: 'Today:\nNormal day. No special requirements found.'
     });
   });
 

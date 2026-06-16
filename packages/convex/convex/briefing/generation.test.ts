@@ -35,7 +35,7 @@ describe('createMorningBriefing', () => {
       })
     ).resolves.toMatchObject({
       generationStatus: 'deterministic',
-      message: "Morning briefing\nToday's requirements\nPack / bring\n- memberA: Bring sports bag"
+      message: "Today:\nToday's requirements\n\nPack / bring\n- Bring sports bag"
     });
   });
 
@@ -67,7 +67,7 @@ describe('createMorningBriefing', () => {
       })
     ).resolves.toMatchObject({
       generationStatus: 'ai',
-      message: 'Morning briefing\nOne thing to prep\nPack / bring\n- memberA needs sports gear.'
+      message: 'Today:\nOne thing to prep\n\nPack / bring\n- someone needs sports gear.'
     });
     expect(provider).toHaveBeenCalledOnce();
   });

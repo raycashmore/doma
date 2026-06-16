@@ -78,17 +78,22 @@ describe('formatMorningBriefing', () => {
         ],
         sourceIdsIgnored: []
       })
-    ).toBe(`Morning briefing
+    ).toBe(`Today:
 Busy coordination day: school items, activity packing, and evening chores.
+
 Watchouts
-- memberA handoff: adultA drops off at 4pm; adultB picks up at 7pm.
+- handoff: adultA drops off at 4pm; adultB picks up at 7pm.
+
 Before leaving
-- memberA: wear sport clothes.
-- memberA and memberB: bring homework.
+- wear sport clothes.
+- bring homework.
+
 Pack / bring
-- memberA: water bottle and snack.
+- water bottle and snack.
+
 Logistics
 - adultA handles activity drop-off and pickup.
+
 Unclear
 - Check whether rehearsal needs special shoes.`);
   });
@@ -131,13 +136,16 @@ Unclear
       sourceIdsIgnored: []
     });
 
-    expect(message).toBe(`Morning briefing
+    expect(message).toBe(`Today:
 Routine details need review.
+
 Before leaving
-- memberA: confirm classroom note.
+- confirm classroom note.
+
 Pack / bring
-- memberA: pack lunch box.`);
-    expect(message.match(/memberA: confirm classroom note\./g)).toHaveLength(1);
+- pack lunch box.`);
+    expect(message.match(/confirm classroom note\./g)).toHaveLength(1);
+    expect(message).not.toContain('memberA');
   });
 });
 
@@ -164,8 +172,7 @@ describe('createDeterministicMorningBriefing', () => {
         uncertaintyNotes: [],
         sourceIdsIgnored: []
       },
-      message:
-        "Morning briefing\nDaily requirements calendar is not configured yet, so I can't check day-specific requirements."
+      message: "Today:\nDaily requirements calendar is not configured yet, so I can't check day-specific requirements."
     });
   });
 
@@ -202,7 +209,7 @@ describe('createDeterministicMorningBriefing', () => {
         ],
         sourceIdsIgnored: []
       },
-      message: "Morning briefing\nToday's requirements\nPack / bring\n- memberA: Bring sports bag"
+      message: "Today:\nToday's requirements\n\nPack / bring\n- Bring sports bag"
     });
   });
 
@@ -233,13 +240,15 @@ describe('createDeterministicMorningBriefing', () => {
           })
         ]
       }).message
-    ).toBe(`Morning briefing
+    ).toBe(`Today:
 Today's requirements
+
 Before leaving
-- memberA: Wear sport clothes
-- memberA: Remember homework
+- Wear sport clothes
+- Remember homework
+
 Pack / bring
-- memberA: Bring water bottle`);
+- Bring water bottle`);
   });
 
   it('returns deterministic weekday quiet output when no actionable items exist', () => {
@@ -250,7 +259,7 @@ Pack / bring
         calendarConfigs: [{ calendarId: 'requirements-calendar', who: 'shared', kind: 'dailyRequirements' }],
         events: []
       }).message
-    ).toBe('Morning briefing\nNormal day. No special requirements found.');
+    ).toBe('Today:\nNormal day. No special requirements found.');
   });
 });
 
@@ -298,14 +307,14 @@ describe('formatMorningBriefingFallback', () => {
         ]
       })
     ).toEqual({
-      message: "Morning briefing\nToday's requirements\nPack / bring\n- memberA: Bring sports bag",
+      message: "Today:\nToday's requirements\n\nPack / bring\n- Bring sports bag",
       sourceIds: ['requirements-calendar:requirements-1:1781218800000']
     });
   });
 
   it('uses deterministic empty fallback text when no daily requirements exist', () => {
     expect(formatMorningBriefingFallback({ events: [event({ googleEventId: 'ordinary-1' })] })).toEqual({
-      message: 'Morning briefing\nNo daily requirements found.',
+      message: 'Today:\nNo daily requirements found.',
       sourceIds: []
     });
   });

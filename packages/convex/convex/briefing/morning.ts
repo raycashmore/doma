@@ -86,7 +86,7 @@ export function fallbackMorningBriefingHeadline(dailyRequirementCount: number) {
 export function formatMorningBriefing(briefing: MorningBriefing) {
   if (!briefing.shouldSend) return '';
 
-  const lines = ['Morning briefing', briefing.headline];
+  const lines = ['Today:', sanitizeBriefingText(briefing.headline).replace(/^Today:\s*/i, '')];
   const groupedRoutineItems = new Set<BriefingItem>();
   const beforeLeaving = briefing.routineItems.filter((item) =>
     hasAnyTag(item, ['wear', 'remember', 'prepare', 'leaveEarlier'])
@@ -122,7 +122,20 @@ export function formatMorningBriefing(briefing: MorningBriefing) {
 function appendSection(lines: string[], heading: string, items: BriefingItem[]) {
   if (items.length === 0) return;
 
-  lines.push(heading, ...items.map((item) => `- ${item.text}`));
+  lines.push('', heading, ...items.map((item) => `- ${sanitizeBriefingText(item.text)}`));
+}
+
+function sanitizeBriefingText(text: string) {
+  return text
+    .replace(/\bfor member[A-Z]\b/g, '')
+    .replace(/\bmember[A-Z]\s+handoff\b/gi, 'handoff')
+    .replace(/\bmember[A-Z]\s+and\s+member[A-Z]:\s*/g, '')
+    .replace(/\bmember[A-Z]:\s*/g, '')
+    .replace(/\bmember[A-Z]\s+and\s+member[A-Z]\b/g, 'the children')
+    .replace(/\bmember[A-Z]\b/g, 'someone')
+    .replace(/\s+([,.;:])/g, '$1')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
 }
 
 function hasAnyTag(item: BriefingItem, tags: BriefingItem['tags']) {
