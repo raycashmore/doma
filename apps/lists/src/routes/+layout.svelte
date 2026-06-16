@@ -60,6 +60,10 @@
   function resolveAppHref(item: (typeof appNavItems)[number]): string {
     return getAppHref(item, dev);
   }
+
+  function getNavLabel(label: string) {
+    return label.slice(0, 1).toUpperCase();
+  }
 </script>
 
 <svelte:head>
@@ -81,47 +85,49 @@
     {/if}
   </main>
 {:else}
-  <div class="app-shell">
-    <nav aria-label="App navigation" class="rail">
-      <a class="home-mark" href={resolveAppHref(homeNavItem)} aria-label="Home">
-        <span>D</span>
+  <div class="min-h-screen bg-warm-bg-dark text-warm-text-primary lg:grid lg:grid-cols-[96px_minmax(0,1fr)]">
+    <nav
+      aria-label="App navigation"
+      class="hidden min-h-screen flex-col items-center gap-8 border-r border-white/8 bg-warm-bg-dark px-4 py-6 text-warm-text-on-dark lg:flex"
+    >
+      <a
+        class="flex h-14 w-14 items-center justify-center rounded-[1.25rem] bg-warm-accent font-warm-display text-xl text-warm-bg transition-colors hover:bg-warm-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warm-accent focus-visible:ring-offset-2 focus-visible:ring-offset-warm-bg-dark"
+        href={resolveAppHref(homeNavItem)}
+        aria-label="Home"
+      >
+        <span aria-hidden="true">D</span>
       </a>
 
-      <div class="rail-links">
+      <div class="flex flex-col gap-4">
         {#each appNavItems.slice(1) as item (item.id)}
+          {@const isActive = item.id === activeAppId}
           <a
-            class:active={item.id === activeAppId}
+            class={`flex h-14 w-14 items-center justify-center rounded-[1.25rem] border text-sm font-semibold tracking-[0.18em] uppercase transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warm-accent focus-visible:ring-offset-2 focus-visible:ring-offset-warm-bg-dark ${
+              isActive
+                ? 'border-white/10 bg-white/10 text-warm-text-on-dark'
+                : 'border-transparent text-warm-text-tertiary hover:border-white/8 hover:bg-white/[0.06] hover:text-warm-text-on-dark'
+            }`}
             href={resolveAppHref(item)}
             aria-label={item.label}
-            aria-current={item.id === activeAppId ? 'page' : undefined}
+            aria-current={isActive ? 'page' : undefined}
           >
-            {item.label.slice(0, 1)}
+            <span aria-hidden="true">{getNavLabel(item.label)}</span>
           </a>
         {/each}
       </div>
     </nav>
 
-    <main class="content-frame">
-      {#if shouldUseConvexAuth}
-        <ConvexAuthGate>
+    <main class="min-w-0 px-0 py-0 lg:px-7 lg:pt-7 lg:pr-7 lg:pb-7 lg:pl-2">
+      <div class="min-h-screen lg:min-h-[calc(100vh-56px)]">
+        {#if shouldUseConvexAuth}
+          <ConvexAuthGate>
+            {@render children()}
+          </ConvexAuthGate>
+        {:else}
           {@render children()}
-        </ConvexAuthGate>
-      {:else}
-        {@render children()}
-      {/if}
+        {/if}
+      </div>
     </main>
-  </div>
-
-  <div class="mobile-nav" aria-label="App navigation">
-    {#each appNavItems as item (item.id)}
-      <a
-        class:active={item.id === activeAppId}
-        href={resolveAppHref(item)}
-        aria-current={item.id === activeAppId ? 'page' : undefined}
-      >
-        {item.label}
-      </a>
-    {/each}
   </div>
 {/if}
 
