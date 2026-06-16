@@ -15,6 +15,7 @@ const testConfig: BotConfig = {
   botServiceToken: 'service-token',
   convexUrl: 'https://convex.example.com',
   scheduleCapabilityUrl: undefined,
+  scheduleCapabilityTimeoutMs: 15_000,
   pairingEnabled: true,
   telegramBotToken: 'telegram-bot-token',
   telegramWebhookSecret: 'telegram-webhook-secret',
@@ -165,7 +166,8 @@ describe('api-bot app', () => {
       'https://schedule.example.com/schedule/api/bot/schedule',
       expect.objectContaining({
         method: 'POST',
-        body: expect.stringContaining('"command":"briefing"')
+        body: expect.stringContaining('"command":"briefing"'),
+        signal: expect.any(AbortSignal)
       })
     );
   });

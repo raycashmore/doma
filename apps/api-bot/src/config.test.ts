@@ -23,6 +23,7 @@ describe('parseConfig', () => {
       botServiceToken: 'service-token',
       convexUrl: 'https://convex.example.com',
       scheduleCapabilityUrl: undefined,
+      scheduleCapabilityTimeoutMs: 15_000,
       pairingEnabled: false,
       telegramBotToken: 'telegram-bot-token',
       telegramWebhookSecret: 'telegram-webhook-secret',
@@ -48,6 +49,18 @@ describe('parseConfig', () => {
         SCHEDULE_CAPABILITY_URL: 'https://schedule.example.com/schedule/api/bot/schedule'
       }).scheduleCapabilityUrl
     ).toBe('https://schedule.example.com/schedule/api/bot/schedule');
+  });
+
+  it('accepts an optional positive schedule capability timeout', () => {
+    expect(parseConfig({ ...validEnv, SCHEDULE_CAPABILITY_TIMEOUT_MS: '20000' }).scheduleCapabilityTimeoutMs).toBe(
+      20_000
+    );
+  });
+
+  it('throws a stable config error when the schedule capability timeout is invalid', () => {
+    expect(() => parseConfig({ ...validEnv, SCHEDULE_CAPABILITY_TIMEOUT_MS: '0' })).toThrow(
+      new Error('Invalid bot gateway config')
+    );
   });
 
   it('throws a stable config error when the schedule capability URL is invalid', () => {

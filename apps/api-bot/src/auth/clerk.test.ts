@@ -13,6 +13,7 @@ const config: BotConfig = {
   clerkPublishableKey: 'clerk-publishable-key',
   botServiceToken: 'service-token',
   convexUrl: 'https://convex.example.com',
+  scheduleCapabilityTimeoutMs: 15_000,
   pairingEnabled: true,
   telegramBotToken: 'telegram-bot-token',
   telegramWebhookSecret: 'telegram-webhook-secret',

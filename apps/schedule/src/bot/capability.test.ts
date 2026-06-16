@@ -134,6 +134,46 @@ describe('handleScheduleCapabilityRequest', () => {
     });
   });
 
+  it('returns a briefing-specific fallback when on-demand generation fails', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await expect(
+      handleScheduleCapabilityRequest(
+        {
+          userId: 'user_123',
+          command: 'briefing',
+          messageText: '/briefing',
+          receivedAt: nowMs
+        },
+        {
+          nowMs,
+          timeZone: 'Australia/Sydney',
+          loadCurrentWeek: async () => ({ events: [] }),
+          loadMorningBriefing: async () => null,
+          generateMorningBriefing: async () => {
+            throw new Error('convex action failed');
+          },
+          markMorningBriefingDelivered: async () => undefined
+        }
+      )
+    ).resolves.toEqual({
+      kind: 'reply',
+      text: 'I could not load the morning briefing just now.'
+    });
+
+    expect(errorSpy).toHaveBeenCalledWith(
+      '[schedule.bot] Morning briefing request failed',
+      expect.objectContaining({
+        localDate: '2026-06-06',
+        error: expect.objectContaining({
+          message: 'convex action failed'
+        })
+      })
+    );
+
+    errorSpy.mockRestore();
+  });
+
   it('replays a stored fallback briefing without regenerating it', async () => {
     const generateMorningBriefing = vi.fn(async () => {
       throw new Error('should not regenerate a stored fallback');

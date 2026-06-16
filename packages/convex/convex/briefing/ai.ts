@@ -1,6 +1,7 @@
 import type { CalendarConfig } from '../schedule/mapping';
 import { serializeError } from './errors';
 import {
+  type BriefingItem,
   collectMorningBriefingEvents,
   createDeterministicMorningBriefing,
   createMorningBriefingFallback,
@@ -32,6 +33,20 @@ export type MorningBriefingAiInput = {
 };
 
 export type MorningBriefingAiProvider = (input: MorningBriefingAiInput) => Promise<unknown>;
+
+type AiBriefingParseFailure =
+  | { reason: 'not_object' }
+  | { reason: 'invalid_top_level_fields' }
+  | { reason: 'invalid_source_ids_ignored_shape' }
+  | {
+      reason: 'invalid_items_array';
+      section: keyof Pick<MorningBriefing, 'routineItems' | 'importantItems' | 'timingNotes' | 'uncertaintyNotes'>;
+    }
+  | {
+      reason: 'invalid_item_shape' | 'invalid_item_source_ids' | 'invalid_item_tags';
+      section: keyof Pick<MorningBriefing, 'routineItems' | 'importantItems' | 'timingNotes' | 'uncertaintyNotes'>;
+      itemIndex: number;
+    };
 
 export const morningBriefingSystemPrompt = [
   'You write a short household morning briefing.',
@@ -141,13 +156,15 @@ export async function createAiMorningBriefing({
   let briefing: MorningBriefing | null;
   try {
     const aiResponse = await provider(input);
-    briefing = parseAiBriefing(aiResponse, new Set(input.sources.map((source) => source.sourceId)));
+    const parseResult = parseAiBriefing(aiResponse, new Set(input.sources.map((source) => source.sourceId)));
+    briefing = parseResult.briefing;
 
     if (!briefing) {
       console.error('[briefing.ai] Falling back after invalid morning briefing AI response', {
         localDate,
         timeZone,
         ...sourceSummary,
+        parseFailure: parseResult.failure,
         responseShape: describeAiResponseShape(aiResponse)
       });
     }
@@ -244,56 +261,91 @@ function toAiSource(event: MorningBriefingEvent): MorningBriefingAiSource {
   return source;
 }
 
-function parseAiBriefing(value: unknown, knownSourceIds: Set<string>): MorningBriefing | null {
-  if (!isRecord(value)) return null;
-  if (typeof value.shouldSend !== 'boolean' || typeof value.headline !== 'string') return null;
-
-  const sourceIdsIgnored = parseSourceIds(value.sourceIdsIgnored, knownSourceIds);
-  const routineItems = parseItems(value.routineItems, 'routine', knownSourceIds);
-  const importantItems = parseItems(value.importantItems, 'important', knownSourceIds);
-  const timingNotes = parseItems(value.timingNotes, 'timing', knownSourceIds);
-  const uncertaintyNotes = parseItems(value.uncertaintyNotes, 'uncertain', knownSourceIds);
-
-  if (!routineItems || !importantItems || !timingNotes || !uncertaintyNotes || !sourceIdsIgnored) {
-    return null;
+function parseAiBriefing(
+  value: unknown,
+  knownSourceIds: Set<string>
+): { briefing: MorningBriefing | null; failure?: AiBriefingParseFailure } {
+  if (!isRecord(value)) return { briefing: null, failure: { reason: 'not_object' } };
+  if (typeof value.shouldSend !== 'boolean' || typeof value.headline !== 'string') {
+    return { briefing: null, failure: { reason: 'invalid_top_level_fields' } };
   }
+
+  const sourceIdsIgnored = parseIgnoredSourceIds(value.sourceIdsIgnored, knownSourceIds);
+  if (!sourceIdsIgnored) {
+    return { briefing: null, failure: { reason: 'invalid_source_ids_ignored_shape' } };
+  }
+
+  const routineItems = parseItems(value.routineItems, 'routineItems', 'routine', knownSourceIds);
+  if (!routineItems.items) return { briefing: null, failure: routineItems.failure };
+
+  const importantItems = parseItems(value.importantItems, 'importantItems', 'important', knownSourceIds);
+  if (!importantItems.items) return { briefing: null, failure: importantItems.failure };
+
+  const timingNotes = parseItems(value.timingNotes, 'timingNotes', 'timing', knownSourceIds);
+  if (!timingNotes.items) return { briefing: null, failure: timingNotes.failure };
+
+  const uncertaintyNotes = parseItems(value.uncertaintyNotes, 'uncertaintyNotes', 'uncertain', knownSourceIds);
+  if (!uncertaintyNotes.items) return { briefing: null, failure: uncertaintyNotes.failure };
+
   return {
-    shouldSend: value.shouldSend,
-    headline: value.headline,
-    routineItems,
-    importantItems,
-    timingNotes,
-    uncertaintyNotes,
-    sourceIdsIgnored
+    briefing: {
+      shouldSend: value.shouldSend,
+      headline: value.headline,
+      routineItems: routineItems.items,
+      importantItems: importantItems.items,
+      timingNotes: timingNotes.items,
+      uncertaintyNotes: uncertaintyNotes.items,
+      sourceIdsIgnored
+    }
   };
 }
 
 function parseItems(
   value: unknown,
+  section: keyof Pick<MorningBriefing, 'routineItems' | 'importantItems' | 'timingNotes' | 'uncertaintyNotes'>,
   kind: MorningBriefing['routineItems'][number]['kind'],
   knownSourceIds: Set<string>
 ) {
-  if (!Array.isArray(value)) return null;
-  const items = value.map((item) => {
+  if (!Array.isArray(value)) {
+    return { items: null, failure: { reason: 'invalid_items_array', section } satisfies AiBriefingParseFailure };
+  }
+  const items = value.map((item, itemIndex) => {
     if (!isRecord(item) || typeof item.text !== 'string' || item.kind !== kind || !Array.isArray(item.tags)) {
-      return null;
+      return { item: null, failure: { reason: 'invalid_item_shape', section, itemIndex } };
     }
     const sourceIds = parseSourceIds(item.sourceIds, knownSourceIds);
-    if (!sourceIds || !item.tags.every(isBriefingTag)) return null;
+    if (!sourceIds) return { item: null, failure: { reason: 'invalid_item_source_ids', section, itemIndex } };
+    if (sourceIds.length === 0) return { item: null, failure: null };
+    if (!item.tags.every(isBriefingTag)) {
+      return { item: null, failure: { reason: 'invalid_item_tags', section, itemIndex } };
+    }
     return {
-      text: item.text,
-      kind,
-      tags: item.tags,
-      sourceIds
+      item: {
+        text: item.text,
+        kind,
+        tags: item.tags,
+        sourceIds
+      }
     };
   });
-  return items.every((item) => item !== null) ? items : null;
+  const invalidItem = items.find((item) => item.failure);
+  return invalidItem
+    ? { items: null, failure: invalidItem.failure as AiBriefingParseFailure }
+    : {
+        items: items.map((item) => item.item).filter((item): item is BriefingItem => item !== null)
+      };
 }
 
 function parseSourceIds(value: unknown, knownSourceIds: Set<string>) {
   if (!Array.isArray(value)) return null;
   if (!value.every((sourceId): sourceId is string => typeof sourceId === 'string')) return null;
-  return value.every((sourceId) => knownSourceIds.has(sourceId)) ? value : null;
+  return value.filter((sourceId) => knownSourceIds.has(sourceId));
+}
+
+function parseIgnoredSourceIds(value: unknown, knownSourceIds: Set<string>) {
+  if (!Array.isArray(value)) return null;
+  if (!value.every((sourceId): sourceId is string => typeof sourceId === 'string')) return null;
+  return value.filter((sourceId) => knownSourceIds.has(sourceId));
 }
 
 function sourceIdsUsedBy(briefing: MorningBriefing) {

@@ -3,6 +3,28 @@ import { CAPABILITY_FALLBACK_RESPONSE, parseCapabilityResponse } from './types.j
 
 const DEFAULT_TIMEOUT_MS = 5_000;
 
+function endpointDetails(endpointUrl: string) {
+  const url = new URL(endpointUrl);
+  return {
+    endpointOrigin: url.origin,
+    endpointPath: url.pathname,
+    endpointHost: url.host
+  };
+}
+
+function errorDetails(error: unknown) {
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message
+    };
+  }
+
+  return {
+    message: String(error)
+  };
+}
+
 export type CreateHttpCapabilityOptions = {
   endpointUrl: string;
   serviceToken: string;
@@ -30,11 +52,30 @@ export function createHttpCapability({
       });
 
       if (!response.ok) {
+        console.warn('[api-bot.capability] Capability request returned non-2xx response', {
+          ...endpointDetails(endpointUrl),
+          timeoutMs,
+          status: response.status
+        });
         return CAPABILITY_FALLBACK_RESPONSE;
       }
 
-      return parseCapabilityResponse(await response.json()) ?? CAPABILITY_FALLBACK_RESPONSE;
-    } catch {
+      const result = parseCapabilityResponse(await response.json());
+      if (!result) {
+        console.warn('[api-bot.capability] Capability request returned invalid response shape', {
+          ...endpointDetails(endpointUrl),
+          timeoutMs
+        });
+        return CAPABILITY_FALLBACK_RESPONSE;
+      }
+
+      return result;
+    } catch (error) {
+      console.warn('[api-bot.capability] Capability request failed', {
+        ...endpointDetails(endpointUrl),
+        timeoutMs,
+        error: errorDetails(error)
+      });
       return CAPABILITY_FALLBACK_RESPONSE;
     } finally {
       clearTimeout(timeout);

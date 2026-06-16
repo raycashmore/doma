@@ -46,6 +46,7 @@ export type HandleScheduleCapabilityOptions = {
 };
 
 const MAX_EVENTS = 5;
+const MORNING_BRIEFING_FALLBACK_TEXT = 'I could not load the morning briefing just now.';
 
 export function parseBotCapabilityRequest(value: unknown): BotCapabilityRequest | null {
   if (typeof value !== 'object' || value === null) {
@@ -123,6 +124,19 @@ function formatEvent(event: BotScheduleEvent, timeZone: string): string {
   return `- ${when}: ${event.title}${location}`;
 }
 
+function errorDetails(error: unknown) {
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message
+    };
+  }
+
+  return {
+    message: String(error)
+  };
+}
+
 export function formatUpcomingEvents(events: BotScheduleEvent[], nowMs: number, timeZone: string): string {
   const upcoming = events
     .filter((event) => event.start >= nowMs)
@@ -149,19 +163,38 @@ export async function handleScheduleCapabilityRequest(
 ): Promise<BotCapabilityResponse> {
   if (isBriefingAsk(request.messageText)) {
     if (!loadMorningBriefing || !generateMorningBriefing || !markMorningBriefingDelivered) {
-      return { kind: 'reply', text: 'I could not load the morning briefing just now.' };
+      return { kind: 'reply', text: MORNING_BRIEFING_FALLBACK_TEXT };
     }
 
     const localDate = formatLocalDate(nowMs, timeZone);
-    const briefing =
-      (await loadMorningBriefing({ localDate })) ??
-      (await generateMorningBriefing({ localDate, timeZone, generatedAt: nowMs }));
+    let briefing: BotMorningBriefing;
 
-    await markMorningBriefingDelivered({
-      briefingKey: briefing.briefingKey,
-      recipientUserId: request.userId,
-      attemptedAt: nowMs
-    });
+    try {
+      briefing =
+        (await loadMorningBriefing({ localDate })) ??
+        (await generateMorningBriefing({ localDate, timeZone, generatedAt: nowMs }));
+    } catch (error) {
+      console.error('[schedule.bot] Morning briefing request failed', {
+        localDate,
+        timeZone,
+        error: errorDetails(error)
+      });
+      return { kind: 'reply', text: MORNING_BRIEFING_FALLBACK_TEXT };
+    }
+
+    try {
+      await markMorningBriefingDelivered({
+        briefingKey: briefing.briefingKey,
+        recipientUserId: request.userId,
+        attemptedAt: nowMs
+      });
+    } catch (error) {
+      console.warn('[schedule.bot] Morning briefing delivery record failed', {
+        briefingKey: briefing.briefingKey,
+        localDate,
+        error: errorDetails(error)
+      });
+    }
 
     const text =
       briefing.shouldSend && briefing.message.trim().length > 0 ? briefing.message : 'Nothing to flag this morning.';

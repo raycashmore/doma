@@ -30,11 +30,13 @@ function createRuntimeCapabilities(config: BotConfig): Record<string, Capability
   return {
     briefing: createHttpCapability({
       endpointUrl: config.scheduleCapabilityUrl,
-      serviceToken: config.botServiceToken
+      serviceToken: config.botServiceToken,
+      timeoutMs: config.scheduleCapabilityTimeoutMs
     }),
     schedule: createHttpCapability({
       endpointUrl: config.scheduleCapabilityUrl,
-      serviceToken: config.botServiceToken
+      serviceToken: config.botServiceToken,
+      timeoutMs: config.scheduleCapabilityTimeoutMs
     })
   };
 }

@@ -231,7 +231,9 @@ describe('createAiMorningBriefing', () => {
     errorSpy.mockRestore();
   });
 
-  it('falls back when AI source references are not valid known source IDs', async () => {
+  it('logs why it falls back when AI source references are not valid known source IDs', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
     await expect(
       createAiMorningBriefing({
         localDate,
@@ -267,6 +269,149 @@ describe('createAiMorningBriefing', () => {
       generationStatus: 'fallback',
       message: "Morning briefing\nToday's requirements\nPack / bring\n- memberA: Bring sports bag"
     });
+
+    expect(errorSpy).toHaveBeenCalledWith(
+      '[briefing.ai] Falling back after invalid morning briefing AI response',
+      expect.objectContaining({
+        parseFailure: {
+          reason: 'invalid_item_source_ids',
+          section: 'routineItems',
+          itemIndex: 0
+        }
+      })
+    );
+
+    errorSpy.mockRestore();
+  });
+
+  it('keeps a valid AI briefing when only sourceIdsIgnored contains an unknown source ID', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await expect(
+      createAiMorningBriefing({
+        localDate,
+        timeZone,
+        calendarConfigs: [{ calendarId: 'requirements-calendar', who: 'shared', kind: 'dailyRequirements' }],
+        events: [
+          event({
+            googleEventId: 'requirements-1',
+            calendarId: 'requirements-calendar',
+            kind: 'dailyRequirements',
+            title: 'Sports uniform',
+            description: 'Bring sports bag'
+          }),
+          event({
+            googleEventId: 'ordinary-1',
+            calendarId: 'calendar-a',
+            title: 'Activity handoff',
+            description: 'adultA drops off; adultB picks up'
+          })
+        ],
+        provider: async () => ({
+          shouldSend: true,
+          headline: 'One thing to prep',
+          routineItems: [
+            {
+              text: 'memberA needs sports gear.',
+              kind: 'routine',
+              tags: ['bring'],
+              sourceIds: ['requirements-calendar:requirements-1:1781218800000']
+            }
+          ],
+          importantItems: [
+            {
+              text: 'Confirm the activity handoff.',
+              kind: 'important',
+              tags: ['coordinate'],
+              sourceIds: ['calendar-a:ordinary-1:1781218800000']
+            }
+          ],
+          timingNotes: [],
+          uncertaintyNotes: [],
+          sourceIdsIgnored: ['made-up-source-id']
+        })
+      })
+    ).resolves.toMatchObject({
+      generationStatus: 'ai',
+      briefing: {
+        sourceIdsIgnored: []
+      },
+      sourceIds: ['requirements-calendar:requirements-1:1781218800000', 'calendar-a:ordinary-1:1781218800000'],
+      message: [
+        'Morning briefing',
+        'One thing to prep',
+        'Watchouts',
+        '- Confirm the activity handoff.',
+        'Pack / bring',
+        '- memberA needs sports gear.'
+      ].join('\n')
+    });
+
+    expect(errorSpy).not.toHaveBeenCalled();
+
+    errorSpy.mockRestore();
+  });
+
+  it('keeps grounded AI items when another item only references unknown source IDs', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await expect(
+      createAiMorningBriefing({
+        localDate,
+        timeZone,
+        calendarConfigs: [{ calendarId: 'requirements-calendar', who: 'shared', kind: 'dailyRequirements' }],
+        events: [
+          event({
+            googleEventId: 'requirements-1',
+            calendarId: 'requirements-calendar',
+            kind: 'dailyRequirements',
+            title: 'Sports uniform',
+            description: 'Bring sports bag'
+          }),
+          event({
+            googleEventId: 'ordinary-1',
+            calendarId: 'calendar-a',
+            title: 'Activity handoff',
+            description: 'adultA drops off; adultB picks up'
+          })
+        ],
+        provider: async () => ({
+          shouldSend: true,
+          headline: 'One thing to prep',
+          routineItems: [
+            {
+              text: 'memberA needs sports gear.',
+              kind: 'routine',
+              tags: ['bring'],
+              sourceIds: ['requirements-calendar:requirements-1:1781218800000']
+            }
+          ],
+          importantItems: [
+            {
+              text: 'Confirm the activity handoff.',
+              kind: 'important',
+              tags: ['coordinate'],
+              sourceIds: ['made-up-source-id']
+            }
+          ],
+          timingNotes: [],
+          uncertaintyNotes: [],
+          sourceIdsIgnored: ['calendar-a:ordinary-1:1781218800000']
+        })
+      })
+    ).resolves.toMatchObject({
+      generationStatus: 'ai',
+      briefing: {
+        importantItems: [],
+        sourceIdsIgnored: ['calendar-a:ordinary-1:1781218800000']
+      },
+      sourceIds: ['requirements-calendar:requirements-1:1781218800000'],
+      message: ['Morning briefing', 'One thing to prep', 'Pack / bring', '- memberA needs sports gear.'].join('\n')
+    });
+
+    expect(errorSpy).not.toHaveBeenCalled();
+
+    errorSpy.mockRestore();
   });
 
   it('falls back to deterministic quiet output when AI suppresses an empty weekday', async () => {

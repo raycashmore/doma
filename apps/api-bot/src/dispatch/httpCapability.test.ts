@@ -168,4 +168,36 @@ describe('createHttpCapability', () => {
 
     await expect(handler(request())).resolves.toEqual(fallback);
   });
+
+  it('logs a sanitized warning when the upstream capability fails', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw new DOMException('The operation was aborted.', 'AbortError');
+      })
+    );
+    const handler = createHttpCapability({
+      endpointUrl: 'https://capability.example.com/schedule',
+      serviceToken: 'service-token',
+      timeoutMs: 25
+    });
+
+    await expect(handler(request())).resolves.toEqual(fallback);
+
+    expect(warn).toHaveBeenCalledWith(
+      '[api-bot.capability] Capability request failed',
+      expect.objectContaining({
+        endpointOrigin: 'https://capability.example.com',
+        endpointPath: '/schedule',
+        timeoutMs: 25,
+        error: expect.objectContaining({
+          name: 'AbortError',
+          message: 'The operation was aborted.'
+        })
+      })
+    );
+
+    warn.mockRestore();
+  });
 });
