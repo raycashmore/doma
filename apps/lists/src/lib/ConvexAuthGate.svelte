@@ -11,7 +11,7 @@
 {#if convexAuth.isLoading}
   <section aria-live="polite" class="sr-only">Checking Lists access...</section>
 {:else if !convexAuth.isAuthenticated}
-  <section aria-live="polite" class="sr-only">Authenticating Lists access...</section>
+  <section class="auth-panel" role="alert">Unable to authenticate with Lists data.</section>
 {:else if authStatus.isLoading}
   <section aria-live="polite" class="sr-only">Opening Lists...</section>
 {:else if authStatus.error}

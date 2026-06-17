@@ -13,7 +13,6 @@ export function assertCanEditList(
   row: { visibility: 'personal' | 'shared'; createdByUserId: string },
   currentUserId: string
 ) {
-  if (row.visibility === 'shared') return;
   if (row.createdByUserId !== currentUserId) throw new Error('List unavailable');
 }
 

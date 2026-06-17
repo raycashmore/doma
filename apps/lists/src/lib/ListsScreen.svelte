@@ -1,5 +1,6 @@
 <script lang="ts">
   import { api } from '@repo/convex';
+  import { slugifyListName } from '@repo/convex/lists/model';
   import { useMutation, useQuery } from 'convex-svelte';
 
   import { browser, dev } from '$app/environment';
@@ -56,15 +57,6 @@
   let deleteTargetPublicId = $state<string | null>(null);
   let usePreviewData = $state(USE_DEV_FIXTURE);
   let previewLists = $state([...previewVisibleLists]);
-
-  function slugify(value: string) {
-    return value
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .slice(0, 48) || 'new-list';
-  }
 
   function updateUiMode() {
     if (!browser) return;
@@ -130,7 +122,7 @@
 
     if (usePreviewData) {
       const name = createName.trim() || 'Untitled list';
-      const slug = slugify(name);
+      const slug = slugifyListName(name);
       const created = {
         _id: `preview-${crypto.randomUUID()}`,
         publicId: slug,
@@ -171,7 +163,7 @@
       const name = renameName.trim() || 'Untitled list';
       previewLists = previewLists.map((list) =>
         list.publicId === renameTargetPublicId
-          ? { ...list, name, slug: slugify(name) }
+          ? { ...list, name, slug: slugifyListName(name) }
           : list
       );
 
@@ -213,10 +205,7 @@
     const remaining =
       presentedLists.filter((list) => list.publicId !== deleteTargetPublicId) ?? [];
 
-    if (usePreviewData) {
-      previewLists = previewLists.filter((list) => list.publicId !== deleteTargetPublicId);
-      deleteTargetPublicId = null;
-      menuTargetPublicId = null;
+    async function navigateAfterDelete() {
       const nextList = remaining[0];
       if (nextList) {
         await goto(buildListHref(base, nextList), {
@@ -224,13 +213,21 @@
           noScroll: true,
           keepFocus: true
         });
-      } else {
-        await goto(buildListsHomeHref(base), {
-          replaceState: true,
-          noScroll: true,
-          keepFocus: true
-        });
+        return;
       }
+
+      await goto(buildListsHomeHref(base), {
+        replaceState: true,
+        noScroll: true,
+        keepFocus: true
+      });
+    }
+
+    if (usePreviewData) {
+      previewLists = previewLists.filter((list) => list.publicId !== deleteTargetPublicId);
+      deleteTargetPublicId = null;
+      menuTargetPublicId = null;
+      await navigateAfterDelete();
       return;
     }
 
@@ -239,20 +236,7 @@
 
       deleteTargetPublicId = null;
       menuTargetPublicId = null;
-      const nextList = remaining[0];
-      if (nextList) {
-        await goto(buildListHref(base, nextList), {
-          replaceState: true,
-          noScroll: true,
-          keepFocus: true
-        });
-      } else {
-        await goto(buildListsHomeHref(base), {
-          replaceState: true,
-          noScroll: true,
-          keepFocus: true
-        });
-      }
+      await navigateAfterDelete();
     } catch (error) {
       mutationError = error instanceof Error ? error.message : 'Unable to delete list.';
     }
@@ -261,13 +245,14 @@
   function beginRename(list: PresentedList) {
     renameTargetPublicId = list.publicId;
     deleteTargetPublicId = null;
+    renameSeededFor = list.publicId;
     renameName = list.name;
   }
 
   function beginDelete(list: PresentedList) {
     deleteTargetPublicId = list.publicId;
     renameTargetPublicId = null;
-    renameName = list.name;
+    renameSeededFor = null;
   }
 
   $effect(() => {
@@ -304,11 +289,12 @@
   });
 
   $effect(() => {
-    const row = selectedRow;
-    if (!row || renameSeededFor === row.publicId) return;
+    if (!renameTargetPublicId || renameSeededFor === renameTargetPublicId) return;
+    const row = visibleListRows.find((list) => list.publicId === renameTargetPublicId);
+    if (!row) return;
 
     renameName = row.name;
-    renameSeededFor = row.publicId;
+    renameSeededFor = renameTargetPublicId;
   });
 
   $effect(() => {
