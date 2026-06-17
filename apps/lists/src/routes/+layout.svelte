@@ -9,6 +9,7 @@
   import { base } from '$app/paths';
   import { type ClerkAuthState, loadClerkSession } from '$lib/auth';
   import ConvexAuthGate from '$lib/ConvexAuthGate.svelte';
+  import NavIcon from '$lib/NavIcon.svelte';
   import { appNavItems, getAppHref } from '$lib/navigation';
 
   let { children }: { children: Snippet } = $props();
@@ -56,13 +57,14 @@
 
   const activeAppId = 'lists';
   const homeNavItem = appNavItems[0]!;
+  const settingsPath = '/settings/notifications';
 
   function resolveAppHref(item: (typeof appNavItems)[number]): string {
     return getAppHref(item, dev);
   }
 
-  function getNavLabel(label: string) {
-    return label.slice(0, 1).toUpperCase();
+  function resolveSettingsHref(): string {
+    return dev ? `http://localhost:${homeNavItem.devPort}${settingsPath}` : settingsPath;
   }
 </script>
 
@@ -85,40 +87,59 @@
     {/if}
   </main>
 {:else}
-  <div class="min-h-screen bg-warm-bg-dark text-warm-text-primary lg:grid lg:grid-cols-[96px_minmax(0,1fr)]">
+  <div class="min-h-screen bg-warm-bg-dark font-warm-body text-warm-text-primary md:h-screen md:overflow-hidden">
+    <div class="flex h-screen overflow-hidden bg-warm-bg-dark md:h-full">
     <nav
       aria-label="App navigation"
-      class="hidden min-h-screen flex-col items-center gap-8 border-r border-white/8 bg-warm-bg-dark px-4 py-6 text-warm-text-on-dark lg:flex"
+      class="hidden w-14 flex-col items-end py-6 text-warm-text-on-dark md:flex"
     >
       <a
-        class="flex h-14 w-14 items-center justify-center rounded-[1.25rem] bg-warm-accent font-warm-display text-xl text-warm-bg transition-colors hover:bg-warm-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warm-accent focus-visible:ring-offset-2 focus-visible:ring-offset-warm-bg-dark"
+        class="flex h-12 w-12 items-center justify-center rounded-xl text-warm-text-tertiary transition-colors hover:bg-warm-bg-dark-muted hover:text-warm-text-on-dark"
         href={resolveAppHref(homeNavItem)}
         aria-label="Home"
       >
-        <span aria-hidden="true">D</span>
+        <NavIcon name="home" size={22} />
       </a>
 
-      <div class="flex flex-col gap-4">
+      <div class="h-6" aria-hidden="true"></div>
+
+      <ul class="flex w-full flex-1 flex-col items-end gap-[18px]">
         {#each appNavItems.slice(1) as item (item.id)}
           {@const isActive = item.id === activeAppId}
-          <a
-            class={`flex h-14 w-14 items-center justify-center rounded-[1.25rem] border text-sm font-semibold tracking-[0.18em] uppercase transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warm-accent focus-visible:ring-offset-2 focus-visible:ring-offset-warm-bg-dark ${
-              isActive
-                ? 'border-white/10 bg-white/10 text-warm-text-on-dark'
-                : 'border-transparent text-warm-text-tertiary hover:border-white/8 hover:bg-white/[0.06] hover:text-warm-text-on-dark'
-            }`}
-            href={resolveAppHref(item)}
-            aria-label={item.label}
-            aria-current={isActive ? 'page' : undefined}
-          >
-            <span aria-hidden="true">{getNavLabel(item.label)}</span>
-          </a>
+          <li>
+            <a
+              class={`flex h-12 w-12 items-center justify-center rounded-[14px] transition-colors ${
+                isActive
+                  ? 'bg-warm-accent text-warm-bg'
+                  : 'text-warm-text-tertiary hover:bg-warm-bg-dark-muted hover:text-warm-text-on-dark'
+              }`}
+              href={resolveAppHref(item)}
+              aria-label={item.label}
+              aria-current={isActive ? 'page' : undefined}
+            >
+              <NavIcon name={item.id} />
+            </a>
+          </li>
         {/each}
-      </div>
+      </ul>
+
+      <a
+        class="flex h-12 w-12 items-center justify-center rounded-[14px] text-warm-text-tertiary transition-colors hover:bg-warm-bg-dark-muted hover:text-warm-text-on-dark"
+        href={resolveSettingsHref()}
+        aria-label="Notification settings"
+      >
+        <NavIcon name="settings" />
+      </a>
     </nav>
 
-    <main class="min-w-0 px-0 py-0 lg:px-7 lg:pt-7 lg:pr-7 lg:pb-7 lg:pl-2">
-      <div class="min-h-screen lg:min-h-[calc(100vh-56px)]">
+    <div class="flex min-h-0 min-w-0 flex-1 flex-col">
+      <header class="flex min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 pb-4 pt-2">
+        <h1 class="font-warm-display text-[24px] leading-[1.1] text-warm-text-on-dark md:text-[32px]">
+          Lists
+        </h1>
+      </header>
+
+      <main class="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 pb-4 md:overflow-hidden">
         {#if shouldUseConvexAuth}
           <ConvexAuthGate>
             {@render children()}
@@ -126,8 +147,29 @@
         {:else}
           {@render children()}
         {/if}
-      </div>
-    </main>
+      </main>
+
+      <nav
+        aria-label="App navigation"
+        class="flex items-stretch justify-around border-t border-warm-border bg-warm-bg-dark px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 md:hidden"
+      >
+        {#each appNavItems as item (item.id)}
+          {@const isActive = item.id === activeAppId}
+          <a
+            href={resolveAppHref(item)}
+            aria-label={item.label}
+            aria-current={isActive ? 'page' : undefined}
+            class={`flex flex-1 flex-col items-center gap-1 rounded-xl py-1.5 text-[10px] transition-colors ${
+              isActive ? 'text-warm-accent' : 'text-warm-text-tertiary hover:text-warm-text-on-dark'
+            }`}
+          >
+            <NavIcon name={item.id} />
+            <span>{item.label}</span>
+          </a>
+        {/each}
+      </nav>
+    </div>
+    </div>
   </div>
 {/if}
 

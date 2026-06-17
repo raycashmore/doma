@@ -22,15 +22,19 @@
     writeLastListPublicId
   } from '$lib/lists-routing';
 
+  const USE_DEV_FIXTURE = dev && !import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+
   let {
     selectedPublicId = null
   }: {
     selectedPublicId?: string | null;
   } = $props();
 
-  const visibleLists = useQuery(api.lists.queries.listVisibleToMe, () => ({}));
+  const visibleLists = useQuery(api.lists.queries.listVisibleToMe, () =>
+    USE_DEV_FIXTURE ? 'skip' : {}
+  );
   const selectedList = useQuery(api.lists.queries.getVisibleListByPublicId, () =>
-    selectedPublicId ? { publicId: selectedPublicId } : 'skip'
+    USE_DEV_FIXTURE || !selectedPublicId ? 'skip' : { publicId: selectedPublicId }
   );
   const createList = useMutation(api.lists.mutations.createList);
   const renameList = useMutation(api.lists.mutations.renameList);
@@ -50,7 +54,7 @@
   let menuTargetPublicId = $state<string | null>(null);
   let renameTargetPublicId = $state<string | null>(null);
   let deleteTargetPublicId = $state<string | null>(null);
-  let usePreviewData = $state(false);
+  let usePreviewData = $state(USE_DEV_FIXTURE);
   let previewLists = $state([...previewVisibleLists]);
 
   function slugify(value: string) {
@@ -371,46 +375,8 @@
     {describeError(visibleLists.error, 'Unable to load lists right now.')}
   </section>
 {:else}
-  <section class="flex min-h-screen flex-col gap-5 bg-warm-bg-dark p-0 text-warm-text-primary min-[1200px]:gap-5">
-      {#if usePreviewData}
-        <div class="px-4 pt-4 min-[1200px]:px-1 min-[1200px]:pt-0">
-          <div class="rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-warm-text-tertiary">
-            Preview mode
-          </div>
-        </div>
-      {/if}
-      <header class="hidden items-center justify-between px-1 py-2 min-[1200px]:flex">
-        <div class="flex items-center gap-4">
-          <div>
-            <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-warm-text-tertiary">
-              Lists
-            </p>
-            <h1 class="font-warm-display text-[36px] leading-[1.05] text-warm-text-on-dark">
-              {selectedPresentedList?.name ?? 'Lists'}
-            </h1>
-          </div>
-        </div>
-        <div class="flex items-center gap-3">
-          <button
-            type="button"
-            class="rounded-full bg-warm-bg-dark-muted px-4 py-2 text-sm font-medium text-warm-text-on-dark"
-            onclick={() => {
-              showCreateDialog = true;
-              createVisibility = selectedPresentedList?.visibility ?? 'personal';
-            }}
-          >
-            New list
-          </button>
-          <button
-            type="button"
-            class="flex h-10 w-10 items-center justify-center rounded-full bg-warm-accent text-sm font-semibold text-warm-bg"
-          >
-            M
-          </button>
-        </div>
-      </header>
-
-      <div class="rounded-[28px] border border-warm-border bg-warm-bg-card p-4 min-[1200px]:flex min-[1200px]:min-h-[calc(100vh-10rem)] min-[1200px]:gap-5 min-[1200px]:p-6">
+  <section class="flex min-h-full flex-col text-warm-text-primary">
+      <div class="flex min-h-full flex-1 flex-col rounded-[18px] bg-warm-bg-card p-[14px] shadow-[0_18px_44px_rgb(20_17_12_/_10%)] md:rounded-[28px] md:p-6 min-[1200px]:flex-row min-[1200px]:gap-5">
             <aside class="hidden w-[244px] shrink-0 flex-col gap-4 rounded-[20px] border border-warm-border bg-warm-bg p-[18px] min-[1200px]:flex">
               <div class="flex items-center justify-between">
                 <h2 class="text-base font-semibold text-warm-text-primary">My Lists</h2>
@@ -519,36 +485,28 @@
 
             <div class="min-w-0 flex-1">
               <div class="flex min-[1200px]:hidden">
-                <div class="w-full rounded-[40px] bg-warm-bg-dark text-warm-text-on-dark">
-                  <div class="flex items-center justify-between px-5 pb-4 pt-5">
+                <div class="w-full text-warm-text-primary">
+                  <div class="flex items-center justify-between pb-4">
                     <button
                       type="button"
-                      class="rounded-full bg-warm-bg-dark-muted px-4 py-2 text-sm font-medium"
+                      class="rounded-full border border-[rgb(29_26_20_/_14%)] px-4 py-2 text-sm font-bold text-warm-text-secondary"
                       onclick={() => (showListPicker = true)}
                     >
                       {screen.title} ▾
                     </button>
-                    <div class="flex items-center gap-2">
-                      <button
-                        type="button"
-                        class="flex h-10 w-10 items-center justify-center rounded-full bg-warm-bg-dark-muted text-base"
-                        onclick={() => {
-                          showCreateDialog = true;
-                          createVisibility = selectedPresentedList?.visibility ?? 'personal';
-                        }}
-                      >
-                        +
-                      </button>
-                      <button
-                        type="button"
-                        class="flex h-10 w-10 items-center justify-center rounded-full bg-warm-accent text-sm font-semibold text-warm-bg"
-                      >
-                        M
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      class="flex h-9 w-9 items-center justify-center rounded-full bg-warm-accent text-base font-bold text-white"
+                      onclick={() => {
+                        showCreateDialog = true;
+                        createVisibility = selectedPresentedList?.visibility ?? 'personal';
+                      }}
+                    >
+                      +
+                    </button>
                   </div>
 
-                  <div class="rounded-t-[24px] bg-warm-bg-card px-4 pb-6 pt-5 text-warm-text-primary">
+                  <div>
                     <p class="text-xs text-warm-text-secondary">{screen.metaLabel}</p>
                     <div class="mt-4 flex items-center justify-between gap-4">
                       <h2 class="font-warm-display text-[20px] leading-tight">Items</h2>
@@ -772,12 +730,12 @@
     {#if uiMode === 'mobile' && showListPicker}
       <button
         type="button"
-        class="fixed inset-0 z-40 bg-[#2D2D2D99]"
+        class="fixed inset-0 z-40 bg-black/30"
         aria-label="Close list picker"
         onclick={() => (showListPicker = false)}
       ></button>
-      <section class="fixed inset-x-4 bottom-4 z-50 rounded-[28px] rounded-b-[36px] border border-warm-border bg-warm-bg p-4 shadow-[0_-16px_40px_rgba(61,46,34,0.2)]">
-        <div class="mx-auto h-1 w-10 rounded-full bg-warm-section-mortgage"></div>
+      <section class="fixed inset-x-0 bottom-0 z-50 max-h-[76dvh] overflow-auto rounded-t-[18px] bg-warm-bg-card p-[14px] shadow-[0_-20px_50px_rgb(0_0_0_/_20%)]">
+        <div class="mx-auto h-[5px] w-11 rounded-full bg-[rgb(29_26_20_/_14%)]"></div>
         <div class="mt-3 flex items-center justify-between">
           <h2 class="text-base font-bold text-warm-text-primary">Switch list</h2>
           <button type="button" class="text-sm text-warm-text-secondary" onclick={() => (showListPicker = false)}>×</button>
@@ -876,12 +834,12 @@
     {#if uiMode === 'mobile' && showItemSheet && currentItem}
       <button
         type="button"
-        class="fixed inset-0 z-40 bg-[#2D2D2D99]"
+        class="fixed inset-0 z-40 bg-black/30"
         aria-label="Close item details"
         onclick={() => (showItemSheet = false)}
       ></button>
-      <section class="fixed inset-x-4 bottom-4 z-50 rounded-[28px] rounded-b-[36px] border border-warm-border bg-warm-bg p-4 shadow-[0_-16px_40px_rgba(61,46,34,0.2)]">
-        <div class="mx-auto h-1 w-10 rounded-full bg-warm-section-mortgage"></div>
+      <section class="fixed inset-x-0 bottom-0 z-50 max-h-[76dvh] overflow-auto rounded-t-[18px] bg-warm-bg-card p-[14px] shadow-[0_-20px_50px_rgb(0_0_0_/_20%)]">
+        <div class="mx-auto h-[5px] w-11 rounded-full bg-[rgb(29_26_20_/_14%)]"></div>
         <div class="mt-3 flex items-center justify-between">
           <p class="text-sm font-semibold text-warm-text-primary">Item details</p>
           <button type="button" class="text-sm text-warm-text-secondary" onclick={() => (showItemSheet = false)}>×</button>
