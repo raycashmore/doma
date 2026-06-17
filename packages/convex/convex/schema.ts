@@ -169,5 +169,21 @@ export default defineSchema({
   // BRIEFINGS — Date-centric household readiness summaries
   // ============================================================
   briefings: briefingsTable,
-  briefingDeliveryAttempts: briefingDeliveryAttemptsTable
+  briefingDeliveryAttempts: briefingDeliveryAttemptsTable,
+
+  // ============================================================
+  // LISTS — Household list sharing and picker state
+  // ============================================================
+  lists: defineTable({
+    publicId: v.string(),
+    name: v.string(),
+    slug: v.string(),
+    visibility: v.union(v.literal('personal'), v.literal('shared')),
+    createdByUserId: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number()
+  })
+    .index('by_public_id', ['publicId'])
+    .index('by_created_by', ['createdByUserId'])
+    .index('by_visibility', ['visibility'])
 });

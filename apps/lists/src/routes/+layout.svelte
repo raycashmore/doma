@@ -9,6 +9,7 @@
   import { base } from '$app/paths';
   import { type ClerkAuthState, loadClerkSession } from '$lib/auth';
   import ConvexAuthGate from '$lib/ConvexAuthGate.svelte';
+  import NavIcon from '$lib/NavIcon.svelte';
   import { appNavItems, getAppHref } from '$lib/navigation';
 
   let { children }: { children: Snippet } = $props();
@@ -56,9 +57,14 @@
 
   const activeAppId = 'lists';
   const homeNavItem = appNavItems[0]!;
+  const settingsPath = '/settings/notifications';
 
   function resolveAppHref(item: (typeof appNavItems)[number]): string {
     return getAppHref(item, dev);
+  }
+
+  function resolveSettingsHref(): string {
+    return dev ? `http://localhost:${homeNavItem.devPort}${settingsPath}` : settingsPath;
   }
 </script>
 
@@ -75,53 +81,95 @@
     <div class="sign-in-host" bind:this={signInElement}></div>
 
     {#if authState.status === 'loading'}
-      <section class="auth-panel" aria-live="polite">Loading Lists...</section>
+      <section class="sr-only" aria-live="polite">Loading Lists...</section>
     {:else if authState.status === 'error'}
       <section class="auth-panel" role="alert">{authState.message}</section>
     {/if}
   </main>
 {:else}
-  <div class="app-shell">
-    <nav aria-label="App navigation" class="rail">
-      <a class="home-mark" href={resolveAppHref(homeNavItem)} aria-label="Home">
-        <span>D</span>
+  <div class="min-h-screen bg-warm-bg-dark font-warm-body text-warm-text-primary md:h-screen md:overflow-hidden">
+    <div class="flex h-screen overflow-hidden bg-warm-bg-dark md:h-full">
+    <nav
+      aria-label="App navigation"
+      class="hidden w-14 flex-col items-end py-6 text-warm-text-on-dark md:flex"
+    >
+      <a
+        class="flex h-12 w-12 items-center justify-center rounded-xl text-warm-text-tertiary transition-colors hover:bg-warm-bg-dark-muted hover:text-warm-text-on-dark"
+        href={resolveAppHref(homeNavItem)}
+        aria-label="Home"
+      >
+        <NavIcon name="home" size={22} />
       </a>
 
-      <div class="rail-links">
+      <div class="h-6" aria-hidden="true"></div>
+
+      <ul class="flex w-full flex-1 flex-col items-end gap-[18px]">
         {#each appNavItems.slice(1) as item (item.id)}
-          <a
-            class:active={item.id === activeAppId}
-            href={resolveAppHref(item)}
-            aria-label={item.label}
-            aria-current={item.id === activeAppId ? 'page' : undefined}
-          >
-            {item.label.slice(0, 1)}
-          </a>
+          {@const isActive = item.id === activeAppId}
+          <li>
+            <a
+              class={`flex h-12 w-12 items-center justify-center rounded-[14px] transition-colors ${
+                isActive
+                  ? 'bg-warm-accent text-warm-bg'
+                  : 'text-warm-text-tertiary hover:bg-warm-bg-dark-muted hover:text-warm-text-on-dark'
+              }`}
+              href={resolveAppHref(item)}
+              aria-label={item.label}
+              aria-current={isActive ? 'page' : undefined}
+            >
+              <NavIcon name={item.id} />
+            </a>
+          </li>
         {/each}
-      </div>
+      </ul>
+
+      <a
+        class="flex h-12 w-12 items-center justify-center rounded-[14px] text-warm-text-tertiary transition-colors hover:bg-warm-bg-dark-muted hover:text-warm-text-on-dark"
+        href={resolveSettingsHref()}
+        aria-label="Notification settings"
+      >
+        <NavIcon name="settings" />
+      </a>
     </nav>
 
-    <main class="content-frame">
-      {#if shouldUseConvexAuth}
-        <ConvexAuthGate>
-          {@render children()}
-        </ConvexAuthGate>
-      {:else}
-        {@render children()}
-      {/if}
-    </main>
-  </div>
+    <div class="flex min-h-0 min-w-0 flex-1 flex-col">
+      <header class="flex min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 pb-4 pt-2">
+        <h1 class="font-warm-display text-[24px] leading-[1.1] text-warm-text-on-dark md:text-[32px]">
+          Lists
+        </h1>
+      </header>
 
-  <div class="mobile-nav" aria-label="App navigation">
-    {#each appNavItems as item (item.id)}
-      <a
-        class:active={item.id === activeAppId}
-        href={resolveAppHref(item)}
-        aria-current={item.id === activeAppId ? 'page' : undefined}
+      <main class="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 pb-4 md:overflow-hidden">
+        {#if shouldUseConvexAuth}
+          <ConvexAuthGate>
+            {@render children()}
+          </ConvexAuthGate>
+        {:else}
+          {@render children()}
+        {/if}
+      </main>
+
+      <nav
+        aria-label="App navigation"
+        class="flex items-stretch justify-around border-t border-warm-border bg-warm-bg-dark px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 md:hidden"
       >
-        {item.label}
-      </a>
-    {/each}
+        {#each appNavItems as item (item.id)}
+          {@const isActive = item.id === activeAppId}
+          <a
+            href={resolveAppHref(item)}
+            aria-label={item.label}
+            aria-current={isActive ? 'page' : undefined}
+            class={`flex flex-1 flex-col items-center gap-1 rounded-xl py-1.5 text-[10px] transition-colors ${
+              isActive ? 'text-warm-accent' : 'text-warm-text-tertiary hover:text-warm-text-on-dark'
+            }`}
+          >
+            <NavIcon name={item.id} />
+            <span>{item.label}</span>
+          </a>
+        {/each}
+      </nav>
+    </div>
+    </div>
   </div>
 {/if}
 

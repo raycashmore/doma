@@ -9,11 +9,11 @@
 </script>
 
 {#if convexAuth.isLoading}
-  <section class="auth-panel" aria-live="polite">Checking Lists access...</section>
+  <section aria-live="polite" class="sr-only">Checking Lists access...</section>
 {:else if !convexAuth.isAuthenticated}
   <section class="auth-panel" role="alert">Unable to authenticate with Lists data.</section>
 {:else if authStatus.isLoading}
-  <section class="auth-panel" aria-live="polite">Opening Lists...</section>
+  <section aria-live="polite" class="sr-only">Opening Lists...</section>
 {:else if authStatus.error}
   <section class="auth-panel" role="alert">Unable to load Lists data.</section>
 {:else if authStatus.data}
