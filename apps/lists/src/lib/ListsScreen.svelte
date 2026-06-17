@@ -367,9 +367,7 @@
     This list is unavailable.
   </section>
 {:else if !usePreviewData && (visibleLists.isLoading || (selectedPublicId && selectedList.isLoading))}
-  <section class="rounded-[32px] border border-warm-border bg-warm-bg-card p-8 text-sm text-warm-text-secondary">
-    Loading Lists...
-  </section>
+  <section aria-hidden="true" class="sr-only">Loading Lists...</section>
 {:else if !usePreviewData && visibleLists.error}
   <section class="rounded-[32px] border border-warm-border bg-warm-bg-card p-8 text-sm text-warm-text-secondary">
     {describeError(visibleLists.error, 'Unable to load lists right now.')}

@@ -81,7 +81,7 @@
     <div class="sign-in-host" bind:this={signInElement}></div>
 
     {#if authState.status === 'loading'}
-      <section class="auth-panel" aria-live="polite">Loading Lists...</section>
+      <section class="sr-only" aria-live="polite">Loading Lists...</section>
     {:else if authState.status === 'error'}
       <section class="auth-panel" role="alert">{authState.message}</section>
     {/if}

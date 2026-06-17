@@ -5,7 +5,8 @@ import {
   type FixtureListDetail,
   type FixtureListItem,
   selectedFixtureItem,
-  selectedItemDetail} from '$lib/lists-fixtures';
+  selectedItemDetail
+} from '$lib/lists-fixtures';
 
 export type VisibleList = {
   _id: string;
