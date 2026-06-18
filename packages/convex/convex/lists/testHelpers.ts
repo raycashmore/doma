@@ -167,6 +167,15 @@ export const dueDateValueForItemA: TestListItemPropertyValueRow = {
   updatedAt: 1
 };
 
+export const priorityValueForCompletedItem: TestListItemPropertyValueRow = {
+  _id: 'value_priority_item_c',
+  listItemId: completedItem._id,
+  listPropertyId: priorityProperty._id,
+  selectOptionId: 'opt_low',
+  createdAt: 1,
+  updatedAt: 1
+};
+
 export const notesValueForItemA: TestListItemPropertyValueRow = {
   _id: 'value_notes_item_a',
   listItemId: activeItemA._id,

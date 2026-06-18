@@ -16,6 +16,7 @@ import {
   personalList,
   priorityProperty,
   priorityValueForItemA,
+  priorityValueForCompletedItem,
   quantityProperty,
   sharedList,
   urgentProperty,
@@ -275,9 +276,9 @@ describe('readVisibleListItemsByPublicId', () => {
     const { ctx } = createItemsCtx(
       { subject: 'user_b' },
       [sharedList],
-      [activeItemA, activeItemB],
+      [{ ...completedItem, completedAt: 175 }, activeItemA, activeItemB],
       [dueDateProperty, priorityProperty],
-      [dueDateValueForItemA, priorityValueForItemA]
+      [priorityValueForCompletedItem, dueDateValueForItemA, priorityValueForItemA]
     );
 
     await expect(
@@ -299,6 +300,13 @@ describe('readVisibleListItemsByPublicId', () => {
         {
           _id: activeItemB._id,
           propertyValues: []
+        }
+      ],
+      completedItems: [
+        {
+          _id: completedItem._id,
+          completedAt: 175,
+          propertyValues: [{ _id: 'value_priority_item_c', listPropertyId: 'prop_priority', selectOptionId: 'opt_low' }]
         }
       ]
     });
@@ -687,6 +695,51 @@ describe('setListItemPropertyValue', () => {
           value.listItemId === activeItemA._id && value.listPropertyId === 'prop_urgent' && value.checkboxValue === true
       )
     ).toBe(true);
+  });
+
+  it('updates an existing sparse property-value row for the same item and property', async () => {
+    const { ctx, insertedRows, patchedRows, state } = createItemsCtx(
+      { subject: 'user_b' },
+      [sharedList],
+      [activeItemA],
+      [notesProperty],
+      [notesValueForItemA]
+    );
+    vi.spyOn(Date, 'now').mockReturnValue(450);
+
+    await expect(
+      setListItemPropertyValueHandler(ctx as never, {
+        itemId: listItemId(activeItemA._id),
+        propertyId: listPropertyId('prop_notes'),
+        value: { type: 'text', text: 'Updated notes' }
+      })
+    ).resolves.toMatchObject({
+      _id: 'value_notes_item_a',
+      listItemId: activeItemA._id,
+      listPropertyId: 'prop_notes',
+      textValue: 'Updated notes',
+      updatedAt: 450
+    });
+
+    expect(insertedRows).toEqual([]);
+    expect(patchedRows).toEqual([
+      {
+        id: 'value_notes_item_a',
+        patch: {
+          textValue: 'Updated notes',
+          updatedAt: 450
+        }
+      }
+    ]);
+    expect(
+      state.values.filter((value) => value.listItemId === activeItemA._id && value.listPropertyId === 'prop_notes')
+    ).toEqual([
+      expect.objectContaining({
+        _id: 'value_notes_item_a',
+        textValue: 'Updated notes',
+        updatedAt: 450
+      })
+    ]);
   });
 
   it('clears an existing sparse property-value row for an editable item', async () => {

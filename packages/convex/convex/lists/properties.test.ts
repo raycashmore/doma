@@ -5,6 +5,7 @@ import {
   dueDateProperty,
   getFutureHandler,
   listPropertyId,
+  notesProperty,
   priorityProperty,
   sharedList,
   type TestListItemPropertyValueRow,
@@ -237,10 +238,10 @@ describe('reorderListProperty', () => {
 
 describe('removeListProperty', () => {
   it('removes a property and deletes its item values', async () => {
-    const { ctx, deletedIds, state } = createPropertiesCtx(
+    const { ctx, deletedIds, patchedRows, state } = createPropertiesCtx(
       { subject: 'user_b' },
       [sharedList],
-      [priorityProperty, dueDateProperty],
+      [priorityProperty, dueDateProperty, notesProperty],
       [
         {
           _id: 'value_priority_item_a',
@@ -269,7 +270,24 @@ describe('removeListProperty', () => {
     });
 
     expect(deletedIds).toEqual(['value_priority_item_a', 'value_priority_item_b', 'prop_priority']);
-    expect(state.properties.map((property) => property._id)).toEqual(['prop_due_date']);
+    expect(patchedRows).toEqual([
+      {
+        id: 'prop_due_date',
+        patch: {
+          sortOrder: 0
+        }
+      },
+      {
+        id: 'prop_notes',
+        patch: {
+          sortOrder: 1
+        }
+      }
+    ]);
+    expect(state.properties.map((property) => [property._id, property.sortOrder])).toEqual([
+      ['prop_due_date', 0],
+      ['prop_notes', 1]
+    ]);
     expect(state.values).toEqual([]);
   });
 });
