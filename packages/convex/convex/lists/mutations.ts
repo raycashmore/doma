@@ -4,19 +4,22 @@ import { customAlphabet } from 'nanoid/non-secure';
 import { mutation, type MutationCtx } from '../_generated/server';
 import {
   clearCompletedListItemsHandler,
-  clearListItemPropertyValueHandler,
   completeListItemHandler,
   createListItemHandler,
-  createListPropertyHandler,
   deleteListItemHandler,
-  removeListPropertyHandler,
+  deleteListSubtree,
   renameListItemHandler,
   reorderListItemHandler,
-  reorderListPropertyHandler,
-  setListItemPropertyValueHandler,
   uncompleteListItemHandler
 } from './items';
 import { buildListPublicId, slugifyListName } from './model';
+import {
+  clearListItemPropertyValueHandler,
+  createListPropertyHandler,
+  removeListPropertyHandler,
+  reorderListPropertyHandler,
+  setListItemPropertyValueHandler
+} from './properties';
 
 const createSeed = customAlphabet('abcdefghjkmnpqrstuvwxyz23456789', 8);
 const CREATE_LIST_PUBLIC_ID_ATTEMPTS = 3;
@@ -152,6 +155,7 @@ export async function deleteListHandler(ctx: ListsMutationCtx, { publicId }: { p
   if (!row) throw new Error('List unavailable');
 
   assertCanEditList(row, identity.subject);
+  await deleteListSubtree(ctx, row._id);
   await ctx.db.delete(row._id);
   return { publicId };
 }

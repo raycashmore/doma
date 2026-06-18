@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import * as itemsModule from './items';
+import * as propertiesModule from './properties';
 import {
   activeItemA,
   activeItemB,
@@ -24,7 +25,7 @@ import {
   type TestListRow,
   urgentProperty} from './testHelpers';
 
-type FutureListItemsModule = typeof itemsModule & {
+type FutureListPropertiesModule = typeof propertiesModule & {
   clearListItemPropertyValueHandler: (...args: unknown[]) => Promise<unknown>;
   setListItemPropertyValueHandler: (...args: unknown[]) => Promise<unknown>;
 };
@@ -40,12 +41,16 @@ const {
   uncompleteListItemHandler
 } = itemsModule;
 
-const clearListItemPropertyValueHandler = getFutureHandler<FutureListItemsModule['clearListItemPropertyValueHandler']>(
-  itemsModule,
+const clearListItemPropertyValueHandler = getFutureHandler<
+  FutureListPropertiesModule['clearListItemPropertyValueHandler']
+>(
+  propertiesModule,
   'clearListItemPropertyValueHandler'
 );
-const setListItemPropertyValueHandler = getFutureHandler<FutureListItemsModule['setListItemPropertyValueHandler']>(
-  itemsModule,
+const setListItemPropertyValueHandler = getFutureHandler<
+  FutureListPropertiesModule['setListItemPropertyValueHandler']
+>(
+  propertiesModule,
   'setListItemPropertyValueHandler'
 );
 

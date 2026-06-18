@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import * as itemsModule from './items';
+import * as propertiesModule from './properties';
 import {
   dueDateProperty,
   getFutureHandler,
@@ -13,22 +13,22 @@ import {
   type TestListRow
 } from './testHelpers';
 
-type FutureListPropertiesModule = typeof itemsModule & {
+type FutureListPropertiesModule = typeof propertiesModule & {
   createListPropertyHandler: (...args: unknown[]) => Promise<unknown>;
   removeListPropertyHandler: (...args: unknown[]) => Promise<unknown>;
   reorderListPropertyHandler: (...args: unknown[]) => Promise<unknown>;
 };
 
 const createListPropertyHandler = getFutureHandler<FutureListPropertiesModule['createListPropertyHandler']>(
-  itemsModule,
+  propertiesModule,
   'createListPropertyHandler'
 );
 const removeListPropertyHandler = getFutureHandler<FutureListPropertiesModule['removeListPropertyHandler']>(
-  itemsModule,
+  propertiesModule,
   'removeListPropertyHandler'
 );
 const reorderListPropertyHandler = getFutureHandler<FutureListPropertiesModule['reorderListPropertyHandler']>(
-  itemsModule,
+  propertiesModule,
   'reorderListPropertyHandler'
 );
 
@@ -275,6 +275,7 @@ describe('removeListProperty', () => {
         }
       ]
     );
+    vi.spyOn(Date, 'now').mockReturnValue(275);
 
     await expect(
       removeListPropertyHandler(ctx as never, { propertyId: listPropertyId('prop_priority') })
@@ -288,13 +289,15 @@ describe('removeListProperty', () => {
       {
         id: 'prop_due_date',
         patch: {
-          sortOrder: 0
+          sortOrder: 0,
+          updatedAt: 275
         }
       },
       {
         id: 'prop_notes',
         patch: {
-          sortOrder: 1
+          sortOrder: 1,
+          updatedAt: 275
         }
       }
     ]);
