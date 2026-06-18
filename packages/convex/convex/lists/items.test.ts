@@ -243,6 +243,14 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+describe('getFutureHandler', () => {
+  it('rejects with an explicit not-implemented error when a handler export is missing', async () => {
+    const missingHandler = getFutureHandler<(...args: unknown[]) => Promise<unknown>>({}, 'futureHandler');
+
+    await expect(missingHandler('arg')).rejects.toThrow('futureHandler is not implemented');
+  });
+});
+
 describe('readVisibleListItemsByPublicId', () => {
   it('returns active items by active order and completed items by completion time', async () => {
     const { ctx } = createItemsCtx(
@@ -503,6 +511,7 @@ describe('setListItemPropertyValue', () => {
       [activeItemA],
       [priorityProperty, notesProperty]
     );
+    vi.spyOn(Date, 'now').mockReturnValue(410);
 
     await expect(
       setListItemPropertyValueHandler(ctx as never, {
@@ -513,14 +522,20 @@ describe('setListItemPropertyValue', () => {
     ).resolves.toMatchObject({
       listItemId: activeItemA._id,
       listPropertyId: 'prop_notes',
-      textValue: 'Buy green bananas'
+      textValue: 'Buy green bananas',
+      createdAt: 410,
+      updatedAt: 410
     });
 
-    expect(insertedRows).toContainEqual({
-      listItemId: activeItemA._id,
-      listPropertyId: 'prop_notes',
-      textValue: 'Buy green bananas'
-    });
+    expect(insertedRows).toEqual([
+      {
+        listItemId: activeItemA._id,
+        listPropertyId: 'prop_notes',
+        textValue: 'Buy green bananas',
+        createdAt: 410,
+        updatedAt: 410
+      }
+    ]);
     expect(
       state.values.some(
         (value) =>
@@ -568,6 +583,7 @@ describe('setListItemPropertyValue', () => {
       [activeItemA],
       [priorityProperty]
     );
+    vi.spyOn(Date, 'now').mockReturnValue(420);
 
     await expect(
       setListItemPropertyValueHandler(ctx as never, {
@@ -578,14 +594,20 @@ describe('setListItemPropertyValue', () => {
     ).resolves.toMatchObject({
       listItemId: activeItemA._id,
       listPropertyId: 'prop_priority',
-      selectOptionId: 'opt_high'
+      selectOptionId: 'opt_high',
+      createdAt: 420,
+      updatedAt: 420
     });
 
-    expect(insertedRows).toContainEqual({
-      listItemId: activeItemA._id,
-      listPropertyId: 'prop_priority',
-      selectOptionId: 'opt_high'
-    });
+    expect(insertedRows).toEqual([
+      {
+        listItemId: activeItemA._id,
+        listPropertyId: 'prop_priority',
+        selectOptionId: 'opt_high',
+        createdAt: 420,
+        updatedAt: 420
+      }
+    ]);
     expect(
       state.values.some(
         (value) =>
@@ -603,6 +625,7 @@ describe('setListItemPropertyValue', () => {
       [activeItemA],
       [dueDateProperty]
     );
+    vi.spyOn(Date, 'now').mockReturnValue(430);
 
     await expect(
       setListItemPropertyValueHandler(ctx as never, {
@@ -613,14 +636,20 @@ describe('setListItemPropertyValue', () => {
     ).resolves.toMatchObject({
       listItemId: activeItemA._id,
       listPropertyId: 'prop_due_date',
-      dateValue: 1_720_000_000_000
+      dateValue: 1_720_000_000_000,
+      createdAt: 430,
+      updatedAt: 430
     });
 
-    expect(insertedRows).toContainEqual({
-      listItemId: activeItemA._id,
-      listPropertyId: 'prop_due_date',
-      dateValue: 1_720_000_000_000
-    });
+    expect(insertedRows).toEqual([
+      {
+        listItemId: activeItemA._id,
+        listPropertyId: 'prop_due_date',
+        dateValue: 1_720_000_000_000,
+        createdAt: 430,
+        updatedAt: 430
+      }
+    ]);
     expect(
       state.values.some(
         (value) =>
@@ -638,6 +667,7 @@ describe('setListItemPropertyValue', () => {
       [activeItemA],
       [quantityProperty]
     );
+    vi.spyOn(Date, 'now').mockReturnValue(440);
 
     await expect(
       setListItemPropertyValueHandler(ctx as never, {
@@ -648,14 +678,20 @@ describe('setListItemPropertyValue', () => {
     ).resolves.toMatchObject({
       listItemId: activeItemA._id,
       listPropertyId: 'prop_quantity',
-      numberValue: 6
+      numberValue: 6,
+      createdAt: 440,
+      updatedAt: 440
     });
 
-    expect(insertedRows).toContainEqual({
-      listItemId: activeItemA._id,
-      listPropertyId: 'prop_quantity',
-      numberValue: 6
-    });
+    expect(insertedRows).toEqual([
+      {
+        listItemId: activeItemA._id,
+        listPropertyId: 'prop_quantity',
+        numberValue: 6,
+        createdAt: 440,
+        updatedAt: 440
+      }
+    ]);
     expect(
       state.values.some(
         (value) =>
@@ -671,6 +707,7 @@ describe('setListItemPropertyValue', () => {
       [activeItemA],
       [urgentProperty]
     );
+    vi.spyOn(Date, 'now').mockReturnValue(445);
 
     await expect(
       setListItemPropertyValueHandler(ctx as never, {
@@ -681,14 +718,20 @@ describe('setListItemPropertyValue', () => {
     ).resolves.toMatchObject({
       listItemId: activeItemA._id,
       listPropertyId: 'prop_urgent',
-      checkboxValue: true
+      checkboxValue: true,
+      createdAt: 445,
+      updatedAt: 445
     });
 
-    expect(insertedRows).toContainEqual({
-      listItemId: activeItemA._id,
-      listPropertyId: 'prop_urgent',
-      checkboxValue: true
-    });
+    expect(insertedRows).toEqual([
+      {
+        listItemId: activeItemA._id,
+        listPropertyId: 'prop_urgent',
+        checkboxValue: true,
+        createdAt: 445,
+        updatedAt: 445
+      }
+    ]);
     expect(
       state.values.some(
         (value) =>
