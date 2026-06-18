@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import * as itemsModule from './items';
 import {
   dueDateProperty,
+  getFutureHandler,
   listPropertyId,
   priorityProperty,
   sharedList,
@@ -17,8 +18,18 @@ type FutureListPropertiesModule = typeof itemsModule & {
   reorderListPropertyHandler: (...args: unknown[]) => Promise<unknown>;
 };
 
-const { createListPropertyHandler, removeListPropertyHandler, reorderListPropertyHandler } =
-  itemsModule as FutureListPropertiesModule;
+const createListPropertyHandler = getFutureHandler<FutureListPropertiesModule['createListPropertyHandler']>(
+  itemsModule,
+  'createListPropertyHandler'
+);
+const removeListPropertyHandler = getFutureHandler<FutureListPropertiesModule['removeListPropertyHandler']>(
+  itemsModule,
+  'removeListPropertyHandler'
+);
+const reorderListPropertyHandler = getFutureHandler<FutureListPropertiesModule['reorderListPropertyHandler']>(
+  itemsModule,
+  'reorderListPropertyHandler'
+);
 
 function createPropertiesCtx(
   identity: { subject: string } | null,

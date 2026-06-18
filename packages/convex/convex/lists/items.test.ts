@@ -8,6 +8,7 @@ import {
   completedItem,
   dueDateProperty,
   dueDateValueForItemA,
+  getFutureHandler,
   listItemId,
   listPropertyId,
   notesProperty,
@@ -15,7 +16,9 @@ import {
   personalList,
   priorityProperty,
   priorityValueForItemA,
+  quantityProperty,
   sharedList,
+  urgentProperty,
   type TestListItemPropertyValueRow,
   type TestListItemRow,
   type TestListPropertyRow,
@@ -38,7 +41,14 @@ const {
   uncompleteListItemHandler
 } = itemsModule;
 
-const { clearListItemPropertyValueHandler, setListItemPropertyValueHandler } = itemsModule as FutureListItemsModule;
+const clearListItemPropertyValueHandler = getFutureHandler<FutureListItemsModule['clearListItemPropertyValueHandler']>(
+  itemsModule,
+  'clearListItemPropertyValueHandler'
+);
+const setListItemPropertyValueHandler = getFutureHandler<FutureListItemsModule['setListItemPropertyValueHandler']>(
+  itemsModule,
+  'setListItemPropertyValueHandler'
+);
 
 function createItemsCtx(
   identity: { subject: string } | null,
@@ -541,6 +551,142 @@ describe('setListItemPropertyValue', () => {
         value: { type: 'select', optionId: 'opt_missing' }
       })
     ).rejects.toThrow('List property option is invalid');
+  });
+
+  it('sets a select property value for an editable item', async () => {
+    const { ctx, insertedRows, state } = createItemsCtx(
+      { subject: 'user_b' },
+      [sharedList],
+      [activeItemA],
+      [priorityProperty]
+    );
+
+    await expect(
+      setListItemPropertyValueHandler(ctx as never, {
+        itemId: listItemId(activeItemA._id),
+        propertyId: listPropertyId('prop_priority'),
+        value: { type: 'select', optionId: 'opt_high' }
+      })
+    ).resolves.toMatchObject({
+      listItemId: activeItemA._id,
+      listPropertyId: 'prop_priority',
+      selectOptionId: 'opt_high'
+    });
+
+    expect(insertedRows).toContainEqual({
+      listItemId: activeItemA._id,
+      listPropertyId: 'prop_priority',
+      selectOptionId: 'opt_high'
+    });
+    expect(
+      state.values.some(
+        (value) =>
+          value.listItemId === activeItemA._id &&
+          value.listPropertyId === 'prop_priority' &&
+          value.selectOptionId === 'opt_high'
+      )
+    ).toBe(true);
+  });
+
+  it('sets a date property value for an editable item', async () => {
+    const { ctx, insertedRows, state } = createItemsCtx(
+      { subject: 'user_b' },
+      [sharedList],
+      [activeItemA],
+      [dueDateProperty]
+    );
+
+    await expect(
+      setListItemPropertyValueHandler(ctx as never, {
+        itemId: listItemId(activeItemA._id),
+        propertyId: listPropertyId('prop_due_date'),
+        value: { type: 'date', date: 1_720_000_000_000 }
+      })
+    ).resolves.toMatchObject({
+      listItemId: activeItemA._id,
+      listPropertyId: 'prop_due_date',
+      dateValue: 1_720_000_000_000
+    });
+
+    expect(insertedRows).toContainEqual({
+      listItemId: activeItemA._id,
+      listPropertyId: 'prop_due_date',
+      dateValue: 1_720_000_000_000
+    });
+    expect(
+      state.values.some(
+        (value) =>
+          value.listItemId === activeItemA._id &&
+          value.listPropertyId === 'prop_due_date' &&
+          value.dateValue === 1_720_000_000_000
+      )
+    ).toBe(true);
+  });
+
+  it('sets a number property value for an editable item', async () => {
+    const { ctx, insertedRows, state } = createItemsCtx(
+      { subject: 'user_b' },
+      [sharedList],
+      [activeItemA],
+      [quantityProperty]
+    );
+
+    await expect(
+      setListItemPropertyValueHandler(ctx as never, {
+        itemId: listItemId(activeItemA._id),
+        propertyId: listPropertyId('prop_quantity'),
+        value: { type: 'number', number: 6 }
+      })
+    ).resolves.toMatchObject({
+      listItemId: activeItemA._id,
+      listPropertyId: 'prop_quantity',
+      numberValue: 6
+    });
+
+    expect(insertedRows).toContainEqual({
+      listItemId: activeItemA._id,
+      listPropertyId: 'prop_quantity',
+      numberValue: 6
+    });
+    expect(
+      state.values.some(
+        (value) =>
+          value.listItemId === activeItemA._id && value.listPropertyId === 'prop_quantity' && value.numberValue === 6
+      )
+    ).toBe(true);
+  });
+
+  it('sets a checkbox property value for an editable item', async () => {
+    const { ctx, insertedRows, state } = createItemsCtx(
+      { subject: 'user_b' },
+      [sharedList],
+      [activeItemA],
+      [urgentProperty]
+    );
+
+    await expect(
+      setListItemPropertyValueHandler(ctx as never, {
+        itemId: listItemId(activeItemA._id),
+        propertyId: listPropertyId('prop_urgent'),
+        value: { type: 'checkbox', checked: true }
+      })
+    ).resolves.toMatchObject({
+      listItemId: activeItemA._id,
+      listPropertyId: 'prop_urgent',
+      checkboxValue: true
+    });
+
+    expect(insertedRows).toContainEqual({
+      listItemId: activeItemA._id,
+      listPropertyId: 'prop_urgent',
+      checkboxValue: true
+    });
+    expect(
+      state.values.some(
+        (value) =>
+          value.listItemId === activeItemA._id && value.listPropertyId === 'prop_urgent' && value.checkboxValue === true
+      )
+    ).toBe(true);
   });
 
   it('clears an existing sparse property-value row for an editable item', async () => {

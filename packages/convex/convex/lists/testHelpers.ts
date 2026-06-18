@@ -129,6 +129,26 @@ export const notesProperty: TestListPropertyRow = {
   updatedAt: 1
 };
 
+export const quantityProperty: TestListPropertyRow = {
+  _id: 'prop_quantity',
+  listId: sharedList._id,
+  name: 'Quantity',
+  type: 'number',
+  sortOrder: 3,
+  createdAt: 1,
+  updatedAt: 1
+};
+
+export const urgentProperty: TestListPropertyRow = {
+  _id: 'prop_urgent',
+  listId: sharedList._id,
+  name: 'Urgent',
+  type: 'checkbox',
+  sortOrder: 4,
+  createdAt: 1,
+  updatedAt: 1
+};
+
 export const priorityValueForItemA: TestListItemPropertyValueRow = {
   _id: 'value_priority_item_a',
   listItemId: activeItemA._id,
@@ -161,3 +181,19 @@ type FutureListPropertyTableName =
 
 export const listItemId = (value: string) => value as Id<'listItems'>;
 export const listPropertyId = (value: string) => value as Id<FutureListPropertyTableName>;
+
+type AsyncHandler = (...args: any[]) => Promise<unknown>;
+
+export function getFutureHandler<THandler extends AsyncHandler>(
+  moduleRecord: Record<string, unknown>,
+  handlerName: string
+): THandler {
+  return ((...args: Parameters<THandler>) => {
+    const handler = moduleRecord[handlerName];
+    if (typeof handler !== 'function') {
+      return Promise.reject(new Error(`${handlerName} is not implemented`));
+    }
+
+    return (handler as THandler)(...args);
+  }) as THandler;
+}
