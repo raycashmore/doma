@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { Id } from '../_generated/dataModel';
 import {
+  clearListItemPropertyValueHandler,
   clearCompletedListItemsHandler,
   completeListItemHandler,
   createListItemHandler,
@@ -9,6 +10,7 @@ import {
   readVisibleListItemsByPublicId,
   renameListItemHandler,
   reorderListItemHandler,
+  setListItemPropertyValueHandler,
   uncompleteListItemHandler
 } from './items';
 
@@ -29,6 +31,30 @@ type TestListItemRow = {
   title: string;
   sortOrder: number;
   completedAt?: number;
+  createdAt: number;
+  updatedAt: number;
+};
+
+type TestListPropertyRow = {
+  _id: string;
+  listId: string;
+  name: string;
+  type: 'text' | 'number' | 'date' | 'select' | 'checkbox';
+  sortOrder: number;
+  options?: Array<{ id: string; label: string }>;
+  createdAt: number;
+  updatedAt: number;
+};
+
+type TestListItemPropertyValueRow = {
+  _id: string;
+  listItemId: string;
+  listPropertyId: string;
+  textValue?: string;
+  numberValue?: number;
+  dateValue?: number;
+  selectOptionId?: string;
+  checkboxValue?: boolean;
   createdAt: number;
   updatedAt: number;
 };
@@ -84,15 +110,54 @@ const completedItem: TestListItemRow = {
 };
 
 const listItemId = (value: string) => value as Id<'listItems'>;
+const listPropertyId = (value: string) => value as never;
+
+const priorityProperty: TestListPropertyRow = {
+  _id: 'prop_priority',
+  listId: sharedList._id,
+  name: 'Priority',
+  type: 'select',
+  sortOrder: 0,
+  options: [
+    { id: 'opt_low', label: 'Low' },
+    { id: 'opt_high', label: 'High' }
+  ],
+  createdAt: 1,
+  updatedAt: 1
+};
+
+const dueDateProperty: TestListPropertyRow = {
+  _id: 'prop_due_date',
+  listId: sharedList._id,
+  name: 'Due date',
+  type: 'date',
+  sortOrder: 1,
+  createdAt: 1,
+  updatedAt: 1
+};
+
+const notesProperty: TestListPropertyRow = {
+  _id: 'prop_notes',
+  listId: sharedList._id,
+  name: 'Notes',
+  type: 'text',
+  sortOrder: 2,
+  createdAt: 1,
+  updatedAt: 1
+};
 
 function createItemsCtx(
   identity: { subject: string } | null,
   lists: readonly TestListRow[] = [],
-  items: readonly TestListItemRow[] = []
+  items: readonly TestListItemRow[] = [],
+  properties: readonly TestListPropertyRow[] = [],
+  values: readonly TestListItemPropertyValueRow[] = []
 ) {
   const state = {
     lists: [...lists],
-    items: [...items]
+    items: [...items],
+    properties: [...properties],
+    values: [...values]
   };
 
   const insertedRows: Array<Record<string, unknown>> = [];
@@ -108,7 +173,13 @@ function createItemsCtx(
         const listMatch = state.lists.find((row) => row._id === id);
         if (listMatch) return listMatch;
 
-        return state.items.find((row) => row._id === id) ?? null;
+        const itemMatch = state.items.find((row) => row._id === id);
+        if (itemMatch) return itemMatch;
+
+        const propertyMatch = state.properties.find((row) => row._id === id);
+        if (propertyMatch) return propertyMatch;
+
+        return state.values.find((row) => row._id === id) ?? null;
       },
       insert: async (table: string, row: Record<string, unknown>) => {
         if (table === 'listItems') {
@@ -116,15 +187,23 @@ function createItemsCtx(
           return 'new_item_id';
         }
 
+        if (table === 'listItemPropertyValues') {
+          insertedRows.push(row);
+          state.values.push({ _id: 'new_value_id', ...(row as TestListItemPropertyValueRow) });
+          return 'new_value_id';
+        }
+
         throw new Error(`Unexpected insert table ${table}`);
       },
       patch: async (id: string, patch: Record<string, unknown>) => {
         patchedRows.push({ id, patch });
         state.items = state.items.map((item) => (item._id === id ? { ...item, ...patch } : item));
+        state.values = state.values.map((value) => (value._id === id ? { ...value, ...patch } : value));
       },
       delete: async (id: string) => {
         deletedIds.push(id);
         state.items = state.items.filter((item) => item._id !== id);
+        state.values = state.values.filter((value) => value._id !== id);
       },
       query: (table: string) => {
         if (table === 'lists') {
@@ -150,10 +229,7 @@ function createItemsCtx(
         if (table === 'listItems') {
           return {
             collect: async () => [...state.items],
-            withIndex: (
-              index: string,
-              apply: (q: { eq: (field: string, value: string) => unknown }) => unknown
-            ) => {
+            withIndex: (index: string, apply: (q: { eq: (field: string, value: string) => unknown }) => unknown) => {
               let filterField = '';
               let filterValue = '';
               apply({
@@ -172,6 +248,73 @@ function createItemsCtx(
               }
 
               throw new Error(`Unexpected listItems index ${index}`);
+            }
+          };
+        }
+
+        if (table === 'listProperties') {
+          return {
+            collect: async () => [...state.properties],
+            withIndex: (index: string, apply: (q: { eq: (field: string, value: string) => unknown }) => unknown) => {
+              let filterField = '';
+              let filterValue = '';
+              apply({
+                eq: (field, value) => {
+                  filterField = field;
+                  filterValue = value;
+                  return value;
+                }
+              });
+
+              if (index === 'by_list_id') {
+                expect(filterField).toBe('listId');
+                return {
+                  collect: async () => state.properties.filter((row) => row.listId === filterValue)
+                };
+              }
+
+              throw new Error(`Unexpected listProperties index ${index}`);
+            }
+          };
+        }
+
+        if (table === 'listItemPropertyValues') {
+          return {
+            collect: async () => [...state.values],
+            withIndex: (
+              index: string,
+              apply: (q: {
+                eq: (field: string, value: string) => { eq: (field: string, value: string) => unknown };
+              }) => unknown
+            ) => {
+              const filters: Array<{ field: string; value: string }> = [];
+              apply({
+                eq: (field, value) => {
+                  filters.push({ field, value });
+                  return {
+                    eq: (nextField: string, nextValue: string) => {
+                      filters.push({ field: nextField, value: nextValue });
+                      return nextValue;
+                    }
+                  };
+                }
+              });
+
+              if (index === 'by_item_id_and_property_id') {
+                expect(filters).toEqual([
+                  { field: 'listItemId', value: expect.any(String) },
+                  { field: 'listPropertyId', value: expect.any(String) }
+                ]);
+
+                return {
+                  unique: async () =>
+                    state.values.find(
+                      (row) => row.listItemId === filters[0]?.value && row.listPropertyId === filters[1]?.value
+                    ) ?? null
+                };
+              }
+
+              throw new Error(`Unexpected listItemPropertyValues index ${index}`);
             }
           };
         }
@@ -215,6 +358,25 @@ describe('readVisibleListItemsByPublicId', () => {
         publicId: personalList.publicId
       })
     ).resolves.toBeNull();
+  });
+
+  it('returns ordered list properties alongside visible list items', async () => {
+    const { ctx } = createItemsCtx(
+      { subject: 'user_b' },
+      [sharedList],
+      [activeItemA, activeItemB],
+      [priorityProperty, dueDateProperty]
+    );
+
+    await expect(
+      readVisibleListItemsByPublicId(ctx as never, { publicId: sharedList.publicId })
+    ).resolves.toMatchObject({
+      list: { publicId: sharedList.publicId },
+      properties: [
+        { _id: 'prop_priority', name: 'Priority', type: 'select', sortOrder: 0 },
+        { _id: 'prop_due_date', name: 'Due date', type: 'date', sortOrder: 1 }
+      ]
+    });
   });
 });
 
@@ -305,10 +467,12 @@ describe('completeListItem', () => {
     const { ctx, patchedRows, state } = createItemsCtx({ subject: 'user_b' }, [sharedList], [activeItemA]);
     vi.spyOn(Date, 'now').mockReturnValue(250);
 
-    await expect(completeListItemHandler(ctx as never, { itemId: listItemId(activeItemA._id) })).resolves.toMatchObject({
-      _id: activeItemA._id,
-      completedAt: 250
-    });
+    await expect(completeListItemHandler(ctx as never, { itemId: listItemId(activeItemA._id) })).resolves.toMatchObject(
+      {
+        _id: activeItemA._id,
+        completedAt: 250
+      }
+    );
 
     expect(patchedRows).toEqual([
       {
@@ -328,7 +492,9 @@ describe('uncompleteListItem', () => {
     const { ctx, patchedRows } = createItemsCtx({ subject: 'user_b' }, [sharedList], [activeItemA, completedItem]);
     vi.spyOn(Date, 'now').mockReturnValue(300);
 
-    await expect(uncompleteListItemHandler(ctx as never, { itemId: listItemId(completedItem._id) })).resolves.toMatchObject({
+    await expect(
+      uncompleteListItemHandler(ctx as never, { itemId: listItemId(completedItem._id) })
+    ).resolves.toMatchObject({
       _id: completedItem._id,
       completedAt: undefined,
       sortOrder: 1,
@@ -353,7 +519,11 @@ describe('reorderListItem', () => {
     const { ctx, state } = createItemsCtx(
       { subject: 'user_b' },
       [sharedList],
-      [activeItemA, activeItemB, { ...activeItemB, _id: 'item_d', title: 'Bread', sortOrder: 2, createdAt: 4, updatedAt: 4 }]
+      [
+        activeItemA,
+        activeItemB,
+        { ...activeItemB, _id: 'item_d', title: 'Bread', sortOrder: 2, createdAt: 4, updatedAt: 4 }
+      ]
     );
     vi.spyOn(Date, 'now').mockReturnValue(400);
 
@@ -389,5 +559,50 @@ describe('clearCompletedListItems', () => {
     });
 
     expect(deletedIds).toEqual(['item_done_2', 'item_c']);
+  });
+});
+
+describe('setListItemPropertyValue', () => {
+  it('sets and clears a text property value for an editable item', async () => {
+    const { ctx } = createItemsCtx(
+      { subject: 'user_b' },
+      [sharedList],
+      [activeItemA],
+      [priorityProperty, notesProperty]
+    );
+
+    await expect(
+      setListItemPropertyValueHandler(ctx as never, {
+        itemId: listItemId(activeItemA._id),
+        propertyId: listPropertyId('prop_notes'),
+        value: { type: 'text', text: 'Buy green bananas' }
+      })
+    ).resolves.toMatchObject({
+      listItemId: activeItemA._id,
+      listPropertyId: 'prop_notes',
+      textValue: 'Buy green bananas'
+    });
+
+    await expect(
+      clearListItemPropertyValueHandler(ctx as never, {
+        itemId: listItemId(activeItemA._id),
+        propertyId: listPropertyId('prop_notes')
+      })
+    ).resolves.toEqual({
+      itemId: listItemId(activeItemA._id),
+      propertyId: listPropertyId('prop_notes')
+    });
+  });
+
+  it('rejects a select value that is not defined on the property', async () => {
+    const { ctx } = createItemsCtx({ subject: 'user_b' }, [sharedList], [activeItemA], [priorityProperty]);
+
+    await expect(
+      setListItemPropertyValueHandler(ctx as never, {
+        itemId: listItemId(activeItemA._id),
+        propertyId: listPropertyId('prop_priority'),
+        value: { type: 'select', optionId: 'opt_missing' }
+      })
+    ).rejects.toThrow('List property option is invalid');
   });
 });
