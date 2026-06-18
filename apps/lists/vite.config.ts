@@ -14,7 +14,7 @@ export default defineConfig(({ command }) => {
       tailwindcss(),
       sveltekit(),
       VitePWA({
-        injectRegister: false,
+        injectRegister: 'auto',
         registerType: 'autoUpdate',
         base: listsBaseUrl,
         scope: listsBaseUrl,
