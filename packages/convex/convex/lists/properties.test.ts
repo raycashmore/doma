@@ -1,78 +1,24 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createListPropertyHandler, removeListPropertyHandler, reorderListPropertyHandler } from './items';
+import * as itemsModule from './items';
+import {
+  dueDateProperty,
+  listPropertyId,
+  priorityProperty,
+  sharedList,
+  type TestListItemPropertyValueRow,
+  type TestListPropertyRow,
+  type TestListRow
+} from './testHelpers';
 
-type TestListRow = {
-  _id: string;
-  publicId: string;
-  name: string;
-  slug: string;
-  visibility: 'personal' | 'shared';
-  createdByUserId: string;
-  createdAt: number;
-  updatedAt: number;
+type FutureListPropertiesModule = typeof itemsModule & {
+  createListPropertyHandler: (...args: unknown[]) => Promise<unknown>;
+  removeListPropertyHandler: (...args: unknown[]) => Promise<unknown>;
+  reorderListPropertyHandler: (...args: unknown[]) => Promise<unknown>;
 };
 
-type TestListPropertyRow = {
-  _id: string;
-  listId: string;
-  name: string;
-  type: 'text' | 'number' | 'date' | 'select' | 'checkbox';
-  sortOrder: number;
-  options?: Array<{ id: string; label: string }>;
-  createdAt: number;
-  updatedAt: number;
-};
-
-type TestListItemPropertyValueRow = {
-  _id: string;
-  listItemId: string;
-  listPropertyId: string;
-  textValue?: string;
-  numberValue?: number;
-  dateValue?: number;
-  selectOptionId?: string;
-  checkboxValue?: boolean;
-  createdAt: number;
-  updatedAt: number;
-};
-
-const sharedList: TestListRow = {
-  _id: 'list_row_shared',
-  publicId: 'list_shared',
-  name: 'Shared shopping',
-  slug: 'shared-shopping',
-  visibility: 'shared',
-  createdByUserId: 'user_a',
-  createdAt: 1,
-  updatedAt: 1
-};
-
-const priorityProperty: TestListPropertyRow = {
-  _id: 'prop_priority',
-  listId: sharedList._id,
-  name: 'Priority',
-  type: 'select',
-  sortOrder: 0,
-  options: [
-    { id: 'opt_low', label: 'Low' },
-    { id: 'opt_high', label: 'High' }
-  ],
-  createdAt: 1,
-  updatedAt: 1
-};
-
-const dueDateProperty: TestListPropertyRow = {
-  _id: 'prop_due_date',
-  listId: sharedList._id,
-  name: 'Due date',
-  type: 'date',
-  sortOrder: 1,
-  createdAt: 1,
-  updatedAt: 1
-};
-
-const listPropertyId = (value: string) => value as never;
+const { createListPropertyHandler, removeListPropertyHandler, reorderListPropertyHandler } =
+  itemsModule as FutureListPropertiesModule;
 
 function createPropertiesCtx(
   identity: { subject: string } | null,
@@ -107,7 +53,7 @@ function createPropertiesCtx(
       insert: async (table: string, row: Record<string, unknown>) => {
         if (table === 'listProperties') {
           insertedRows.push(row);
-          state.properties.push({ _id: 'new_property_id', ...(row as TestListPropertyRow) });
+          state.properties.push({ ...(row as TestListPropertyRow), _id: 'new_property_id' });
           return 'new_property_id';
         }
 
