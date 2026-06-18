@@ -204,6 +204,69 @@ describe('createListProperty', () => {
       })
     ).rejects.toThrow('List property name is required');
   });
+
+  it('rejects a select property without options', async () => {
+    const { ctx } = createPropertiesCtx({ subject: 'user_b' }, [sharedList], [priorityProperty]);
+
+    await expect(
+      createListPropertyHandler(ctx as never, {
+        listPublicId: sharedList.publicId,
+        name: 'Priority',
+        type: 'select'
+      })
+    ).rejects.toThrow('List property options are required');
+  });
+
+  it('rejects select options with blank ids or labels', async () => {
+    const { ctx } = createPropertiesCtx({ subject: 'user_b' }, [sharedList], [priorityProperty]);
+
+    await expect(
+      createListPropertyHandler(ctx as never, {
+        listPublicId: sharedList.publicId,
+        name: 'Priority',
+        type: 'select',
+        options: [{ id: '   ', label: 'High' }]
+      })
+    ).rejects.toThrow('List property option id is required');
+
+    await expect(
+      createListPropertyHandler(ctx as never, {
+        listPublicId: sharedList.publicId,
+        name: 'Priority',
+        type: 'select',
+        options: [{ id: 'opt_high', label: '   ' }]
+      })
+    ).rejects.toThrow('List property option label is required');
+  });
+
+  it('rejects duplicate select option ids', async () => {
+    const { ctx } = createPropertiesCtx({ subject: 'user_b' }, [sharedList], [priorityProperty]);
+
+    await expect(
+      createListPropertyHandler(ctx as never, {
+        listPublicId: sharedList.publicId,
+        name: 'Priority',
+        type: 'select',
+        options: [
+          { id: 'opt_high', label: 'High' },
+          { id: 'opt_high', label: 'Still high' }
+        ]
+      })
+    ).rejects.toThrow('List property option ids must be unique');
+  });
+
+  it('rejects options for non-select property types', async () => {
+    const { ctx } = createPropertiesCtx({ subject: 'user_b' }, [sharedList], [priorityProperty]);
+
+    await expect(
+      createListPropertyHandler(ctx as never, {
+        listPublicId: sharedList.publicId,
+        name: 'Notes',
+        type: 'text',
+        options: [{ id: 'opt_unused', label: 'Unused' }]
+      })
+    ).rejects.toThrow('List property options are only supported for select properties');
+  });
 });
 
 describe('reorderListProperty', () => {

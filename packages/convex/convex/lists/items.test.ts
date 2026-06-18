@@ -539,7 +539,7 @@ describe('clearCompletedListItems', () => {
 
 describe('setListItemPropertyValue', () => {
   it('sets and clears a text property value for an editable item', async () => {
-    const { ctx, deletedIds, insertedRows, state } = createItemsCtx(
+    const { ctx, deletedIds, insertedRows, patchedRows, state } = createItemsCtx(
       { subject: 'user_b' },
       [sharedList],
       [activeItemA],
@@ -572,6 +572,14 @@ describe('setListItemPropertyValue', () => {
         updatedAt: 410
       }
     ]);
+    expect(patchedRows).toEqual([
+      {
+        id: activeItemA._id,
+        patch: {
+          updatedAt: activeItemA.updatedAt
+        }
+      }
+    ]);
     expect(
       state.values.some(
         (value) =>
@@ -591,6 +599,20 @@ describe('setListItemPropertyValue', () => {
       propertyId: listPropertyId('prop_notes')
     });
 
+    expect(patchedRows).toEqual([
+      {
+        id: activeItemA._id,
+        patch: {
+          updatedAt: activeItemA.updatedAt
+        }
+      },
+      {
+        id: activeItemA._id,
+        patch: {
+          updatedAt: activeItemA.updatedAt
+        }
+      }
+    ]);
     expect(deletedIds).toContain('new_value_id');
     expect(state.values).not.toContainEqual(
       expect.objectContaining({
@@ -811,6 +833,12 @@ describe('setListItemPropertyValue', () => {
     expect(insertedRows).toEqual([]);
     expect(patchedRows).toEqual([
       {
+        id: activeItemA._id,
+        patch: {
+          updatedAt: activeItemA.updatedAt
+        }
+      },
+      {
         id: 'value_notes_item_a',
         patch: {
           textValue: 'Updated notes',
@@ -830,7 +858,7 @@ describe('setListItemPropertyValue', () => {
   });
 
   it('clears an existing sparse property-value row for an editable item', async () => {
-    const { ctx, deletedIds, state } = createItemsCtx(
+    const { ctx, deletedIds, patchedRows, state } = createItemsCtx(
       { subject: 'user_b' },
       [sharedList],
       [activeItemA],
@@ -848,6 +876,14 @@ describe('setListItemPropertyValue', () => {
       propertyId: listPropertyId('prop_notes')
     });
 
+    expect(patchedRows).toEqual([
+      {
+        id: activeItemA._id,
+        patch: {
+          updatedAt: activeItemA.updatedAt
+        }
+      }
+    ]);
     expect(deletedIds).toEqual(['value_notes_item_a']);
     expect(state.values).toEqual([]);
   });

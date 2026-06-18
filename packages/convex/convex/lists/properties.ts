@@ -20,6 +20,8 @@ type SetListItemPropertyValue =
   | { type: 'select'; optionId: string }
   | { type: 'checkbox'; checked: boolean };
 
+type ListItemRow = Awaited<ReturnType<typeof requireEditableItem>>['item'];
+
 function normalizeListPropertyName(name: string) {
   const trimmed = name.trim();
   if (!trimmed) throw new Error('List property name is required');
@@ -27,8 +29,40 @@ function normalizeListPropertyName(name: string) {
 }
 
 function normalizeListPropertyOptions(type: ListPropertyType, options?: ListPropertyOption[]) {
-  if (type !== 'select') return undefined;
-  return options && options.length > 0 ? options : undefined;
+  if (type !== 'select') {
+    if (options && options.length > 0) {
+      throw new Error('List property options are only supported for select properties');
+    }
+
+    return undefined;
+  }
+
+  if (!options || options.length === 0) {
+    throw new Error('List property options are required');
+  }
+
+  const normalizedOptions: ListPropertyOption[] = [];
+  const seenOptionIds = new Set<string>();
+
+  for (const option of options) {
+    const id = option.id.trim();
+    if (!id) throw new Error('List property option id is required');
+
+    const label = option.label.trim();
+    if (!label) throw new Error('List property option label is required');
+
+    if (seenOptionIds.has(id)) throw new Error('List property option ids must be unique');
+    seenOptionIds.add(id);
+    normalizedOptions.push({ id, label });
+  }
+
+  return normalizedOptions;
+}
+
+async function serializeListItemPropertyValueMutation(ctx: ListsMutationCtx, item: ListItemRow) {
+  await ctx.db.patch(item._id, {
+    updatedAt: item.updatedAt
+  });
 }
 
 function buildPropertyValuePatch(
@@ -157,6 +191,7 @@ export async function setListItemPropertyValueHandler(
   const property = await findListPropertyById(ctx, args.propertyId);
   if (!property || property.listId !== list._id) throw new Error('List property unavailable');
 
+  await serializeListItemPropertyValueMutation(ctx, item);
   const now = Date.now();
   const valuePatch = buildPropertyValuePatch(property, args.value);
   const existing = await findItemPropertyValue(ctx, item._id, property._id);
@@ -190,6 +225,7 @@ export async function clearListItemPropertyValueHandler(
   const property = await findListPropertyById(ctx, propertyId);
   if (!property || property.listId !== list._id) throw new Error('List property unavailable');
 
+  await serializeListItemPropertyValueMutation(ctx, item);
   const existing = await findItemPropertyValue(ctx, item._id, property._id);
   if (existing) {
     await ctx.db.delete(existing._id);
