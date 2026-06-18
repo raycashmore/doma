@@ -18,21 +18,23 @@
   const clerkPublishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefined;
   const convexUrl = import.meta.env.VITE_CONVEX_URL as string | undefined;
   const shouldUseConvexAuth = Boolean(clerkPublishableKey);
-  const isMissingConvexUrl = shouldUseConvexAuth && !convexUrl;
+  const isMissingConvexUrl = !convexUrl;
 
   if (convexUrl) {
     setupConvex(convexUrl);
-    setupAuth(() => ({
-      isLoading: authState.status === 'loading',
-      isAuthenticated: authState.status === 'ready' && Boolean(authState.session),
-      fetchAccessToken: async ({ forceRefreshToken }) => {
-        if (authState.status !== 'ready' || !authState.session) return null;
-        return authState.session.getToken({
-          template: 'convex',
-          skipCache: forceRefreshToken
-        });
-      }
-    }));
+    if (shouldUseConvexAuth) {
+      setupAuth(() => ({
+        isLoading: authState.status === 'loading',
+        isAuthenticated: authState.status === 'ready' && Boolean(authState.session),
+        fetchAccessToken: async ({ forceRefreshToken }) => {
+          if (authState.status !== 'ready' || !authState.session) return null;
+          return authState.session.getToken({
+            template: 'convex',
+            skipCache: forceRefreshToken
+          });
+        }
+      }));
+    }
   }
 
   onMount(async () => {
