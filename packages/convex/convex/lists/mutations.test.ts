@@ -100,10 +100,8 @@ describe('assertCanEditList', () => {
     expect(() => assertCanEditList({ visibility: 'shared', createdByUserId: 'user_a' }, 'user_a')).not.toThrow();
   });
 
-  it('rejects editing a shared list owned by another user', () => {
-    expect(() => assertCanEditList({ visibility: 'shared', createdByUserId: 'user_a' }, 'user_b')).toThrow(
-      'List unavailable'
-    );
+  it('allows editing a shared list owned by another user', () => {
+    expect(() => assertCanEditList({ visibility: 'shared', createdByUserId: 'user_a' }, 'user_b')).not.toThrow();
   });
 
   it('rejects editing a personal list owned by another user', () => {
@@ -208,13 +206,31 @@ describe('renameList', () => {
     expect(patchedRows).toEqual([]);
   });
 
-  it('rejects editing a shared list owned by another user', async () => {
+  it('allows editing a shared list owned by another user', async () => {
     const { ctx, patchedRows } = createMutationCtx({ subject: 'user_b' }, [sharedList]);
+    vi.spyOn(Date, 'now').mockReturnValue(1700000000000);
 
     await expect(
       renameListHandler(ctx as never, { publicId: sharedList.publicId, name: 'Shared shopping 2' })
-    ).rejects.toThrow('List unavailable');
-    expect(patchedRows).toEqual([]);
+    ).resolves.toMatchObject({
+      _id: sharedList._id,
+      publicId: sharedList.publicId,
+      name: 'Shared shopping 2',
+      slug: 'shared-shopping-2',
+      canonicalPath: '/lists/l/list_shared/shared-shopping-2',
+      updatedAt: 1700000000000
+    });
+
+    expect(patchedRows).toEqual([
+      {
+        id: sharedList._id,
+        patch: {
+          name: 'Shared shopping 2',
+          slug: 'shared-shopping-2',
+          updatedAt: 1700000000000
+        }
+      }
+    ]);
   });
 
   it('allows editing a shared list owned by the current user', async () => {
@@ -255,13 +271,13 @@ describe('deleteList', () => {
     expect(deletedIds).toEqual([]);
   });
 
-  it('rejects deleting a shared list owned by another user', async () => {
+  it('allows deleting a shared list owned by another user', async () => {
     const { ctx, deletedIds } = createMutationCtx({ subject: 'user_b' }, [sharedList]);
 
-    await expect(deleteListHandler(ctx as never, { publicId: sharedList.publicId })).rejects.toThrow(
-      'List unavailable'
-    );
-    expect(deletedIds).toEqual([]);
+    await expect(deleteListHandler(ctx as never, { publicId: sharedList.publicId })).resolves.toEqual({
+      publicId: sharedList.publicId
+    });
+    expect(deletedIds).toEqual([sharedList._id]);
   });
 
   it('allows deleting a shared list owned by the current user', async () => {

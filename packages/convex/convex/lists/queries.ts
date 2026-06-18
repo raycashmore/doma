@@ -1,6 +1,7 @@
 import { v } from 'convex/values';
 
 import { query, type QueryCtx } from '../_generated/server';
+import { readVisibleListItemsByPublicId } from './items';
 
 export function filterVisibleLists<T extends { visibility: 'personal' | 'shared'; createdByUserId: string }>(
   rows: T[],
@@ -50,4 +51,9 @@ export const listVisibleToMe = query({
 export const getVisibleListByPublicId = query({
   args: { publicId: v.string() },
   handler: readVisibleListByPublicId
+});
+
+export const getVisibleListItemsByPublicId = query({
+  args: { publicId: v.string() },
+  handler: readVisibleListItemsByPublicId
 });

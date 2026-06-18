@@ -185,5 +185,16 @@ export default defineSchema({
   })
     .index('by_public_id', ['publicId'])
     .index('by_created_by', ['createdByUserId'])
-    .index('by_visibility', ['visibility'])
+    .index('by_visibility', ['visibility']),
+  listItems: defineTable({
+    listId: v.id('lists'),
+    title: v.string(),
+    sortOrder: v.number(),
+    completedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number()
+  })
+    .index('by_list_id', ['listId'])
+    .index('by_list_id_and_sort_order', ['listId', 'sortOrder'])
+    .index('by_list_id_and_completed_at', ['listId', 'completedAt'])
 });

@@ -1,13 +1,3 @@
-import {
-  completedItems,
-  fixtureCategories,
-  type FixtureCategory,
-  type FixtureListDetail,
-  type FixtureListItem,
-  selectedFixtureItem,
-  selectedItemDetail
-} from '$lib/lists-fixtures';
-
 export type VisibleList = {
   _id: string;
   publicId: string;
@@ -17,20 +7,25 @@ export type VisibleList = {
   createdByUserId: string;
 };
 
-export type PresentedList = VisibleList & {
-  description: string;
-  icon: 'shopping-basket' | 'house' | 'party-popper';
-  itemCountLabel: string;
-  selected: boolean;
+export type VisibleListItem = {
+  _id: string;
+  listId: string;
+  title: string;
+  sortOrder: number;
+  completedAt?: number;
+  createdAt: number;
+  updatedAt: number;
 };
 
-export type PresentedListScreen = {
-  categories: FixtureCategory[];
-  completedItems: FixtureListItem[];
-  detail: FixtureListDetail;
-  metaLabel: string;
-  selectedItem: FixtureListItem;
-  title: string;
+export type VisibleListItemsResult = {
+  list: VisibleList;
+  activeItems: VisibleListItem[];
+  completedItems: VisibleListItem[];
+};
+
+export type PresentedList = VisibleList & {
+  description: string;
+  selected: boolean;
 };
 
 export const previewVisibleLists: VisibleList[] = [
@@ -60,55 +55,131 @@ export const previewVisibleLists: VisibleList[] = [
   }
 ];
 
-const listDecor = [
-  {
-    icon: 'shopping-basket' as const,
-    description: 'Shared with Maya and Jon · Due Fri',
-    itemCountLabel: '18 items'
+const now = 1_700_000_000_000;
+
+export const previewItemsByListPublicId: Record<string, VisibleListItemsResult> = {
+  'weekly-shop': {
+    list: previewVisibleLists[0]!,
+    activeItems: [
+      {
+        _id: 'preview-item-bananas',
+        listId: 'preview-weekly-shop',
+        title: 'Bananas',
+        sortOrder: 0,
+        createdAt: now,
+        updatedAt: now
+      },
+      {
+        _id: 'preview-item-milk',
+        listId: 'preview-weekly-shop',
+        title: 'Milk',
+        sortOrder: 1,
+        createdAt: now + 1,
+        updatedAt: now + 1
+      },
+      {
+        _id: 'preview-item-bread',
+        listId: 'preview-weekly-shop',
+        title: 'Bread',
+        sortOrder: 2,
+        createdAt: now + 2,
+        updatedAt: now + 2
+      }
+    ],
+    completedItems: [
+      {
+        _id: 'preview-item-apples',
+        listId: 'preview-weekly-shop',
+        title: 'Apples',
+        sortOrder: 3,
+        completedAt: now + 10,
+        createdAt: now + 3,
+        updatedAt: now + 10
+      }
+    ]
   },
-  {
-    icon: 'house' as const,
-    description: 'Personal · 2 overdue',
-    itemCountLabel: '8 items'
+  'home-reset': {
+    list: previewVisibleLists[1]!,
+    activeItems: [
+      {
+        _id: 'preview-item-laundry',
+        listId: 'preview-home-reset',
+        title: 'Fold laundry',
+        sortOrder: 0,
+        createdAt: now,
+        updatedAt: now
+      },
+      {
+        _id: 'preview-item-bins',
+        listId: 'preview-home-reset',
+        title: 'Take bins out',
+        sortOrder: 1,
+        createdAt: now + 1,
+        updatedAt: now + 1
+      }
+    ],
+    completedItems: []
   },
-  {
-    icon: 'party-popper' as const,
-    description: 'Shared · One-off',
-    itemCountLabel: '6 items'
+  'birthday-dinner': {
+    list: previewVisibleLists[2]!,
+    activeItems: [
+      {
+        _id: 'preview-item-cake',
+        listId: 'preview-birthday-dinner',
+        title: 'Order cake',
+        sortOrder: 0,
+        createdAt: now,
+        updatedAt: now
+      }
+    ],
+    completedItems: [
+      {
+        _id: 'preview-item-candles',
+        listId: 'preview-birthday-dinner',
+        title: 'Buy candles',
+        sortOrder: 1,
+        completedAt: now + 20,
+        createdAt: now + 1,
+        updatedAt: now + 20
+      }
+    ]
   }
-];
+};
 
 export function presentLists(rows: VisibleList[], selectedPublicId: string | null): PresentedList[] {
-  return rows.map((row, index) => {
-    const decor = listDecor[index % listDecor.length] ?? listDecor[0]!;
-
-    return {
-      ...row,
-      ...decor,
-      selected: row.publicId === selectedPublicId
-    };
-  });
+  return rows.map((row) => ({
+    ...row,
+    description: row.visibility === 'shared' ? 'Shared list' : 'Personal list',
+    selected: row.publicId === selectedPublicId
+  }));
 }
 
-export function presentListScreen(selectedList: PresentedList | null): PresentedListScreen {
-  const title = selectedList?.name ?? 'Weekly shop';
-  const metaLabel = selectedList
-    ? selectedList.visibility === 'shared'
-      ? `Shared with Maya and Jon · ${selectedList.itemCountLabel}`
-      : `${selectedList.description} · ${selectedList.itemCountLabel}`
-    : 'Shared with Maya and Jon · 18 items';
+export function describeListMeta(
+  list: Pick<VisibleList, 'visibility'> | null,
+  activeCount: number,
+  completedCount: number
+) {
+  const visibilityLabel = list?.visibility === 'shared' ? 'Shared list' : 'Personal list';
+  const completedLabel = completedCount === 1 ? '1 completed' : `${completedCount} completed`;
+  const activeLabel = activeCount === 1 ? '1 active item' : `${activeCount} active items`;
 
-  return {
-    categories: fixtureCategories,
-    completedItems,
-    detail: selectedItemDetail,
-    metaLabel,
-    selectedItem: selectedFixtureItem ?? {
-      id: 'fallback-item',
-      title: 'Coffee beans',
-      categoryId: 'pantry',
-      completed: false
-    },
-    title
-  };
+  return `${visibilityLabel} · ${activeLabel} · ${completedLabel}`;
+}
+
+export function projectDraggedItems(
+  items: VisibleListItem[],
+  draggingItemId: string | null,
+  dragOverItemId: string | null
+) {
+  if (!draggingItemId || !dragOverItemId || draggingItemId === dragOverItemId) return items;
+
+  const fromIndex = items.findIndex((item) => item._id === draggingItemId);
+  const toIndex = items.findIndex((item) => item._id === dragOverItemId);
+  if (fromIndex === -1 || toIndex === -1) return items;
+
+  const projected = [...items];
+  const [moved] = projected.splice(fromIndex, 1);
+  if (!moved) return items;
+  projected.splice(toIndex, 0, moved);
+  return projected;
 }

@@ -2,6 +2,15 @@ import { v } from 'convex/values';
 import { customAlphabet } from 'nanoid/non-secure';
 
 import { mutation, type MutationCtx } from '../_generated/server';
+import {
+  clearCompletedListItemsHandler,
+  completeListItemHandler,
+  createListItemHandler,
+  deleteListItemHandler,
+  renameListItemHandler,
+  reorderListItemHandler,
+  uncompleteListItemHandler
+} from './items';
 import { buildListPublicId, slugifyListName } from './model';
 
 const createSeed = customAlphabet('abcdefghjkmnpqrstuvwxyz23456789', 8);
@@ -13,6 +22,7 @@ export function assertCanEditList(
   row: { visibility: 'personal' | 'shared'; createdByUserId: string },
   currentUserId: string
 ) {
+  if (row.visibility === 'shared') return;
   if (row.createdByUserId !== currentUserId) throw new Error('List unavailable');
 }
 
@@ -111,4 +121,56 @@ export async function deleteListHandler(ctx: ListsMutationCtx, { publicId }: { p
 export const deleteList = mutation({
   args: { publicId: v.string() },
   handler: deleteListHandler
+});
+
+export const createListItem = mutation({
+  args: {
+    listPublicId: v.string(),
+    title: v.string()
+  },
+  handler: createListItemHandler
+});
+
+export const renameListItem = mutation({
+  args: {
+    itemId: v.id('listItems'),
+    title: v.string()
+  },
+  handler: renameListItemHandler
+});
+
+export const deleteListItem = mutation({
+  args: {
+    itemId: v.id('listItems')
+  },
+  handler: deleteListItemHandler
+});
+
+export const completeListItem = mutation({
+  args: {
+    itemId: v.id('listItems')
+  },
+  handler: completeListItemHandler
+});
+
+export const uncompleteListItem = mutation({
+  args: {
+    itemId: v.id('listItems')
+  },
+  handler: uncompleteListItemHandler
+});
+
+export const reorderListItem = mutation({
+  args: {
+    itemId: v.id('listItems'),
+    targetIndex: v.number()
+  },
+  handler: reorderListItemHandler
+});
+
+export const clearCompletedListItems = mutation({
+  args: {
+    listPublicId: v.string()
+  },
+  handler: clearCompletedListItemsHandler
 });

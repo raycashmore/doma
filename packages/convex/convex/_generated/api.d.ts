@@ -21,6 +21,7 @@ import type * as budgetSummary from "../budgetSummary.js";
 import type * as crons from "../crons.js";
 import type * as helpers from "../helpers.js";
 import type * as lists_auth from "../lists/auth.js";
+import type * as lists_items from "../lists/items.js";
 import type * as lists_model from "../lists/model.js";
 import type * as lists_mutations from "../lists/mutations.js";
 import type * as lists_queries from "../lists/queries.js";
@@ -61,6 +62,7 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   helpers: typeof helpers;
   "lists/auth": typeof lists_auth;
+  "lists/items": typeof lists_items;
   "lists/model": typeof lists_model;
   "lists/mutations": typeof lists_mutations;
   "lists/queries": typeof lists_queries;
