@@ -196,7 +196,11 @@ afterEach(() => {
 
 describe('createListProperty', () => {
   it('creates a property at the end of the list property order', async () => {
-    const { ctx } = createPropertiesCtx({ subject: 'user_b' }, [sharedList], [priorityProperty, dueDateProperty]);
+    const { ctx, insertedRows, state } = createPropertiesCtx(
+      { subject: 'user_b' },
+      [sharedList],
+      [priorityProperty, dueDateProperty]
+    );
     vi.spyOn(Date, 'now').mockReturnValue(200);
 
     await expect(
@@ -212,12 +216,34 @@ describe('createListProperty', () => {
       type: 'text',
       sortOrder: 2
     });
+
+    expect(insertedRows).toEqual([
+      {
+        listId: sharedList._id,
+        name: 'Store section',
+        type: 'text',
+        sortOrder: 2,
+        options: undefined,
+        createdAt: 200,
+        updatedAt: 200
+      }
+    ]);
+    expect(state.properties.map((property) => [property._id, property.sortOrder])).toEqual([
+      ['prop_priority', 0],
+      ['prop_due_date', 1],
+      ['new_property_id', 2]
+    ]);
   });
 });
 
 describe('reorderListProperty', () => {
   it('reorders properties within a list', async () => {
-    const { ctx } = createPropertiesCtx({ subject: 'user_b' }, [sharedList], [priorityProperty, dueDateProperty]);
+    const { ctx, patchedRows, state } = createPropertiesCtx(
+      { subject: 'user_b' },
+      [sharedList],
+      [priorityProperty, dueDateProperty]
+    );
+    vi.spyOn(Date, 'now').mockReturnValue(250);
 
     await expect(
       reorderListPropertyHandler(ctx as never, {
@@ -227,6 +253,27 @@ describe('reorderListProperty', () => {
     ).resolves.toMatchObject([
       { _id: 'prop_due_date', sortOrder: 0 },
       { _id: 'prop_priority', sortOrder: 1 }
+    ]);
+
+    expect(patchedRows).toEqual([
+      {
+        id: 'prop_due_date',
+        patch: {
+          sortOrder: 0,
+          updatedAt: 250
+        }
+      },
+      {
+        id: 'prop_priority',
+        patch: {
+          sortOrder: 1,
+          updatedAt: 250
+        }
+      }
+    ]);
+    expect(state.properties.map((property) => [property._id, property.sortOrder])).toEqual([
+      ['prop_priority', 1],
+      ['prop_due_date', 0]
     ]);
   });
 });

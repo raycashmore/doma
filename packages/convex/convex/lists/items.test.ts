@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { Id } from '../_generated/dataModel';
 import {
+  clearListItemPropertyValueHandler,
   clearCompletedListItemsHandler,
   completeListItemHandler,
   createListItemHandler,
@@ -141,6 +142,33 @@ const notesProperty: TestListPropertyRow = {
   name: 'Notes',
   type: 'text',
   sortOrder: 2,
+  createdAt: 1,
+  updatedAt: 1
+};
+
+const priorityValueForItemA: TestListItemPropertyValueRow = {
+  _id: 'value_priority_item_a',
+  listItemId: activeItemA._id,
+  listPropertyId: priorityProperty._id,
+  selectOptionId: 'opt_high',
+  createdAt: 1,
+  updatedAt: 1
+};
+
+const dueDateValueForItemA: TestListItemPropertyValueRow = {
+  _id: 'value_due_date_item_a',
+  listItemId: activeItemA._id,
+  listPropertyId: dueDateProperty._id,
+  dateValue: 1_720_000_000_000,
+  createdAt: 1,
+  updatedAt: 1
+};
+
+const notesValueForItemA: TestListItemPropertyValueRow = {
+  _id: 'value_notes_item_a',
+  listItemId: activeItemA._id,
+  listPropertyId: notesProperty._id,
+  textValue: 'Existing notes',
   createdAt: 1,
   updatedAt: 1
 };
@@ -313,6 +341,13 @@ function createItemsCtx(
                 };
               }
 
+              if (index === 'by_item_id') {
+                expect(filters).toEqual([{ field: 'listItemId', value: expect.any(String) }]);
+                return {
+                  collect: async () => state.values.filter((row) => row.listItemId === filters[0]?.value)
+                };
+              }
+
               throw new Error(`Unexpected listItemPropertyValues index ${index}`);
             }
           };
@@ -364,7 +399,8 @@ describe('readVisibleListItemsByPublicId', () => {
       { subject: 'user_b' },
       [sharedList],
       [activeItemA, activeItemB],
-      [priorityProperty, dueDateProperty]
+      [priorityProperty, dueDateProperty],
+      [priorityValueForItemA, dueDateValueForItemA]
     );
 
     await expect(
@@ -374,6 +410,19 @@ describe('readVisibleListItemsByPublicId', () => {
       properties: [
         { _id: 'prop_priority', name: 'Priority', type: 'select', sortOrder: 0 },
         { _id: 'prop_due_date', name: 'Due date', type: 'date', sortOrder: 1 }
+      ],
+      activeItems: [
+        {
+          _id: activeItemA._id,
+          propertyValues: [
+            { _id: 'value_priority_item_a', listPropertyId: 'prop_priority', selectOptionId: 'opt_high' },
+            { _id: 'value_due_date_item_a', listPropertyId: 'prop_due_date', dateValue: 1_720_000_000_000 }
+          ]
+        },
+        {
+          _id: activeItemB._id,
+          propertyValues: []
+        }
       ]
     });
   });
@@ -563,7 +612,7 @@ describe('clearCompletedListItems', () => {
 
 describe('setListItemPropertyValue', () => {
   it('sets and clears a text property value for an editable item', async () => {
-    const { ctx } = createItemsCtx(
+    const { ctx, deletedIds, insertedRows, state } = createItemsCtx(
       { subject: 'user_b' },
       [sharedList],
       [activeItemA],
@@ -582,16 +631,37 @@ describe('setListItemPropertyValue', () => {
       textValue: 'Buy green bananas'
     });
 
+    expect(insertedRows).toContainEqual({
+      listItemId: activeItemA._id,
+      listPropertyId: 'prop_notes',
+      textValue: 'Buy green bananas'
+    });
+    expect(
+      state.values.some(
+        (value) =>
+          value.listItemId === activeItemA._id &&
+          value.listPropertyId === 'prop_notes' &&
+          value.textValue === 'Buy green bananas'
+      )
+    ).toBe(true);
+
     await expect(
-      setListItemPropertyValueHandler(ctx as never, {
+      clearListItemPropertyValueHandler(ctx as never, {
         itemId: listItemId(activeItemA._id),
-        propertyId: listPropertyId('prop_notes'),
-        value: { type: 'text', text: '   ' }
+        propertyId: listPropertyId('prop_notes')
       })
     ).resolves.toEqual({
       itemId: listItemId(activeItemA._id),
       propertyId: listPropertyId('prop_notes')
     });
+
+    expect(deletedIds).toContain('new_value_id');
+    expect(state.values).not.toContainEqual(
+      expect.objectContaining({
+        listItemId: activeItemA._id,
+        listPropertyId: 'prop_notes'
+      })
+    );
   });
 
   it('rejects a select value that is not defined on the property', async () => {
@@ -604,5 +674,28 @@ describe('setListItemPropertyValue', () => {
         value: { type: 'select', optionId: 'opt_missing' }
       })
     ).rejects.toThrow('List property option is invalid');
+  });
+
+  it('clears an existing sparse property-value row for an editable item', async () => {
+    const { ctx, deletedIds, state } = createItemsCtx(
+      { subject: 'user_b' },
+      [sharedList],
+      [activeItemA],
+      [notesProperty],
+      [notesValueForItemA]
+    );
+
+    await expect(
+      clearListItemPropertyValueHandler(ctx as never, {
+        itemId: listItemId(activeItemA._id),
+        propertyId: listPropertyId('prop_notes')
+      })
+    ).resolves.toEqual({
+      itemId: listItemId(activeItemA._id),
+      propertyId: listPropertyId('prop_notes')
+    });
+
+    expect(deletedIds).toEqual(['value_notes_item_a']);
+    expect(state.values).toEqual([]);
   });
 });
