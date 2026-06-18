@@ -233,7 +233,7 @@ describe('reorderListProperty', () => {
 
 describe('removeListProperty', () => {
   it('removes a property and deletes its item values', async () => {
-    const { ctx } = createPropertiesCtx(
+    const { ctx, deletedIds, state } = createPropertiesCtx(
       { subject: 'user_b' },
       [sharedList],
       [priorityProperty, dueDateProperty],
@@ -263,5 +263,9 @@ describe('removeListProperty', () => {
       propertyId: listPropertyId('prop_priority'),
       removedValueIds: ['value_priority_item_a', 'value_priority_item_b']
     });
+
+    expect(deletedIds).toEqual(['value_priority_item_a', 'value_priority_item_b', 'prop_priority']);
+    expect(state.properties.map((property) => property._id)).toEqual(['prop_due_date']);
+    expect(state.values).toEqual([]);
   });
 });

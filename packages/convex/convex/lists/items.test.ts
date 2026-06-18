@@ -2,7 +2,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { Id } from '../_generated/dataModel';
 import {
-  clearListItemPropertyValueHandler,
   clearCompletedListItemsHandler,
   completeListItemHandler,
   createListItemHandler,
@@ -584,9 +583,10 @@ describe('setListItemPropertyValue', () => {
     });
 
     await expect(
-      clearListItemPropertyValueHandler(ctx as never, {
+      setListItemPropertyValueHandler(ctx as never, {
         itemId: listItemId(activeItemA._id),
-        propertyId: listPropertyId('prop_notes')
+        propertyId: listPropertyId('prop_notes'),
+        value: { type: 'text', text: '   ' }
       })
     ).resolves.toEqual({
       itemId: listItemId(activeItemA._id),
