@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { Id } from '../_generated/dataModel';
 import * as itemsModule from './items';
 import {
   activeItemA,
@@ -15,16 +14,15 @@ import {
   notesValueForItemA,
   personalList,
   priorityProperty,
-  priorityValueForItemA,
   priorityValueForCompletedItem,
+  priorityValueForItemA,
   quantityProperty,
   sharedList,
-  urgentProperty,
   type TestListItemPropertyValueRow,
   type TestListItemRow,
   type TestListPropertyRow,
-  type TestListRow
-} from './testHelpers';
+  type TestListRow,
+  urgentProperty} from './testHelpers';
 
 type FutureListItemsModule = typeof itemsModule & {
   clearListItemPropertyValueHandler: (...args: unknown[]) => Promise<unknown>;
@@ -68,6 +66,7 @@ function createItemsCtx(
   const insertedRows: Array<Record<string, unknown>> = [];
   const patchedRows: Array<{ id: string; patch: Record<string, unknown> }> = [];
   const deletedIds: string[] = [];
+  const queriedValueIndexes: string[] = [];
 
   const ctx = {
     auth: {
@@ -205,6 +204,8 @@ function createItemsCtx(
                 }
               });
 
+              queriedValueIndexes.push(index);
+
               if (index === 'by_item_id_and_property_id') {
                 expect(filters).toEqual([
                   { field: 'listItemId', value: expect.any(String) },
@@ -219,10 +220,10 @@ function createItemsCtx(
                 };
               }
 
-              if (index === 'by_item_id') {
-                expect(filters).toEqual([{ field: 'listItemId', value: expect.any(String) }]);
+              if (index === 'by_list_id') {
+                expect(filters).toEqual([{ field: 'listId', value: expect.any(String) }]);
                 return {
-                  collect: async () => state.values.filter((row) => row.listItemId === filters[0]?.value)
+                  collect: async () => state.values.filter((row) => row.listId === filters[0]?.value)
                 };
               }
 
@@ -236,7 +237,7 @@ function createItemsCtx(
     }
   };
 
-  return { ctx, insertedRows, patchedRows, deletedIds, state };
+  return { ctx, insertedRows, patchedRows, deletedIds, queriedValueIndexes, state };
 }
 
 afterEach(() => {
@@ -281,7 +282,7 @@ describe('readVisibleListItemsByPublicId', () => {
   });
 
   it('returns ordered list properties alongside visible list items', async () => {
-    const { ctx } = createItemsCtx(
+    const { ctx, queriedValueIndexes } = createItemsCtx(
       { subject: 'user_b' },
       [sharedList],
       [{ ...completedItem, completedAt: 175 }, activeItemA, activeItemB],
@@ -318,6 +319,8 @@ describe('readVisibleListItemsByPublicId', () => {
         }
       ]
     });
+
+    expect(queriedValueIndexes).toEqual(['by_list_id']);
   });
 });
 
@@ -392,14 +395,21 @@ describe('renameListItem', () => {
 });
 
 describe('deleteListItem', () => {
-  it('deletes an item from a visible shared list', async () => {
-    const { ctx, deletedIds } = createItemsCtx({ subject: 'user_b' }, [sharedList], [activeItemA]);
+  it('deletes an item from a visible shared list and removes its property values', async () => {
+    const { ctx, deletedIds, state } = createItemsCtx(
+      { subject: 'user_b' },
+      [sharedList],
+      [activeItemA],
+      [notesProperty],
+      [notesValueForItemA]
+    );
 
     await expect(deleteListItemHandler(ctx as never, { itemId: listItemId(activeItemA._id) })).resolves.toEqual({
       itemId: listItemId(activeItemA._id)
     });
 
-    expect(deletedIds).toEqual([activeItemA._id]);
+    expect(deletedIds).toEqual(['value_notes_item_a', activeItemA._id]);
+    expect(state.values).toEqual([]);
   });
 });
 
@@ -484,11 +494,24 @@ describe('reorderListItem', () => {
 });
 
 describe('clearCompletedListItems', () => {
-  it('deletes all completed items from a visible shared list', async () => {
-    const { ctx, deletedIds } = createItemsCtx(
+  it('deletes all completed items from a visible shared list and removes their property values', async () => {
+    const { ctx, deletedIds, state } = createItemsCtx(
       { subject: 'user_b' },
       [sharedList],
-      [activeItemA, completedItem, { ...completedItem, _id: 'item_done_2', completedAt: 200 }]
+      [activeItemA, completedItem, { ...completedItem, _id: 'item_done_2', completedAt: 200 }],
+      [priorityProperty],
+      [
+        priorityValueForCompletedItem,
+        {
+          _id: 'value_priority_item_done_2',
+          listId: sharedList._id,
+          listItemId: 'item_done_2',
+          listPropertyId: priorityProperty._id,
+          selectOptionId: 'opt_high',
+          createdAt: 2,
+          updatedAt: 2
+        }
+      ]
     );
 
     await expect(
@@ -499,7 +522,13 @@ describe('clearCompletedListItems', () => {
       removedItemIds: ['item_done_2', 'item_c']
     });
 
-    expect(deletedIds).toEqual(['item_done_2', 'item_c']);
+    expect(deletedIds).toEqual([
+      'value_priority_item_c',
+      'value_priority_item_done_2',
+      'item_done_2',
+      'item_c'
+    ]);
+    expect(state.values).toEqual([]);
   });
 });
 
@@ -520,6 +549,7 @@ describe('setListItemPropertyValue', () => {
         value: { type: 'text', text: 'Buy green bananas' }
       })
     ).resolves.toMatchObject({
+      listId: sharedList._id,
       listItemId: activeItemA._id,
       listPropertyId: 'prop_notes',
       textValue: 'Buy green bananas',
@@ -529,6 +559,7 @@ describe('setListItemPropertyValue', () => {
 
     expect(insertedRows).toEqual([
       {
+        listId: sharedList._id,
         listItemId: activeItemA._id,
         listPropertyId: 'prop_notes',
         textValue: 'Buy green bananas',
@@ -592,6 +623,7 @@ describe('setListItemPropertyValue', () => {
         value: { type: 'select', optionId: 'opt_high' }
       })
     ).resolves.toMatchObject({
+      listId: sharedList._id,
       listItemId: activeItemA._id,
       listPropertyId: 'prop_priority',
       selectOptionId: 'opt_high',
@@ -601,6 +633,7 @@ describe('setListItemPropertyValue', () => {
 
     expect(insertedRows).toEqual([
       {
+        listId: sharedList._id,
         listItemId: activeItemA._id,
         listPropertyId: 'prop_priority',
         selectOptionId: 'opt_high',
@@ -634,6 +667,7 @@ describe('setListItemPropertyValue', () => {
         value: { type: 'date', date: 1_720_000_000_000 }
       })
     ).resolves.toMatchObject({
+      listId: sharedList._id,
       listItemId: activeItemA._id,
       listPropertyId: 'prop_due_date',
       dateValue: 1_720_000_000_000,
@@ -643,6 +677,7 @@ describe('setListItemPropertyValue', () => {
 
     expect(insertedRows).toEqual([
       {
+        listId: sharedList._id,
         listItemId: activeItemA._id,
         listPropertyId: 'prop_due_date',
         dateValue: 1_720_000_000_000,
@@ -676,6 +711,7 @@ describe('setListItemPropertyValue', () => {
         value: { type: 'number', number: 6 }
       })
     ).resolves.toMatchObject({
+      listId: sharedList._id,
       listItemId: activeItemA._id,
       listPropertyId: 'prop_quantity',
       numberValue: 6,
@@ -685,6 +721,7 @@ describe('setListItemPropertyValue', () => {
 
     expect(insertedRows).toEqual([
       {
+        listId: sharedList._id,
         listItemId: activeItemA._id,
         listPropertyId: 'prop_quantity',
         numberValue: 6,
@@ -716,6 +753,7 @@ describe('setListItemPropertyValue', () => {
         value: { type: 'checkbox', checked: true }
       })
     ).resolves.toMatchObject({
+      listId: sharedList._id,
       listItemId: activeItemA._id,
       listPropertyId: 'prop_urgent',
       checkboxValue: true,
@@ -725,6 +763,7 @@ describe('setListItemPropertyValue', () => {
 
     expect(insertedRows).toEqual([
       {
+        listId: sharedList._id,
         listItemId: activeItemA._id,
         listPropertyId: 'prop_urgent',
         checkboxValue: true,

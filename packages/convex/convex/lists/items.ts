@@ -66,10 +66,10 @@ async function readListProperties(ctx: Pick<ListsReadCtx, 'db'>, listId: Id<'lis
     .collect();
 }
 
-async function readListItemPropertyValues(ctx: Pick<ListsReadCtx, 'db'>, itemId: Id<'listItems'>) {
+async function readListItemPropertyValuesByListId(ctx: Pick<ListsReadCtx, 'db'>, listId: Id<'lists'>) {
   return ctx.db
     .query('listItemPropertyValues')
-    .withIndex('by_item_id', (q) => q.eq('listItemId', itemId))
+    .withIndex('by_list_id', (q) => q.eq('listId', listId))
     .collect();
 }
 
@@ -118,6 +118,24 @@ function sortPropertyValues(values: Doc<'listItemPropertyValues'>[], orderedProp
     const rightOrder = propertyOrder.get(b.listPropertyId) ?? Number.MAX_SAFE_INTEGER;
     return leftOrder - rightOrder || a.createdAt - b.createdAt;
   });
+}
+
+async function deleteListItemPropertyValuesForItems(
+  ctx: Pick<ListsMutationCtx, 'db'>,
+  listId: Id<'lists'>,
+  itemIds: Id<'listItems'>[]
+) {
+  if (itemIds.length === 0) return [];
+
+  const propertyValues = await readListItemPropertyValuesByListId(ctx, listId);
+  const itemIdSet = new Set(itemIds);
+  const matchingPropertyValues = propertyValues.filter((propertyValue) => itemIdSet.has(propertyValue.listItemId));
+
+  for (const propertyValue of matchingPropertyValues) {
+    await ctx.db.delete(propertyValue._id);
+  }
+
+  return matchingPropertyValues;
 }
 
 function buildPropertyValuePatch(property: Doc<'listProperties'>, value: SetListItemPropertyValue) {
@@ -177,16 +195,18 @@ export async function readVisibleListItemsByPublicId(ctx: ListsQueryCtx, { publi
 
   const items = await readListItems(ctx, visible.list._id);
   const properties = sortListProperties(await readListProperties(ctx, visible.list._id));
-  const propertyValuesByItemId = new Map(
-    (
-      await Promise.all(
-        items.map(
-          async (item) =>
-            [item._id, sortPropertyValues(await readListItemPropertyValues(ctx, item._id), properties)] as const
-        )
-      )
-    ).map(([itemId, propertyValues]) => [itemId, propertyValues])
-  );
+  const allPropertyValues = await readListItemPropertyValuesByListId(ctx, visible.list._id);
+  const propertyValuesByItemId = new Map<Id<'listItems'>, Doc<'listItemPropertyValues'>[]>();
+
+  for (const item of items) {
+    propertyValuesByItemId.set(item._id, []);
+  }
+
+  for (const propertyValue of sortPropertyValues(allPropertyValues, properties)) {
+    const itemPropertyValues = propertyValuesByItemId.get(propertyValue.listItemId);
+    if (!itemPropertyValues) continue;
+    itemPropertyValues.push(propertyValue);
+  }
 
   return {
     list: visible.list,
@@ -240,7 +260,8 @@ export async function renameListItemHandler(
 }
 
 export async function deleteListItemHandler(ctx: ListsMutationCtx, { itemId }: { itemId: Id<'listItems'> }) {
-  await requireEditableItem(ctx, itemId);
+  const { list, item } = await requireEditableItem(ctx, itemId);
+  await deleteListItemPropertyValuesForItems(ctx, list._id, [item._id]);
   await ctx.db.delete(itemId);
   return { itemId };
 }
@@ -315,6 +336,11 @@ export async function clearCompletedListItemsHandler(
 
   assertCanEditList(visible.list, visible.currentUserId);
   const completedItems = sortCompletedItems(await readListItems(ctx, visible.list._id));
+  await deleteListItemPropertyValuesForItems(
+    ctx,
+    visible.list._id,
+    completedItems.map((item) => item._id)
+  );
 
   for (const item of completedItems) {
     await ctx.db.delete(item._id);
@@ -438,6 +464,7 @@ export async function setListItemPropertyValueHandler(
   }
 
   const row = {
+    listId: list._id,
     listItemId: item._id,
     listPropertyId: property._id,
     ...valuePatch,

@@ -192,6 +192,18 @@ describe('createListProperty', () => {
       ['new_property_id', 2]
     ]);
   });
+
+  it('rejects a blank property name after trimming', async () => {
+    const { ctx } = createPropertiesCtx({ subject: 'user_b' }, [sharedList], [priorityProperty]);
+
+    await expect(
+      createListPropertyHandler(ctx as never, {
+        listPublicId: sharedList.publicId,
+        name: '   ',
+        type: 'text'
+      })
+    ).rejects.toThrow('List property name is required');
+  });
 });
 
 describe('reorderListProperty', () => {
@@ -245,6 +257,7 @@ describe('removeListProperty', () => {
       [
         {
           _id: 'value_priority_item_a',
+          listId: sharedList._id,
           listItemId: 'item_a',
           listPropertyId: priorityProperty._id,
           selectOptionId: 'opt_high',
@@ -253,6 +266,7 @@ describe('removeListProperty', () => {
         },
         {
           _id: 'value_priority_item_b',
+          listId: sharedList._id,
           listItemId: 'item_b',
           listPropertyId: priorityProperty._id,
           selectOptionId: 'opt_low',

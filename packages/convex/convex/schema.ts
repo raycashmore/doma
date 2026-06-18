@@ -222,6 +222,7 @@ export default defineSchema({
     .index('by_list_id', ['listId'])
     .index('by_list_id_and_sort_order', ['listId', 'sortOrder']),
   listItemPropertyValues: defineTable({
+    listId: v.id('lists'),
     listItemId: v.id('listItems'),
     listPropertyId: v.id('listProperties'),
     textValue: v.optional(v.string()),
@@ -232,6 +233,7 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number()
   })
+    .index('by_list_id', ['listId'])
     .index('by_item_id', ['listItemId'])
     .index('by_property_id', ['listPropertyId'])
     .index('by_item_id_and_property_id', ['listItemId', 'listPropertyId'])

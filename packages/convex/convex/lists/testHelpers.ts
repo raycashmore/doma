@@ -34,6 +34,7 @@ export type TestListPropertyRow = {
 
 export type TestListItemPropertyValueRow = {
   _id: string;
+  listId: string;
   listItemId: string;
   listPropertyId: string;
   textValue?: string;
@@ -151,6 +152,7 @@ export const urgentProperty: TestListPropertyRow = {
 
 export const priorityValueForItemA: TestListItemPropertyValueRow = {
   _id: 'value_priority_item_a',
+  listId: sharedList._id,
   listItemId: activeItemA._id,
   listPropertyId: priorityProperty._id,
   selectOptionId: 'opt_high',
@@ -160,6 +162,7 @@ export const priorityValueForItemA: TestListItemPropertyValueRow = {
 
 export const dueDateValueForItemA: TestListItemPropertyValueRow = {
   _id: 'value_due_date_item_a',
+  listId: sharedList._id,
   listItemId: activeItemA._id,
   listPropertyId: dueDateProperty._id,
   dateValue: 1_720_000_000_000,
@@ -169,6 +172,7 @@ export const dueDateValueForItemA: TestListItemPropertyValueRow = {
 
 export const priorityValueForCompletedItem: TestListItemPropertyValueRow = {
   _id: 'value_priority_item_c',
+  listId: sharedList._id,
   listItemId: completedItem._id,
   listPropertyId: priorityProperty._id,
   selectOptionId: 'opt_low',
@@ -178,6 +182,7 @@ export const priorityValueForCompletedItem: TestListItemPropertyValueRow = {
 
 export const notesValueForItemA: TestListItemPropertyValueRow = {
   _id: 'value_notes_item_a',
+  listId: sharedList._id,
   listItemId: activeItemA._id,
   listPropertyId: notesProperty._id,
   textValue: 'Existing notes',
@@ -191,7 +196,7 @@ type FutureListPropertyTableName =
 export const listItemId = (value: string) => value as Id<'listItems'>;
 export const listPropertyId = (value: string) => value as Id<FutureListPropertyTableName>;
 
-type AsyncHandler = (...args: any[]) => Promise<unknown>;
+type AsyncHandler = (...args: unknown[]) => Promise<unknown>;
 
 export function getFutureHandler<THandler extends AsyncHandler>(
   moduleRecord: Record<string, unknown>,
