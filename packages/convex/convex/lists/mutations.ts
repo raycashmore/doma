@@ -4,17 +4,55 @@ import { customAlphabet } from 'nanoid/non-secure';
 import { mutation, type MutationCtx } from '../_generated/server';
 import {
   clearCompletedListItemsHandler,
+  clearListItemPropertyValueHandler,
   completeListItemHandler,
   createListItemHandler,
+  createListPropertyHandler,
   deleteListItemHandler,
+  removeListPropertyHandler,
   renameListItemHandler,
   reorderListItemHandler,
+  reorderListPropertyHandler,
+  setListItemPropertyValueHandler,
   uncompleteListItemHandler
 } from './items';
 import { buildListPublicId, slugifyListName } from './model';
 
 const createSeed = customAlphabet('abcdefghjkmnpqrstuvwxyz23456789', 8);
 const CREATE_LIST_PUBLIC_ID_ATTEMPTS = 3;
+const listPropertyType = v.union(
+  v.literal('text'),
+  v.literal('number'),
+  v.literal('date'),
+  v.literal('select'),
+  v.literal('checkbox')
+);
+const listPropertyOption = v.object({
+  id: v.string(),
+  label: v.string()
+});
+const listItemPropertyValue = v.union(
+  v.object({
+    type: v.literal('text'),
+    text: v.string()
+  }),
+  v.object({
+    type: v.literal('number'),
+    number: v.number()
+  }),
+  v.object({
+    type: v.literal('date'),
+    date: v.number()
+  }),
+  v.object({
+    type: v.literal('select'),
+    optionId: v.string()
+  }),
+  v.object({
+    type: v.literal('checkbox'),
+    checked: v.boolean()
+  })
+);
 
 type ListsMutationCtx = Pick<MutationCtx, 'auth' | 'db'>;
 
@@ -173,4 +211,46 @@ export const clearCompletedListItems = mutation({
     listPublicId: v.string()
   },
   handler: clearCompletedListItemsHandler
+});
+
+export const createListProperty = mutation({
+  args: {
+    listPublicId: v.string(),
+    name: v.string(),
+    type: listPropertyType,
+    options: v.optional(v.array(listPropertyOption))
+  },
+  handler: createListPropertyHandler
+});
+
+export const reorderListProperty = mutation({
+  args: {
+    propertyId: v.id('listProperties'),
+    targetIndex: v.number()
+  },
+  handler: reorderListPropertyHandler
+});
+
+export const removeListProperty = mutation({
+  args: {
+    propertyId: v.id('listProperties')
+  },
+  handler: removeListPropertyHandler
+});
+
+export const setListItemPropertyValue = mutation({
+  args: {
+    itemId: v.id('listItems'),
+    propertyId: v.id('listProperties'),
+    value: listItemPropertyValue
+  },
+  handler: setListItemPropertyValueHandler
+});
+
+export const clearListItemPropertyValue = mutation({
+  args: {
+    itemId: v.id('listItems'),
+    propertyId: v.id('listProperties')
+  },
+  handler: clearListItemPropertyValueHandler
 });
