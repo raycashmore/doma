@@ -11,6 +11,7 @@ export type VisibleListItem = {
   _id: string;
   listId: string;
   title: string;
+  notes?: string;
   sortOrder: number;
   completedAt?: number;
   createdAt: number;
@@ -114,6 +115,7 @@ export const previewItemsByListPublicId: Record<string, VisibleListItemsResult> 
         _id: 'preview-item-bananas',
         listId: 'preview-weekly-shop',
         title: 'Bananas',
+        notes: 'Buy firm ones so they last the week.',
         sortOrder: 0,
         createdAt: now,
         updatedAt: now,
@@ -195,6 +197,7 @@ export const previewItemsByListPublicId: Record<string, VisibleListItemsResult> 
         _id: 'preview-item-laundry',
         listId: 'preview-home-reset',
         title: 'Fold laundry',
+        notes: 'Sort darks and lights before folding.',
         sortOrder: 0,
         createdAt: now,
         updatedAt: now,
