@@ -21,6 +21,41 @@ type TestListRow = {
   updatedAt: number;
 };
 
+type TestListItemRow = {
+  _id: string;
+  listId: string;
+  title: string;
+  sortOrder: number;
+  completedAt?: number;
+  createdAt: number;
+  updatedAt: number;
+};
+
+type TestListPropertyRow = {
+  _id: string;
+  listId: string;
+  name: string;
+  type: 'text' | 'number' | 'date' | 'select' | 'checkbox';
+  sortOrder: number;
+  options?: Array<{ id: string; label: string }>;
+  createdAt: number;
+  updatedAt: number;
+};
+
+type TestListItemPropertyValueRow = {
+  _id: string;
+  listId: string;
+  listItemId: string;
+  listPropertyId: string;
+  textValue?: string;
+  numberValue?: number;
+  dateValue?: number;
+  selectOptionId?: string;
+  checkboxValue?: boolean;
+  createdAt: number;
+  updatedAt: number;
+};
+
 const sharedList: TestListRow = {
   _id: 'list_row_shared',
   publicId: 'list_shared',
@@ -43,7 +78,19 @@ const personalList: TestListRow = {
   updatedAt: 1
 };
 
-function createMutationCtx(identity: { subject: string } | null, rows: readonly TestListRow[] = []) {
+function createMutationCtx(
+  identity: { subject: string } | null,
+  rows: readonly TestListRow[] = [],
+  items: readonly TestListItemRow[] = [],
+  properties: readonly TestListPropertyRow[] = [],
+  values: readonly TestListItemPropertyValueRow[] = []
+) {
+  const state = {
+    rows: [...rows],
+    items: [...items],
+    properties: [...properties],
+    values: [...values]
+  };
   const insertedRows: Array<Record<string, unknown>> = [];
   const patchedRows: Array<{ id: string; patch: Record<string, unknown> }> = [];
   const deletedIds: string[] = [];
@@ -64,31 +111,95 @@ function createMutationCtx(identity: { subject: string } | null, rows: readonly 
       },
       delete: async (id: string) => {
         deletedIds.push(id);
+        state.rows = state.rows.filter((row) => row._id !== id);
+        state.items = state.items.filter((row) => row._id !== id);
+        state.properties = state.properties.filter((row) => row._id !== id);
+        state.values = state.values.filter((row) => row._id !== id);
       },
       query: (table: string) => {
-        expect(table).toBe('lists');
-        return {
-          withIndex: (index: string, apply: (q: { eq: (field: string, value: string) => unknown }) => unknown) => {
-            expect(index).toBe('by_public_id');
-            let requestedPublicId = '';
-            apply({
-              eq: (field, value) => {
-                expect(field).toBe('publicId');
-                requestedPublicId = value;
-                publicIdLookups.push(value);
-                return value;
-              }
-            });
-            return {
-              unique: async () => rows.find((row) => row.publicId === requestedPublicId) ?? null
-            };
-          }
-        };
+        if (table === 'lists') {
+          return {
+            withIndex: (index: string, apply: (q: { eq: (field: string, value: string) => unknown }) => unknown) => {
+              expect(index).toBe('by_public_id');
+              let requestedPublicId = '';
+              apply({
+                eq: (field, value) => {
+                  expect(field).toBe('publicId');
+                  requestedPublicId = value;
+                  publicIdLookups.push(value);
+                  return value;
+                }
+              });
+              return {
+                unique: async () => state.rows.find((row) => row.publicId === requestedPublicId) ?? null
+              };
+            }
+          };
+        }
+
+        if (table === 'listItems') {
+          return {
+            withIndex: (index: string, apply: (q: { eq: (field: string, value: string) => unknown }) => unknown) => {
+              expect(index).toBe('by_list_id');
+              let listId = '';
+              apply({
+                eq: (field, value) => {
+                  expect(field).toBe('listId');
+                  listId = value;
+                  return value;
+                }
+              });
+              return {
+                collect: async () => state.items.filter((row) => row.listId === listId)
+              };
+            }
+          };
+        }
+
+        if (table === 'listProperties') {
+          return {
+            withIndex: (index: string, apply: (q: { eq: (field: string, value: string) => unknown }) => unknown) => {
+              expect(index).toBe('by_list_id');
+              let listId = '';
+              apply({
+                eq: (field, value) => {
+                  expect(field).toBe('listId');
+                  listId = value;
+                  return value;
+                }
+              });
+              return {
+                collect: async () => state.properties.filter((row) => row.listId === listId)
+              };
+            }
+          };
+        }
+
+        if (table === 'listItemPropertyValues') {
+          return {
+            withIndex: (index: string, apply: (q: { eq: (field: string, value: string) => unknown }) => unknown) => {
+              expect(index).toBe('by_list_id');
+              let listId = '';
+              apply({
+                eq: (field, value) => {
+                  expect(field).toBe('listId');
+                  listId = value;
+                  return value;
+                }
+              });
+              return {
+                collect: async () => state.values.filter((row) => row.listId === listId)
+              };
+            }
+          };
+        }
+
+        throw new Error(`Unexpected query table ${table}`);
       }
     }
   };
 
-  return { ctx, insertedRows, patchedRows, deletedIds, publicIdLookups };
+  return { ctx, insertedRows, patchedRows, deletedIds, publicIdLookups, state };
 }
 
 afterEach(() => {
@@ -100,10 +211,8 @@ describe('assertCanEditList', () => {
     expect(() => assertCanEditList({ visibility: 'shared', createdByUserId: 'user_a' }, 'user_a')).not.toThrow();
   });
 
-  it('rejects editing a shared list owned by another user', () => {
-    expect(() => assertCanEditList({ visibility: 'shared', createdByUserId: 'user_a' }, 'user_b')).toThrow(
-      'List unavailable'
-    );
+  it('allows editing a shared list owned by another user', () => {
+    expect(() => assertCanEditList({ visibility: 'shared', createdByUserId: 'user_a' }, 'user_b')).not.toThrow();
   });
 
   it('rejects editing a personal list owned by another user', () => {
@@ -208,13 +317,31 @@ describe('renameList', () => {
     expect(patchedRows).toEqual([]);
   });
 
-  it('rejects editing a shared list owned by another user', async () => {
+  it('allows editing a shared list owned by another user', async () => {
     const { ctx, patchedRows } = createMutationCtx({ subject: 'user_b' }, [sharedList]);
+    vi.spyOn(Date, 'now').mockReturnValue(1700000000000);
 
     await expect(
       renameListHandler(ctx as never, { publicId: sharedList.publicId, name: 'Shared shopping 2' })
-    ).rejects.toThrow('List unavailable');
-    expect(patchedRows).toEqual([]);
+    ).resolves.toMatchObject({
+      _id: sharedList._id,
+      publicId: sharedList.publicId,
+      name: 'Shared shopping 2',
+      slug: 'shared-shopping-2',
+      canonicalPath: '/lists/l/list_shared/shared-shopping-2',
+      updatedAt: 1700000000000
+    });
+
+    expect(patchedRows).toEqual([
+      {
+        id: sharedList._id,
+        patch: {
+          name: 'Shared shopping 2',
+          slug: 'shared-shopping-2',
+          updatedAt: 1700000000000
+        }
+      }
+    ]);
   });
 
   it('allows editing a shared list owned by the current user', async () => {
@@ -255,13 +382,62 @@ describe('deleteList', () => {
     expect(deletedIds).toEqual([]);
   });
 
-  it('rejects deleting a shared list owned by another user', async () => {
+  it('allows deleting a shared list owned by another user', async () => {
     const { ctx, deletedIds } = createMutationCtx({ subject: 'user_b' }, [sharedList]);
 
-    await expect(deleteListHandler(ctx as never, { publicId: sharedList.publicId })).rejects.toThrow(
-      'List unavailable'
+    await expect(deleteListHandler(ctx as never, { publicId: sharedList.publicId })).resolves.toEqual({
+      publicId: sharedList.publicId
+    });
+    expect(deletedIds).toEqual([sharedList._id]);
+  });
+
+  it('deletes the list subtree before deleting the list row', async () => {
+    const { ctx, deletedIds, state } = createMutationCtx(
+      { subject: 'user_a' },
+      [sharedList],
+      [
+        {
+          _id: 'item_a',
+          listId: sharedList._id,
+          title: 'Bananas',
+          sortOrder: 0,
+          createdAt: 1,
+          updatedAt: 1
+        }
+      ],
+      [
+        {
+          _id: 'prop_notes',
+          listId: sharedList._id,
+          name: 'Notes',
+          type: 'text',
+          sortOrder: 0,
+          createdAt: 1,
+          updatedAt: 1
+        }
+      ],
+      [
+        {
+          _id: 'value_notes_item_a',
+          listId: sharedList._id,
+          listItemId: 'item_a',
+          listPropertyId: 'prop_notes',
+          textValue: 'ripe ones',
+          createdAt: 1,
+          updatedAt: 1
+        }
+      ]
     );
-    expect(deletedIds).toEqual([]);
+
+    await expect(deleteListHandler(ctx as never, { publicId: sharedList.publicId })).resolves.toEqual({
+      publicId: sharedList.publicId
+    });
+
+    expect(deletedIds).toEqual(['value_notes_item_a', 'item_a', 'prop_notes', sharedList._id]);
+    expect(state.rows).toEqual([]);
+    expect(state.items).toEqual([]);
+    expect(state.properties).toEqual([]);
+    expect(state.values).toEqual([]);
   });
 
   it('allows deleting a shared list owned by the current user', async () => {

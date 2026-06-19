@@ -8,14 +8,20 @@
   import { base } from '$app/paths';
   import { page } from '$app/state';
   import {
-    fixtureCategories,
-    type FixtureListItem,
-    selectedItemDetail  } from '$lib/lists-fixtures';
-  import {
+    describeListMeta,
+    getSelectedItem,
+    getUnsetPropertiesForItem,
     type PresentedList,
     presentLists,
-    presentListScreen,
-    previewVisibleLists  } from '$lib/lists-presenter';
+    previewItemsByListPublicId,
+    previewVisibleLists,
+    projectDraggedItems,
+    type VisibleList,
+    type VisibleListItem,
+    type VisibleListItemPropertyValue,
+    type VisibleListItemsResult,
+    type VisibleListProperty
+  } from '$lib/lists-presenter';
   import {
     buildListHref,
     buildListsHomeHref,
@@ -31,80 +37,202 @@
     selectedPublicId?: string | null;
   } = $props();
 
-  const visibleLists = useQuery(api.lists.queries.listVisibleToMe, () =>
-    USE_DEV_FIXTURE ? 'skip' : {}
-  );
-  const selectedList = useQuery(api.lists.queries.getVisibleListByPublicId, () =>
+  const visibleLists = useQuery(api.lists.queries.listVisibleToMe, () => (USE_DEV_FIXTURE ? 'skip' : {}));
+  const listItems = useQuery(api.lists.queries.getVisibleListItemsByPublicId, () =>
     USE_DEV_FIXTURE || !selectedPublicId ? 'skip' : { publicId: selectedPublicId }
   );
+
   const createList = useMutation(api.lists.mutations.createList);
   const renameList = useMutation(api.lists.mutations.renameList);
   const deleteList = useMutation(api.lists.mutations.deleteList);
+  const createListItem = useMutation(api.lists.mutations.createListItem);
+  const renameListItem = useMutation(api.lists.mutations.renameListItem);
+  const deleteListItem = useMutation(api.lists.mutations.deleteListItem);
+  const completeListItem = useMutation(api.lists.mutations.completeListItem);
+  const uncompleteListItem = useMutation(api.lists.mutations.uncompleteListItem);
+  const reorderListItem = useMutation(api.lists.mutations.reorderListItem);
+  const clearCompletedListItems = useMutation(api.lists.mutations.clearCompletedListItems);
+  const createListProperty = useMutation(api.lists.mutations.createListProperty);
+  const renameListProperty = useMutation(api.lists.mutations.renameListProperty);
+  const reorderListProperty = useMutation(api.lists.mutations.reorderListProperty);
+  const removeListProperty = useMutation(api.lists.mutations.removeListProperty);
+  const setListItemPropertyValue = useMutation(api.lists.mutations.setListItemPropertyValue);
+  const clearListItemPropertyValue = useMutation(api.lists.mutations.clearListItemPropertyValue);
 
   let createName = $state('');
   let createVisibility = $state<'personal' | 'shared'>('personal');
   let renameName = $state('');
   let renameSeededFor = $state<string | null>(null);
   let mutationError = $state<string | null>(null);
-  let uiMode = $state<'mobile' | 'desktop'>('mobile');
+  let itemDraft = $state('');
+  let itemMutationError = $state<string | null>(null);
   let listFilter = $state<'personal' | 'shared'>('personal');
-  let activeItemId = $state('item-avocados');
-  let showListPicker = $state(false);
-  let showItemSheet = $state(false);
-  let showCreateDialog = $state(false);
   let menuTargetPublicId = $state<string | null>(null);
   let renameTargetPublicId = $state<string | null>(null);
   let deleteTargetPublicId = $state<string | null>(null);
+  let showCreateDialog = $state(false);
+  let editingItemId = $state<string | null>(null);
+  let editingItemTitle = $state('');
+  let draggingItemId = $state<string | null>(null);
+  let dragOverItemId = $state<string | null>(null);
+  let selectedItemId = $state<string | null>(null);
+  let showMobileDetails = $state(false);
   let usePreviewData = $state(USE_DEV_FIXTURE);
   let previewLists = $state([...previewVisibleLists]);
-
-  function updateUiMode() {
-    if (!browser) return;
-    uiMode = window.innerWidth >= 1200 ? 'desktop' : 'mobile';
-  }
+  let previewItemsByList = $state(structuredClone(previewItemsByListPublicId));
+  let propertyMutationError = $state<string | null>(null);
+  let propertyDraftName = $state('');
+  let propertyDraftType = $state<VisibleListProperty['type']>('text');
+  let propertyDraftOptions = $state('');
+  let propertyRenameId = $state<string | null>(null);
+  let propertyRenameName = $state('');
+  let pendingRemovePropertyId = $state<string | null>(null);
+  let valueEditorPropertyId = $state<string | null>(null);
+  let valueDraftText = $state('');
+  let valueDraftNumber = $state('');
+  let valueDraftDate = $state('');
+  let valueDraftSelectOptionId = $state('');
+  let valueDraftCheckbox = $state(false);
+  let previousListPublicId = $state<string | null>(null);
 
   function describeError(error: unknown, fallback: string) {
-    const message =
-      error instanceof Error ? error.message : typeof error === 'string' ? error : null;
-
+    const message = error instanceof Error ? error.message : typeof error === 'string' ? error : null;
     if (!message) return fallback;
-    if (message.includes('Not authenticated')) {
-      return 'Sign in to load and edit household lists.';
-    }
-    if (message.includes('List unavailable')) {
-      return 'This list may have been deleted or is no longer visible to you.';
-    }
-
+    if (message.includes('Not authenticated')) return 'Sign in to load and edit household lists.';
+    if (message.includes('List unavailable')) return 'This list may have been deleted or is no longer visible to you.';
+    if (message.includes('List item unavailable')) return 'This item is unavailable.';
     return message;
   }
 
-  function isSelectedListUnavailable() {
-    if (!selectedPublicId || selectedList.isLoading) return false;
-    if (selectedList.error) return true;
-    if (visibleLists.isLoading) return false;
-    return selectedList.data === null;
+  function normalizePreviewItems(items: VisibleListItem[]) {
+    return items.map((item, index) => ({ ...item, sortOrder: index }));
   }
 
-  function listIcon(icon: PresentedList['icon']) {
-    if (icon === 'house') return 'H';
-    if (icon === 'party-popper') return 'P';
-    return 'S';
+  function normalizePreviewProperties(properties: VisibleListProperty[]) {
+    return properties.map((property, index) => ({ ...property, sortOrder: index }));
   }
 
-  function selectedItem() {
-    for (const category of fixtureCategories) {
-      const match = category.items.find((item) => item.id === activeItemId);
-      if (match) return match;
+  function updatePreviewListData(publicId: string, updater: (current: VisibleListItemsResult) => VisibleListItemsResult) {
+    const current = previewItemsByList[publicId];
+    if (!current) return;
+
+    previewItemsByList = {
+      ...previewItemsByList,
+      [publicId]: updater(current)
+    };
+  }
+
+  function propertyTypeLabel(type: VisibleListProperty['type']) {
+    switch (type) {
+      case 'text':
+        return 'Text';
+      case 'number':
+        return 'Number';
+      case 'date':
+        return 'Date';
+      case 'select':
+        return 'Select';
+      case 'checkbox':
+        return 'Checkbox';
     }
-
-    return fixtureCategories[0]?.items[0] ?? null;
   }
 
-  function openItem(item: FixtureListItem) {
-    activeItemId = item.id;
-    if (uiMode === 'mobile') {
-      showItemSheet = true;
+  function slugifyOptionId(label: string, index: number) {
+    return slugifyListName(label).replace(/-/g, '_') || `option_${index + 1}`;
+  }
+
+  function parsePropertyOptions(input: string) {
+    const labels = input
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean);
+
+    return labels.map((label, index) => ({
+      id: slugifyOptionId(label, index),
+      label
+    }));
+  }
+
+  function findPropertyValue(item: VisibleListItem | null, propertyId: string) {
+    return item?.propertyValues.find((value) => value.listPropertyId === propertyId) ?? null;
+  }
+
+  function formatDateForInput(value?: number) {
+    if (!value) return '';
+    const date = new Date(value);
+    const year = date.getFullYear();
+    const month = `${date.getMonth() + 1}`.padStart(2, '0');
+    const day = `${date.getDate()}`.padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  function parseDateInput(value: string) {
+    if (!value) return null;
+    const parsed = new Date(`${value}T12:00:00`);
+    return Number.isNaN(parsed.valueOf()) ? null : parsed.valueOf();
+  }
+
+  function describePropertyValue(property: VisibleListProperty, value: VisibleListItemPropertyValue) {
+    switch (property.type) {
+      case 'text':
+        return value.textValue ?? '';
+      case 'number':
+        return value.numberValue === undefined ? '' : `${value.numberValue}`;
+      case 'date':
+        return value.dateValue ? new Date(value.dateValue).toLocaleDateString() : '';
+      case 'checkbox':
+        return value.checkboxValue ? 'Checked' : 'Unchecked';
+      case 'select':
+        return property.options?.find((option) => option.id === value.selectOptionId)?.label ?? '';
     }
+  }
+
+  function closeMobileDetails() {
+    showMobileDetails = false;
+  }
+
+  function clearSelectedItem() {
+    selectedItemId = null;
+  }
+
+  function openItemDetails(itemId: string) {
+    selectedItemId = itemId;
+    showMobileDetails = true;
+    propertyMutationError = null;
+  }
+
+  function resetValueEditor() {
+    valueEditorPropertyId = null;
+    valueDraftText = '';
+    valueDraftNumber = '';
+    valueDraftDate = '';
+    valueDraftSelectOptionId = '';
+    valueDraftCheckbox = false;
+  }
+
+  function beginPropertyRename(property: VisibleListProperty) {
+    propertyRenameId = property._id;
+    propertyRenameName = property.name;
+    pendingRemovePropertyId = null;
+    propertyMutationError = null;
+  }
+
+  function cancelPropertyRename() {
+    propertyRenameId = null;
+    propertyRenameName = '';
+  }
+
+  function openValueEditor(
+    property: VisibleListProperty,
+    currentValue: VisibleListItemPropertyValue | null = findPropertyValue(selectedItem, property._id)
+  ) {
+    valueEditorPropertyId = property._id;
+    valueDraftText = currentValue?.textValue ?? '';
+    valueDraftNumber = currentValue?.numberValue === undefined ? '' : `${currentValue.numberValue}`;
+    valueDraftDate = formatDateForInput(currentValue?.dateValue);
+    valueDraftSelectOptionId = currentValue?.selectOptionId ?? property.options?.[0]?.id ?? '';
+    valueDraftCheckbox = currentValue?.checkboxValue ?? false;
+    propertyMutationError = null;
   }
 
   function closeMenus() {
@@ -113,7 +241,6 @@
 
   async function navigateToList(list: { publicId: string; slug: string }) {
     closeMenus();
-    showListPicker = false;
     await goto(buildListHref(base, list), { noScroll: true, keepFocus: true });
   }
 
@@ -130,12 +257,20 @@
         name,
         visibility: createVisibility,
         createdByUserId: 'preview-user'
-      };
+      } satisfies VisibleList;
 
       previewLists = [created, ...previewLists];
+      previewItemsByList = {
+        ...previewItemsByList,
+        [created.publicId]: {
+          list: created,
+          properties: [],
+          activeItems: [],
+          completedItems: []
+        }
+      };
       createName = '';
       showCreateDialog = false;
-      showListPicker = false;
       await goto(buildListHref(base, created), { noScroll: true, keepFocus: true });
       return;
     }
@@ -148,7 +283,6 @@
 
       createName = '';
       showCreateDialog = false;
-      showListPicker = false;
       await goto(buildListHref(base, created), { noScroll: true, keepFocus: true });
     } catch (error) {
       mutationError = error instanceof Error ? error.message : 'Unable to create list.';
@@ -161,13 +295,25 @@
 
     if (usePreviewData) {
       const name = renameName.trim() || 'Untitled list';
+      const slug = slugifyListName(name);
+
       previewLists = previewLists.map((list) =>
-        list.publicId === renameTargetPublicId
-          ? { ...list, name, slug: slugifyListName(name) }
-          : list
+        list.publicId === renameTargetPublicId ? { ...list, name, slug } : list
       );
 
-      const renamed = previewLists.find((list) => list.publicId === renameTargetPublicId);
+      const current = previewItemsByList[renameTargetPublicId];
+      if (current) {
+        const nextList = { ...current.list, name, slug };
+        previewItemsByList = {
+          ...previewItemsByList,
+          [renameTargetPublicId]: {
+            ...current,
+            list: nextList
+          }
+        };
+      }
+
+      const renamed = previewLists.find((list) => list.slug === slug && list.name === name);
       renameTargetPublicId = null;
       menuTargetPublicId = null;
       if (renamed) {
@@ -202,8 +348,7 @@
     if (!deleteTargetPublicId) return;
     mutationError = null;
 
-    const remaining =
-      presentedLists.filter((list) => list.publicId !== deleteTargetPublicId) ?? [];
+    const remaining = presentedLists.filter((list) => list.publicId !== deleteTargetPublicId);
 
     async function navigateAfterDelete() {
       const nextList = remaining[0];
@@ -225,6 +370,9 @@
 
     if (usePreviewData) {
       previewLists = previewLists.filter((list) => list.publicId !== deleteTargetPublicId);
+      const rest = { ...previewItemsByList };
+      delete rest[deleteTargetPublicId];
+      previewItemsByList = rest;
       deleteTargetPublicId = null;
       menuTargetPublicId = null;
       await navigateAfterDelete();
@@ -233,7 +381,6 @@
 
     try {
       await deleteList({ publicId: deleteTargetPublicId });
-
       deleteTargetPublicId = null;
       menuTargetPublicId = null;
       await navigateAfterDelete();
@@ -255,15 +402,513 @@
     renameSeededFor = null;
   }
 
-  $effect(() => {
-    if (!browser) return;
-    updateUiMode();
-    window.addEventListener('resize', updateUiMode);
+  async function handleCreateItem() {
+    if (!selectedRow?.publicId) return;
+    itemMutationError = null;
 
-    return () => {
-      window.removeEventListener('resize', updateUiMode);
+    if (usePreviewData) {
+      updatePreviewListData(selectedRow.publicId, (current) => {
+        const nextItem: VisibleListItem = {
+          _id: `preview-item-${crypto.randomUUID()}`,
+          listId: current.list._id,
+          title: itemDraft.trim(),
+          sortOrder: current.activeItems.length,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          propertyValues: []
+        };
+
+        return {
+          ...current,
+          activeItems: [...current.activeItems, nextItem]
+        };
+      });
+      itemDraft = '';
+      return;
+    }
+
+    try {
+      await createListItem({
+        listPublicId: selectedRow.publicId,
+        title: itemDraft
+      });
+      itemDraft = '';
+    } catch (error) {
+      itemMutationError = describeError(error, 'Unable to add item.');
+    }
+  }
+
+  function beginEditingItem(item: VisibleListItem) {
+    editingItemId = item._id;
+    editingItemTitle = item.title;
+    itemMutationError = null;
+  }
+
+  async function saveEditedItem() {
+    if (!editingItemId) return;
+    itemMutationError = null;
+
+    if (usePreviewData) {
+      if (!selectedRow?.publicId) return;
+      updatePreviewListData(selectedRow.publicId, (current) => ({
+        ...current,
+        activeItems: current.activeItems.map((item) =>
+          item._id === editingItemId ? { ...item, title: editingItemTitle.trim(), updatedAt: Date.now() } : item
+        ),
+        completedItems: current.completedItems.map((item) =>
+          item._id === editingItemId ? { ...item, title: editingItemTitle.trim(), updatedAt: Date.now() } : item
+        )
+      }));
+      editingItemId = null;
+      editingItemTitle = '';
+      return;
+    }
+
+    try {
+      await renameListItem({
+        itemId: editingItemId as never,
+        title: editingItemTitle
+      });
+      editingItemId = null;
+      editingItemTitle = '';
+    } catch (error) {
+      itemMutationError = describeError(error, 'Unable to rename item.');
+    }
+  }
+
+  async function removeItem(itemId: string) {
+    itemMutationError = null;
+
+    if (usePreviewData) {
+      if (!selectedRow?.publicId) return;
+      updatePreviewListData(selectedRow.publicId, (current) => ({
+        ...current,
+        activeItems: normalizePreviewItems(current.activeItems.filter((item) => item._id !== itemId)),
+        completedItems: current.completedItems.filter((item) => item._id !== itemId)
+      }));
+      return;
+    }
+
+    try {
+      await deleteListItem({ itemId: itemId as never });
+    } catch (error) {
+      itemMutationError = describeError(error, 'Unable to delete item.');
+    }
+  }
+
+  async function toggleItemCompletion(item: VisibleListItem) {
+    itemMutationError = null;
+
+    if (usePreviewData) {
+      if (!selectedRow?.publicId) return;
+      updatePreviewListData(selectedRow.publicId, (current) => {
+        if (item.completedAt === undefined) {
+          const activeItems = normalizePreviewItems(current.activeItems.filter((entry) => entry._id !== item._id));
+          const completedItems = [
+            { ...item, completedAt: Date.now(), updatedAt: Date.now() },
+            ...current.completedItems
+          ];
+          return { ...current, activeItems, completedItems };
+        }
+
+        const activeItems = [
+          ...current.activeItems,
+          {
+            ...item,
+            completedAt: undefined,
+            sortOrder: current.activeItems.length,
+            updatedAt: Date.now()
+          }
+        ];
+        const completedItems = current.completedItems.filter((entry) => entry._id !== item._id);
+        return { ...current, activeItems, completedItems };
+      });
+      return;
+    }
+
+    try {
+      if (item.completedAt === undefined) {
+        await completeListItem({ itemId: item._id as never });
+      } else {
+        await uncompleteListItem({ itemId: item._id as never });
+      }
+    } catch (error) {
+      itemMutationError = describeError(error, 'Unable to update item.');
+    }
+  }
+
+  async function handleClearCompletedItems() {
+    if (!selectedRow?.publicId) return;
+    itemMutationError = null;
+
+    if (usePreviewData) {
+      updatePreviewListData(selectedRow.publicId, (current) => ({
+        ...current,
+        completedItems: []
+      }));
+      return;
+    }
+
+    try {
+      await clearCompletedListItems({
+        listPublicId: selectedRow.publicId
+      });
+    } catch (error) {
+      itemMutationError = describeError(error, 'Unable to clear completed items.');
+    }
+  }
+
+  async function handleCreateProperty() {
+    if (!selectedRow?.publicId) return;
+    propertyMutationError = null;
+
+    const options = propertyDraftType === 'select' ? parsePropertyOptions(propertyDraftOptions) : undefined;
+
+    if (usePreviewData) {
+      updatePreviewListData(selectedRow.publicId, (current) => {
+        const nextProperty: VisibleListProperty = {
+          _id: `preview-property-${crypto.randomUUID()}`,
+          listId: current.list._id,
+          name: propertyDraftName.trim(),
+          type: propertyDraftType,
+          sortOrder: current.properties.length,
+          options
+        };
+
+        return {
+          ...current,
+          properties: [...current.properties, nextProperty]
+        };
+      });
+      propertyDraftName = '';
+      propertyDraftType = 'text';
+      propertyDraftOptions = '';
+      return;
+    }
+
+    try {
+      await createListProperty({
+        listPublicId: selectedRow.publicId,
+        name: propertyDraftName,
+        type: propertyDraftType as never,
+        options
+      });
+      propertyDraftName = '';
+      propertyDraftType = 'text';
+      propertyDraftOptions = '';
+    } catch (error) {
+      propertyMutationError = describeError(error, 'Unable to create property.');
+    }
+  }
+
+  async function handleRenameProperty() {
+    if (!propertyRenameId) return;
+    propertyMutationError = null;
+
+    if (usePreviewData) {
+      if (!selectedRow?.publicId) return;
+      updatePreviewListData(selectedRow.publicId, (current) => ({
+        ...current,
+        properties: current.properties.map((property) =>
+          property._id === propertyRenameId ? { ...property, name: propertyRenameName.trim() } : property
+        )
+      }));
+      cancelPropertyRename();
+      return;
+    }
+
+    try {
+      await renameListProperty({
+        propertyId: propertyRenameId as never,
+        name: propertyRenameName
+      });
+      cancelPropertyRename();
+    } catch (error) {
+      propertyMutationError = describeError(error, 'Unable to rename property.');
+    }
+  }
+
+  async function handleReorderProperty(propertyId: string, targetIndex: number) {
+    propertyMutationError = null;
+
+    if (usePreviewData) {
+      if (!selectedRow?.publicId) return;
+      updatePreviewListData(selectedRow.publicId, (current) => {
+        const currentIndex = current.properties.findIndex((property) => property._id === propertyId);
+        if (currentIndex < 0) return current;
+
+        const boundedTarget = Math.max(0, Math.min(targetIndex, current.properties.length - 1));
+        if (boundedTarget === currentIndex) return current;
+
+        const nextProperties = [...current.properties];
+        const [moved] = nextProperties.splice(currentIndex, 1);
+        if (!moved) return current;
+        nextProperties.splice(boundedTarget, 0, moved);
+
+        return {
+          ...current,
+          properties: normalizePreviewProperties(nextProperties)
+        };
+      });
+      return;
+    }
+
+    try {
+      await reorderListProperty({
+        propertyId: propertyId as never,
+        targetIndex
+      });
+    } catch (error) {
+      propertyMutationError = describeError(error, 'Unable to reorder property.');
+    }
+  }
+
+  async function handleRemoveProperty() {
+    if (!pendingRemovePropertyId) return;
+    propertyMutationError = null;
+    const propertyId = pendingRemovePropertyId;
+
+    if (usePreviewData) {
+      if (!selectedRow?.publicId) return;
+      updatePreviewListData(selectedRow.publicId, (current) => ({
+        ...current,
+        properties: normalizePreviewProperties(current.properties.filter((property) => property._id !== propertyId)),
+        activeItems: current.activeItems.map((item) => ({
+          ...item,
+          propertyValues: item.propertyValues.filter((value) => value.listPropertyId !== propertyId)
+        })),
+        completedItems: current.completedItems.map((item) => ({
+          ...item,
+          propertyValues: item.propertyValues.filter((value) => value.listPropertyId !== propertyId)
+        }))
+      }));
+      pendingRemovePropertyId = null;
+      if (valueEditorPropertyId === propertyId) resetValueEditor();
+      return;
+    }
+
+    try {
+      await removeListProperty({
+        propertyId: propertyId as never
+      });
+      pendingRemovePropertyId = null;
+      resetValueEditor();
+    } catch (error) {
+      propertyMutationError = describeError(error, 'Unable to remove property.');
+    }
+  }
+
+  async function handleSavePropertyValue(property: VisibleListProperty) {
+    if (!selectedItem) return;
+    propertyMutationError = null;
+
+    let payload:
+      | { type: 'text'; text: string }
+      | { type: 'number'; number: number }
+      | { type: 'date'; date: number }
+      | { type: 'select'; optionId: string }
+      | { type: 'checkbox'; checked: boolean };
+
+    switch (property.type) {
+      case 'text':
+        payload = { type: 'text', text: valueDraftText.trim() };
+        break;
+      case 'number':
+        payload = { type: 'number', number: Number(valueDraftNumber) };
+        break;
+      case 'date': {
+        const dateValue = parseDateInput(valueDraftDate);
+        if (dateValue === null) {
+          propertyMutationError = 'Choose a date before saving.';
+          return;
+        }
+        payload = { type: 'date', date: dateValue };
+        break;
+      }
+      case 'select':
+        payload = { type: 'select', optionId: valueDraftSelectOptionId };
+        break;
+      case 'checkbox':
+        payload = { type: 'checkbox', checked: valueDraftCheckbox };
+        break;
+    }
+
+    if (usePreviewData) {
+      if (!selectedRow?.publicId) return;
+      updatePreviewListData(selectedRow.publicId, (current) => {
+        const updateItem = (item: VisibleListItem) => {
+          if (item._id !== selectedItem._id) return item;
+
+          const existingIndex = item.propertyValues.findIndex((value) => value.listPropertyId === property._id);
+          const nextValue: VisibleListItemPropertyValue = {
+            _id:
+              existingIndex >= 0
+                ? item.propertyValues[existingIndex]!._id
+                : `preview-value-${crypto.randomUUID()}`,
+            listItemId: item._id,
+            listPropertyId: property._id,
+            ...(payload.type === 'text' ? { textValue: payload.text } : {}),
+            ...(payload.type === 'number' ? { numberValue: payload.number } : {}),
+            ...(payload.type === 'date' ? { dateValue: payload.date } : {}),
+            ...(payload.type === 'select' ? { selectOptionId: payload.optionId } : {}),
+            ...(payload.type === 'checkbox' ? { checkboxValue: payload.checked } : {})
+          };
+
+          const propertyValues =
+            existingIndex >= 0
+              ? item.propertyValues.map((value, index) => (index === existingIndex ? nextValue : value))
+              : [...item.propertyValues, nextValue];
+
+          return { ...item, propertyValues };
+        };
+
+        return {
+          ...current,
+          activeItems: current.activeItems.map(updateItem),
+          completedItems: current.completedItems.map(updateItem)
+        };
+      });
+      resetValueEditor();
+      return;
+    }
+
+    try {
+      await setListItemPropertyValue({
+        itemId: selectedItem._id as never,
+        propertyId: property._id as never,
+        value: payload as never
+      });
+      resetValueEditor();
+    } catch (error) {
+      propertyMutationError = describeError(error, 'Unable to save value.');
+    }
+  }
+
+  async function handleClearPropertyValue(propertyId: string) {
+    if (!selectedItem) return;
+    propertyMutationError = null;
+
+    if (usePreviewData) {
+      if (!selectedRow?.publicId) return;
+      updatePreviewListData(selectedRow.publicId, (current) => {
+        const updateItem = (item: VisibleListItem) =>
+          item._id === selectedItem._id
+            ? {
+                ...item,
+                propertyValues: item.propertyValues.filter((value) => value.listPropertyId !== propertyId)
+              }
+            : item;
+
+        return {
+          ...current,
+          activeItems: current.activeItems.map(updateItem),
+          completedItems: current.completedItems.map(updateItem)
+        };
+      });
+      if (valueEditorPropertyId === propertyId) resetValueEditor();
+      return;
+    }
+
+    try {
+      await clearListItemPropertyValue({
+        itemId: selectedItem._id as never,
+        propertyId: propertyId as never
+      });
+      if (valueEditorPropertyId === propertyId) resetValueEditor();
+    } catch (error) {
+      propertyMutationError = describeError(error, 'Unable to clear value.');
+    }
+  }
+
+  async function persistPreviewReorder(itemId: string, targetItemId: string) {
+    if (!selectedRow?.publicId) return;
+    updatePreviewListData(selectedRow.publicId, (current) => {
+      const dragged = projectDraggedItems(current.activeItems, itemId, targetItemId);
+      return {
+        ...current,
+        activeItems: normalizePreviewItems(dragged)
+      };
+    });
+  }
+
+  async function persistItemReorder(itemId: string, targetItemId: string) {
+    const baseItems = selectedListData?.activeItems ?? [];
+    const targetIndex = baseItems.findIndex((item) => item._id === targetItemId);
+    if (targetIndex < 0) return;
+
+    if (usePreviewData) {
+      await persistPreviewReorder(itemId, targetItemId);
+      return;
+    }
+
+    try {
+      await reorderListItem({
+        itemId: itemId as never,
+        targetIndex
+      });
+    } catch (error) {
+      itemMutationError = describeError(error, 'Unable to reorder item.');
+    }
+  }
+
+  function startDragging(itemId: string, event: PointerEvent) {
+    if (!browser) return;
+
+    event.preventDefault();
+    itemMutationError = null;
+    draggingItemId = itemId;
+    dragOverItemId = itemId;
+
+    const move = (moveEvent: PointerEvent) => {
+      const target = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY);
+      if (!(target instanceof HTMLElement)) return;
+      const row = target.closest<HTMLElement>('[data-active-item-id]');
+      if (row?.dataset.activeItemId) {
+        dragOverItemId = row.dataset.activeItemId;
+      }
     };
-  });
+
+    const finish = async () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', finish);
+      window.removeEventListener('pointercancel', finish);
+
+      const draggedItemId = draggingItemId;
+      const targetItemId = dragOverItemId;
+      draggingItemId = null;
+      dragOverItemId = null;
+
+      if (!draggedItemId || !targetItemId || draggedItemId === targetItemId) return;
+      await persistItemReorder(draggedItemId, targetItemId);
+    };
+
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', finish);
+    window.addEventListener('pointercancel', finish);
+  }
+
+  const visibleListRows = $derived(usePreviewData ? previewLists : (visibleLists.data ?? []));
+  const previewSelectedListData = $derived(
+    selectedPublicId ? previewItemsByList[selectedPublicId] ?? null : null
+  );
+  const selectedListData = $derived(
+    usePreviewData
+      ? previewSelectedListData ?? (visibleListRows[0] ? previewItemsByList[visibleListRows[0].publicId] ?? null : null)
+      : listItems.data ?? null
+  );
+  const selectedRow = $derived(selectedListData?.list ?? null);
+  const presentedLists = $derived(presentLists(visibleListRows, selectedRow?.publicId ?? selectedPublicId));
+  const filteredLists = $derived(presentedLists.filter((list) => list.visibility === listFilter));
+  const activeItems = $derived(
+    projectDraggedItems(selectedListData?.activeItems ?? [], draggingItemId, dragOverItemId)
+  );
+  const completedItems = $derived(selectedListData?.completedItems ?? []);
+  const visibleProperties = $derived(selectedListData?.properties ?? []);
+  const selectedItem = $derived(getSelectedItem(activeItems, completedItems, selectedItemId));
+  const unsetProperties = $derived(getUnsetPropertiesForItem(visibleProperties, selectedItem));
+  const metaLabel = $derived(
+    describeListMeta(selectedRow, selectedListData?.activeItems.length ?? 0, selectedListData?.completedItems.length ?? 0)
+  );
 
   $effect(() => {
     if (!browser) return;
@@ -275,7 +920,7 @@
   $effect(() => {
     if (!browser || selectedPublicId) return;
     const rows = visibleListRows;
-    if (!rows?.length) return;
+    if (!rows.length) return;
 
     const lastPublicId = readLastListPublicId();
     const preferred = rows.find((row) => row.publicId === lastPublicId) ?? rows[0];
@@ -292,7 +937,6 @@
     if (!renameTargetPublicId || renameSeededFor === renameTargetPublicId) return;
     const row = visibleListRows.find((list) => list.publicId === renameTargetPublicId);
     if (!row) return;
-
     renameName = row.name;
     renameSeededFor = renameTargetPublicId;
   });
@@ -313,30 +957,9 @@
     });
   });
 
-  const visibleListRows = $derived(usePreviewData ? previewLists : (visibleLists.data ?? []));
-  const selectedRow = $derived(
-    usePreviewData
-      ? visibleListRows.find((list) => list.publicId === selectedPublicId) ?? visibleListRows[0] ?? null
-      : selectedList.data ?? null
-  );
-  const presentedLists = $derived(
-    presentLists(visibleListRows, selectedRow?.publicId ?? selectedPublicId)
-  );
-  const selectedPresentedList = $derived(
-    presentedLists.find((list) => list.selected) ??
-      (selectedRow
-        ? presentLists([selectedRow], selectedRow.publicId)[0]
-        : null)
-  );
-  const screen = $derived(presentListScreen(selectedPresentedList ?? null));
-  const filteredLists = $derived(
-    presentedLists.filter((list) => list.visibility === listFilter)
-  );
-  const currentItem = $derived(selectedItem());
-
   $effect(() => {
     if (!browser || !dev || usePreviewData) return;
-    if (visibleLists.data || visibleLists.error || selectedList.data || selectedList.error) return;
+    if (visibleLists.data || visibleLists.error || listItems.data || listItems.error) return;
 
     const timeoutId = window.setTimeout(() => {
       usePreviewData = true;
@@ -346,521 +969,704 @@
       window.clearTimeout(timeoutId);
     };
   });
+
+  $effect(() => {
+    const listPublicId = selectedRow?.publicId ?? null;
+    if (listPublicId === previousListPublicId) return;
+    previousListPublicId = listPublicId;
+    selectedItemId = null;
+    showMobileDetails = false;
+    resetValueEditor();
+    cancelPropertyRename();
+    pendingRemovePropertyId = null;
+    propertyMutationError = null;
+  });
+
+  $effect(() => {
+    if (!selectedItemId) return;
+    if (selectedItem) return;
+    selectedItemId = null;
+    showMobileDetails = false;
+    resetValueEditor();
+  });
 </script>
 
-{#if selectedPublicId && !usePreviewData && isSelectedListUnavailable()}
+{#snippet detailSurface()}
+  <div class="flex h-full flex-col gap-4">
+    {#if selectedItem}
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-warm-text-secondary">Item details</p>
+          <h3 class="mt-2 text-lg font-bold text-warm-text-primary">{selectedItem.title}</h3>
+        </div>
+        <button
+          type="button"
+          class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary"
+          onclick={() => {
+            clearSelectedItem();
+            closeMobileDetails();
+          }}
+        >
+          List properties
+        </button>
+      </div>
+
+      {#if propertyMutationError}
+        <p class="text-sm text-warm-accent">{propertyMutationError}</p>
+      {/if}
+
+      <div class="flex flex-col gap-3">
+        {#each visibleProperties as property (property._id)}
+          {@const currentValue = findPropertyValue(selectedItem, property._id)}
+          <div class="rounded-[22px] border border-warm-border bg-warm-bg-card p-4">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="truncate text-sm font-semibold text-warm-text-primary">{property.name}</p>
+                <p class="mt-1 text-[11px] uppercase tracking-[0.16em] text-warm-text-secondary">
+                  {propertyTypeLabel(property.type)}
+                </p>
+              </div>
+
+              {#if currentValue}
+                <div class="flex items-center gap-2">
+                  <button
+                    type="button"
+                    class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary"
+                    onclick={() => openValueEditor(property, currentValue)}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-accent"
+                    onclick={() => void handleClearPropertyValue(property._id)}
+                  >
+                    Clear
+                  </button>
+                </div>
+              {:else}
+                <button
+                  type="button"
+                  class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary"
+                  onclick={() => openValueEditor(property, null)}
+                >
+                  Add
+                </button>
+              {/if}
+            </div>
+
+            {#if valueEditorPropertyId === property._id}
+              <div class="mt-4 flex flex-col gap-3">
+                {#if property.type === 'text'}
+                  <input
+                    bind:value={valueDraftText}
+                    class="rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary outline-none"
+                    placeholder={`Add ${property.name.toLowerCase()}`}
+                  />
+                {:else if property.type === 'number'}
+                  <input
+                    bind:value={valueDraftNumber}
+                    type="number"
+                    class="rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary outline-none"
+                    placeholder="0"
+                  />
+                {:else if property.type === 'date'}
+                  <input
+                    bind:value={valueDraftDate}
+                    type="date"
+                    class="rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary outline-none"
+                  />
+                {:else if property.type === 'select'}
+                  <select
+                    bind:value={valueDraftSelectOptionId}
+                    class="rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary outline-none"
+                  >
+                    {#each property.options ?? [] as option (option.id)}
+                      <option value={option.id}>{option.label}</option>
+                    {/each}
+                  </select>
+                {:else}
+                  <label class="flex items-center justify-between rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary">
+                    <span>Checked</span>
+                    <input bind:checked={valueDraftCheckbox} type="checkbox" class="h-4 w-4" />
+                  </label>
+                {/if}
+
+                <div class="flex gap-2">
+                  <button
+                    type="button"
+                    class="flex-1 rounded-full border border-warm-border px-4 py-3 text-sm font-medium text-warm-text-secondary"
+                    onclick={() => resetValueEditor()}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    class="flex-1 rounded-full bg-warm-text-primary px-4 py-3 text-sm font-bold text-warm-text-on-dark disabled:opacity-60"
+                    disabled={
+                      (property.type === 'text' && !valueDraftText.trim()) ||
+                      (property.type === 'number' && valueDraftNumber === '') ||
+                      (property.type === 'date' && !valueDraftDate) ||
+                      (property.type === 'select' && !valueDraftSelectOptionId)
+                    }
+                    onclick={() => void handleSavePropertyValue(property)}
+                  >
+                    Save value
+                  </button>
+                </div>
+              </div>
+            {:else if currentValue}
+              <p class="mt-4 text-sm text-warm-text-secondary">{describePropertyValue(property, currentValue)}</p>
+            {/if}
+          </div>
+        {/each}
+
+        {#if !visibleProperties.length}
+          <div class="rounded-[22px] border border-dashed border-warm-border bg-warm-bg-card px-4 py-5 text-sm text-warm-text-secondary">
+            Add list properties first, then attach values to this item here.
+          </div>
+        {:else if unsetProperties.length && !valueEditorPropertyId}
+          <div class="rounded-[22px] border border-dashed border-warm-border bg-warm-bg-card px-4 py-4">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-warm-text-secondary">Unset fields</p>
+            <div class="mt-3 flex flex-wrap gap-2">
+              {#each unsetProperties as property (property._id)}
+                <button
+                  type="button"
+                  class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary"
+                  onclick={() => openValueEditor(property, null)}
+                >
+                  Add {property.name}
+                </button>
+              {/each}
+            </div>
+          </div>
+        {/if}
+      </div>
+    {:else}
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-warm-text-secondary">List properties</p>
+          <h3 class="mt-2 text-lg font-bold text-warm-text-primary">Fields available to every item</h3>
+        </div>
+      </div>
+
+      {#if propertyMutationError}
+        <p class="text-sm text-warm-accent">{propertyMutationError}</p>
+      {/if}
+
+      <div class="flex flex-col gap-3">
+        {#if visibleProperties.length}
+          {#each visibleProperties as property, index (property._id)}
+            <div class="rounded-[22px] border border-warm-border bg-warm-bg-card p-4">
+              {#if propertyRenameId === property._id}
+                <form
+                  class="flex flex-col gap-3"
+                  onsubmit={(event) => {
+                    event.preventDefault();
+                    void handleRenameProperty();
+                  }}
+                >
+                  <input
+                    bind:value={propertyRenameName}
+                    class="rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary outline-none"
+                    placeholder="Property name"
+                  />
+                  <div class="flex gap-2">
+                    <button
+                      type="button"
+                      class="flex-1 rounded-full border border-warm-border px-4 py-3 text-sm font-medium text-warm-text-secondary"
+                      onclick={() => cancelPropertyRename()}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      class="flex-1 rounded-full bg-warm-text-primary px-4 py-3 text-sm font-bold text-warm-text-on-dark disabled:opacity-60"
+                      disabled={!propertyRenameName.trim()}
+                    >
+                      Save
+                    </button>
+                  </div>
+                </form>
+              {:else}
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="truncate text-sm font-semibold text-warm-text-primary">{property.name}</p>
+                    <p class="mt-1 text-[11px] uppercase tracking-[0.16em] text-warm-text-secondary">
+                      {propertyTypeLabel(property.type)}
+                    </p>
+                    {#if property.type === 'select' && property.options?.length}
+                      <p class="mt-2 text-xs text-warm-text-secondary">
+                        {property.options.map((option) => option.label).join(' · ')}
+                      </p>
+                    {/if}
+                  </div>
+                  <div class="flex flex-wrap justify-end gap-2">
+                    <button
+                      type="button"
+                      class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary disabled:opacity-50"
+                      disabled={index === 0}
+                      onclick={() => void handleReorderProperty(property._id, index - 1)}
+                    >
+                      Up
+                    </button>
+                    <button
+                      type="button"
+                      class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary disabled:opacity-50"
+                      disabled={index === visibleProperties.length - 1}
+                      onclick={() => void handleReorderProperty(property._id, index + 1)}
+                    >
+                      Down
+                    </button>
+                    <button
+                      type="button"
+                      class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary"
+                      onclick={() => beginPropertyRename(property)}
+                    >
+                      Rename
+                    </button>
+                    <button
+                      type="button"
+                      class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-accent"
+                      onclick={() => {
+                        pendingRemovePropertyId = property._id;
+                        cancelPropertyRename();
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+
+                {#if pendingRemovePropertyId === property._id}
+                  <div class="mt-4 rounded-2xl border border-warm-border bg-warm-bg px-4 py-4">
+                    <p class="text-sm text-warm-text-secondary">Removing this property also clears its values from every item.</p>
+                    <div class="mt-3 flex gap-2">
+                      <button
+                        type="button"
+                        class="flex-1 rounded-full border border-warm-border px-4 py-3 text-sm font-medium text-warm-text-secondary"
+                        onclick={() => (pendingRemovePropertyId = null)}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        class="flex-1 rounded-full bg-warm-accent px-4 py-3 text-sm font-bold text-warm-text-on-dark"
+                        onclick={() => void handleRemoveProperty()}
+                      >
+                        Confirm remove
+                      </button>
+                    </div>
+                  </div>
+                {/if}
+              {/if}
+            </div>
+          {/each}
+        {:else}
+          <div class="rounded-[22px] border border-dashed border-warm-border bg-warm-bg-card px-4 py-5 text-sm text-warm-text-secondary">
+            No properties yet. Add one to shape what details each item can hold.
+          </div>
+        {/if}
+      </div>
+
+      <form
+        class="mt-2 flex flex-col gap-3 rounded-[24px] border border-warm-border bg-warm-bg-card p-4"
+        onsubmit={(event) => {
+          event.preventDefault();
+          void handleCreateProperty();
+        }}
+      >
+        <div>
+          <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-warm-text-secondary">Add property</p>
+        </div>
+        <input
+          bind:value={propertyDraftName}
+          class="rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary outline-none"
+          placeholder="Priority"
+        />
+        <select
+          bind:value={propertyDraftType}
+          class="rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary outline-none"
+        >
+          <option value="text">Text</option>
+          <option value="number">Number</option>
+          <option value="date">Date</option>
+          <option value="select">Select</option>
+          <option value="checkbox">Checkbox</option>
+        </select>
+        {#if propertyDraftType === 'select'}
+          <input
+            bind:value={propertyDraftOptions}
+            class="rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary outline-none"
+            placeholder="High, Medium, Low"
+          />
+        {/if}
+        <button
+          type="submit"
+          class="rounded-full bg-warm-text-primary px-4 py-3 text-sm font-bold text-warm-text-on-dark disabled:opacity-60"
+          disabled={!propertyDraftName.trim() || (propertyDraftType === 'select' && !propertyDraftOptions.trim())}
+        >
+          Add property
+        </button>
+      </form>
+    {/if}
+  </div>
+{/snippet}
+
+{#if selectedPublicId && !usePreviewData && listItems.data === null && !listItems.isLoading}
   <section class="rounded-[32px] border border-warm-border bg-warm-bg-card p-8 text-sm text-warm-text-secondary">
     This list is unavailable.
   </section>
-{:else if !usePreviewData && (visibleLists.isLoading || (selectedPublicId && selectedList.isLoading))}
+{:else if !usePreviewData && (visibleLists.isLoading || (selectedPublicId && listItems.isLoading))}
   <section aria-hidden="true" class="sr-only">Loading Lists...</section>
 {:else if !usePreviewData && visibleLists.error}
   <section class="rounded-[32px] border border-warm-border bg-warm-bg-card p-8 text-sm text-warm-text-secondary">
     {describeError(visibleLists.error, 'Unable to load lists right now.')}
   </section>
 {:else}
-  <section class="flex min-h-full flex-col text-warm-text-primary">
-      <div class="flex min-h-full flex-1 flex-col rounded-[18px] bg-warm-bg-card p-[14px] shadow-[0_18px_44px_rgb(20_17_12_/_10%)] md:rounded-[28px] md:p-6 min-[1200px]:flex-row min-[1200px]:gap-5">
-            <aside class="hidden w-[244px] shrink-0 flex-col gap-4 rounded-[20px] border border-warm-border bg-warm-bg p-[18px] min-[1200px]:flex">
-              <div class="flex items-center justify-between">
-                <h2 class="text-base font-semibold text-warm-text-primary">My Lists</h2>
-                <button
-                  type="button"
-                  class="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-warm-bg-dark text-sm font-semibold text-warm-text-on-dark"
-                  onclick={() => {
-                    showCreateDialog = true;
-                    createVisibility = listFilter;
-                  }}
-                >
-                  +
-                </button>
-              </div>
-
-              <div class="flex rounded-full bg-warm-section-mortgage p-1">
-                <button
-                  type="button"
-                  class={`flex-1 rounded-full px-3 py-2 text-[11px] font-bold ${
-                    listFilter === 'personal'
-                      ? 'bg-warm-text-primary text-warm-text-on-dark'
-                      : 'text-warm-text-secondary'
-                  }`}
-                  onclick={() => (listFilter = 'personal')}
-                >
-                  Personal
-                </button>
-                <button
-                  type="button"
-                  class={`flex-1 rounded-full px-3 py-2 text-[11px] font-bold ${
-                    listFilter === 'shared'
-                      ? 'bg-warm-text-primary text-warm-text-on-dark'
-                      : 'text-warm-text-secondary'
-                  }`}
-                  onclick={() => (listFilter = 'shared')}
-                >
-                  Shared
-                </button>
-              </div>
-
-              <div class="flex flex-col gap-[10px]">
-                {#if filteredLists.length}
-                  {#each filteredLists as list (list.publicId)}
-                    <div
-                      class={`rounded-2xl border p-[14px] ${
-                        list.selected
-                          ? 'border-warm-accent bg-warm-section-spend'
-                          : 'border-warm-border bg-warm-bg-card'
-                      }`}
-                    >
-                      <div class="flex items-start gap-3">
-                        <div class={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-semibold ${
-                          list.selected ? 'bg-warm-bg text-warm-text-primary' : 'bg-warm-section-mortgage text-warm-text-secondary'
-                        }`}>
-                          {listIcon(list.icon)}
-                        </div>
-                        <button
-                          type="button"
-                          class="min-w-0 flex-1 text-left"
-                          onclick={() => void navigateToList(list)}
-                        >
-                          <p class={`truncate text-sm ${list.selected ? 'font-bold text-warm-text-primary' : 'font-semibold text-warm-text-secondary'}`}>
-                            {list.name}
-                          </p>
-                          <p class="mt-1 text-[11px] text-warm-text-secondary">{list.description}</p>
-                        </button>
-                        <div class="relative">
-                          <button
-                            type="button"
-                            class="rounded-full px-2 py-1 text-sm text-warm-text-secondary"
-                            aria-label={`List actions for ${list.name}`}
-                            onclick={() => {
-                              menuTargetPublicId = menuTargetPublicId === list.publicId ? null : list.publicId;
-                            }}
-                          >
-                            •••
-                          </button>
-
-                          {#if menuTargetPublicId === list.publicId}
-                            <div class="absolute right-0 top-8 z-20 w-36 rounded-2xl border border-warm-border bg-warm-bg-card p-2 shadow-[0_20px_40px_rgba(61,46,34,0.16)]">
-                              <button
-                                type="button"
-                                class="flex w-full rounded-xl px-3 py-2 text-left text-sm text-warm-text-primary hover:bg-warm-bg"
-                                onclick={() => beginRename(list)}
-                              >
-                                Rename
-                              </button>
-                              <button
-                                type="button"
-                                class="flex w-full rounded-xl px-3 py-2 text-left text-sm text-warm-accent hover:bg-warm-bg"
-                                onclick={() => beginDelete(list)}
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          {/if}
-                        </div>
-                      </div>
-                    </div>
-                  {/each}
-                {:else}
-                  <p class="text-sm text-warm-text-secondary">No {listFilter} lists yet.</p>
-                {/if}
-              </div>
-            </aside>
-
-            <div class="min-w-0 flex-1">
-              <div class="flex min-[1200px]:hidden">
-                <div class="w-full text-warm-text-primary">
-                  <div class="flex items-center justify-between pb-4">
-                    <button
-                      type="button"
-                      class="rounded-full border border-[rgb(29_26_20_/_14%)] px-4 py-2 text-sm font-bold text-warm-text-secondary"
-                      onclick={() => (showListPicker = true)}
-                    >
-                      {screen.title} ▾
-                    </button>
-                    <button
-                      type="button"
-                      class="flex h-9 w-9 items-center justify-center rounded-full bg-warm-accent text-base font-bold text-white"
-                      onclick={() => {
-                        showCreateDialog = true;
-                        createVisibility = selectedPresentedList?.visibility ?? 'personal';
-                      }}
-                    >
-                      +
-                    </button>
-                  </div>
-
-                  <div>
-                    <p class="text-xs text-warm-text-secondary">{screen.metaLabel}</p>
-                    <div class="mt-4 flex items-center justify-between gap-4">
-                      <h2 class="font-warm-display text-[20px] leading-tight">Items</h2>
-                      <div class="flex items-center gap-2">
-                        <button type="button" class="rounded-full bg-warm-text-primary px-4 py-2 text-xs font-bold text-warm-text-on-dark">
-                          Auto
-                        </button>
-                        <button type="button" class="flex h-9 w-9 items-center justify-center rounded-full bg-warm-section-mortgage text-xs text-warm-text-secondary">
-                          ⌕
-                        </button>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      class="mt-4 flex w-full items-center gap-3 rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-left text-[13px] text-warm-text-tertiary"
-                    >
-                      <span class="text-warm-accent">＋</span>
-                      Add item or paste a recipe...
-                    </button>
-
-                    <div class="mt-4 flex flex-col gap-3">
-                      {#each screen.categories as category (category.id)}
-                        <section class={`rounded-[18px] ${category.collapsed ? 'bg-warm-section-mortgage' : 'border border-warm-border bg-warm-bg-card'} p-[14px]`}>
-                          <div class="flex items-center gap-2">
-                            <span class="text-sm text-warm-text-secondary">{category.collapsed ? '›' : '⌄'}</span>
-                            <h3 class="flex-1 text-sm font-bold">{category.title}</h3>
-                            {#if !category.collapsed}
-                              <span class={`rounded-full px-2 py-1 text-[10px] font-semibold ${
-                                category.sourceTone === 'sage'
-                                  ? 'bg-warm-section-income text-warm-positive'
-                                  : 'bg-warm-section-mortgage text-warm-text-secondary'
-                              }`}>
-                                {category.sourceLabel}
-                              </span>
-                              <span class="text-xs text-warm-text-secondary">{category.items.length} items</span>
-                            {:else}
-                              <span class="text-xs text-warm-text-secondary">{category.collapsedCountLabel}</span>
-                            {/if}
-                          </div>
-
-                          {#if !category.collapsed}
-                            <div class="mt-3 flex flex-col gap-1">
-                              {#each category.items as item (item.id)}
-                                <button
-                                  type="button"
-                                  class={`flex items-center gap-3 rounded-xl px-1 py-2 text-left ${
-                                    item.selected ? 'bg-warm-bg' : ''
-                                  }`}
-                                  onclick={() => openItem(item)}
-                                >
-                                  <span class={`h-5 w-5 rounded-md border-2 ${
-                                    item.selected
-                                      ? 'border-warm-accent bg-warm-section-spend'
-                                      : 'border-warm-section-income'
-                                  }`}></span>
-                                  <span class="min-w-0 flex-1">
-                                    <span class={`block truncate text-sm ${item.selected ? 'font-bold' : 'font-semibold'}`}>
-                                      {item.title}
-                                    </span>
-                                  </span>
-                                  {#if item.tagLabel}
-                                    <span class={`rounded-full px-2 py-1 text-[10px] font-medium ${
-                                      item.tagTone === 'butter'
-                                        ? 'bg-warm-card-butter text-[#D9893A]'
-                                        : 'bg-warm-section-mortgage text-warm-text-secondary'
-                                    }`}>
-                                      {item.tagLabel}
-                                    </span>
-                                  {/if}
-                                  {#if item.dueLabel}
-                                    <span class={`text-xs ${item.dueTone === 'accent' ? 'font-bold text-warm-accent' : 'text-warm-text-secondary'}`}>
-                                      {item.dueLabel}
-                                    </span>
-                                  {/if}
-                                </button>
-                              {/each}
-                            </div>
-                          {/if}
-                        </section>
-                      {/each}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="hidden min-h-full gap-5 min-[1200px]:flex">
-                <section class="flex min-w-0 flex-1 flex-col gap-4">
-                  <div class="flex items-start justify-between gap-4">
-                    <div>
-                      <h2 class="font-warm-display text-[30px] leading-none text-warm-text-primary">
-                        {screen.title}
-                      </h2>
-                      <p class="mt-1 text-xs text-warm-text-secondary">{screen.metaLabel}</p>
-                    </div>
-                    <div class="flex items-center gap-[10px]">
-                      <button type="button" class="rounded-full bg-warm-text-primary px-[14px] py-[10px] text-sm font-semibold text-warm-text-on-dark">
-                        Auto category
-                      </button>
-                      <button type="button" class="flex h-[38px] w-[38px] items-center justify-center rounded-full bg-warm-bg-dark-muted text-sm text-warm-text-on-dark">
-                        ⌕
-                      </button>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    class="flex items-center gap-[10px] rounded-2xl border border-warm-border bg-warm-bg px-[14px] py-3 text-left text-[13px] text-warm-text-tertiary"
-                  >
-                    <span class="text-lg leading-none text-warm-accent">＋</span>
-                    <span class="flex-1">Add milk, bread, or paste a recipe...</span>
-                    <span class="rounded-full bg-warm-card-butter px-3 py-2 text-[11px] font-bold text-[#D9893A]">
-                      Due date
-                    </span>
-                  </button>
-
-                  <div class="flex flex-1 flex-col gap-3">
-                    {#each screen.categories as category (category.id)}
-                      <section class={`rounded-[18px] ${category.collapsed ? 'bg-warm-section-mortgage' : 'border border-warm-border bg-warm-bg-card'} p-[14px]`}>
-                        <div class="flex items-center gap-2">
-                          <span class="text-sm text-warm-text-secondary">{category.collapsed ? '›' : '⌄'}</span>
-                          <h3 class="flex-1 text-sm font-bold">{category.title}</h3>
-                          {#if !category.collapsed}
-                            <span class={`rounded-full px-2 py-1 text-[10px] font-semibold ${
-                              category.sourceTone === 'sage'
-                                ? 'bg-warm-section-income text-warm-positive'
-                                : 'bg-warm-section-mortgage text-warm-text-secondary'
-                            }`}>
-                              {category.sourceLabel}
-                            </span>
-                            <span class="text-xs text-warm-text-secondary">{category.items.length} items</span>
-                          {:else}
-                            <span class="text-xs text-warm-text-secondary">{category.collapsedCountLabel}</span>
-                          {/if}
-                        </div>
-
-                        {#if !category.collapsed}
-                          <div class="mt-3 flex flex-col gap-1">
-                            {#each category.items as item (item.id)}
-                              <button
-                                type="button"
-                                class={`flex items-center gap-3 rounded-xl px-1 py-2 text-left ${item.selected ? 'bg-warm-bg' : ''}`}
-                                onclick={() => openItem(item)}
-                              >
-                                <span class={`h-5 w-5 rounded-md border-2 ${
-                                  item.selected
-                                    ? 'border-warm-accent bg-warm-section-spend'
-                                    : 'border-warm-section-income'
-                                }`}></span>
-                                <span class="min-w-0 flex-1">
-                                  <span class={`block truncate text-sm ${item.selected ? 'font-bold' : 'font-semibold'}`}>
-                                    {item.title}
-                                  </span>
-                                </span>
-                                {#if item.tagLabel}
-                                  <span class={`rounded-full px-2 py-1 text-[10px] font-medium ${
-                                    item.tagTone === 'butter'
-                                      ? 'bg-warm-card-butter text-[#D9893A]'
-                                      : 'bg-warm-section-mortgage text-warm-text-secondary'
-                                  }`}>
-                                    {item.tagLabel}
-                                  </span>
-                                {/if}
-                                {#if item.dueLabel}
-                                  <span class={`w-[72px] text-right text-xs ${item.dueTone === 'accent' ? 'font-bold text-warm-accent' : 'text-warm-text-secondary'}`}>
-                                    {item.dueLabel}
-                                  </span>
-                                {/if}
-                              </button>
-                            {/each}
-                          </div>
-                        {/if}
-                      </section>
-                    {/each}
-                  </div>
-                </section>
-
-                <aside class="w-[274px] shrink-0 rounded-[20px] border border-warm-border bg-warm-bg p-[18px]">
-                  <div class="flex items-center justify-between">
-                    <p class="text-sm font-semibold text-warm-text-primary">Item details</p>
-                    <button type="button" class="text-sm text-warm-text-secondary">×</button>
-                  </div>
-
-                  <div class="mt-4 rounded-[18px] bg-warm-section-spend p-4">
-                    <div class="flex h-7 w-7 items-center justify-center rounded-full bg-warm-bg text-xs font-bold text-warm-accent">
-                      S
-                    </div>
-                    <h3 class="mt-3 font-warm-display text-[28px] leading-none text-warm-text-primary">
-                      {selectedItemDetail.title}
-                    </h3>
-                    <p class="mt-2 text-xs text-warm-text-secondary">{selectedItemDetail.meta}</p>
-                  </div>
-
-                  <div class="mt-4 flex flex-col gap-2">
-                    {#each selectedItemDetail.properties as property (property.label)}
-                      <div class="flex items-center justify-between py-2 text-xs">
-                        <span class="text-warm-text-secondary">{property.label}</span>
-                        <span class={property.accent ? 'font-bold text-warm-accent' : 'font-bold text-warm-text-primary'}>
-                          {property.value}
-                        </span>
-                      </div>
-                    {/each}
-                  </div>
-
-                  <div class="mt-4 rounded-2xl border border-warm-border bg-warm-bg-card p-[14px]">
-                    <p class="text-xs font-bold text-warm-text-primary">Notes</p>
-                    <p class="mt-2 text-xs leading-5 text-warm-text-secondary">{selectedItemDetail.note}</p>
-                  </div>
-
-                  <button
-                    type="button"
-                    class="mt-4 flex w-full items-center justify-center rounded-full bg-warm-text-primary px-4 py-3 text-sm font-bold text-warm-text-on-dark"
-                  >
-                    Mark as bought
-                  </button>
-                </aside>
-              </div>
-      </div>
-    </div>
-
-    {#if uiMode === 'mobile' && showListPicker}
-      <button
-        type="button"
-        class="fixed inset-0 z-40 bg-black/30"
-        aria-label="Close list picker"
-        onclick={() => (showListPicker = false)}
-      ></button>
-      <section class="fixed inset-x-0 bottom-0 z-50 max-h-[76dvh] overflow-auto rounded-t-[18px] bg-warm-bg-card p-[14px] shadow-[0_-20px_50px_rgb(0_0_0_/_20%)]">
-        <div class="mx-auto h-[5px] w-11 rounded-full bg-[rgb(29_26_20_/_14%)]"></div>
-        <div class="mt-3 flex items-center justify-between">
-          <h2 class="text-base font-bold text-warm-text-primary">Switch list</h2>
-          <button type="button" class="text-sm text-warm-text-secondary" onclick={() => (showListPicker = false)}>×</button>
+  <section class="flex min-h-full flex-col gap-4 text-warm-text-primary min-[1100px]:flex-row">
+    <aside class="rounded-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_18px_44px_rgb(20_17_12_/_10%)] min-[1100px]:w-[300px]">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-base font-semibold text-warm-text-primary">My Lists</h2>
+          <p class="mt-1 text-xs text-warm-text-secondary">Plain working household lists.</p>
         </div>
-
-        <div class="mt-3 rounded-full bg-warm-section-mortgage px-4 py-3 text-[13px] text-warm-text-tertiary">
-          Search lists
-        </div>
-
-        <div class="mt-3 flex rounded-full bg-warm-section-mortgage p-1">
-          <button
-            type="button"
-            class={`flex-1 rounded-full px-3 py-2 text-[11px] font-bold ${
-              listFilter === 'personal'
-                ? 'bg-warm-text-primary text-warm-text-on-dark'
-                : 'text-warm-text-secondary'
-            }`}
-            onclick={() => (listFilter = 'personal')}
-          >
-            Personal
-          </button>
-          <button
-            type="button"
-            class={`flex-1 rounded-full px-3 py-2 text-[11px] font-bold ${
-              listFilter === 'shared'
-                ? 'bg-warm-text-primary text-warm-text-on-dark'
-                : 'text-warm-text-secondary'
-            }`}
-            onclick={() => (listFilter = 'shared')}
-          >
-            Shared
-          </button>
-        </div>
-
-        <div class="mt-4 flex flex-col gap-3">
-          {#each filteredLists as list (list.publicId)}
-            <div class={`rounded-2xl p-[12px_14px] ${list.selected ? 'border border-warm-accent bg-warm-section-spend' : ''}`}>
-              <div class="flex items-center gap-3">
-                <div class={`flex h-10 w-10 items-center justify-center rounded-xl text-sm font-semibold ${
-                  list.selected ? 'bg-warm-bg text-warm-text-primary' : 'bg-warm-section-mortgage text-warm-text-secondary'
-                }`}>
-                  {listIcon(list.icon)}
-                </div>
-                <button type="button" class="min-w-0 flex-1 text-left" onclick={() => void navigateToList(list)}>
-                  <p class={`truncate text-sm ${list.selected ? 'font-bold text-warm-text-primary' : 'font-semibold text-warm-text-secondary'}`}>
-                    {list.name}
-                  </p>
-                  <p class="text-[11px] text-warm-text-tertiary">{list.description}</p>
-                </button>
-                <button
-                  type="button"
-                  class="text-sm text-warm-text-secondary"
-                  onclick={() => {
-                    menuTargetPublicId = menuTargetPublicId === list.publicId ? null : list.publicId;
-                  }}
-                >
-                  •••
-                </button>
-              </div>
-
-              {#if menuTargetPublicId === list.publicId}
-                <div class="mt-3 flex gap-2">
-                  <button
-                    type="button"
-                    class="flex-1 rounded-full bg-warm-bg px-3 py-2 text-sm font-medium text-warm-text-primary"
-                    onclick={() => beginRename(list)}
-                  >
-                    Rename
-                  </button>
-                  <button
-                    type="button"
-                    class="flex-1 rounded-full bg-warm-bg px-3 py-2 text-sm font-medium text-warm-accent"
-                    onclick={() => beginDelete(list)}
-                  >
-                    Delete
-                  </button>
-                </div>
-              {/if}
-            </div>
-          {/each}
-        </div>
-
         <button
           type="button"
-          class="mt-4 flex w-full items-center justify-center rounded-full bg-warm-text-primary px-4 py-3 text-sm font-bold text-warm-text-on-dark"
+          class="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-warm-bg-dark text-sm font-semibold text-warm-text-on-dark"
           onclick={() => {
             showCreateDialog = true;
             createVisibility = listFilter;
           }}
         >
-          + New list
+          +
         </button>
-      </section>
-    {/if}
+      </div>
 
-    {#if uiMode === 'mobile' && showItemSheet && currentItem}
-      <button
-        type="button"
-        class="fixed inset-0 z-40 bg-black/30"
-        aria-label="Close item details"
-        onclick={() => (showItemSheet = false)}
-      ></button>
-      <section class="fixed inset-x-0 bottom-0 z-50 max-h-[76dvh] overflow-auto rounded-t-[18px] bg-warm-bg-card p-[14px] shadow-[0_-20px_50px_rgb(0_0_0_/_20%)]">
-        <div class="mx-auto h-[5px] w-11 rounded-full bg-[rgb(29_26_20_/_14%)]"></div>
-        <div class="mt-3 flex items-center justify-between">
-          <p class="text-sm font-semibold text-warm-text-primary">Item details</p>
-          <button type="button" class="text-sm text-warm-text-secondary" onclick={() => (showItemSheet = false)}>×</button>
-        </div>
-
-        <div class="mt-4 rounded-[18px] bg-warm-section-spend p-4">
-          <div class="flex h-7 w-7 items-center justify-center rounded-full bg-warm-bg text-xs font-bold text-warm-accent">
-            S
-          </div>
-          <h3 class="mt-3 font-warm-display text-[28px] leading-none text-warm-text-primary">
-            {selectedItemDetail.title}
-          </h3>
-          <p class="mt-2 text-xs text-warm-text-secondary">{selectedItemDetail.meta}</p>
-        </div>
-
-        <div class="mt-4 flex flex-col gap-2">
-          {#each selectedItemDetail.properties as property (property.label)}
-            <div class="flex items-center justify-between py-2 text-xs">
-              <span class="text-warm-text-secondary">{property.label}</span>
-              <span class={property.accent ? 'font-bold text-warm-accent' : 'font-bold text-warm-text-primary'}>
-                {property.value}
-              </span>
-            </div>
-          {/each}
-        </div>
-
-        <div class="mt-4 rounded-2xl border border-warm-border bg-warm-bg-card p-[14px]">
-          <p class="text-xs font-bold text-warm-text-primary">Notes</p>
-          <p class="mt-2 text-xs leading-5 text-warm-text-secondary">{selectedItemDetail.note}</p>
-        </div>
-
+      <div class="mt-4 flex rounded-full bg-warm-section-mortgage p-1">
         <button
           type="button"
-          class="mt-4 flex w-full items-center justify-center rounded-full bg-warm-text-primary px-4 py-3 text-sm font-bold text-warm-text-on-dark"
+          class={`flex-1 rounded-full px-3 py-2 text-[11px] font-bold ${
+            listFilter === 'personal' ? 'bg-warm-text-primary text-warm-text-on-dark' : 'text-warm-text-secondary'
+          }`}
+          onclick={() => (listFilter = 'personal')}
         >
-          Mark as bought
+          Personal
         </button>
+        <button
+          type="button"
+          class={`flex-1 rounded-full px-3 py-2 text-[11px] font-bold ${
+            listFilter === 'shared' ? 'bg-warm-text-primary text-warm-text-on-dark' : 'text-warm-text-secondary'
+          }`}
+          onclick={() => (listFilter = 'shared')}
+        >
+          Shared
+        </button>
+      </div>
+
+      <div class="mt-4 flex flex-col gap-3">
+        {#if filteredLists.length}
+          {#each filteredLists as list (list.publicId)}
+            <div
+              class={`rounded-2xl border p-[14px] ${
+                list.selected ? 'border-warm-accent bg-warm-section-spend' : 'border-warm-border bg-warm-bg-card'
+              }`}
+            >
+              <div class="flex items-start gap-3">
+                <button type="button" class="min-w-0 flex-1 text-left" onclick={() => void navigateToList(list)}>
+                  <p class={`truncate text-sm ${list.selected ? 'font-bold text-warm-text-primary' : 'font-semibold text-warm-text-secondary'}`}>
+                    {list.name}
+                  </p>
+                  <p class="mt-1 text-[11px] text-warm-text-secondary">{list.description}</p>
+                </button>
+                <div class="relative">
+                  <button
+                    type="button"
+                    class="rounded-full px-2 py-1 text-sm text-warm-text-secondary"
+                    aria-label={`List actions for ${list.name}`}
+                    onclick={() => {
+                      menuTargetPublicId = menuTargetPublicId === list.publicId ? null : list.publicId;
+                    }}
+                  >
+                    •••
+                  </button>
+
+                  {#if menuTargetPublicId === list.publicId}
+                    <div class="absolute right-0 top-8 z-20 w-36 rounded-2xl border border-warm-border bg-warm-bg-card p-2 shadow-[0_20px_40px_rgba(61,46,34,0.16)]">
+                      <button
+                        type="button"
+                        class="flex w-full rounded-xl px-3 py-2 text-left text-sm text-warm-text-primary hover:bg-warm-bg"
+                        onclick={() => beginRename(list)}
+                      >
+                        Rename
+                      </button>
+                      <button
+                        type="button"
+                        class="flex w-full rounded-xl px-3 py-2 text-left text-sm text-warm-accent hover:bg-warm-bg"
+                        onclick={() => beginDelete(list)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  {/if}
+                </div>
+              </div>
+            </div>
+          {/each}
+        {:else}
+          <p class="text-sm text-warm-text-secondary">No {listFilter} lists yet.</p>
+        {/if}
+      </div>
+    </aside>
+
+    <section class="min-w-0 flex-1 rounded-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_18px_44px_rgb(20_17_12_/_10%)]">
+      {#if selectedRow}
+        <div class="flex flex-col gap-4">
+          <div class="flex flex-col gap-2 min-[700px]:flex-row min-[700px]:items-end min-[700px]:justify-between">
+            <div>
+              <p class="text-xs text-warm-text-secondary">{metaLabel}</p>
+              <h2 class="font-warm-display text-[28px] leading-none text-warm-text-primary min-[700px]:text-[34px]">
+                {selectedRow.name}
+              </h2>
+            </div>
+            <button
+              type="button"
+              class="rounded-full border border-warm-border px-4 py-2 text-sm font-semibold text-warm-text-secondary min-[900px]:hidden"
+              onclick={() => (showMobileDetails = true)}
+            >
+              {selectedItem ? 'Item details' : 'List properties'}
+            </button>
+          </div>
+
+          <form
+            class="flex flex-col gap-2 rounded-[24px] border border-warm-border bg-warm-bg p-3 min-[700px]:flex-row"
+            onsubmit={(event) => {
+              event.preventDefault();
+              void handleCreateItem();
+            }}
+          >
+            <input
+              bind:value={itemDraft}
+              class="flex-1 rounded-2xl bg-transparent px-2 py-2 text-sm text-warm-text-primary outline-none"
+              placeholder="Add an item"
+            />
+            <button
+              type="submit"
+              class="rounded-full bg-warm-text-primary px-4 py-2 text-sm font-semibold text-warm-text-on-dark disabled:opacity-60"
+              disabled={!itemDraft.trim()}
+            >
+              Add item
+            </button>
+          </form>
+
+          {#if itemMutationError}
+            <p class="text-sm text-warm-accent">{itemMutationError}</p>
+          {/if}
+
+          <div class="grid gap-4 min-[900px]:grid-cols-[minmax(0,1fr)_260px]">
+            <div class="flex flex-col gap-4">
+              <section class="rounded-[24px] border border-warm-border bg-warm-bg p-4">
+                <div class="flex items-center justify-between gap-3">
+                  <div>
+                    <h3 class="text-sm font-bold text-warm-text-primary">Active items</h3>
+                    <p class="mt-1 text-xs text-warm-text-secondary">Drag by the handle to reorder.</p>
+                  </div>
+                  <span class="rounded-full bg-warm-section-mortgage px-3 py-1 text-[11px] font-semibold text-warm-text-secondary">
+                    {activeItems.length}
+                  </span>
+                </div>
+
+                {#if activeItems.length}
+                  <ul class="mt-4 flex flex-col gap-2">
+                    {#each activeItems as item (item._id)}
+                      <li
+                        data-active-item-id={item._id}
+                        class={`rounded-2xl border px-3 py-3 ${
+                          draggingItemId === item._id
+                            ? 'border-warm-accent bg-warm-section-spend'
+                            : dragOverItemId === item._id
+                              ? 'border-warm-accent/60 bg-warm-section-spend/60'
+                              : selectedItemId === item._id
+                                ? 'border-warm-accent/70 bg-warm-section-spend/40'
+                              : 'border-warm-border bg-warm-bg-card'
+                        }`}
+                      >
+                        {#if editingItemId === item._id}
+                          <form
+                            class="flex flex-col gap-2 min-[700px]:flex-row"
+                            onsubmit={(event) => {
+                              event.preventDefault();
+                              void saveEditedItem();
+                            }}
+                          >
+                            <input
+                              bind:value={editingItemTitle}
+                              class="flex-1 rounded-2xl border border-warm-border bg-warm-bg px-3 py-2 text-sm text-warm-text-primary outline-none"
+                            />
+                            <div class="flex gap-2">
+                              <button
+                                type="button"
+                                class="rounded-full border border-warm-border px-3 py-2 text-xs font-semibold text-warm-text-secondary"
+                                onclick={() => {
+                                  editingItemId = null;
+                                  editingItemTitle = '';
+                                }}
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="submit"
+                                class="rounded-full bg-warm-text-primary px-3 py-2 text-xs font-semibold text-warm-text-on-dark disabled:opacity-60"
+                                disabled={!editingItemTitle.trim()}
+                              >
+                                Save
+                              </button>
+                            </div>
+                          </form>
+                        {:else}
+                          <div class="flex items-center gap-3">
+                            <button
+                              type="button"
+                              class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-warm-section-income"
+                              aria-label={`Mark ${item.title} complete`}
+                              onclick={() => void toggleItemCompletion(item)}
+                            >
+                              <span class="h-2.5 w-2.5 rounded-full bg-warm-section-income"></span>
+                            </button>
+                            <button
+                              type="button"
+                              class="flex h-9 w-9 shrink-0 cursor-grab items-center justify-center rounded-full bg-warm-section-mortgage text-sm text-warm-text-secondary active:cursor-grabbing"
+                              aria-label={`Drag to reorder ${item.title}`}
+                              onpointerdown={(event) => startDragging(item._id, event)}
+                            >
+                              ≡
+                            </button>
+                            <button
+                              type="button"
+                              class="min-w-0 flex-1 text-left text-sm font-semibold text-warm-text-primary"
+                              onclick={() => openItemDetails(item._id)}
+                            >
+                              {item.title}
+                            </button>
+                            <div class="flex items-center gap-2">
+                              <button
+                                type="button"
+                                class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary"
+                                onclick={() => beginEditingItem(item)}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-accent"
+                                onclick={() => void removeItem(item._id)}
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        {/if}
+                      </li>
+                    {/each}
+                  </ul>
+                {:else}
+                  <p class="mt-4 text-sm text-warm-text-secondary">No active items yet.</p>
+                {/if}
+              </section>
+
+              <section class="rounded-[24px] border border-warm-border bg-warm-bg p-4">
+                <div class="flex items-center justify-between gap-3">
+                  <div>
+                    <h3 class="text-sm font-bold text-warm-text-primary">Completed items</h3>
+                    <p class="mt-1 text-xs text-warm-text-secondary">Newest completions stay visible until you clear or remove them.</p>
+                  </div>
+                  <button
+                    type="button"
+                    class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary disabled:opacity-60"
+                    onclick={() => void handleClearCompletedItems()}
+                    disabled={!completedItems.length}
+                  >
+                    Clear completed
+                  </button>
+                </div>
+
+                {#if completedItems.length}
+                  <ul class="mt-4 flex flex-col gap-2">
+                    {#each completedItems as item (item._id)}
+                      <li class="rounded-2xl border border-warm-border bg-warm-bg-card px-3 py-3">
+                        <div class="flex items-center gap-3">
+                          <button
+                            type="button"
+                            class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-warm-accent bg-warm-section-spend text-[11px] text-warm-accent"
+                            aria-label={`Undo completion for ${item.title}`}
+                            onclick={() => void toggleItemCompletion(item)}
+                          >
+                            ✓
+                          </button>
+                          <button
+                            type="button"
+                            class="min-w-0 flex-1 text-left text-sm text-warm-text-secondary line-through"
+                            onclick={() => openItemDetails(item._id)}
+                          >
+                            {item.title}
+                          </button>
+                          <div class="flex items-center gap-2">
+                            <button
+                              type="button"
+                              class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary"
+                              onclick={() => void toggleItemCompletion(item)}
+                            >
+                              Undo
+                            </button>
+                            <button
+                              type="button"
+                              class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-accent"
+                              onclick={() => void removeItem(item._id)}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      </li>
+                    {/each}
+                  </ul>
+                {:else}
+                  <p class="mt-4 text-sm text-warm-text-secondary">No completed items yet.</p>
+                {/if}
+              </section>
+            </div>
+
+            <aside class="hidden rounded-[24px] border border-warm-border bg-warm-bg p-4 min-[900px]:block">
+              {@render detailSurface()}
+            </aside>
+          </div>
+        </div>
+      {:else}
+        <div class="rounded-[24px] border border-warm-border bg-warm-bg p-6 text-sm text-warm-text-secondary">
+          Create a list or select one from the sidebar.
+        </div>
+      {/if}
+    </section>
+
+    {#if showMobileDetails}
+      <button
+        type="button"
+        class="fixed inset-0 z-40 bg-[#2D2D2D99] min-[900px]:hidden"
+        aria-label="Close details"
+        onclick={() => closeMobileDetails()}
+      ></button>
+      <section class="fixed inset-x-0 bottom-0 z-50 max-h-[82vh] overflow-y-auto rounded-t-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_-12px_40px_rgba(61,46,34,0.18)] min-[900px]:hidden">
+        <div class="mb-4 flex items-center justify-between gap-3">
+          <div class="h-1.5 w-14 rounded-full bg-warm-border"></div>
+          <button
+            type="button"
+            class="rounded-full border border-warm-border px-3 py-2 text-xs font-semibold text-warm-text-secondary"
+            onclick={() => closeMobileDetails()}
+          >
+            Done
+          </button>
+        </div>
+        {@render detailSurface()}
       </section>
     {/if}
 
@@ -910,9 +1716,7 @@
               <button
                 type="button"
                 class={`flex-1 rounded-full px-3 py-2 text-[11px] font-bold ${
-                  createVisibility === 'shared'
-                    ? 'bg-warm-text-primary text-warm-text-on-dark'
-                    : 'text-warm-text-secondary'
+                  createVisibility === 'shared' ? 'bg-warm-text-primary text-warm-text-on-dark' : 'text-warm-text-secondary'
                 }`}
                 onclick={() => (createVisibility = 'shared')}
               >
@@ -976,7 +1780,7 @@
           </form>
         {:else if deleteTargetPublicId}
           <h2 class="font-warm-display text-[26px] text-warm-text-primary">Delete list</h2>
-          <p class="mt-2 text-sm text-warm-text-secondary">This removes the list from the picker and active route.</p>
+          <p class="mt-2 text-sm text-warm-text-secondary">This removes the list and its items from the current view.</p>
 
           <div class="mt-5 flex gap-2">
             <button

@@ -2,10 +2,62 @@ import { v } from 'convex/values';
 import { customAlphabet } from 'nanoid/non-secure';
 
 import { mutation, type MutationCtx } from '../_generated/server';
+import {
+  clearCompletedListItemsHandler,
+  completeListItemHandler,
+  createListItemHandler,
+  deleteListItemHandler,
+  deleteListSubtree,
+  renameListItemHandler,
+  reorderListItemHandler,
+  uncompleteListItemHandler
+} from './items';
 import { buildListPublicId, slugifyListName } from './model';
+import {
+  clearListItemPropertyValueHandler,
+  createListPropertyHandler,
+  removeListPropertyHandler,
+  renameListPropertyHandler,
+  reorderListPropertyHandler,
+  replaceListPropertyOptionsHandler,
+  setListItemPropertyValueHandler
+} from './properties';
 
 const createSeed = customAlphabet('abcdefghjkmnpqrstuvwxyz23456789', 8);
 const CREATE_LIST_PUBLIC_ID_ATTEMPTS = 3;
+const listPropertyType = v.union(
+  v.literal('text'),
+  v.literal('number'),
+  v.literal('date'),
+  v.literal('select'),
+  v.literal('checkbox')
+);
+const listPropertyOption = v.object({
+  id: v.string(),
+  label: v.string()
+});
+const listItemPropertyValue = v.union(
+  v.object({
+    type: v.literal('text'),
+    text: v.string()
+  }),
+  v.object({
+    type: v.literal('number'),
+    number: v.number()
+  }),
+  v.object({
+    type: v.literal('date'),
+    date: v.number()
+  }),
+  v.object({
+    type: v.literal('select'),
+    optionId: v.string()
+  }),
+  v.object({
+    type: v.literal('checkbox'),
+    checked: v.boolean()
+  })
+);
 
 type ListsMutationCtx = Pick<MutationCtx, 'auth' | 'db'>;
 
@@ -13,6 +65,7 @@ export function assertCanEditList(
   row: { visibility: 'personal' | 'shared'; createdByUserId: string },
   currentUserId: string
 ) {
+  if (row.visibility === 'shared') return;
   if (row.createdByUserId !== currentUserId) throw new Error('List unavailable');
 }
 
@@ -104,6 +157,7 @@ export async function deleteListHandler(ctx: ListsMutationCtx, { publicId }: { p
   if (!row) throw new Error('List unavailable');
 
   assertCanEditList(row, identity.subject);
+  await deleteListSubtree(ctx, row._id);
   await ctx.db.delete(row._id);
   return { publicId };
 }
@@ -111,4 +165,114 @@ export async function deleteListHandler(ctx: ListsMutationCtx, { publicId }: { p
 export const deleteList = mutation({
   args: { publicId: v.string() },
   handler: deleteListHandler
+});
+
+export const createListItem = mutation({
+  args: {
+    listPublicId: v.string(),
+    title: v.string()
+  },
+  handler: createListItemHandler
+});
+
+export const renameListItem = mutation({
+  args: {
+    itemId: v.id('listItems'),
+    title: v.string()
+  },
+  handler: renameListItemHandler
+});
+
+export const deleteListItem = mutation({
+  args: {
+    itemId: v.id('listItems')
+  },
+  handler: deleteListItemHandler
+});
+
+export const completeListItem = mutation({
+  args: {
+    itemId: v.id('listItems')
+  },
+  handler: completeListItemHandler
+});
+
+export const uncompleteListItem = mutation({
+  args: {
+    itemId: v.id('listItems')
+  },
+  handler: uncompleteListItemHandler
+});
+
+export const reorderListItem = mutation({
+  args: {
+    itemId: v.id('listItems'),
+    targetIndex: v.number()
+  },
+  handler: reorderListItemHandler
+});
+
+export const clearCompletedListItems = mutation({
+  args: {
+    listPublicId: v.string()
+  },
+  handler: clearCompletedListItemsHandler
+});
+
+export const createListProperty = mutation({
+  args: {
+    listPublicId: v.string(),
+    name: v.string(),
+    type: listPropertyType,
+    options: v.optional(v.array(listPropertyOption))
+  },
+  handler: createListPropertyHandler
+});
+
+export const reorderListProperty = mutation({
+  args: {
+    propertyId: v.id('listProperties'),
+    targetIndex: v.number()
+  },
+  handler: reorderListPropertyHandler
+});
+
+export const renameListProperty = mutation({
+  args: {
+    propertyId: v.id('listProperties'),
+    name: v.string()
+  },
+  handler: renameListPropertyHandler
+});
+
+export const removeListProperty = mutation({
+  args: {
+    propertyId: v.id('listProperties')
+  },
+  handler: removeListPropertyHandler
+});
+
+export const replaceListPropertyOptions = mutation({
+  args: {
+    propertyId: v.id('listProperties'),
+    options: v.array(listPropertyOption)
+  },
+  handler: replaceListPropertyOptionsHandler
+});
+
+export const setListItemPropertyValue = mutation({
+  args: {
+    itemId: v.id('listItems'),
+    propertyId: v.id('listProperties'),
+    value: listItemPropertyValue
+  },
+  handler: setListItemPropertyValueHandler
+});
+
+export const clearListItemPropertyValue = mutation({
+  args: {
+    itemId: v.id('listItems'),
+    propertyId: v.id('listProperties')
+  },
+  handler: clearListItemPropertyValueHandler
 });

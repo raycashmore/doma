@@ -185,5 +185,56 @@ export default defineSchema({
   })
     .index('by_public_id', ['publicId'])
     .index('by_created_by', ['createdByUserId'])
-    .index('by_visibility', ['visibility'])
+    .index('by_visibility', ['visibility']),
+  listItems: defineTable({
+    listId: v.id('lists'),
+    title: v.string(),
+    sortOrder: v.number(),
+    completedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number()
+  })
+    .index('by_list_id', ['listId'])
+    .index('by_list_id_and_sort_order', ['listId', 'sortOrder'])
+    .index('by_list_id_and_completed_at', ['listId', 'completedAt']),
+  listProperties: defineTable({
+    listId: v.id('lists'),
+    name: v.string(),
+    type: v.union(
+      v.literal('text'),
+      v.literal('number'),
+      v.literal('date'),
+      v.literal('select'),
+      v.literal('checkbox')
+    ),
+    sortOrder: v.number(),
+    options: v.optional(
+      v.array(
+        v.object({
+          id: v.string(),
+          label: v.string()
+        })
+      )
+    ),
+    createdAt: v.number(),
+    updatedAt: v.number()
+  })
+    .index('by_list_id', ['listId'])
+    .index('by_list_id_and_sort_order', ['listId', 'sortOrder']),
+  listItemPropertyValues: defineTable({
+    listId: v.id('lists'),
+    listItemId: v.id('listItems'),
+    listPropertyId: v.id('listProperties'),
+    textValue: v.optional(v.string()),
+    numberValue: v.optional(v.number()),
+    dateValue: v.optional(v.number()),
+    selectOptionId: v.optional(v.string()),
+    checkboxValue: v.optional(v.boolean()),
+    createdAt: v.number(),
+    updatedAt: v.number()
+  })
+    .index('by_list_id', ['listId'])
+    .index('by_item_id', ['listItemId'])
+    .index('by_property_id', ['listPropertyId'])
+    .index('by_item_id_and_property_id', ['listItemId', 'listPropertyId'])
 });
