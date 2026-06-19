@@ -974,6 +974,7 @@
     previousListPublicId = listPublicId;
     selectedItemId = null;
     showMobileDetails = false;
+    rightPanel = 'closed';
     resetValueEditor();
     cancelPropertyRename();
     pendingRemovePropertyId = null;
@@ -985,6 +986,7 @@
     if (selectedItem) return;
     selectedItemId = null;
     showMobileDetails = false;
+    rightPanel = 'closed';
     resetValueEditor();
   });
 </script>
@@ -996,7 +998,7 @@
         item={selectedItem}
         properties={visibleProperties}
         completed={selectedItem.completedAt !== undefined}
-        error={propertyMutationError}
+        error={itemMutationError ?? propertyMutationError}
         onClose={() => {
           clearSelectedItem();
           closeMobileDetails();
@@ -1026,7 +1028,6 @@
         setValueDraftCheckbox={(value) => (valueDraftCheckbox = value)}
         {describePropertyValue}
         {findPropertyValue}
-        {propertyTypeLabel}
       />
     {:else}
       <div class="flex items-start justify-between gap-3">

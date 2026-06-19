@@ -32,8 +32,7 @@
     setValueDraftSelectOptionId,
     setValueDraftCheckbox,
     describePropertyValue,
-    findPropertyValue,
-    propertyTypeLabel
+    findPropertyValue
   }: {
     item: VisibleListItem;
     properties: VisibleListProperty[];
@@ -61,7 +60,6 @@
     setValueDraftCheckbox: (value: boolean) => void;
     describePropertyValue: (p: VisibleListProperty, v: VisibleListItemPropertyValue) => string;
     findPropertyValue: (item: VisibleListItem, propertyId: string) => VisibleListItemPropertyValue | null;
-    propertyTypeLabel: (t: VisibleListProperty['type']) => string;
   } = $props();
 
   let titleDraft = $state(item.title);
