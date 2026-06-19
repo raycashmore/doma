@@ -81,6 +81,7 @@
   let selectedItemId = $state<string | null>(null);
   let rightPanel = $state<'closed' | 'item' | 'settings'>('closed');
   let showMobileDetails = $state(false);
+  let showListSwitcher = $state(false);
   let usePreviewData = $state(USE_DEV_FIXTURE);
   let previewLists = $state([...previewVisibleLists]);
   let previewItemsByList = $state(structuredClone(previewItemsByListPublicId));
@@ -1077,7 +1078,7 @@
   </section>
 {:else}
   <section class="flex min-h-full flex-col gap-4 text-warm-text-primary min-[1100px]:flex-row">
-    <aside class="rounded-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_18px_44px_rgb(20_17_12_/_10%)] min-[1100px]:w-[300px]">
+    <aside class="hidden rounded-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_18px_44px_rgb(20_17_12_/_10%)] min-[900px]:block min-[1100px]:w-[300px]">
       <div class="flex items-center justify-between">
         <div>
           <h2 class="text-base font-semibold text-warm-text-primary">My Lists</h2>
@@ -1174,6 +1175,27 @@
     <section class="min-w-0 flex-1 rounded-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_18px_44px_rgb(20_17_12_/_10%)]">
       {#if selectedRow}
         <div class="flex flex-col gap-4">
+          <div class="flex items-center justify-between gap-2 min-[900px]:hidden">
+            <button
+              type="button"
+              class="flex items-center gap-2 rounded-full bg-warm-bg-dark px-4 py-2 text-sm font-semibold text-warm-text-on-dark"
+              onclick={() => (showListSwitcher = true)}
+            >
+              {selectedRow?.name ?? 'Lists'}
+              <ListIcon name="chevron-down" size={16} />
+            </button>
+            <button
+              type="button"
+              class="flex h-9 w-9 items-center justify-center rounded-full bg-warm-bg-dark text-warm-text-on-dark"
+              aria-label="New list"
+              onclick={() => {
+                showCreateDialog = true;
+                createVisibility = listFilter;
+              }}
+            >
+              <ListIcon name="plus" size={18} />
+            </button>
+          </div>
           <div class="flex flex-col gap-2 min-[700px]:flex-row min-[700px]:items-end min-[700px]:justify-between">
             <div>
               <p class="text-xs text-warm-text-secondary">{metaLabel}</p>
@@ -1330,6 +1352,56 @@
           </button>
         </div>
         {@render detailSurface()}
+      </section>
+    {/if}
+
+    {#if showListSwitcher}
+      <button
+        type="button"
+        class="fixed inset-0 z-40 bg-[#2D2D2D99] min-[900px]:hidden"
+        aria-label="Close list switcher"
+        onclick={() => (showListSwitcher = false)}
+      ></button>
+      <section class="fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-y-auto rounded-t-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_-12px_40px_rgba(61,46,34,0.18)] min-[900px]:hidden">
+        <div class="mb-3 flex items-center justify-between">
+          <h2 class="text-base font-semibold text-warm-text-primary">My Lists</h2>
+          <button type="button" class="flex h-8 w-8 items-center justify-center rounded-full text-warm-text-secondary" aria-label="Close" onclick={() => (showListSwitcher = false)}>
+            <ListIcon name="close" size={16} />
+          </button>
+        </div>
+        <div class="flex rounded-full bg-warm-section-mortgage p-1">
+          <button type="button" class={`flex-1 rounded-full px-3 py-2 text-[11px] font-bold ${listFilter === 'personal' ? 'bg-warm-text-primary text-warm-text-on-dark' : 'text-warm-text-secondary'}`} onclick={() => (listFilter = 'personal')}>Personal</button>
+          <button type="button" class={`flex-1 rounded-full px-3 py-2 text-[11px] font-bold ${listFilter === 'shared' ? 'bg-warm-text-primary text-warm-text-on-dark' : 'text-warm-text-secondary'}`} onclick={() => (listFilter = 'shared')}>Shared</button>
+        </div>
+        <div class="mt-3 flex flex-col gap-2">
+          {#each filteredLists as list (list.publicId)}
+            <button
+              type="button"
+              class={`rounded-2xl border p-3 text-left ${list.selected ? 'border-warm-accent bg-warm-section-spend' : 'border-warm-border bg-warm-bg-card'}`}
+              onclick={() => {
+                showListSwitcher = false;
+                void navigateToList(list);
+              }}
+            >
+              <p class={`truncate text-sm ${list.selected ? 'font-bold text-warm-text-primary' : 'font-semibold text-warm-text-secondary'}`}>{list.name}</p>
+              <p class="mt-0.5 text-[11px] text-warm-text-secondary">{list.description}</p>
+            </button>
+          {/each}
+          {#if !filteredLists.length}
+            <p class="text-sm text-warm-text-secondary">No {listFilter} lists yet.</p>
+          {/if}
+        </div>
+        <button
+          type="button"
+          class="mt-3 flex w-full items-center justify-center gap-2 rounded-full border border-warm-border px-4 py-2 text-sm font-semibold text-warm-text-secondary"
+          onclick={() => {
+            showListSwitcher = false;
+            showCreateDialog = true;
+            createVisibility = listFilter;
+          }}
+        >
+          <ListIcon name="plus" size={16} /> New list
+        </button>
       </section>
     {/if}
 
