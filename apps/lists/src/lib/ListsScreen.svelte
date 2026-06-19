@@ -6,6 +6,7 @@
   import { dndzone, type DndEvent } from 'svelte-dnd-action';
   import ListItemRow from '$lib/ListItemRow.svelte';
   import ListIcon from '$lib/ListIcon.svelte';
+  import ItemDetailPanel from '$lib/ItemDetailPanel.svelte';
 
   import { browser, dev } from '$app/environment';
   import { goto } from '$app/navigation';
@@ -61,6 +62,7 @@
   const removeListProperty = useMutation(api.lists.mutations.removeListProperty);
   const setListItemPropertyValue = useMutation(api.lists.mutations.setListItemPropertyValue);
   const clearListItemPropertyValue = useMutation(api.lists.mutations.clearListItemPropertyValue);
+  const setListItemNotes = useMutation(api.lists.mutations.setListItemNotes);
 
   let createName = $state('');
   let createVisibility = $state<'personal' | 'shared'>('personal');
@@ -76,6 +78,7 @@
   let showCreateDialog = $state(false);
   let activeDragDisabled = $state(true);
   let selectedItemId = $state<string | null>(null);
+  let rightPanel = $state<'closed' | 'item' | 'settings'>('closed');
   let showMobileDetails = $state(false);
   let usePreviewData = $state(USE_DEV_FIXTURE);
   let previewLists = $state([...previewVisibleLists]);
@@ -193,10 +196,12 @@
 
   function clearSelectedItem() {
     selectedItemId = null;
+    rightPanel = 'closed';
   }
 
   function openItemDetails(itemId: string) {
     selectedItemId = itemId;
+    rightPanel = 'item';
     showMobileDetails = true;
     propertyMutationError = null;
   }
@@ -455,6 +460,49 @@
       await deleteListItem({ itemId: itemId as never });
     } catch (error) {
       itemMutationError = describeError(error, 'Unable to delete item.');
+    }
+  }
+
+  async function handleRenameSelectedItem(title: string) {
+    if (!selectedItem) return;
+    itemMutationError = null;
+    if (usePreviewData) {
+      if (!selectedRow?.publicId) return;
+      updatePreviewListData(selectedRow.publicId, (current) => ({
+        ...current,
+        activeItems: current.activeItems.map((entry) =>
+          entry._id === selectedItem._id ? { ...entry, title, updatedAt: Date.now() } : entry
+        ),
+        completedItems: current.completedItems.map((entry) =>
+          entry._id === selectedItem._id ? { ...entry, title, updatedAt: Date.now() } : entry
+        )
+      }));
+      return;
+    }
+    try {
+      await renameListItem({ itemId: selectedItem._id as never, title });
+    } catch (error) {
+      itemMutationError = describeError(error, 'Unable to rename item.');
+    }
+  }
+
+  async function handleSaveSelectedNotes(notes: string) {
+    if (!selectedItem) return;
+    itemMutationError = null;
+    const trimmed = notes.trim();
+    if (usePreviewData) {
+      if (!selectedRow?.publicId) return;
+      updatePreviewListData(selectedRow.publicId, (current) => {
+        const apply = (entry: VisibleListItem) =>
+          entry._id === selectedItem._id ? { ...entry, notes: trimmed || undefined, updatedAt: Date.now() } : entry;
+        return { ...current, activeItems: current.activeItems.map(apply), completedItems: current.completedItems.map(apply) };
+      });
+      return;
+    }
+    try {
+      await setListItemNotes({ itemId: selectedItem._id as never, notes: trimmed });
+    } catch (error) {
+      itemMutationError = describeError(error, 'Unable to save notes.');
     }
   }
 
@@ -943,155 +991,43 @@
 
 {#snippet detailSurface()}
   <div class="flex h-full flex-col gap-4">
-    {#if selectedItem}
-      <div class="flex items-start justify-between gap-3">
-        <div>
-          <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-warm-text-secondary">Item details</p>
-          <h3 class="mt-2 text-lg font-bold text-warm-text-primary">{selectedItem.title}</h3>
-        </div>
-        <button
-          type="button"
-          class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary"
-          onclick={() => {
-            clearSelectedItem();
-            closeMobileDetails();
-          }}
-        >
-          List properties
-        </button>
-      </div>
-
-      {#if propertyMutationError}
-        <p class="text-sm text-warm-accent">{propertyMutationError}</p>
-      {/if}
-
-      <div class="flex flex-col gap-3">
-        {#each visibleProperties as property (property._id)}
-          {@const currentValue = findPropertyValue(selectedItem, property._id)}
-          <div class="rounded-[22px] border border-warm-border bg-warm-bg-card p-4">
-            <div class="flex items-start justify-between gap-3">
-              <div class="min-w-0">
-                <p class="truncate text-sm font-semibold text-warm-text-primary">{property.name}</p>
-                <p class="mt-1 text-[11px] uppercase tracking-[0.16em] text-warm-text-secondary">
-                  {propertyTypeLabel(property.type)}
-                </p>
-              </div>
-
-              {#if currentValue}
-                <div class="flex items-center gap-2">
-                  <button
-                    type="button"
-                    class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary"
-                    onclick={() => openValueEditor(property, currentValue)}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-accent"
-                    onclick={() => void handleClearPropertyValue(property._id)}
-                  >
-                    Clear
-                  </button>
-                </div>
-              {:else}
-                <button
-                  type="button"
-                  class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary"
-                  onclick={() => openValueEditor(property, null)}
-                >
-                  Add
-                </button>
-              {/if}
-            </div>
-
-            {#if valueEditorPropertyId === property._id}
-              <div class="mt-4 flex flex-col gap-3">
-                {#if property.type === 'text'}
-                  <input
-                    bind:value={valueDraftText}
-                    class="rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary outline-none"
-                    placeholder={`Add ${property.name.toLowerCase()}`}
-                  />
-                {:else if property.type === 'number'}
-                  <input
-                    bind:value={valueDraftNumber}
-                    type="number"
-                    class="rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary outline-none"
-                    placeholder="0"
-                  />
-                {:else if property.type === 'date'}
-                  <input
-                    bind:value={valueDraftDate}
-                    type="date"
-                    class="rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary outline-none"
-                  />
-                {:else if property.type === 'select'}
-                  <select
-                    bind:value={valueDraftSelectOptionId}
-                    class="rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary outline-none"
-                  >
-                    {#each property.options ?? [] as option (option.id)}
-                      <option value={option.id}>{option.label}</option>
-                    {/each}
-                  </select>
-                {:else}
-                  <label class="flex items-center justify-between rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary">
-                    <span>Checked</span>
-                    <input bind:checked={valueDraftCheckbox} type="checkbox" class="h-4 w-4" />
-                  </label>
-                {/if}
-
-                <div class="flex gap-2">
-                  <button
-                    type="button"
-                    class="flex-1 rounded-full border border-warm-border px-4 py-3 text-sm font-medium text-warm-text-secondary"
-                    onclick={() => resetValueEditor()}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    class="flex-1 rounded-full bg-warm-text-primary px-4 py-3 text-sm font-bold text-warm-text-on-dark disabled:opacity-60"
-                    disabled={
-                      (property.type === 'text' && !valueDraftText.trim()) ||
-                      (property.type === 'number' && valueDraftNumber === '') ||
-                      (property.type === 'date' && !valueDraftDate) ||
-                      (property.type === 'select' && !valueDraftSelectOptionId)
-                    }
-                    onclick={() => void handleSavePropertyValue(property)}
-                  >
-                    Save value
-                  </button>
-                </div>
-              </div>
-            {:else if currentValue}
-              <p class="mt-4 text-sm text-warm-text-secondary">{describePropertyValue(property, currentValue)}</p>
-            {/if}
-          </div>
-        {/each}
-
-        {#if !visibleProperties.length}
-          <div class="rounded-[22px] border border-dashed border-warm-border bg-warm-bg-card px-4 py-5 text-sm text-warm-text-secondary">
-            Add list properties first, then attach values to this item here.
-          </div>
-        {:else if unsetProperties.length && !valueEditorPropertyId}
-          <div class="rounded-[22px] border border-dashed border-warm-border bg-warm-bg-card px-4 py-4">
-            <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-warm-text-secondary">Unset fields</p>
-            <div class="mt-3 flex flex-wrap gap-2">
-              {#each unsetProperties as property (property._id)}
-                <button
-                  type="button"
-                  class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary"
-                  onclick={() => openValueEditor(property, null)}
-                >
-                  Add {property.name}
-                </button>
-              {/each}
-            </div>
-          </div>
-        {/if}
-      </div>
+    {#if rightPanel === 'item' && selectedItem}
+      <ItemDetailPanel
+        item={selectedItem}
+        properties={visibleProperties}
+        completed={selectedItem.completedAt !== undefined}
+        error={propertyMutationError}
+        onClose={() => {
+          clearSelectedItem();
+          closeMobileDetails();
+        }}
+        onRename={(title) => void handleRenameSelectedItem(title)}
+        onSaveNotes={(notes) => void handleSaveSelectedNotes(notes)}
+        onToggleComplete={() => void toggleItemCompletion(selectedItem)}
+        onDelete={() => {
+          void removeItem(selectedItem._id);
+          clearSelectedItem();
+          closeMobileDetails();
+        }}
+        {valueEditorPropertyId}
+        {openValueEditor}
+        {resetValueEditor}
+        onSaveValue={(property) => void handleSavePropertyValue(property)}
+        onClearValue={(propertyId) => void handleClearPropertyValue(propertyId)}
+        {valueDraftText}
+        {valueDraftNumber}
+        {valueDraftDate}
+        {valueDraftSelectOptionId}
+        {valueDraftCheckbox}
+        setValueDraftText={(value) => (valueDraftText = value)}
+        setValueDraftNumber={(value) => (valueDraftNumber = value)}
+        setValueDraftDate={(value) => (valueDraftDate = value)}
+        setValueDraftSelectOptionId={(value) => (valueDraftSelectOptionId = value)}
+        setValueDraftCheckbox={(value) => (valueDraftCheckbox = value)}
+        {describePropertyValue}
+        {findPropertyValue}
+        {propertyTypeLabel}
+      />
     {:else}
       <div class="flex items-start justify-between gap-3">
         <div>
