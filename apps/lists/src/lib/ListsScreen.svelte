@@ -9,6 +9,8 @@
   import { page } from '$app/state';
   import {
     describeListMeta,
+    getSelectedItem,
+    getUnsetPropertiesForItem,
     type PresentedList,
     presentLists,
     previewItemsByListPublicId,
@@ -16,7 +18,9 @@
     projectDraggedItems,
     type VisibleList,
     type VisibleListItem,
-    type VisibleListItemsResult
+    type VisibleListItemPropertyValue,
+    type VisibleListItemsResult,
+    type VisibleListProperty
   } from '$lib/lists-presenter';
   import {
     buildListHref,
@@ -48,6 +52,12 @@
   const uncompleteListItem = useMutation(api.lists.mutations.uncompleteListItem);
   const reorderListItem = useMutation(api.lists.mutations.reorderListItem);
   const clearCompletedListItems = useMutation(api.lists.mutations.clearCompletedListItems);
+  const createListProperty = useMutation(api.lists.mutations.createListProperty);
+  const renameListProperty = useMutation(api.lists.mutations.renameListProperty);
+  const reorderListProperty = useMutation(api.lists.mutations.reorderListProperty);
+  const removeListProperty = useMutation(api.lists.mutations.removeListProperty);
+  const setListItemPropertyValue = useMutation(api.lists.mutations.setListItemPropertyValue);
+  const clearListItemPropertyValue = useMutation(api.lists.mutations.clearListItemPropertyValue);
 
   let createName = $state('');
   let createVisibility = $state<'personal' | 'shared'>('personal');
@@ -65,9 +75,25 @@
   let editingItemTitle = $state('');
   let draggingItemId = $state<string | null>(null);
   let dragOverItemId = $state<string | null>(null);
+  let selectedItemId = $state<string | null>(null);
+  let showMobileDetails = $state(false);
   let usePreviewData = $state(USE_DEV_FIXTURE);
   let previewLists = $state([...previewVisibleLists]);
   let previewItemsByList = $state(structuredClone(previewItemsByListPublicId));
+  let propertyMutationError = $state<string | null>(null);
+  let propertyDraftName = $state('');
+  let propertyDraftType = $state<VisibleListProperty['type']>('text');
+  let propertyDraftOptions = $state('');
+  let propertyRenameId = $state<string | null>(null);
+  let propertyRenameName = $state('');
+  let pendingRemovePropertyId = $state<string | null>(null);
+  let valueEditorPropertyId = $state<string | null>(null);
+  let valueDraftText = $state('');
+  let valueDraftNumber = $state('');
+  let valueDraftDate = $state('');
+  let valueDraftSelectOptionId = $state('');
+  let valueDraftCheckbox = $state(false);
+  let previousListPublicId = $state<string | null>(null);
 
   function describeError(error: unknown, fallback: string) {
     const message = error instanceof Error ? error.message : typeof error === 'string' ? error : null;
@@ -82,6 +108,10 @@
     return items.map((item, index) => ({ ...item, sortOrder: index }));
   }
 
+  function normalizePreviewProperties(properties: VisibleListProperty[]) {
+    return properties.map((property, index) => ({ ...property, sortOrder: index }));
+  }
+
   function updatePreviewListData(publicId: string, updater: (current: VisibleListItemsResult) => VisibleListItemsResult) {
     const current = previewItemsByList[publicId];
     if (!current) return;
@@ -90,6 +120,119 @@
       ...previewItemsByList,
       [publicId]: updater(current)
     };
+  }
+
+  function propertyTypeLabel(type: VisibleListProperty['type']) {
+    switch (type) {
+      case 'text':
+        return 'Text';
+      case 'number':
+        return 'Number';
+      case 'date':
+        return 'Date';
+      case 'select':
+        return 'Select';
+      case 'checkbox':
+        return 'Checkbox';
+    }
+  }
+
+  function slugifyOptionId(label: string, index: number) {
+    return slugifyListName(label).replace(/-/g, '_') || `option_${index + 1}`;
+  }
+
+  function parsePropertyOptions(input: string) {
+    const labels = input
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean);
+
+    return labels.map((label, index) => ({
+      id: slugifyOptionId(label, index),
+      label
+    }));
+  }
+
+  function findPropertyValue(item: VisibleListItem | null, propertyId: string) {
+    return item?.propertyValues.find((value) => value.listPropertyId === propertyId) ?? null;
+  }
+
+  function formatDateForInput(value?: number) {
+    if (!value) return '';
+    const date = new Date(value);
+    const year = date.getFullYear();
+    const month = `${date.getMonth() + 1}`.padStart(2, '0');
+    const day = `${date.getDate()}`.padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  function parseDateInput(value: string) {
+    if (!value) return null;
+    const parsed = new Date(`${value}T12:00:00`);
+    return Number.isNaN(parsed.valueOf()) ? null : parsed.valueOf();
+  }
+
+  function describePropertyValue(property: VisibleListProperty, value: VisibleListItemPropertyValue) {
+    switch (property.type) {
+      case 'text':
+        return value.textValue ?? '';
+      case 'number':
+        return value.numberValue === undefined ? '' : `${value.numberValue}`;
+      case 'date':
+        return value.dateValue ? new Date(value.dateValue).toLocaleDateString() : '';
+      case 'checkbox':
+        return value.checkboxValue ? 'Checked' : 'Unchecked';
+      case 'select':
+        return property.options?.find((option) => option.id === value.selectOptionId)?.label ?? '';
+    }
+  }
+
+  function closeMobileDetails() {
+    showMobileDetails = false;
+  }
+
+  function clearSelectedItem() {
+    selectedItemId = null;
+  }
+
+  function openItemDetails(itemId: string) {
+    selectedItemId = itemId;
+    showMobileDetails = true;
+    propertyMutationError = null;
+  }
+
+  function resetValueEditor() {
+    valueEditorPropertyId = null;
+    valueDraftText = '';
+    valueDraftNumber = '';
+    valueDraftDate = '';
+    valueDraftSelectOptionId = '';
+    valueDraftCheckbox = false;
+  }
+
+  function beginPropertyRename(property: VisibleListProperty) {
+    propertyRenameId = property._id;
+    propertyRenameName = property.name;
+    pendingRemovePropertyId = null;
+    propertyMutationError = null;
+  }
+
+  function cancelPropertyRename() {
+    propertyRenameId = null;
+    propertyRenameName = '';
+  }
+
+  function openValueEditor(
+    property: VisibleListProperty,
+    currentValue: VisibleListItemPropertyValue | null = findPropertyValue(selectedItem, property._id)
+  ) {
+    valueEditorPropertyId = property._id;
+    valueDraftText = currentValue?.textValue ?? '';
+    valueDraftNumber = currentValue?.numberValue === undefined ? '' : `${currentValue.numberValue}`;
+    valueDraftDate = formatDateForInput(currentValue?.dateValue);
+    valueDraftSelectOptionId = currentValue?.selectOptionId ?? property.options?.[0]?.id ?? '';
+    valueDraftCheckbox = currentValue?.checkboxValue ?? false;
+    propertyMutationError = null;
   }
 
   function closeMenus() {
@@ -121,6 +264,7 @@
         ...previewItemsByList,
         [created.publicId]: {
           list: created,
+          properties: [],
           activeItems: [],
           completedItems: []
         }
@@ -273,7 +417,8 @@
           title: itemDraft.trim(),
           sortOrder: current.activeItems.length,
           createdAt: Date.now(),
-          updatedAt: Date.now()
+          updatedAt: Date.now(),
+          propertyValues: []
         };
 
         return {
@@ -416,6 +561,268 @@
     }
   }
 
+  async function handleCreateProperty() {
+    if (!selectedRow?.publicId) return;
+    propertyMutationError = null;
+
+    const options = propertyDraftType === 'select' ? parsePropertyOptions(propertyDraftOptions) : undefined;
+
+    if (usePreviewData) {
+      updatePreviewListData(selectedRow.publicId, (current) => {
+        const nextProperty: VisibleListProperty = {
+          _id: `preview-property-${crypto.randomUUID()}`,
+          listId: current.list._id,
+          name: propertyDraftName.trim(),
+          type: propertyDraftType,
+          sortOrder: current.properties.length,
+          options
+        };
+
+        return {
+          ...current,
+          properties: [...current.properties, nextProperty]
+        };
+      });
+      propertyDraftName = '';
+      propertyDraftType = 'text';
+      propertyDraftOptions = '';
+      return;
+    }
+
+    try {
+      await createListProperty({
+        listPublicId: selectedRow.publicId,
+        name: propertyDraftName,
+        type: propertyDraftType as never,
+        options
+      });
+      propertyDraftName = '';
+      propertyDraftType = 'text';
+      propertyDraftOptions = '';
+    } catch (error) {
+      propertyMutationError = describeError(error, 'Unable to create property.');
+    }
+  }
+
+  async function handleRenameProperty() {
+    if (!propertyRenameId) return;
+    propertyMutationError = null;
+
+    if (usePreviewData) {
+      if (!selectedRow?.publicId) return;
+      updatePreviewListData(selectedRow.publicId, (current) => ({
+        ...current,
+        properties: current.properties.map((property) =>
+          property._id === propertyRenameId ? { ...property, name: propertyRenameName.trim() } : property
+        )
+      }));
+      cancelPropertyRename();
+      return;
+    }
+
+    try {
+      await renameListProperty({
+        propertyId: propertyRenameId as never,
+        name: propertyRenameName
+      });
+      cancelPropertyRename();
+    } catch (error) {
+      propertyMutationError = describeError(error, 'Unable to rename property.');
+    }
+  }
+
+  async function handleReorderProperty(propertyId: string, targetIndex: number) {
+    propertyMutationError = null;
+
+    if (usePreviewData) {
+      if (!selectedRow?.publicId) return;
+      updatePreviewListData(selectedRow.publicId, (current) => {
+        const currentIndex = current.properties.findIndex((property) => property._id === propertyId);
+        if (currentIndex < 0) return current;
+
+        const boundedTarget = Math.max(0, Math.min(targetIndex, current.properties.length - 1));
+        if (boundedTarget === currentIndex) return current;
+
+        const nextProperties = [...current.properties];
+        const [moved] = nextProperties.splice(currentIndex, 1);
+        if (!moved) return current;
+        nextProperties.splice(boundedTarget, 0, moved);
+
+        return {
+          ...current,
+          properties: normalizePreviewProperties(nextProperties)
+        };
+      });
+      return;
+    }
+
+    try {
+      await reorderListProperty({
+        propertyId: propertyId as never,
+        targetIndex
+      });
+    } catch (error) {
+      propertyMutationError = describeError(error, 'Unable to reorder property.');
+    }
+  }
+
+  async function handleRemoveProperty() {
+    if (!pendingRemovePropertyId) return;
+    propertyMutationError = null;
+    const propertyId = pendingRemovePropertyId;
+
+    if (usePreviewData) {
+      if (!selectedRow?.publicId) return;
+      updatePreviewListData(selectedRow.publicId, (current) => ({
+        ...current,
+        properties: normalizePreviewProperties(current.properties.filter((property) => property._id !== propertyId)),
+        activeItems: current.activeItems.map((item) => ({
+          ...item,
+          propertyValues: item.propertyValues.filter((value) => value.listPropertyId !== propertyId)
+        })),
+        completedItems: current.completedItems.map((item) => ({
+          ...item,
+          propertyValues: item.propertyValues.filter((value) => value.listPropertyId !== propertyId)
+        }))
+      }));
+      pendingRemovePropertyId = null;
+      if (valueEditorPropertyId === propertyId) resetValueEditor();
+      return;
+    }
+
+    try {
+      await removeListProperty({
+        propertyId: propertyId as never
+      });
+      pendingRemovePropertyId = null;
+      resetValueEditor();
+    } catch (error) {
+      propertyMutationError = describeError(error, 'Unable to remove property.');
+    }
+  }
+
+  async function handleSavePropertyValue(property: VisibleListProperty) {
+    if (!selectedItem) return;
+    propertyMutationError = null;
+
+    let payload:
+      | { type: 'text'; text: string }
+      | { type: 'number'; number: number }
+      | { type: 'date'; date: number }
+      | { type: 'select'; optionId: string }
+      | { type: 'checkbox'; checked: boolean };
+
+    switch (property.type) {
+      case 'text':
+        payload = { type: 'text', text: valueDraftText.trim() };
+        break;
+      case 'number':
+        payload = { type: 'number', number: Number(valueDraftNumber) };
+        break;
+      case 'date': {
+        const dateValue = parseDateInput(valueDraftDate);
+        if (dateValue === null) {
+          propertyMutationError = 'Choose a date before saving.';
+          return;
+        }
+        payload = { type: 'date', date: dateValue };
+        break;
+      }
+      case 'select':
+        payload = { type: 'select', optionId: valueDraftSelectOptionId };
+        break;
+      case 'checkbox':
+        payload = { type: 'checkbox', checked: valueDraftCheckbox };
+        break;
+    }
+
+    if (usePreviewData) {
+      if (!selectedRow?.publicId) return;
+      updatePreviewListData(selectedRow.publicId, (current) => {
+        const updateItem = (item: VisibleListItem) => {
+          if (item._id !== selectedItem._id) return item;
+
+          const existingIndex = item.propertyValues.findIndex((value) => value.listPropertyId === property._id);
+          const nextValue: VisibleListItemPropertyValue = {
+            _id:
+              existingIndex >= 0
+                ? item.propertyValues[existingIndex]!._id
+                : `preview-value-${crypto.randomUUID()}`,
+            listItemId: item._id,
+            listPropertyId: property._id,
+            ...(payload.type === 'text' ? { textValue: payload.text } : {}),
+            ...(payload.type === 'number' ? { numberValue: payload.number } : {}),
+            ...(payload.type === 'date' ? { dateValue: payload.date } : {}),
+            ...(payload.type === 'select' ? { selectOptionId: payload.optionId } : {}),
+            ...(payload.type === 'checkbox' ? { checkboxValue: payload.checked } : {})
+          };
+
+          const propertyValues =
+            existingIndex >= 0
+              ? item.propertyValues.map((value, index) => (index === existingIndex ? nextValue : value))
+              : [...item.propertyValues, nextValue];
+
+          return { ...item, propertyValues };
+        };
+
+        return {
+          ...current,
+          activeItems: current.activeItems.map(updateItem),
+          completedItems: current.completedItems.map(updateItem)
+        };
+      });
+      resetValueEditor();
+      return;
+    }
+
+    try {
+      await setListItemPropertyValue({
+        itemId: selectedItem._id as never,
+        propertyId: property._id as never,
+        value: payload as never
+      });
+      resetValueEditor();
+    } catch (error) {
+      propertyMutationError = describeError(error, 'Unable to save value.');
+    }
+  }
+
+  async function handleClearPropertyValue(propertyId: string) {
+    if (!selectedItem) return;
+    propertyMutationError = null;
+
+    if (usePreviewData) {
+      if (!selectedRow?.publicId) return;
+      updatePreviewListData(selectedRow.publicId, (current) => {
+        const updateItem = (item: VisibleListItem) =>
+          item._id === selectedItem._id
+            ? {
+                ...item,
+                propertyValues: item.propertyValues.filter((value) => value.listPropertyId !== propertyId)
+              }
+            : item;
+
+        return {
+          ...current,
+          activeItems: current.activeItems.map(updateItem),
+          completedItems: current.completedItems.map(updateItem)
+        };
+      });
+      if (valueEditorPropertyId === propertyId) resetValueEditor();
+      return;
+    }
+
+    try {
+      await clearListItemPropertyValue({
+        itemId: selectedItem._id as never,
+        propertyId: propertyId as never
+      });
+      if (valueEditorPropertyId === propertyId) resetValueEditor();
+    } catch (error) {
+      propertyMutationError = describeError(error, 'Unable to clear value.');
+    }
+  }
+
   async function persistPreviewReorder(itemId: string, targetItemId: string) {
     if (!selectedRow?.publicId) return;
     updatePreviewListData(selectedRow.publicId, (current) => {
@@ -499,6 +906,9 @@
     projectDraggedItems(selectedListData?.activeItems ?? [], draggingItemId, dragOverItemId)
   );
   const completedItems = $derived(selectedListData?.completedItems ?? []);
+  const visibleProperties = $derived(selectedListData?.properties ?? []);
+  const selectedItem = $derived(getSelectedItem(activeItems, completedItems, selectedItemId));
+  const unsetProperties = $derived(getUnsetPropertiesForItem(visibleProperties, selectedItem));
   const metaLabel = $derived(
     describeListMeta(selectedRow, selectedListData?.activeItems.length ?? 0, selectedListData?.completedItems.length ?? 0)
   );
@@ -562,7 +972,349 @@
       window.clearTimeout(timeoutId);
     };
   });
+
+  $effect(() => {
+    const listPublicId = selectedRow?.publicId ?? null;
+    if (listPublicId === previousListPublicId) return;
+    previousListPublicId = listPublicId;
+    selectedItemId = null;
+    showMobileDetails = false;
+    resetValueEditor();
+    cancelPropertyRename();
+    pendingRemovePropertyId = null;
+    propertyMutationError = null;
+  });
+
+  $effect(() => {
+    if (!selectedItemId) return;
+    if (selectedItem) return;
+    selectedItemId = null;
+    showMobileDetails = false;
+    resetValueEditor();
+  });
 </script>
+
+{#snippet detailSurface()}
+  <div class="flex h-full flex-col gap-4">
+    {#if selectedItem}
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-warm-text-secondary">Item details</p>
+          <h3 class="mt-2 text-lg font-bold text-warm-text-primary">{selectedItem.title}</h3>
+        </div>
+        <button
+          type="button"
+          class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary"
+          onclick={() => {
+            clearSelectedItem();
+            closeMobileDetails();
+          }}
+        >
+          List properties
+        </button>
+      </div>
+
+      {#if propertyMutationError}
+        <p class="text-sm text-warm-accent">{propertyMutationError}</p>
+      {/if}
+
+      <div class="flex flex-col gap-3">
+        {#each visibleProperties as property (property._id)}
+          {@const currentValue = findPropertyValue(selectedItem, property._id)}
+          <div class="rounded-[22px] border border-warm-border bg-warm-bg-card p-4">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="truncate text-sm font-semibold text-warm-text-primary">{property.name}</p>
+                <p class="mt-1 text-[11px] uppercase tracking-[0.16em] text-warm-text-secondary">
+                  {propertyTypeLabel(property.type)}
+                </p>
+              </div>
+
+              {#if currentValue}
+                <div class="flex items-center gap-2">
+                  <button
+                    type="button"
+                    class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary"
+                    onclick={() => openValueEditor(property, currentValue)}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-accent"
+                    onclick={() => void handleClearPropertyValue(property._id)}
+                  >
+                    Clear
+                  </button>
+                </div>
+              {:else}
+                <button
+                  type="button"
+                  class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary"
+                  onclick={() => openValueEditor(property, null)}
+                >
+                  Add
+                </button>
+              {/if}
+            </div>
+
+            {#if valueEditorPropertyId === property._id}
+              <div class="mt-4 flex flex-col gap-3">
+                {#if property.type === 'text'}
+                  <input
+                    bind:value={valueDraftText}
+                    class="rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary outline-none"
+                    placeholder={`Add ${property.name.toLowerCase()}`}
+                  />
+                {:else if property.type === 'number'}
+                  <input
+                    bind:value={valueDraftNumber}
+                    type="number"
+                    class="rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary outline-none"
+                    placeholder="0"
+                  />
+                {:else if property.type === 'date'}
+                  <input
+                    bind:value={valueDraftDate}
+                    type="date"
+                    class="rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary outline-none"
+                  />
+                {:else if property.type === 'select'}
+                  <select
+                    bind:value={valueDraftSelectOptionId}
+                    class="rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary outline-none"
+                  >
+                    {#each property.options ?? [] as option (option.id)}
+                      <option value={option.id}>{option.label}</option>
+                    {/each}
+                  </select>
+                {:else}
+                  <label class="flex items-center justify-between rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary">
+                    <span>Checked</span>
+                    <input bind:checked={valueDraftCheckbox} type="checkbox" class="h-4 w-4" />
+                  </label>
+                {/if}
+
+                <div class="flex gap-2">
+                  <button
+                    type="button"
+                    class="flex-1 rounded-full border border-warm-border px-4 py-3 text-sm font-medium text-warm-text-secondary"
+                    onclick={() => resetValueEditor()}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    class="flex-1 rounded-full bg-warm-text-primary px-4 py-3 text-sm font-bold text-warm-text-on-dark disabled:opacity-60"
+                    disabled={
+                      (property.type === 'text' && !valueDraftText.trim()) ||
+                      (property.type === 'number' && valueDraftNumber === '') ||
+                      (property.type === 'date' && !valueDraftDate) ||
+                      (property.type === 'select' && !valueDraftSelectOptionId)
+                    }
+                    onclick={() => void handleSavePropertyValue(property)}
+                  >
+                    Save value
+                  </button>
+                </div>
+              </div>
+            {:else if currentValue}
+              <p class="mt-4 text-sm text-warm-text-secondary">{describePropertyValue(property, currentValue)}</p>
+            {/if}
+          </div>
+        {/each}
+
+        {#if !visibleProperties.length}
+          <div class="rounded-[22px] border border-dashed border-warm-border bg-warm-bg-card px-4 py-5 text-sm text-warm-text-secondary">
+            Add list properties first, then attach values to this item here.
+          </div>
+        {:else if unsetProperties.length && !valueEditorPropertyId}
+          <div class="rounded-[22px] border border-dashed border-warm-border bg-warm-bg-card px-4 py-4">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-warm-text-secondary">Unset fields</p>
+            <div class="mt-3 flex flex-wrap gap-2">
+              {#each unsetProperties as property (property._id)}
+                <button
+                  type="button"
+                  class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary"
+                  onclick={() => openValueEditor(property, null)}
+                >
+                  Add {property.name}
+                </button>
+              {/each}
+            </div>
+          </div>
+        {/if}
+      </div>
+    {:else}
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-warm-text-secondary">List properties</p>
+          <h3 class="mt-2 text-lg font-bold text-warm-text-primary">Fields available to every item</h3>
+        </div>
+      </div>
+
+      {#if propertyMutationError}
+        <p class="text-sm text-warm-accent">{propertyMutationError}</p>
+      {/if}
+
+      <div class="flex flex-col gap-3">
+        {#if visibleProperties.length}
+          {#each visibleProperties as property, index (property._id)}
+            <div class="rounded-[22px] border border-warm-border bg-warm-bg-card p-4">
+              {#if propertyRenameId === property._id}
+                <form
+                  class="flex flex-col gap-3"
+                  onsubmit={(event) => {
+                    event.preventDefault();
+                    void handleRenameProperty();
+                  }}
+                >
+                  <input
+                    bind:value={propertyRenameName}
+                    class="rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary outline-none"
+                    placeholder="Property name"
+                  />
+                  <div class="flex gap-2">
+                    <button
+                      type="button"
+                      class="flex-1 rounded-full border border-warm-border px-4 py-3 text-sm font-medium text-warm-text-secondary"
+                      onclick={() => cancelPropertyRename()}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      class="flex-1 rounded-full bg-warm-text-primary px-4 py-3 text-sm font-bold text-warm-text-on-dark disabled:opacity-60"
+                      disabled={!propertyRenameName.trim()}
+                    >
+                      Save
+                    </button>
+                  </div>
+                </form>
+              {:else}
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="truncate text-sm font-semibold text-warm-text-primary">{property.name}</p>
+                    <p class="mt-1 text-[11px] uppercase tracking-[0.16em] text-warm-text-secondary">
+                      {propertyTypeLabel(property.type)}
+                    </p>
+                    {#if property.type === 'select' && property.options?.length}
+                      <p class="mt-2 text-xs text-warm-text-secondary">
+                        {property.options.map((option) => option.label).join(' · ')}
+                      </p>
+                    {/if}
+                  </div>
+                  <div class="flex flex-wrap justify-end gap-2">
+                    <button
+                      type="button"
+                      class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary disabled:opacity-50"
+                      disabled={index === 0}
+                      onclick={() => void handleReorderProperty(property._id, index - 1)}
+                    >
+                      Up
+                    </button>
+                    <button
+                      type="button"
+                      class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary disabled:opacity-50"
+                      disabled={index === visibleProperties.length - 1}
+                      onclick={() => void handleReorderProperty(property._id, index + 1)}
+                    >
+                      Down
+                    </button>
+                    <button
+                      type="button"
+                      class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary"
+                      onclick={() => beginPropertyRename(property)}
+                    >
+                      Rename
+                    </button>
+                    <button
+                      type="button"
+                      class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-accent"
+                      onclick={() => {
+                        pendingRemovePropertyId = property._id;
+                        cancelPropertyRename();
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+
+                {#if pendingRemovePropertyId === property._id}
+                  <div class="mt-4 rounded-2xl border border-warm-border bg-warm-bg px-4 py-4">
+                    <p class="text-sm text-warm-text-secondary">Removing this property also clears its values from every item.</p>
+                    <div class="mt-3 flex gap-2">
+                      <button
+                        type="button"
+                        class="flex-1 rounded-full border border-warm-border px-4 py-3 text-sm font-medium text-warm-text-secondary"
+                        onclick={() => (pendingRemovePropertyId = null)}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        class="flex-1 rounded-full bg-warm-accent px-4 py-3 text-sm font-bold text-warm-text-on-dark"
+                        onclick={() => void handleRemoveProperty()}
+                      >
+                        Confirm remove
+                      </button>
+                    </div>
+                  </div>
+                {/if}
+              {/if}
+            </div>
+          {/each}
+        {:else}
+          <div class="rounded-[22px] border border-dashed border-warm-border bg-warm-bg-card px-4 py-5 text-sm text-warm-text-secondary">
+            No properties yet. Add one to shape what details each item can hold.
+          </div>
+        {/if}
+      </div>
+
+      <form
+        class="mt-2 flex flex-col gap-3 rounded-[24px] border border-warm-border bg-warm-bg-card p-4"
+        onsubmit={(event) => {
+          event.preventDefault();
+          void handleCreateProperty();
+        }}
+      >
+        <div>
+          <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-warm-text-secondary">Add property</p>
+        </div>
+        <input
+          bind:value={propertyDraftName}
+          class="rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary outline-none"
+          placeholder="Priority"
+        />
+        <select
+          bind:value={propertyDraftType}
+          class="rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary outline-none"
+        >
+          <option value="text">Text</option>
+          <option value="number">Number</option>
+          <option value="date">Date</option>
+          <option value="select">Select</option>
+          <option value="checkbox">Checkbox</option>
+        </select>
+        {#if propertyDraftType === 'select'}
+          <input
+            bind:value={propertyDraftOptions}
+            class="rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary outline-none"
+            placeholder="High, Medium, Low"
+          />
+        {/if}
+        <button
+          type="submit"
+          class="rounded-full bg-warm-text-primary px-4 py-3 text-sm font-bold text-warm-text-on-dark disabled:opacity-60"
+          disabled={!propertyDraftName.trim() || (propertyDraftType === 'select' && !propertyDraftOptions.trim())}
+        >
+          Add property
+        </button>
+      </form>
+    {/if}
+  </div>
+{/snippet}
 
 {#if selectedPublicId && !usePreviewData && listItems.data === null && !listItems.isLoading}
   <section class="rounded-[32px] border border-warm-border bg-warm-bg-card p-8 text-sm text-warm-text-secondary">
@@ -680,6 +1432,13 @@
                 {selectedRow.name}
               </h2>
             </div>
+            <button
+              type="button"
+              class="rounded-full border border-warm-border px-4 py-2 text-sm font-semibold text-warm-text-secondary min-[900px]:hidden"
+              onclick={() => (showMobileDetails = true)}
+            >
+              {selectedItem ? 'Item details' : 'List properties'}
+            </button>
           </div>
 
           <form
@@ -730,6 +1489,8 @@
                             ? 'border-warm-accent bg-warm-section-spend'
                             : dragOverItemId === item._id
                               ? 'border-warm-accent/60 bg-warm-section-spend/60'
+                              : selectedItemId === item._id
+                                ? 'border-warm-accent/70 bg-warm-section-spend/40'
                               : 'border-warm-border bg-warm-bg-card'
                         }`}
                       >
@@ -783,7 +1544,13 @@
                             >
                               ≡
                             </button>
-                            <span class="min-w-0 flex-1 text-sm font-semibold text-warm-text-primary">{item.title}</span>
+                            <button
+                              type="button"
+                              class="min-w-0 flex-1 text-left text-sm font-semibold text-warm-text-primary"
+                              onclick={() => openItemDetails(item._id)}
+                            >
+                              {item.title}
+                            </button>
                             <div class="flex items-center gap-2">
                               <button
                                 type="button"
@@ -839,7 +1606,13 @@
                           >
                             ✓
                           </button>
-                          <span class="min-w-0 flex-1 text-sm text-warm-text-secondary line-through">{item.title}</span>
+                          <button
+                            type="button"
+                            class="min-w-0 flex-1 text-left text-sm text-warm-text-secondary line-through"
+                            onclick={() => openItemDetails(item._id)}
+                          >
+                            {item.title}
+                          </button>
                           <div class="flex items-center gap-2">
                             <button
                               type="button"
@@ -866,13 +1639,8 @@
               </section>
             </div>
 
-            <aside class="rounded-[24px] border border-warm-border bg-warm-bg p-4">
-              <h3 class="text-sm font-bold text-warm-text-primary">How this list works</h3>
-              <ul class="mt-3 flex list-none flex-col gap-2 text-sm text-warm-text-secondary">
-                <li>Add plain text items.</li>
-                <li>Drag active items into the order you want.</li>
-                <li>Completed items stay visible until you clear them.</li>
-              </ul>
+            <aside class="hidden rounded-[24px] border border-warm-border bg-warm-bg p-4 min-[900px]:block">
+              {@render detailSurface()}
             </aside>
           </div>
         </div>
@@ -882,6 +1650,28 @@
         </div>
       {/if}
     </section>
+
+    {#if showMobileDetails}
+      <button
+        type="button"
+        class="fixed inset-0 z-40 bg-[#2D2D2D99] min-[900px]:hidden"
+        aria-label="Close details"
+        onclick={() => closeMobileDetails()}
+      ></button>
+      <section class="fixed inset-x-0 bottom-0 z-50 max-h-[82vh] overflow-y-auto rounded-t-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_-12px_40px_rgba(61,46,34,0.18)] min-[900px]:hidden">
+        <div class="mb-4 flex items-center justify-between gap-3">
+          <div class="h-1.5 w-14 rounded-full bg-warm-border"></div>
+          <button
+            type="button"
+            class="rounded-full border border-warm-border px-3 py-2 text-xs font-semibold text-warm-text-secondary"
+            onclick={() => closeMobileDetails()}
+          >
+            Done
+          </button>
+        </div>
+        {@render detailSurface()}
+      </section>
+    {/if}
 
     {#if showCreateDialog || renameTargetPublicId || deleteTargetPublicId}
       <button

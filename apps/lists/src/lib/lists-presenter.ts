@@ -15,10 +15,32 @@ export type VisibleListItem = {
   completedAt?: number;
   createdAt: number;
   updatedAt: number;
+  propertyValues: VisibleListItemPropertyValue[];
+};
+
+export type VisibleListProperty = {
+  _id: string;
+  listId: string;
+  name: string;
+  type: 'text' | 'number' | 'date' | 'select' | 'checkbox';
+  sortOrder: number;
+  options?: Array<{ id: string; label: string }>;
+};
+
+export type VisibleListItemPropertyValue = {
+  _id: string;
+  listItemId: string;
+  listPropertyId: string;
+  textValue?: string;
+  numberValue?: number;
+  dateValue?: number;
+  selectOptionId?: string;
+  checkboxValue?: boolean;
 };
 
 export type VisibleListItemsResult = {
   list: VisibleList;
+  properties: VisibleListProperty[];
   activeItems: VisibleListItem[];
   completedItems: VisibleListItem[];
 };
@@ -60,6 +82,33 @@ const now = 1_700_000_000_000;
 export const previewItemsByListPublicId: Record<string, VisibleListItemsResult> = {
   'weekly-shop': {
     list: previewVisibleLists[0]!,
+    properties: [
+      {
+        _id: 'preview-property-priority',
+        listId: 'preview-weekly-shop',
+        name: 'Priority',
+        type: 'select',
+        sortOrder: 0,
+        options: [
+          { id: 'high', label: 'High' },
+          { id: 'low', label: 'Low' }
+        ]
+      },
+      {
+        _id: 'preview-property-notes',
+        listId: 'preview-weekly-shop',
+        name: 'Notes',
+        type: 'text',
+        sortOrder: 1
+      },
+      {
+        _id: 'preview-property-due-date',
+        listId: 'preview-weekly-shop',
+        name: 'Due date',
+        type: 'date',
+        sortOrder: 2
+      }
+    ],
     activeItems: [
       {
         _id: 'preview-item-bananas',
@@ -67,7 +116,15 @@ export const previewItemsByListPublicId: Record<string, VisibleListItemsResult> 
         title: 'Bananas',
         sortOrder: 0,
         createdAt: now,
-        updatedAt: now
+        updatedAt: now,
+        propertyValues: [
+          {
+            _id: 'preview-value-bananas-priority',
+            listItemId: 'preview-item-bananas',
+            listPropertyId: 'preview-property-priority',
+            selectOptionId: 'high'
+          }
+        ]
       },
       {
         _id: 'preview-item-milk',
@@ -75,7 +132,15 @@ export const previewItemsByListPublicId: Record<string, VisibleListItemsResult> 
         title: 'Milk',
         sortOrder: 1,
         createdAt: now + 1,
-        updatedAt: now + 1
+        updatedAt: now + 1,
+        propertyValues: [
+          {
+            _id: 'preview-value-milk-notes',
+            listItemId: 'preview-item-milk',
+            listPropertyId: 'preview-property-notes',
+            textValue: 'Get oat if regular is out'
+          }
+        ]
       },
       {
         _id: 'preview-item-bread',
@@ -83,7 +148,8 @@ export const previewItemsByListPublicId: Record<string, VisibleListItemsResult> 
         title: 'Bread',
         sortOrder: 2,
         createdAt: now + 2,
-        updatedAt: now + 2
+        updatedAt: now + 2,
+        propertyValues: []
       }
     ],
     completedItems: [
@@ -94,12 +160,36 @@ export const previewItemsByListPublicId: Record<string, VisibleListItemsResult> 
         sortOrder: 3,
         completedAt: now + 10,
         createdAt: now + 3,
-        updatedAt: now + 10
+        updatedAt: now + 10,
+        propertyValues: [
+          {
+            _id: 'preview-value-apples-due-date',
+            listItemId: 'preview-item-apples',
+            listPropertyId: 'preview-property-due-date',
+            dateValue: now + 86_400_000
+          }
+        ]
       }
     ]
   },
   'home-reset': {
     list: previewVisibleLists[1]!,
+    properties: [
+      {
+        _id: 'preview-property-area',
+        listId: 'preview-home-reset',
+        name: 'Area',
+        type: 'text',
+        sortOrder: 0
+      },
+      {
+        _id: 'preview-property-urgent',
+        listId: 'preview-home-reset',
+        name: 'Urgent',
+        type: 'checkbox',
+        sortOrder: 1
+      }
+    ],
     activeItems: [
       {
         _id: 'preview-item-laundry',
@@ -107,7 +197,15 @@ export const previewItemsByListPublicId: Record<string, VisibleListItemsResult> 
         title: 'Fold laundry',
         sortOrder: 0,
         createdAt: now,
-        updatedAt: now
+        updatedAt: now,
+        propertyValues: [
+          {
+            _id: 'preview-value-laundry-area',
+            listItemId: 'preview-item-laundry',
+            listPropertyId: 'preview-property-area',
+            textValue: 'Bedroom'
+          }
+        ]
       },
       {
         _id: 'preview-item-bins',
@@ -115,13 +213,37 @@ export const previewItemsByListPublicId: Record<string, VisibleListItemsResult> 
         title: 'Take bins out',
         sortOrder: 1,
         createdAt: now + 1,
-        updatedAt: now + 1
+        updatedAt: now + 1,
+        propertyValues: [
+          {
+            _id: 'preview-value-bins-urgent',
+            listItemId: 'preview-item-bins',
+            listPropertyId: 'preview-property-urgent',
+            checkboxValue: true
+          }
+        ]
       }
     ],
     completedItems: []
   },
   'birthday-dinner': {
     list: previewVisibleLists[2]!,
+    properties: [
+      {
+        _id: 'preview-property-owner',
+        listId: 'preview-birthday-dinner',
+        name: 'Owner',
+        type: 'text',
+        sortOrder: 0
+      },
+      {
+        _id: 'preview-property-budget',
+        listId: 'preview-birthday-dinner',
+        name: 'Budget',
+        type: 'number',
+        sortOrder: 1
+      }
+    ],
     activeItems: [
       {
         _id: 'preview-item-cake',
@@ -129,7 +251,21 @@ export const previewItemsByListPublicId: Record<string, VisibleListItemsResult> 
         title: 'Order cake',
         sortOrder: 0,
         createdAt: now,
-        updatedAt: now
+        updatedAt: now,
+        propertyValues: [
+          {
+            _id: 'preview-value-cake-owner',
+            listItemId: 'preview-item-cake',
+            listPropertyId: 'preview-property-owner',
+            textValue: 'Ray'
+          },
+          {
+            _id: 'preview-value-cake-budget',
+            listItemId: 'preview-item-cake',
+            listPropertyId: 'preview-property-budget',
+            numberValue: 85
+          }
+        ]
       }
     ],
     completedItems: [
@@ -140,7 +276,8 @@ export const previewItemsByListPublicId: Record<string, VisibleListItemsResult> 
         sortOrder: 1,
         completedAt: now + 20,
         createdAt: now + 1,
-        updatedAt: now + 20
+        updatedAt: now + 20,
+        propertyValues: []
       }
     ]
   }
@@ -182,4 +319,20 @@ export function projectDraggedItems(
   if (!moved) return items;
   projected.splice(toIndex, 0, moved);
   return projected;
+}
+
+export function getSelectedItem(
+  activeItems: VisibleListItem[],
+  completedItems: VisibleListItem[],
+  selectedItemId: string | null
+) {
+  if (!selectedItemId) return null;
+  return [...activeItems, ...completedItems].find((item) => item._id === selectedItemId) ?? null;
+}
+
+export function getUnsetPropertiesForItem(properties: VisibleListProperty[], item: VisibleListItem | null) {
+  if (!item) return properties;
+
+  const assignedPropertyIds = new Set(item.propertyValues.map((value) => value.listPropertyId));
+  return properties.filter((property) => !assignedPropertyIds.has(property._id));
 }
