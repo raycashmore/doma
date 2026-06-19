@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { dndzone, type DndEvent } from 'svelte-dnd-action';
+  import { type DndEvent,dndzone } from 'svelte-dnd-action';
 
-  import type { VisibleListProperty } from '$lib/lists-presenter';
   import ListIcon from '$lib/ListIcon.svelte';
+  import type { VisibleListProperty } from '$lib/lists-presenter';
 
   let {
     properties,

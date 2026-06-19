@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { VisibleListItem } from '$lib/lists-presenter';
   import ListIcon from '$lib/ListIcon.svelte';
+  import type { VisibleListItem } from '$lib/lists-presenter';
 
   let {
     item,

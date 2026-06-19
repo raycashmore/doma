@@ -1,10 +1,12 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
+
+  import ListIcon from '$lib/ListIcon.svelte';
   import type {
     VisibleListItem,
     VisibleListItemPropertyValue,
     VisibleListProperty
   } from '$lib/lists-presenter';
-  import ListIcon from '$lib/ListIcon.svelte';
 
   let {
     item,
@@ -62,9 +64,12 @@
     findPropertyValue: (item: VisibleListItem, propertyId: string) => VisibleListItemPropertyValue | null;
   } = $props();
 
-  let titleDraft = $state(item.title);
-  let notesDraft = $state(item.notes ?? '');
-  let lastItemId = $state(item._id);
+  // Seed local editable drafts from the item prop once; the $effect below
+  // re-seeds them whenever a different item is selected. untrack makes the
+  // intentional read-once explicit (silences state_referenced_locally).
+  let titleDraft = $state(untrack(() => item.title));
+  let notesDraft = $state(untrack(() => item.notes ?? ''));
+  let lastItemId = $state(untrack(() => item._id));
 
   $effect(() => {
     if (item._id === lastItemId) return;

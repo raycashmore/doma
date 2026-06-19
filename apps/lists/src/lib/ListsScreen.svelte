@@ -2,21 +2,18 @@
   import { api } from '@repo/convex';
   import { slugifyListName } from '@repo/convex/lists/model';
   import { useMutation, useQuery } from 'convex-svelte';
-
-  import { dndzone, type DndEvent } from 'svelte-dnd-action';
-  import ListItemRow from '$lib/ListItemRow.svelte';
-  import ListIcon from '$lib/ListIcon.svelte';
-  import ItemDetailPanel from '$lib/ItemDetailPanel.svelte';
-  import ListSettingsPanel from '$lib/ListSettingsPanel.svelte';
+  import { type DndEvent,dndzone } from 'svelte-dnd-action';
 
   import { browser, dev } from '$app/environment';
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import { page } from '$app/state';
+  import ItemDetailPanel from '$lib/ItemDetailPanel.svelte';
+  import ListIcon from '$lib/ListIcon.svelte';
+  import ListItemRow from '$lib/ListItemRow.svelte';
   import {
     describeListMeta,
     getSelectedItem,
-    getUnsetPropertiesForItem,
     type PresentedList,
     presentLists,
     previewItemsByListPublicId,
@@ -33,6 +30,7 @@
     readLastListPublicId,
     writeLastListPublicId
   } from '$lib/lists-routing';
+  import ListSettingsPanel from '$lib/ListSettingsPanel.svelte';
 
   const USE_DEV_FIXTURE = dev && !import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
@@ -848,7 +846,6 @@
   const completedItems = $derived(selectedListData?.completedItems ?? []);
   const visibleProperties = $derived(selectedListData?.properties ?? []);
   const selectedItem = $derived(getSelectedItem(activeItems, completedItems, selectedItemId));
-  const unsetProperties = $derived(getUnsetPropertiesForItem(visibleProperties, selectedItem));
   const metaLabel = $derived(
     describeListMeta(selectedRow, selectedListData?.activeItems.length ?? 0, selectedListData?.completedItems.length ?? 0)
   );
@@ -1365,7 +1362,7 @@
       <section class="fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-y-auto rounded-t-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_-12px_40px_rgba(61,46,34,0.18)] min-[900px]:hidden">
         <div class="mb-3 flex items-center justify-between">
           <h2 class="text-base font-semibold text-warm-text-primary">My Lists</h2>
-          <button type="button" class="flex h-8 w-8 items-center justify-center rounded-full text-warm-text-secondary" aria-label="Close" onclick={() => (showListSwitcher = false)}>
+          <button type="button" class="flex h-8 w-8 items-center justify-center rounded-full text-warm-text-secondary" aria-label="Close list switcher" onclick={() => (showListSwitcher = false)}>
             <ListIcon name="close" size={16} />
           </button>
         </div>
