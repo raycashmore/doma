@@ -59,9 +59,9 @@ function normalizeListPropertyOptions(type: ListPropertyType, options?: ListProp
   return normalizedOptions;
 }
 
-async function serializeListItemPropertyValueMutation(ctx: ListsMutationCtx, item: ListItemRow) {
+async function serializeListItemPropertyValueMutation(ctx: ListsMutationCtx, item: ListItemRow, now: number) {
   await ctx.db.patch(item._id, {
-    updatedAt: item.updatedAt
+    updatedAt: now
   });
 }
 
@@ -238,8 +238,8 @@ export async function setListItemPropertyValueHandler(
   const property = await findListPropertyById(ctx, args.propertyId);
   if (!property || property.listId !== list._id) throw new Error('List property unavailable');
 
-  await serializeListItemPropertyValueMutation(ctx, item);
   const now = Date.now();
+  await serializeListItemPropertyValueMutation(ctx, item, now);
   const valuePatch = buildPropertyValuePatch(property, args.value);
   const existing = await findItemPropertyValue(ctx, item._id, property._id);
 
@@ -272,7 +272,8 @@ export async function clearListItemPropertyValueHandler(
   const property = await findListPropertyById(ctx, propertyId);
   if (!property || property.listId !== list._id) throw new Error('List property unavailable');
 
-  await serializeListItemPropertyValueMutation(ctx, item);
+  const now = Date.now();
+  await serializeListItemPropertyValueMutation(ctx, item, now);
   const existing = await findItemPropertyValue(ctx, item._id, property._id);
   if (existing) {
     await ctx.db.delete(existing._id);

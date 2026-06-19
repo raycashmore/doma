@@ -567,7 +567,7 @@ describe('setListItemPropertyValue', () => {
       {
         id: activeItemA._id,
         patch: {
-          updatedAt: activeItemA.updatedAt
+          updatedAt: 410
         }
       }
     ]);
@@ -594,13 +594,13 @@ describe('setListItemPropertyValue', () => {
       {
         id: activeItemA._id,
         patch: {
-          updatedAt: activeItemA.updatedAt
+          updatedAt: 410
         }
       },
       {
         id: activeItemA._id,
         patch: {
-          updatedAt: activeItemA.updatedAt
+          updatedAt: 410
         }
       }
     ]);
@@ -826,7 +826,7 @@ describe('setListItemPropertyValue', () => {
       {
         id: activeItemA._id,
         patch: {
-          updatedAt: activeItemA.updatedAt
+          updatedAt: 450
         }
       },
       {
@@ -856,6 +856,7 @@ describe('setListItemPropertyValue', () => {
       [notesProperty],
       [notesValueForItemA]
     );
+    vi.spyOn(Date, 'now').mockReturnValue(460);
 
     await expect(
       clearListItemPropertyValueHandler(ctx as never, {
@@ -871,7 +872,7 @@ describe('setListItemPropertyValue', () => {
       {
         id: activeItemA._id,
         patch: {
-          updatedAt: activeItemA.updatedAt
+          updatedAt: 460
         }
       }
     ]);

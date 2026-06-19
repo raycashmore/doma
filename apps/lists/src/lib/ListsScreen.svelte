@@ -303,13 +303,10 @@
 
       const current = previewItemsByList[renameTargetPublicId];
       if (current) {
-        const nextPublicId = renameTargetPublicId === slug ? renameTargetPublicId : slug;
-        const nextList = { ...current.list, name, slug, publicId: nextPublicId };
-        const rest = { ...previewItemsByList };
-        delete rest[renameTargetPublicId];
+        const nextList = { ...current.list, name, slug };
         previewItemsByList = {
-          ...rest,
-          [nextPublicId]: {
+          ...previewItemsByList,
+          [renameTargetPublicId]: {
             ...current,
             list: nextList
           }

@@ -257,7 +257,7 @@ export const previewItemsByListPublicId: Record<string, VisibleListItemsResult> 
             _id: 'preview-value-cake-owner',
             listItemId: 'preview-item-cake',
             listPropertyId: 'preview-property-owner',
-            textValue: 'Ray'
+            textValue: 'memberA'
           },
           {
             _id: 'preview-value-cake-budget',
