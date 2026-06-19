@@ -189,6 +189,7 @@ export default defineSchema({
   listItems: defineTable({
     listId: v.id('lists'),
     title: v.string(),
+    notes: v.optional(v.string()),
     sortOrder: v.number(),
     completedAt: v.optional(v.number()),
     createdAt: v.number(),

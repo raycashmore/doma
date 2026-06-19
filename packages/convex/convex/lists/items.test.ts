@@ -39,6 +39,7 @@ const {
   readVisibleListItemsByPublicId,
   renameListItemHandler,
   reorderListItemHandler,
+  setListItemNotesHandler,
   uncompleteListItemHandler
 } = itemsModule;
 
@@ -392,6 +393,53 @@ describe('renameListItem', () => {
         }
       }
     ]);
+  });
+});
+
+describe('setListItemNotes', () => {
+  it('sets notes on an item in a visible shared list', async () => {
+    const { ctx, patchedRows } = createItemsCtx({ subject: 'user_b' }, [sharedList], [activeItemA]);
+    vi.spyOn(Date, 'now').mockReturnValue(330);
+
+    await expect(
+      setListItemNotesHandler(ctx as never, {
+        itemId: listItemId(activeItemA._id),
+        notes: '  Buy firm ones  '
+      })
+    ).resolves.toMatchObject({
+      _id: activeItemA._id,
+      notes: 'Buy firm ones',
+      updatedAt: 330
+    });
+
+    expect(patchedRows).toEqual([
+      {
+        id: activeItemA._id,
+        patch: {
+          notes: 'Buy firm ones',
+          updatedAt: 330
+        }
+      }
+    ]);
+  });
+
+  it('clears notes when given an empty string', async () => {
+    const { ctx, patchedRows } = createItemsCtx({ subject: 'user_b' }, [sharedList], [activeItemA]);
+    vi.spyOn(Date, 'now').mockReturnValue(340);
+
+    await expect(
+      setListItemNotesHandler(ctx as never, { itemId: listItemId(activeItemA._id), notes: '   ' })
+    ).resolves.toMatchObject({ notes: undefined, updatedAt: 340 });
+
+    expect(patchedRows).toEqual([{ id: activeItemA._id, patch: { notes: undefined, updatedAt: 340 } }]);
+  });
+
+  it('rejects editing an item the user cannot see', async () => {
+    const { ctx } = createItemsCtx({ subject: 'user_intruder' }, [personalList], [activeItemA]);
+
+    await expect(
+      setListItemNotesHandler(ctx as never, { itemId: listItemId(activeItemA._id), notes: 'x' })
+    ).rejects.toThrow('List unavailable');
   });
 });
 

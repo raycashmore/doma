@@ -10,6 +10,7 @@ import {
   deleteListSubtree,
   renameListItemHandler,
   reorderListItemHandler,
+  setListItemNotesHandler,
   uncompleteListItemHandler
 } from './items';
 import { buildListPublicId, slugifyListName } from './model';
@@ -181,6 +182,14 @@ export const renameListItem = mutation({
     title: v.string()
   },
   handler: renameListItemHandler
+});
+
+export const setListItemNotes = mutation({
+  args: {
+    itemId: v.id('listItems'),
+    notes: v.string()
+  },
+  handler: setListItemNotesHandler
 });
 
 export const deleteListItem = mutation({
