@@ -3,6 +3,9 @@
   import { slugifyListName } from '@repo/convex/lists/model';
   import { useMutation, useQuery } from 'convex-svelte';
 
+  import { dndzone, type DndEvent } from 'svelte-dnd-action';
+  import ListItemRow from '$lib/ListItemRow.svelte';
+
   import { browser, dev } from '$app/environment';
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
@@ -15,7 +18,6 @@
     presentLists,
     previewItemsByListPublicId,
     previewVisibleLists,
-    projectDraggedItems,
     type VisibleList,
     type VisibleListItem,
     type VisibleListItemPropertyValue,
@@ -71,10 +73,7 @@
   let renameTargetPublicId = $state<string | null>(null);
   let deleteTargetPublicId = $state<string | null>(null);
   let showCreateDialog = $state(false);
-  let editingItemId = $state<string | null>(null);
-  let editingItemTitle = $state('');
-  let draggingItemId = $state<string | null>(null);
-  let dragOverItemId = $state<string | null>(null);
+  let activeDragDisabled = $state(true);
   let selectedItemId = $state<string | null>(null);
   let showMobileDetails = $state(false);
   let usePreviewData = $state(USE_DEV_FIXTURE);
@@ -438,44 +437,6 @@
     }
   }
 
-  function beginEditingItem(item: VisibleListItem) {
-    editingItemId = item._id;
-    editingItemTitle = item.title;
-    itemMutationError = null;
-  }
-
-  async function saveEditedItem() {
-    if (!editingItemId) return;
-    itemMutationError = null;
-
-    if (usePreviewData) {
-      if (!selectedRow?.publicId) return;
-      updatePreviewListData(selectedRow.publicId, (current) => ({
-        ...current,
-        activeItems: current.activeItems.map((item) =>
-          item._id === editingItemId ? { ...item, title: editingItemTitle.trim(), updatedAt: Date.now() } : item
-        ),
-        completedItems: current.completedItems.map((item) =>
-          item._id === editingItemId ? { ...item, title: editingItemTitle.trim(), updatedAt: Date.now() } : item
-        )
-      }));
-      editingItemId = null;
-      editingItemTitle = '';
-      return;
-    }
-
-    try {
-      await renameListItem({
-        itemId: editingItemId as never,
-        title: editingItemTitle
-      });
-      editingItemId = null;
-      editingItemTitle = '';
-    } catch (error) {
-      itemMutationError = describeError(error, 'Unable to rename item.');
-    }
-  }
-
   async function removeItem(itemId: string) {
     itemMutationError = null;
 
@@ -820,73 +781,6 @@
     }
   }
 
-  async function persistPreviewReorder(itemId: string, targetItemId: string) {
-    if (!selectedRow?.publicId) return;
-    updatePreviewListData(selectedRow.publicId, (current) => {
-      const dragged = projectDraggedItems(current.activeItems, itemId, targetItemId);
-      return {
-        ...current,
-        activeItems: normalizePreviewItems(dragged)
-      };
-    });
-  }
-
-  async function persistItemReorder(itemId: string, targetItemId: string) {
-    const baseItems = selectedListData?.activeItems ?? [];
-    const targetIndex = baseItems.findIndex((item) => item._id === targetItemId);
-    if (targetIndex < 0) return;
-
-    if (usePreviewData) {
-      await persistPreviewReorder(itemId, targetItemId);
-      return;
-    }
-
-    try {
-      await reorderListItem({
-        itemId: itemId as never,
-        targetIndex
-      });
-    } catch (error) {
-      itemMutationError = describeError(error, 'Unable to reorder item.');
-    }
-  }
-
-  function startDragging(itemId: string, event: PointerEvent) {
-    if (!browser) return;
-
-    event.preventDefault();
-    itemMutationError = null;
-    draggingItemId = itemId;
-    dragOverItemId = itemId;
-
-    const move = (moveEvent: PointerEvent) => {
-      const target = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY);
-      if (!(target instanceof HTMLElement)) return;
-      const row = target.closest<HTMLElement>('[data-active-item-id]');
-      if (row?.dataset.activeItemId) {
-        dragOverItemId = row.dataset.activeItemId;
-      }
-    };
-
-    const finish = async () => {
-      window.removeEventListener('pointermove', move);
-      window.removeEventListener('pointerup', finish);
-      window.removeEventListener('pointercancel', finish);
-
-      const draggedItemId = draggingItemId;
-      const targetItemId = dragOverItemId;
-      draggingItemId = null;
-      dragOverItemId = null;
-
-      if (!draggedItemId || !targetItemId || draggedItemId === targetItemId) return;
-      await persistItemReorder(draggedItemId, targetItemId);
-    };
-
-    window.addEventListener('pointermove', move);
-    window.addEventListener('pointerup', finish);
-    window.addEventListener('pointercancel', finish);
-  }
-
   const visibleListRows = $derived(usePreviewData ? previewLists : (visibleLists.data ?? []));
   const previewSelectedListData = $derived(
     selectedPublicId ? previewItemsByList[selectedPublicId] ?? null : null
@@ -899,9 +793,7 @@
   const selectedRow = $derived(selectedListData?.list ?? null);
   const presentedLists = $derived(presentLists(visibleListRows, selectedRow?.publicId ?? selectedPublicId));
   const filteredLists = $derived(presentedLists.filter((list) => list.visibility === listFilter));
-  const activeItems = $derived(
-    projectDraggedItems(selectedListData?.activeItems ?? [], draggingItemId, dragOverItemId)
-  );
+  const activeItems = $derived(selectedListData?.activeItems ?? []);
   const completedItems = $derived(selectedListData?.completedItems ?? []);
   const visibleProperties = $derived(selectedListData?.properties ?? []);
   const selectedItem = $derived(getSelectedItem(activeItems, completedItems, selectedItemId));
@@ -909,6 +801,63 @@
   const metaLabel = $derived(
     describeListMeta(selectedRow, selectedListData?.activeItems.length ?? 0, selectedListData?.completedItems.length ?? 0)
   );
+
+  function summarizeItemValues(item: VisibleListItem) {
+    const parts: string[] = [];
+    for (const property of visibleProperties) {
+      const value = findPropertyValue(item, property._id);
+      if (!value) continue;
+      const described = describePropertyValue(property, value);
+      if (described) parts.push(described);
+    }
+    return parts.join(' · ');
+  }
+
+  // svelte-dnd-action requires the bound `items` array to be updated on EVERY
+  // consider/finalize event, so it is local $state seeded from the query/preview
+  // source and frozen while a drag is in flight.
+  let activeDndItems = $state<{ id: string; item: VisibleListItem }[]>([]);
+  let isDraggingActive = $state(false);
+
+  $effect(() => {
+    const next = activeItems.map((item) => ({ id: item._id, item }));
+    if (isDraggingActive) return;
+    activeDndItems = next;
+  });
+
+  function handleActiveConsider(event: CustomEvent<DndEvent<{ id: string; item: VisibleListItem }>>) {
+    isDraggingActive = true;
+    activeDndItems = event.detail.items;
+  }
+
+  async function handleActiveFinalize(event: CustomEvent<DndEvent<{ id: string; item: VisibleListItem }>>) {
+    activeDndItems = event.detail.items;
+    isDraggingActive = false;
+    activeDragDisabled = true;
+
+    const nextOrder = event.detail.items.map((entry) => entry.id);
+    const movedId = event.detail.info.id;
+    const targetIndex = nextOrder.indexOf(movedId);
+    if (targetIndex < 0) return;
+
+    if (usePreviewData) {
+      if (!selectedRow?.publicId) return;
+      updatePreviewListData(selectedRow.publicId, (current) => {
+        const byId = new Map(current.activeItems.map((entry) => [entry._id, entry]));
+        const reordered = nextOrder
+          .map((id) => byId.get(id))
+          .filter((entry): entry is VisibleListItem => Boolean(entry));
+        return { ...current, activeItems: normalizePreviewItems(reordered) };
+      });
+      return;
+    }
+
+    try {
+      await reorderListItem({ itemId: movedId as never, targetIndex });
+    } catch (error) {
+      itemMutationError = describeError(error, 'Unable to reorder item.');
+    }
+  }
 
   $effect(() => {
     if (!browser) return;
@@ -1468,7 +1417,7 @@
               <section class="rounded-[24px] border border-warm-border bg-warm-bg p-4">
                 <div class="flex items-center justify-between gap-3">
                   <div>
-                    <h3 class="text-sm font-bold text-warm-text-primary">Active items</h3>
+                    <h3 class="text-sm font-bold text-warm-text-primary">Items</h3>
                     <p class="mt-1 text-xs text-warm-text-secondary">Drag by the handle to reorder.</p>
                   </div>
                   <span class="rounded-full bg-warm-section-mortgage px-3 py-1 text-[11px] font-semibold text-warm-text-secondary">
@@ -1476,101 +1425,31 @@
                   </span>
                 </div>
 
-                {#if activeItems.length}
-                  <ul class="mt-4 flex flex-col gap-2">
-                    {#each activeItems as item (item._id)}
-                      <li
-                        data-active-item-id={item._id}
-                        class={`rounded-2xl border px-3 py-3 ${
-                          draggingItemId === item._id
-                            ? 'border-warm-accent bg-warm-section-spend'
-                            : dragOverItemId === item._id
-                              ? 'border-warm-accent/60 bg-warm-section-spend/60'
-                              : selectedItemId === item._id
-                                ? 'border-warm-accent/70 bg-warm-section-spend/40'
-                              : 'border-warm-border bg-warm-bg-card'
-                        }`}
-                      >
-                        {#if editingItemId === item._id}
-                          <form
-                            class="flex flex-col gap-2 min-[700px]:flex-row"
-                            onsubmit={(event) => {
-                              event.preventDefault();
-                              void saveEditedItem();
-                            }}
-                          >
-                            <input
-                              bind:value={editingItemTitle}
-                              class="flex-1 rounded-2xl border border-warm-border bg-warm-bg px-3 py-2 text-sm text-warm-text-primary outline-none"
-                            />
-                            <div class="flex gap-2">
-                              <button
-                                type="button"
-                                class="rounded-full border border-warm-border px-3 py-2 text-xs font-semibold text-warm-text-secondary"
-                                onclick={() => {
-                                  editingItemId = null;
-                                  editingItemTitle = '';
-                                }}
-                              >
-                                Cancel
-                              </button>
-                              <button
-                                type="submit"
-                                class="rounded-full bg-warm-text-primary px-3 py-2 text-xs font-semibold text-warm-text-on-dark disabled:opacity-60"
-                                disabled={!editingItemTitle.trim()}
-                              >
-                                Save
-                              </button>
-                            </div>
-                          </form>
-                        {:else}
-                          <div class="flex items-center gap-3">
-                            <button
-                              type="button"
-                              class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-warm-section-income"
-                              aria-label={`Mark ${item.title} complete`}
-                              onclick={() => void toggleItemCompletion(item)}
-                            >
-                              <span class="h-2.5 w-2.5 rounded-full bg-warm-section-income"></span>
-                            </button>
-                            <button
-                              type="button"
-                              class="flex h-9 w-9 shrink-0 cursor-grab items-center justify-center rounded-full bg-warm-section-mortgage text-sm text-warm-text-secondary active:cursor-grabbing"
-                              aria-label={`Drag to reorder ${item.title}`}
-                              onpointerdown={(event) => startDragging(item._id, event)}
-                            >
-                              ≡
-                            </button>
-                            <button
-                              type="button"
-                              class="min-w-0 flex-1 text-left text-sm font-semibold text-warm-text-primary"
-                              onclick={() => openItemDetails(item._id)}
-                            >
-                              {item.title}
-                            </button>
-                            <div class="flex items-center gap-2">
-                              <button
-                                type="button"
-                                class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary"
-                                onclick={() => beginEditingItem(item)}
-                              >
-                                Edit
-                              </button>
-                              <button
-                                type="button"
-                                class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-accent"
-                                onclick={() => void removeItem(item._id)}
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          </div>
-                        {/if}
+                {#if activeDndItems.length}
+                  <ul
+                    class="mt-3 flex flex-col divide-y divide-warm-border/60"
+                    use:dndzone={{ items: activeDndItems, dragDisabled: activeDragDisabled, flipDurationMs: 160, dropTargetStyle: {} }}
+                    onconsider={handleActiveConsider}
+                    onfinalize={handleActiveFinalize}
+                  >
+                    {#each activeDndItems as entry (entry.id)}
+                      <li>
+                        <ListItemRow
+                          item={entry.item}
+                          valueSummary={summarizeItemValues(entry.item)}
+                          completed={false}
+                          selected={selectedItemId === entry.item._id}
+                          dragDisabled={activeDragDisabled}
+                          onHandlePointerDown={() => (activeDragDisabled = false)}
+                          onToggleComplete={() => void toggleItemCompletion(entry.item)}
+                          onOpenDetail={() => openItemDetails(entry.item._id)}
+                          onDelete={() => void removeItem(entry.item._id)}
+                        />
                       </li>
                     {/each}
                   </ul>
                 {:else}
-                  <p class="mt-4 text-sm text-warm-text-secondary">No active items yet.</p>
+                  <p class="mt-4 text-sm text-warm-text-secondary">No items yet.</p>
                 {/if}
               </section>
 

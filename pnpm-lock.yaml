@@ -425,6 +425,9 @@ importers:
       svelte:
         specifier: ^5.56.3
         version: 5.56.3(@typescript-eslint/types@8.54.0)
+      svelte-dnd-action:
+        specifier: ^0.9.70
+        version: 0.9.70(svelte@5.56.3(@typescript-eslint/types@8.54.0))
       tailwindcss:
         specifier: ^4.0.6
         version: 4.3.0
@@ -8147,6 +8150,11 @@ packages:
     peerDependencies:
       svelte: ^4.0.0 || ^5.0.0-next.0
       typescript: '>=5.0.0'
+
+  svelte-dnd-action@0.9.70:
+    resolution: {integrity: sha512-iVqDAW1PtQArA96dHhM5Lwxj39iKNjIuYE+tqpq9DUaBWfv410SpGGFJ3NzPtvptx+YkXBzMYV3lpey8s07q+w==}
+    peerDependencies:
+      svelte: '>=3.23.0 || ^5.0.0-next.0'
 
   svelte-eslint-parser@1.8.0:
     resolution: {integrity: sha512-mikR1qwIVy3t5WthUoAXkMwxkXvabZP9FJgdx35Ei7EbGWmctva1Pih16Koeor/bdNNq8NXHlwKGS6NkYTawLg==}
@@ -17738,6 +17746,10 @@ snapshots:
       typescript: 6.0.3
     transitivePeerDependencies:
       - picomatch
+
+  svelte-dnd-action@0.9.70(svelte@5.56.3(@typescript-eslint/types@8.54.0)):
+    dependencies:
+      svelte: 5.56.3(@typescript-eslint/types@8.54.0)
 
   svelte-eslint-parser@1.8.0(svelte@5.56.3(@typescript-eslint/types@8.54.0)):
     dependencies:
