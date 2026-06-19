@@ -33,6 +33,10 @@
   import ListSettingsPanel from '$lib/ListSettingsPanel.svelte';
 
   const USE_DEV_FIXTURE = dev && !import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+  // How long an authed dev session waits on an unresponsive Convex backend before
+  // dropping to fixtures. Generous on purpose: the fallback is reversible, so this
+  // only needs to outlast a normal cold connect, not race it.
+  const OFFLINE_FALLBACK_MS = 4000;
 
   let {
     selectedPublicId = null
@@ -80,7 +84,13 @@
   let rightPanel = $state<'closed' | 'item' | 'settings'>('closed');
   let showMobileDetails = $state(false);
   let showListSwitcher = $state(false);
-  let usePreviewData = $state(USE_DEV_FIXTURE);
+  // Reversible offline fallback for an authed dev session whose Convex backend never
+  // responds (e.g. `npx convex dev` not running). It clears the instant real data or a
+  // real error arrives, so a merely-slow backend can't silently strand a live session
+  // in non-persisting fixture mode. The explicit `dev:no-auth` mode stays sticky via
+  // USE_DEV_FIXTURE below.
+  let autoOfflineFallback = $state(false);
+  const usePreviewData = $derived(USE_DEV_FIXTURE || autoOfflineFallback);
   let previewLists = $state([...previewVisibleLists]);
   let previewItemsByList = $state(structuredClone(previewItemsByListPublicId));
   let propertyMutationError = $state<string | null>(null);
@@ -955,12 +965,19 @@
   });
 
   $effect(() => {
-    if (!browser || !dev || usePreviewData) return;
-    if (visibleLists.data || visibleLists.error || listItems.data || listItems.error) return;
+    // Explicit no-auth fixture mode is sticky and owns preview state; never override it.
+    if (!browser || !dev || USE_DEV_FIXTURE) return;
 
+    // A real response (data or error) means the backend is reachable — leave fallback.
+    if (visibleLists.data || visibleLists.error || listItems.data || listItems.error) {
+      autoOfflineFallback = false;
+      return;
+    }
+
+    // Still no response — assume the Convex dev backend isn't running and fall back.
     const timeoutId = window.setTimeout(() => {
-      usePreviewData = true;
-    }, 1500);
+      autoOfflineFallback = true;
+    }, OFFLINE_FALLBACK_MS);
 
     return () => {
       window.clearTimeout(timeoutId);
@@ -1062,6 +1079,15 @@
     {/if}
   </div>
 {/snippet}
+
+{#if autoOfflineFallback}
+  <div
+    role="status"
+    class="mb-4 rounded-2xl border border-warm-border bg-warm-bg-card px-4 py-2 text-xs text-warm-accent"
+  >
+    Offline demo data — the Convex backend isn’t responding, so changes won’t be saved.
+  </div>
+{/if}
 
 {#if selectedPublicId && !usePreviewData && listItems.data === null && !listItems.isLoading}
   <section class="rounded-[32px] border border-warm-border bg-warm-bg-card p-8 text-sm text-warm-text-secondary">
