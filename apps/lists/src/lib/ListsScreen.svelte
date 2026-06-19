@@ -5,6 +5,7 @@
 
   import { dndzone, type DndEvent } from 'svelte-dnd-action';
   import ListItemRow from '$lib/ListItemRow.svelte';
+  import ListIcon from '$lib/ListIcon.svelte';
 
   import { browser, dev } from '$app/environment';
   import { goto } from '$app/navigation';
@@ -1420,9 +1421,21 @@
                     <h3 class="text-sm font-bold text-warm-text-primary">Items</h3>
                     <p class="mt-1 text-xs text-warm-text-secondary">Drag by the handle to reorder.</p>
                   </div>
-                  <span class="rounded-full bg-warm-section-mortgage px-3 py-1 text-[11px] font-semibold text-warm-text-secondary">
-                    {activeItems.length}
-                  </span>
+                  <div class="flex items-center gap-2">
+                    <span class="rounded-full bg-warm-section-mortgage px-3 py-1 text-[11px] font-semibold text-warm-text-secondary">
+                      {activeItems.length}
+                    </span>
+                    <button
+                      type="button"
+                      class="flex h-8 w-8 items-center justify-center rounded-full text-warm-text-tertiary hover:text-warm-accent disabled:opacity-40"
+                      aria-label="Clear completed items"
+                      title="Clear completed"
+                      disabled={!completedItems.length}
+                      onclick={() => void handleClearCompletedItems()}
+                    >
+                      <ListIcon name="trash" size={16} />
+                    </button>
+                  </div>
                 </div>
 
                 {#if activeDndItems.length}
@@ -1451,68 +1464,28 @@
                 {:else}
                   <p class="mt-4 text-sm text-warm-text-secondary">No items yet.</p>
                 {/if}
-              </section>
-
-              <section class="rounded-[24px] border border-warm-border bg-warm-bg p-4">
-                <div class="flex items-center justify-between gap-3">
-                  <div>
-                    <h3 class="text-sm font-bold text-warm-text-primary">Completed items</h3>
-                    <p class="mt-1 text-xs text-warm-text-secondary">Newest completions stay visible until you clear or remove them.</p>
-                  </div>
-                  <button
-                    type="button"
-                    class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary disabled:opacity-60"
-                    onclick={() => void handleClearCompletedItems()}
-                    disabled={!completedItems.length}
-                  >
-                    Clear completed
-                  </button>
-                </div>
 
                 {#if completedItems.length}
-                  <ul class="mt-4 flex flex-col gap-2">
+                  <ul class="mt-1 flex flex-col divide-y divide-warm-border/60">
                     {#each completedItems as item (item._id)}
-                      <li class="rounded-2xl border border-warm-border bg-warm-bg-card px-3 py-3">
-                        <div class="flex items-center gap-3">
-                          <button
-                            type="button"
-                            class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-warm-accent bg-warm-section-spend text-[11px] text-warm-accent"
-                            aria-label={`Undo completion for ${item.title}`}
-                            onclick={() => void toggleItemCompletion(item)}
-                          >
-                            ✓
-                          </button>
-                          <button
-                            type="button"
-                            class="min-w-0 flex-1 text-left text-sm text-warm-text-secondary line-through"
-                            onclick={() => openItemDetails(item._id)}
-                          >
-                            {item.title}
-                          </button>
-                          <div class="flex items-center gap-2">
-                            <button
-                              type="button"
-                              class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary"
-                              onclick={() => void toggleItemCompletion(item)}
-                            >
-                              Undo
-                            </button>
-                            <button
-                              type="button"
-                              class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-accent"
-                              onclick={() => void removeItem(item._id)}
-                            >
-                              Remove
-                            </button>
-                          </div>
-                        </div>
+                      <li>
+                        <ListItemRow
+                          {item}
+                          valueSummary={summarizeItemValues(item)}
+                          completed={true}
+                          selected={selectedItemId === item._id}
+                          dragDisabled={true}
+                          onHandlePointerDown={() => {}}
+                          onToggleComplete={() => void toggleItemCompletion(item)}
+                          onOpenDetail={() => openItemDetails(item._id)}
+                          onDelete={() => void removeItem(item._id)}
+                        />
                       </li>
                     {/each}
                   </ul>
-                {:else}
-                  <p class="mt-4 text-sm text-warm-text-secondary">No completed items yet.</p>
                 {/if}
               </section>
+
             </div>
 
             <aside class="hidden rounded-[24px] border border-warm-border bg-warm-bg p-4 min-[900px]:block">
