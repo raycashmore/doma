@@ -306,24 +306,6 @@ export function describeListMeta(
   return `${visibilityLabel} · ${activeLabel} · ${completedLabel}`;
 }
 
-export function projectDraggedItems(
-  items: VisibleListItem[],
-  draggingItemId: string | null,
-  dragOverItemId: string | null
-) {
-  if (!draggingItemId || !dragOverItemId || draggingItemId === dragOverItemId) return items;
-
-  const fromIndex = items.findIndex((item) => item._id === draggingItemId);
-  const toIndex = items.findIndex((item) => item._id === dragOverItemId);
-  if (fromIndex === -1 || toIndex === -1) return items;
-
-  const projected = [...items];
-  const [moved] = projected.splice(fromIndex, 1);
-  if (!moved) return items;
-  projected.splice(toIndex, 0, moved);
-  return projected;
-}
-
 export function getSelectedItem(
   activeItems: VisibleListItem[],
   completedItems: VisibleListItem[],
@@ -331,11 +313,4 @@ export function getSelectedItem(
 ) {
   if (!selectedItemId) return null;
   return [...activeItems, ...completedItems].find((item) => item._id === selectedItemId) ?? null;
-}
-
-export function getUnsetPropertiesForItem(properties: VisibleListProperty[], item: VisibleListItem | null) {
-  if (!item) return properties;
-
-  const assignedPropertyIds = new Set(item.propertyValues.map((value) => value.listPropertyId));
-  return properties.filter((property) => !assignedPropertyIds.has(property._id));
 }

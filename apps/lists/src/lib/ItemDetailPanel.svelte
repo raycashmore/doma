@@ -206,7 +206,13 @@
               {/if}
               <button
                 type="button"
-                class="flex-1 rounded-full bg-warm-text-primary px-3 py-2 text-xs font-bold text-warm-text-on-dark"
+                class="flex-1 rounded-full bg-warm-text-primary px-3 py-2 text-xs font-bold text-warm-text-on-dark disabled:opacity-60"
+                disabled={
+                  (property.type === 'text' && !valueDraftText.trim()) ||
+                  (property.type === 'number' && valueDraftNumber === '') ||
+                  (property.type === 'date' && !valueDraftDate) ||
+                  (property.type === 'select' && !valueDraftSelectOptionId)
+                }
                 onclick={() => onSaveValue(property)}
               >
                 Save
