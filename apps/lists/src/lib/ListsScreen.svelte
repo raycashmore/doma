@@ -7,6 +7,7 @@
   import ListItemRow from '$lib/ListItemRow.svelte';
   import ListIcon from '$lib/ListIcon.svelte';
   import ItemDetailPanel from '$lib/ItemDetailPanel.svelte';
+  import ListSettingsPanel from '$lib/ListSettingsPanel.svelte';
 
   import { browser, dev } from '$app/environment';
   import { goto } from '$app/navigation';
@@ -1030,172 +1031,36 @@
         {findPropertyValue}
       />
     {:else}
-      <div class="flex items-start justify-between gap-3">
-        <div>
-          <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-warm-text-secondary">List properties</p>
-          <h3 class="mt-2 text-lg font-bold text-warm-text-primary">Fields available to every item</h3>
-        </div>
-      </div>
-
-      {#if propertyMutationError}
-        <p class="text-sm text-warm-accent">{propertyMutationError}</p>
-      {/if}
-
-      <div class="flex flex-col gap-3">
-        {#if visibleProperties.length}
-          {#each visibleProperties as property, index (property._id)}
-            <div class="rounded-[22px] border border-warm-border bg-warm-bg-card p-4">
-              {#if propertyRenameId === property._id}
-                <form
-                  class="flex flex-col gap-3"
-                  onsubmit={(event) => {
-                    event.preventDefault();
-                    void handleRenameProperty();
-                  }}
-                >
-                  <input
-                    bind:value={propertyRenameName}
-                    class="rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary outline-none"
-                    placeholder="Property name"
-                  />
-                  <div class="flex gap-2">
-                    <button
-                      type="button"
-                      class="flex-1 rounded-full border border-warm-border px-4 py-3 text-sm font-medium text-warm-text-secondary"
-                      onclick={() => cancelPropertyRename()}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      class="flex-1 rounded-full bg-warm-text-primary px-4 py-3 text-sm font-bold text-warm-text-on-dark disabled:opacity-60"
-                      disabled={!propertyRenameName.trim()}
-                    >
-                      Save
-                    </button>
-                  </div>
-                </form>
-              {:else}
-                <div class="flex items-start justify-between gap-3">
-                  <div class="min-w-0">
-                    <p class="truncate text-sm font-semibold text-warm-text-primary">{property.name}</p>
-                    <p class="mt-1 text-[11px] uppercase tracking-[0.16em] text-warm-text-secondary">
-                      {propertyTypeLabel(property.type)}
-                    </p>
-                    {#if property.type === 'select' && property.options?.length}
-                      <p class="mt-2 text-xs text-warm-text-secondary">
-                        {property.options.map((option) => option.label).join(' · ')}
-                      </p>
-                    {/if}
-                  </div>
-                  <div class="flex flex-wrap justify-end gap-2">
-                    <button
-                      type="button"
-                      class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary disabled:opacity-50"
-                      disabled={index === 0}
-                      onclick={() => void handleReorderProperty(property._id, index - 1)}
-                    >
-                      Up
-                    </button>
-                    <button
-                      type="button"
-                      class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary disabled:opacity-50"
-                      disabled={index === visibleProperties.length - 1}
-                      onclick={() => void handleReorderProperty(property._id, index + 1)}
-                    >
-                      Down
-                    </button>
-                    <button
-                      type="button"
-                      class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary"
-                      onclick={() => beginPropertyRename(property)}
-                    >
-                      Rename
-                    </button>
-                    <button
-                      type="button"
-                      class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-accent"
-                      onclick={() => {
-                        pendingRemovePropertyId = property._id;
-                        cancelPropertyRename();
-                      }}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                </div>
-
-                {#if pendingRemovePropertyId === property._id}
-                  <div class="mt-4 rounded-2xl border border-warm-border bg-warm-bg px-4 py-4">
-                    <p class="text-sm text-warm-text-secondary">Removing this property also clears its values from every item.</p>
-                    <div class="mt-3 flex gap-2">
-                      <button
-                        type="button"
-                        class="flex-1 rounded-full border border-warm-border px-4 py-3 text-sm font-medium text-warm-text-secondary"
-                        onclick={() => (pendingRemovePropertyId = null)}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        class="flex-1 rounded-full bg-warm-accent px-4 py-3 text-sm font-bold text-warm-text-on-dark"
-                        onclick={() => void handleRemoveProperty()}
-                      >
-                        Confirm remove
-                      </button>
-                    </div>
-                  </div>
-                {/if}
-              {/if}
-            </div>
-          {/each}
-        {:else}
-          <div class="rounded-[22px] border border-dashed border-warm-border bg-warm-bg-card px-4 py-5 text-sm text-warm-text-secondary">
-            No properties yet. Add one to shape what details each item can hold.
-          </div>
-        {/if}
-      </div>
-
-      <form
-        class="mt-2 flex flex-col gap-3 rounded-[24px] border border-warm-border bg-warm-bg-card p-4"
-        onsubmit={(event) => {
-          event.preventDefault();
-          void handleCreateProperty();
-        }}
-      >
-        <div>
-          <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-warm-text-secondary">Add property</p>
-        </div>
-        <input
-          bind:value={propertyDraftName}
-          class="rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary outline-none"
-          placeholder="Priority"
-        />
-        <select
-          bind:value={propertyDraftType}
-          class="rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary outline-none"
-        >
-          <option value="text">Text</option>
-          <option value="number">Number</option>
-          <option value="date">Date</option>
-          <option value="select">Select</option>
-          <option value="checkbox">Checkbox</option>
-        </select>
-        {#if propertyDraftType === 'select'}
-          <input
-            bind:value={propertyDraftOptions}
-            class="rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary outline-none"
-            placeholder="High, Medium, Low"
-          />
-        {/if}
-        <button
-          type="submit"
-          class="rounded-full bg-warm-text-primary px-4 py-3 text-sm font-bold text-warm-text-on-dark disabled:opacity-60"
-          disabled={!propertyDraftName.trim() || (propertyDraftType === 'select' && !propertyDraftOptions.trim())}
-        >
-          Add property
-        </button>
-      </form>
+    <ListSettingsPanel
+      properties={visibleProperties}
+      error={propertyMutationError}
+      onClose={() => {
+        rightPanel = 'closed';
+        closeMobileDetails();
+      }}
+      onReorder={(propertyId, targetIndex) => void handleReorderProperty(propertyId, targetIndex)}
+      {propertyRenameId}
+      {propertyRenameName}
+      setPropertyRenameName={(value) => (propertyRenameName = value)}
+      beginRename={beginPropertyRename}
+      cancelRename={cancelPropertyRename}
+      onSaveRename={() => void handleRenameProperty()}
+      pendingRemoveId={pendingRemovePropertyId}
+      requestRemove={(propertyId) => {
+        pendingRemovePropertyId = propertyId;
+        cancelPropertyRename();
+      }}
+      cancelRemove={() => (pendingRemovePropertyId = null)}
+      onConfirmRemove={() => void handleRemoveProperty()}
+      draftName={propertyDraftName}
+      setDraftName={(value) => (propertyDraftName = value)}
+      draftType={propertyDraftType}
+      setDraftType={(value) => (propertyDraftType = value)}
+      draftOptions={propertyDraftOptions}
+      setDraftOptions={(value) => (propertyDraftOptions = value)}
+      onCreate={() => void handleCreateProperty()}
+      {propertyTypeLabel}
+    />
     {/if}
   </div>
 {/snippet}
@@ -1316,13 +1181,20 @@
                 {selectedRow.name}
               </h2>
             </div>
-            <button
-              type="button"
-              class="rounded-full border border-warm-border px-4 py-2 text-sm font-semibold text-warm-text-secondary min-[900px]:hidden"
-              onclick={() => (showMobileDetails = true)}
-            >
-              {selectedItem ? 'Item details' : 'List properties'}
-            </button>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                class="flex h-9 w-9 items-center justify-center rounded-full border border-warm-border text-warm-text-secondary hover:text-warm-text-primary"
+                aria-label="List settings"
+                onclick={() => {
+                  selectedItemId = null;
+                  rightPanel = rightPanel === 'settings' ? 'closed' : 'settings';
+                  showMobileDetails = rightPanel === 'settings';
+                }}
+              >
+                <ListIcon name="settings" size={18} />
+              </button>
+            </div>
           </div>
 
           <form
@@ -1350,7 +1222,7 @@
             <p class="text-sm text-warm-accent">{itemMutationError}</p>
           {/if}
 
-          <div class="grid gap-4 min-[900px]:grid-cols-[minmax(0,1fr)_260px]">
+          <div class={`grid gap-4 ${rightPanel !== 'closed' ? 'min-[900px]:grid-cols-[minmax(0,1fr)_300px]' : ''}`}>
             <div class="flex flex-col gap-4">
               <section class="rounded-[24px] border border-warm-border bg-warm-bg p-4">
                 <div class="flex items-center justify-between gap-3">
@@ -1425,9 +1297,11 @@
 
             </div>
 
-            <aside class="hidden rounded-[24px] border border-warm-border bg-warm-bg p-4 min-[900px]:block">
-              {@render detailSurface()}
-            </aside>
+            {#if rightPanel !== 'closed'}
+              <aside class="hidden rounded-[24px] border border-warm-border bg-warm-bg p-4 min-[900px]:block">
+                {@render detailSurface()}
+              </aside>
+            {/if}
           </div>
         </div>
       {:else}
