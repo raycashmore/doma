@@ -1197,33 +1197,33 @@
             </div>
           </div>
 
-          <form
-            class="flex flex-col gap-2 rounded-[24px] border border-warm-border bg-warm-bg p-3 min-[700px]:flex-row"
-            onsubmit={(event) => {
-              event.preventDefault();
-              void handleCreateItem();
-            }}
-          >
-            <input
-              bind:value={itemDraft}
-              class="flex-1 rounded-2xl bg-transparent px-2 py-2 text-sm text-warm-text-primary outline-none"
-              placeholder="Add an item"
-            />
-            <button
-              type="submit"
-              class="rounded-full bg-warm-text-primary px-4 py-2 text-sm font-semibold text-warm-text-on-dark disabled:opacity-60"
-              disabled={!itemDraft.trim()}
-            >
-              Add item
-            </button>
-          </form>
-
           {#if itemMutationError}
             <p class="text-sm text-warm-accent">{itemMutationError}</p>
           {/if}
 
           <div class={`grid gap-4 ${rightPanel !== 'closed' ? 'min-[900px]:grid-cols-[minmax(0,1fr)_300px]' : ''}`}>
             <div class="flex flex-col gap-4">
+              <form
+                class="flex items-center gap-3 rounded-2xl border border-warm-border bg-warm-bg px-4 py-3"
+                onsubmit={(event) => {
+                  event.preventDefault();
+                  void handleCreateItem();
+                }}
+              >
+                <span class="text-warm-accent"><ListIcon name="plus" size={18} /></span>
+                <input
+                  bind:value={itemDraft}
+                  class="flex-1 bg-transparent text-sm text-warm-text-primary outline-none placeholder:text-warm-text-tertiary"
+                  placeholder="Add an item or paste a recipe..."
+                />
+                <button
+                  type="submit"
+                  class="rounded-full bg-warm-text-primary px-4 py-1.5 text-sm font-semibold text-warm-text-on-dark disabled:opacity-60"
+                  disabled={!itemDraft.trim()}
+                >
+                  Add
+                </button>
+              </form>
               <section class="rounded-[24px] border border-warm-border bg-warm-bg p-4">
                 <div class="flex items-center justify-between gap-3">
                   <div>
@@ -1298,7 +1298,7 @@
             </div>
 
             {#if rightPanel !== 'closed'}
-              <aside class="hidden rounded-[24px] border border-warm-border bg-warm-bg p-4 min-[900px]:block">
+              <aside class="hidden h-full rounded-[24px] border border-warm-border bg-warm-bg p-4 min-[900px]:block">
                 {@render detailSurface()}
               </aside>
             {/if}
