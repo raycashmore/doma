@@ -96,9 +96,9 @@ export const previewItemsByListPublicId: Record<string, VisibleListItemsResult> 
         ]
       },
       {
-        _id: 'preview-property-notes',
+        _id: 'preview-property-aisle',
         listId: 'preview-weekly-shop',
-        name: 'Notes',
+        name: 'Aisle',
         type: 'text',
         sortOrder: 1
       },
@@ -137,10 +137,10 @@ export const previewItemsByListPublicId: Record<string, VisibleListItemsResult> 
         updatedAt: now + 1,
         propertyValues: [
           {
-            _id: 'preview-value-milk-notes',
+            _id: 'preview-value-milk-aisle',
             listItemId: 'preview-item-milk',
-            listPropertyId: 'preview-property-notes',
-            textValue: 'Get oat if regular is out'
+            listPropertyId: 'preview-property-aisle',
+            textValue: 'Dairy'
           }
         ]
       },
