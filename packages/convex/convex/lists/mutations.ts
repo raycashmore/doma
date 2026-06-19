@@ -17,7 +17,9 @@ import {
   clearListItemPropertyValueHandler,
   createListPropertyHandler,
   removeListPropertyHandler,
+  renameListPropertyHandler,
   reorderListPropertyHandler,
+  replaceListPropertyOptionsHandler,
   setListItemPropertyValueHandler
 } from './properties';
 
@@ -235,11 +237,27 @@ export const reorderListProperty = mutation({
   handler: reorderListPropertyHandler
 });
 
+export const renameListProperty = mutation({
+  args: {
+    propertyId: v.id('listProperties'),
+    name: v.string()
+  },
+  handler: renameListPropertyHandler
+});
+
 export const removeListProperty = mutation({
   args: {
     propertyId: v.id('listProperties')
   },
   handler: removeListPropertyHandler
+});
+
+export const replaceListPropertyOptions = mutation({
+  args: {
+    propertyId: v.id('listProperties'),
+    options: v.array(listPropertyOption)
+  },
+  handler: replaceListPropertyOptionsHandler
 });
 
 export const setListItemPropertyValue = mutation({

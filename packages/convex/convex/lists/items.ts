@@ -91,7 +91,10 @@ export function sortListProperties(properties: Doc<'listProperties'>[]) {
   return [...properties].sort((a, b) => a.sortOrder - b.sortOrder || a.createdAt - b.createdAt);
 }
 
-export function sortPropertyValues(values: Doc<'listItemPropertyValues'>[], orderedProperties: Doc<'listProperties'>[]) {
+export function sortPropertyValues(
+  values: Doc<'listItemPropertyValues'>[],
+  orderedProperties: Doc<'listProperties'>[]
+) {
   const propertyOrder = new Map(orderedProperties.map((property, index) => [property._id, index]));
 
   return [...values].sort((a, b) => {

@@ -23,7 +23,8 @@ import {
   type TestListItemRow,
   type TestListPropertyRow,
   type TestListRow,
-  urgentProperty} from './testHelpers';
+  urgentProperty
+} from './testHelpers';
 
 type FutureListPropertiesModule = typeof propertiesModule & {
   clearListItemPropertyValueHandler: (...args: unknown[]) => Promise<unknown>;
@@ -43,13 +44,8 @@ const {
 
 const clearListItemPropertyValueHandler = getFutureHandler<
   FutureListPropertiesModule['clearListItemPropertyValueHandler']
->(
-  propertiesModule,
-  'clearListItemPropertyValueHandler'
-);
-const setListItemPropertyValueHandler = getFutureHandler<
-  FutureListPropertiesModule['setListItemPropertyValueHandler']
->(
+>(propertiesModule, 'clearListItemPropertyValueHandler');
+const setListItemPropertyValueHandler = getFutureHandler<FutureListPropertiesModule['setListItemPropertyValueHandler']>(
   propertiesModule,
   'setListItemPropertyValueHandler'
 );
@@ -527,12 +523,7 @@ describe('clearCompletedListItems', () => {
       removedItemIds: ['item_done_2', 'item_c']
     });
 
-    expect(deletedIds).toEqual([
-      'value_priority_item_c',
-      'value_priority_item_done_2',
-      'item_done_2',
-      'item_c'
-    ]);
+    expect(deletedIds).toEqual(['value_priority_item_c', 'value_priority_item_done_2', 'item_done_2', 'item_c']);
     expect(state.values).toEqual([]);
   });
 });

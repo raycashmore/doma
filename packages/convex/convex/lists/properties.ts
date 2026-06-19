@@ -66,9 +66,7 @@ async function serializeListItemPropertyValueMutation(ctx: ListsMutationCtx, ite
 }
 
 function buildPropertyValuePatch(
-  property: Awaited<ReturnType<typeof findListPropertyById>> extends infer T
-    ? NonNullable<T>
-    : never,
+  property: Awaited<ReturnType<typeof findListPropertyById>> extends infer T ? NonNullable<T> : never,
   value: SetListItemPropertyValue
 ) {
   if (property.type !== value.type) throw new Error('List property value is invalid');
@@ -112,6 +110,20 @@ export async function createListPropertyHandler(
 
   const id = await ctx.db.insert('listProperties', row);
   return { _id: id, ...row };
+}
+
+export async function renameListPropertyHandler(
+  ctx: ListsMutationCtx,
+  { propertyId, name }: { propertyId: Id<'listProperties'>; name: string }
+) {
+  const { property } = await requireEditableProperty(ctx, propertyId);
+  const patch = {
+    name: normalizeListPropertyName(name),
+    updatedAt: Date.now()
+  };
+
+  await ctx.db.patch(property._id, patch);
+  return { ...property, ...patch };
 }
 
 export async function reorderListPropertyHandler(
@@ -181,6 +193,41 @@ export async function removeListPropertyHandler(
     propertyId,
     removedValueIds: propertyValues.map((propertyValue) => propertyValue._id)
   };
+}
+
+export async function replaceListPropertyOptionsHandler(
+  ctx: ListsMutationCtx,
+  { propertyId, options }: { propertyId: Id<'listProperties'>; options: ListPropertyOption[] }
+) {
+  const { property } = await requireEditableProperty(ctx, propertyId);
+  if (property.type !== 'select') {
+    throw new Error('List property options are only supported for select properties');
+  }
+
+  const normalizedOptions = normalizeListPropertyOptions('select', options);
+  if (!normalizedOptions) {
+    throw new Error('List property options are required');
+  }
+
+  const patch = {
+    options: normalizedOptions,
+    updatedAt: Date.now()
+  };
+  await ctx.db.patch(property._id, patch);
+
+  const allowedOptionIds = new Set(normalizedOptions.map((option) => option.id));
+  const propertyValues = await ctx.db
+    .query('listItemPropertyValues')
+    .withIndex('by_property_id', (q) => q.eq('listPropertyId', property._id))
+    .collect();
+
+  for (const propertyValue of propertyValues) {
+    if (propertyValue.selectOptionId && !allowedOptionIds.has(propertyValue.selectOptionId)) {
+      await ctx.db.delete(propertyValue._id);
+    }
+  }
+
+  return { ...property, ...patch };
 }
 
 export async function setListItemPropertyValueHandler(

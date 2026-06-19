@@ -15,13 +15,19 @@ import {
 
 type FutureListPropertiesModule = typeof propertiesModule & {
   createListPropertyHandler: (...args: unknown[]) => Promise<unknown>;
+  renameListPropertyHandler: (...args: unknown[]) => Promise<unknown>;
   removeListPropertyHandler: (...args: unknown[]) => Promise<unknown>;
   reorderListPropertyHandler: (...args: unknown[]) => Promise<unknown>;
+  replaceListPropertyOptionsHandler: (...args: unknown[]) => Promise<unknown>;
 };
 
 const createListPropertyHandler = getFutureHandler<FutureListPropertiesModule['createListPropertyHandler']>(
   propertiesModule,
   'createListPropertyHandler'
+);
+const renameListPropertyHandler = getFutureHandler<FutureListPropertiesModule['renameListPropertyHandler']>(
+  propertiesModule,
+  'renameListPropertyHandler'
 );
 const removeListPropertyHandler = getFutureHandler<FutureListPropertiesModule['removeListPropertyHandler']>(
   propertiesModule,
@@ -31,6 +37,9 @@ const reorderListPropertyHandler = getFutureHandler<FutureListPropertiesModule['
   propertiesModule,
   'reorderListPropertyHandler'
 );
+const replaceListPropertyOptionsHandler = getFutureHandler<
+  FutureListPropertiesModule['replaceListPropertyOptionsHandler']
+>(propertiesModule, 'replaceListPropertyOptionsHandler');
 
 function createPropertiesCtx(
   identity: { subject: string } | null,
@@ -311,6 +320,52 @@ describe('reorderListProperty', () => {
   });
 });
 
+describe('renameListProperty', () => {
+  it('renames a property after trimming whitespace', async () => {
+    const { ctx, patchedRows, state } = createPropertiesCtx({ subject: 'user_b' }, [sharedList], [notesProperty]);
+    vi.spyOn(Date, 'now').mockReturnValue(260);
+
+    await expect(
+      renameListPropertyHandler(ctx as never, {
+        propertyId: listPropertyId('prop_notes'),
+        name: '  Shopping notes  '
+      })
+    ).resolves.toMatchObject({
+      _id: 'prop_notes',
+      name: 'Shopping notes',
+      updatedAt: 260
+    });
+
+    expect(patchedRows).toEqual([
+      {
+        id: 'prop_notes',
+        patch: {
+          name: 'Shopping notes',
+          updatedAt: 260
+        }
+      }
+    ]);
+    expect(state.properties).toContainEqual(
+      expect.objectContaining({
+        _id: 'prop_notes',
+        name: 'Shopping notes',
+        updatedAt: 260
+      })
+    );
+  });
+
+  it('rejects a blank property name after trimming', async () => {
+    const { ctx } = createPropertiesCtx({ subject: 'user_b' }, [sharedList], [notesProperty]);
+
+    await expect(
+      renameListPropertyHandler(ctx as never, {
+        propertyId: listPropertyId('prop_notes'),
+        name: '   '
+      })
+    ).rejects.toThrow('List property name is required');
+  });
+});
+
 describe('removeListProperty', () => {
   it('removes a property and deletes its item values', async () => {
     const { ctx, deletedIds, patchedRows, state } = createPropertiesCtx(
@@ -369,5 +424,84 @@ describe('removeListProperty', () => {
       ['prop_notes', 1]
     ]);
     expect(state.values).toEqual([]);
+  });
+});
+
+describe('replaceListPropertyOptions', () => {
+  it('replaces select options and deletes values for removed options', async () => {
+    const { ctx, deletedIds, patchedRows, state } = createPropertiesCtx(
+      { subject: 'user_b' },
+      [sharedList],
+      [priorityProperty],
+      [
+        {
+          _id: 'value_priority_item_a',
+          listId: sharedList._id,
+          listItemId: 'item_a',
+          listPropertyId: priorityProperty._id,
+          selectOptionId: 'opt_high',
+          createdAt: 1,
+          updatedAt: 1
+        },
+        {
+          _id: 'value_priority_item_b',
+          listId: sharedList._id,
+          listItemId: 'item_b',
+          listPropertyId: priorityProperty._id,
+          selectOptionId: 'opt_low',
+          createdAt: 1,
+          updatedAt: 1
+        }
+      ]
+    );
+    vi.spyOn(Date, 'now').mockReturnValue(280);
+
+    await expect(
+      replaceListPropertyOptionsHandler(ctx as never, {
+        propertyId: listPropertyId('prop_priority'),
+        options: [
+          { id: 'opt_high', label: 'High priority' },
+          { id: 'opt_soon', label: 'Soon' }
+        ]
+      })
+    ).resolves.toMatchObject({
+      _id: 'prop_priority',
+      options: [
+        { id: 'opt_high', label: 'High priority' },
+        { id: 'opt_soon', label: 'Soon' }
+      ],
+      updatedAt: 280
+    });
+
+    expect(patchedRows).toEqual([
+      {
+        id: 'prop_priority',
+        patch: {
+          options: [
+            { id: 'opt_high', label: 'High priority' },
+            { id: 'opt_soon', label: 'Soon' }
+          ],
+          updatedAt: 280
+        }
+      }
+    ]);
+    expect(deletedIds).toEqual(['value_priority_item_b']);
+    expect(state.values).toEqual([
+      expect.objectContaining({
+        _id: 'value_priority_item_a',
+        selectOptionId: 'opt_high'
+      })
+    ]);
+  });
+
+  it('rejects replacing options on a non-select property', async () => {
+    const { ctx } = createPropertiesCtx({ subject: 'user_b' }, [sharedList], [notesProperty]);
+
+    await expect(
+      replaceListPropertyOptionsHandler(ctx as never, {
+        propertyId: listPropertyId('prop_notes'),
+        options: [{ id: 'opt_unused', label: 'Unused' }]
+      })
+    ).rejects.toThrow('List property options are only supported for select properties');
   });
 });
