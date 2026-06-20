@@ -7,7 +7,8 @@
     | 'chevron-down'
     | 'open-panel'
     | 'plus'
-    | 'check';
+    | 'check'
+    | 'edit';
 
   let { name, size = 18 }: { name: IconName; size?: number } = $props();
 </script>
@@ -53,5 +54,8 @@
     <path d="M12 5v14" />
   {:else if name === 'check'}
     <path d="M20 6 9 17l-5-5" />
+  {:else if name === 'edit'}
+    <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+    <path d="m15 5 4 4" />
   {/if}
 </svg>

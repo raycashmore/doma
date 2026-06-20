@@ -84,7 +84,7 @@
     <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-warm-text-secondary">Item details</p>
     <button
       type="button"
-      class="flex h-8 w-8 items-center justify-center rounded-full text-warm-text-secondary hover:text-warm-text-primary"
+      class="flex h-9 w-9 items-center justify-center rounded-full bg-warm-bg-dark text-warm-text-on-dark"
       aria-label="Close details"
       onclick={onClose}
     >
@@ -94,7 +94,7 @@
 
   <div class="rounded-[18px] bg-warm-section-spend p-4">
     <input
-      class="w-full bg-transparent font-warm-display text-[26px] leading-tight text-warm-text-primary outline-none"
+      class="w-full bg-transparent font-warm-display text-lg leading-tight text-warm-text-primary outline-none"
       value={titleDraft}
       oninput={(event) => (titleDraft = event.currentTarget.value)}
       onblur={() => {
@@ -104,7 +104,6 @@
       }}
       aria-label="Item title"
     />
-    <p class="mt-1 text-xs text-warm-text-secondary">{completed ? 'Completed' : 'Active'}</p>
   </div>
 
   {#if error}
@@ -132,13 +131,24 @@
         <div class="flex items-center justify-between gap-3">
           <p class="text-sm text-warm-text-secondary">{property.name}</p>
           {#if valueEditorPropertyId !== property._id}
-            <button
-              type="button"
-              class="truncate text-sm font-semibold text-warm-text-primary"
-              onclick={() => openValueEditor(property, currentValue)}
-            >
-              {currentValue ? describePropertyValue(property, currentValue) : 'Add'}
-            </button>
+            {#if currentValue}
+              <button
+                type="button"
+                class="truncate text-sm font-semibold text-warm-text-primary"
+                onclick={() => openValueEditor(property, currentValue)}
+              >
+                {describePropertyValue(property, currentValue)}
+              </button>
+            {:else}
+              <button
+                type="button"
+                class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-warm-text-tertiary hover:text-warm-text-primary"
+                aria-label={`Edit ${property.name}`}
+                onclick={() => openValueEditor(property, currentValue)}
+              >
+                <ListIcon name="edit" size={14} />
+              </button>
+            {/if}
           {/if}
         </div>
 
