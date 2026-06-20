@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview --port 3004",
     "check-types": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "test": "vitest run",
     "lint": "eslint --fix .",
     "format": "prettier --write ."
   },
@@ -36,7 +37,9 @@
     "@repo/typescript-config": "workspace:*",
     "@types/node": "^22.10.2",
     "eslint": "^9.39.1",
+    "jsdom": "^29.1.1",
     "svelte-check": "^4.6.0",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.7"
   }
 }
