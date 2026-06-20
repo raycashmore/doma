@@ -112,7 +112,9 @@ describe('ListsScreen mobile details', () => {
     const target = await renderScreen();
     await provideLiveData();
 
-    [...target.querySelectorAll('[role="button"]')].find((el) => el.textContent?.includes('Bananas'))?.click();
+    target.querySelectorAll<HTMLElement>('[role="button"]').forEach((el) => {
+      if (el.textContent?.includes('Bananas')) el.click();
+    });
     await tick();
     expect(target.querySelector('textarea')?.value).toBe('Buy firm ones so they last the week.');
 
@@ -121,7 +123,9 @@ describe('ListsScreen mobile details', () => {
     await tick();
     expect(target.querySelector('textarea')).toBeNull();
 
-    [...target.querySelectorAll('[role="button"]')].find((el) => el.textContent?.includes('Bananas'))?.click();
+    target.querySelectorAll<HTMLElement>('[role="button"]').forEach((el) => {
+      if (el.textContent?.includes('Bananas')) el.click();
+    });
     await tick();
     expect(target.querySelector('textarea')?.value).toBe('Buy firm ones so they last the week.');
   });
