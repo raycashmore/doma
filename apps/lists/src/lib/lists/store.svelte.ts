@@ -16,7 +16,7 @@ import type {
   VisibleListItemPropertyValue,
   VisibleListItemsResult,
   VisibleListProperty
-} from './lists-presenter';
+} from './presenter';
 
 export type ListRouteTarget = { publicId: string; slug: string };
 
@@ -60,7 +60,7 @@ export type ListStore = {
   removeProperty(input: { propertyId: string }): Promise<void>;
   setPropertyValue(input: { itemId: string; propertyId: string; value: ListItemPropertyValueInput }): Promise<void>;
   clearPropertyValue(input: { itemId: string; propertyId: string }): Promise<void>;
-}
+};
 
 type InMemorySeed = {
   getSelectedPublicId: () => string | null;

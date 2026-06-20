@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { InMemoryListStore } from './list-store.svelte';
-import { previewItemsByListPublicId, previewVisibleLists } from './lists-presenter';
+import { previewItemsByListPublicId, previewVisibleLists } from './presenter';
+import { InMemoryListStore } from './store.svelte';
 
 function makeStore(selectedPublicId: string | null = null) {
   let selected = selectedPublicId;

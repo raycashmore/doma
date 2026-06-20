@@ -1,8 +1,8 @@
 <script lang="ts">
   import { dragHandle } from 'svelte-dnd-action';
 
-  import ListIcon from '$lib/ListIcon.svelte';
-  import type { VisibleListItem } from '$lib/lists-presenter';
+  import ListIcon from '$lib/lists/components/ListIcon.svelte';
+  import type { VisibleListItem } from '$lib/lists/presenter';
 
   let {
     item,

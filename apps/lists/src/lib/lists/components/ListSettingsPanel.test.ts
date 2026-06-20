@@ -1,7 +1,7 @@
 import { mount, tick, unmount } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { VisibleListProperty } from '$lib/lists-presenter';
+import type { VisibleListProperty } from '$lib/lists/presenter';
 
 vi.mock('svelte-dnd-action', () => ({
   dragHandle(node: HTMLElement) {
@@ -97,4 +97,4 @@ describe('ListSettingsPanel reordering', () => {
   });
 });
 
-import ListSettingsPanel from '$lib/ListSettingsPanel.svelte';
+import ListSettingsPanel from '$lib/lists/components/ListSettingsPanel.svelte';

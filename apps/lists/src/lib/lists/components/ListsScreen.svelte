@@ -8,10 +8,11 @@
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import { page } from '$app/state';
-  import ItemDetailPanel from '$lib/ItemDetailPanel.svelte';
-  import { type ListItemPropertyValueInput,ListStoreFacade } from '$lib/list-store.svelte';
-  import ListIcon from '$lib/ListIcon.svelte';
-  import ListItemRow from '$lib/ListItemRow.svelte';
+  import ItemDetailPanel from '$lib/lists/components/ItemDetailPanel.svelte';
+  import ListIcon from '$lib/lists/components/ListIcon.svelte';
+  import ListItemRow from '$lib/lists/components/ListItemRow.svelte';
+  import ListSettingsPanel from '$lib/lists/components/ListSettingsPanel.svelte';
+  import { parsePastedItems,type PasteEntry } from '$lib/lists/paste-parser';
   import {
     getSelectedItem,
     type PresentedList,
@@ -21,15 +22,14 @@
     type VisibleListItem,
     type VisibleListItemPropertyValue,
     type VisibleListProperty
-  } from '$lib/lists-presenter';
+  } from '$lib/lists/presenter';
   import {
     buildListHref,
     buildListsHomeHref,
     readLastListPublicId,
     writeLastListPublicId
-  } from '$lib/lists-routing';
-  import ListSettingsPanel from '$lib/ListSettingsPanel.svelte';
-  import { parsePastedItems,type PasteEntry } from '$lib/paste-parser';
+  } from '$lib/lists/routing';
+  import { type ListItemPropertyValueInput,ListStoreFacade } from '$lib/lists/store.svelte';
 
   const USE_DEV_FIXTURE = dev && !import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
   // How long an authed dev session waits on an unresponsive Convex backend before

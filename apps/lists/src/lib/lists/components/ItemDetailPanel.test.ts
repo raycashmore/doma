@@ -1,8 +1,8 @@
 import { mount, tick, unmount } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import ItemDetailPanel from '$lib/ItemDetailPanel.svelte';
-import type { VisibleListItem } from '$lib/lists-presenter';
+import ItemDetailPanel from '$lib/lists/components/ItemDetailPanel.svelte';
+import type { VisibleListItem } from '$lib/lists/presenter';
 
 const item: VisibleListItem = {
   _id: 'item',
