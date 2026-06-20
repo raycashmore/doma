@@ -3,6 +3,8 @@
   import { slugifyListName } from '@repo/convex/lists/model';
   import { useMutation, useQuery } from 'convex-svelte';
   import { type DndEvent, dragHandleZone } from 'svelte-dnd-action';
+  import { fade, fly } from 'svelte/transition';
+  import { cubicOut } from 'svelte/easing';
 
   import { browser, dev } from '$app/environment';
   import { goto } from '$app/navigation';
@@ -1115,14 +1117,11 @@
 {:else}
   <section class="flex min-h-full flex-col gap-4 text-warm-text-primary min-[1100px]:flex-row">
     <aside class="hidden rounded-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_18px_44px_rgb(20_17_12_/_10%)] min-[900px]:block min-[1100px]:w-[300px]">
-      <div class="flex items-center justify-between">
-        <div>
-          <h2 class="text-base font-semibold text-warm-text-primary">My Lists</h2>
-          <p class="mt-1 text-xs text-warm-text-secondary">Plain working household lists.</p>
-        </div>
-        <button
-          type="button"
-          class="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-warm-bg-dark text-sm font-semibold text-warm-text-on-dark"
+       <div class="flex items-center justify-between">
+          <h2 class="!mb-0 text-lg font-semibold text-warm-text-primary">My Lists</h2>
+          <button
+           type="button"
+           class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-warm-bg-dark text-sm font-semibold text-warm-text-on-dark"
           onclick={() => {
             showCreateDialog = true;
             createVisibility = listFilter;
@@ -1156,43 +1155,55 @@
       <div class="mt-4 flex flex-col gap-3">
         {#if filteredLists.length}
           {#each filteredLists as list (list.publicId)}
-            <div
-              class={`rounded-2xl border p-[14px] ${
-                list.selected ? 'border-warm-accent bg-warm-section-spend' : 'border-warm-border bg-warm-bg-card'
+            <button
+              type="button"
+              class={`w-full cursor-pointer rounded-2xl border p-[14px] text-left transition-colors ${
+                list.selected ? 'border-warm-accent bg-warm-section-spend' : 'border-warm-border bg-warm-bg-card hover:bg-warm-section-mortgage'
               }`}
+              onclick={() => void navigateToList(list)}
             >
-              <div class="flex items-start gap-3">
-                <button type="button" class="min-w-0 flex-1 text-left" onclick={() => void navigateToList(list)}>
+              <div class="flex items-center gap-3">
+                <div class="min-w-0 flex-1">
                   <p class={`truncate text-sm ${list.selected ? 'font-bold text-warm-text-primary' : 'font-semibold text-warm-text-secondary'}`}>
                     {list.name}
                   </p>
                   <p class="mt-1 text-[11px] text-warm-text-secondary">{list.description}</p>
-                </button>
+                </div>
                 <div class="relative">
-                  <button
-                    type="button"
-                    class="rounded-full px-2 py-1 text-sm text-warm-text-secondary"
+                  <!-- svelte-ignore a11y_click_events_have_key_events -->
+                  <span
+                    role="button"
+                    tabindex="0"
+                    class="rounded-full px-2 py-1 text-sm text-warm-text-secondary hover:text-warm-text-primary"
                     aria-label={`List actions for ${list.name}`}
-                    onclick={() => {
+                    onclick={(e) => {
+                      e.stopPropagation();
                       menuTargetPublicId = menuTargetPublicId === list.publicId ? null : list.publicId;
                     }}
                   >
                     •••
-                  </button>
+                  </span>
 
                   {#if menuTargetPublicId === list.publicId}
+                    <!-- svelte-ignore a11y_click_events_have_key_events -->
+                    <div
+                      role="button"
+                      tabindex="-1"
+                      class="fixed inset-0 z-10"
+                      onclick={(e) => { e.stopPropagation(); menuTargetPublicId = null; }}
+                    ></div>
                     <div class="absolute right-0 top-8 z-20 w-36 rounded-2xl border border-warm-border bg-warm-bg-card p-2 shadow-[0_20px_40px_rgba(61,46,34,0.16)]">
                       <button
                         type="button"
                         class="flex w-full rounded-xl px-3 py-2 text-left text-sm text-warm-text-primary hover:bg-warm-bg"
-                        onclick={() => beginRename(list)}
+                        onclick={(e) => { e.stopPropagation(); beginRename(list); }}
                       >
                         Rename
                       </button>
                       <button
                         type="button"
                         class="flex w-full rounded-xl px-3 py-2 text-left text-sm text-warm-accent hover:bg-warm-bg"
-                        onclick={() => beginDelete(list)}
+                        onclick={(e) => { e.stopPropagation(); beginDelete(list); }}
                       >
                         Delete
                       </button>
@@ -1200,7 +1211,7 @@
                   {/if}
                 </div>
               </div>
-            </div>
+            </button>
           {/each}
         {:else}
           <p class="text-sm text-warm-text-secondary">No {listFilter} lists yet.</p>
@@ -1371,8 +1382,12 @@
         class="fixed inset-0 z-40 bg-[#2D2D2D99] min-[900px]:hidden"
         aria-label="Close details"
         onclick={() => closeMobileDetails()}
+        transition:fade={{ duration: 250 }}
       ></button>
-      <section class="fixed inset-x-0 bottom-0 z-50 max-h-[82vh] overflow-y-auto rounded-t-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_-12px_40px_rgba(61,46,34,0.18)] min-[900px]:hidden">
+      <section
+        class="fixed inset-x-0 bottom-0 z-50 max-h-[82vh] overflow-y-auto rounded-t-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_-12px_40px_rgba(61,46,34,0.18)] min-[900px]:hidden"
+        transition:fly={{ y: 800, duration: 350, easing: cubicOut }}
+      >
         <div class="mb-4 flex items-center justify-between gap-3">
           <div class="h-1.5 w-14 rounded-full bg-warm-border"></div>
           <button
@@ -1393,10 +1408,14 @@
         class="fixed inset-0 z-40 bg-[#2D2D2D99] min-[900px]:hidden"
         aria-label="Close list switcher"
         onclick={() => (showListSwitcher = false)}
+        transition:fade={{ duration: 250 }}
       ></button>
-      <section class="fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-y-auto rounded-t-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_-12px_40px_rgba(61,46,34,0.18)] min-[900px]:hidden">
+      <section
+        class="fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-y-auto rounded-t-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_-12px_40px_rgba(61,46,34,0.18)] min-[900px]:hidden"
+        transition:fly={{ y: 800, duration: 350, easing: cubicOut }}
+      >
         <div class="mb-3 flex items-center justify-between">
-          <h2 class="text-base font-semibold text-warm-text-primary">My Lists</h2>
+          <h2 class="!mb-0 text-base font-semibold text-warm-text-primary">My Lists</h2>
           <button type="button" class="flex h-8 w-8 items-center justify-center rounded-full text-warm-text-secondary" aria-label="Close list switcher" onclick={() => (showListSwitcher = false)}>
             <ListIcon name="close" size={16} />
           </button>
