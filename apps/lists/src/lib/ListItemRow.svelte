@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { dragHandle } from 'svelte-dnd-action';
+
   import ListIcon from '$lib/ListIcon.svelte';
   import type { VisibleListItem } from '$lib/lists-presenter';
 
@@ -9,9 +11,7 @@
     selected,
     onToggleComplete,
     onOpenDetail,
-    onDelete,
-    dragDisabled,
-    onHandlePointerDown
+    onDelete
   }: {
     item: VisibleListItem;
     valueSummary: string;
@@ -20,8 +20,6 @@
     onToggleComplete: () => void;
     onOpenDetail: () => void;
     onDelete: () => void;
-    dragDisabled: boolean;
-    onHandlePointerDown: () => void;
   } = $props();
 </script>
 
@@ -30,19 +28,19 @@
     selected ? 'bg-warm-section-spend/50' : 'hover:bg-warm-bg-card'
   }`}
 >
-  <button
-    type="button"
-    class={`flex h-7 w-6 shrink-0 items-center justify-center text-warm-text-tertiary opacity-0 transition-opacity group-hover:opacity-100 ${
-      completed ? 'invisible' : 'cursor-grab active:cursor-grabbing'
-    }`}
-    aria-label={`Drag to reorder ${item.title}`}
-    disabled={completed}
-    onpointerdown={() => {
-      if (dragDisabled && !completed) onHandlePointerDown();
-    }}
-  >
-    <ListIcon name="grip" size={16} />
-  </button>
+  {#if completed}
+    <span class="invisible flex h-7 w-6 shrink-0 items-center justify-center" aria-hidden="true">
+      <ListIcon name="grip" size={16} />
+    </span>
+  {:else}
+    <span
+      use:dragHandle
+      class="flex h-7 w-6 shrink-0 cursor-grab items-center justify-center text-warm-text-tertiary active:cursor-grabbing"
+      aria-label={`Drag to reorder ${item.title}`}
+    >
+      <ListIcon name="grip" size={16} />
+    </span>
+  {/if}
 
   <button
     type="button"

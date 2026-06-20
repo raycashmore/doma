@@ -2,7 +2,7 @@
   import { api } from '@repo/convex';
   import { slugifyListName } from '@repo/convex/lists/model';
   import { useMutation, useQuery } from 'convex-svelte';
-  import { type DndEvent,dndzone } from 'svelte-dnd-action';
+  import { type DndEvent, dragHandleZone } from 'svelte-dnd-action';
 
   import { browser, dev } from '$app/environment';
   import { goto } from '$app/navigation';
@@ -79,7 +79,6 @@
   let renameTargetPublicId = $state<string | null>(null);
   let deleteTargetPublicId = $state<string | null>(null);
   let showCreateDialog = $state(false);
-  let activeDragDisabled = $state(true);
   let selectedItemId = $state<string | null>(null);
   let rightPanel = $state<'closed' | 'item' | 'settings'>('closed');
   let showMobileDetails = $state(false);
@@ -202,6 +201,12 @@
 
   function closeMobileDetails() {
     showMobileDetails = false;
+    selectedItemId = null;
+    rightPanel = 'closed';
+    propertyRenameId = null;
+    propertyRenameName = '';
+    pendingRemovePropertyId = null;
+    resetValueEditor();
   }
 
   function clearSelectedItem() {
@@ -652,7 +657,7 @@
     propertyMutationError = null;
 
     if (usePreviewData) {
-      if (!selectedRow?.publicId) return;
+      if (!selectedRow?.publicId) return false;
       updatePreviewListData(selectedRow.publicId, (current) => {
         const currentIndex = current.properties.findIndex((property) => property._id === propertyId);
         if (currentIndex < 0) return current;
@@ -670,7 +675,7 @@
           properties: normalizePreviewProperties(nextProperties)
         };
       });
-      return;
+      return true;
     }
 
     try {
@@ -678,8 +683,10 @@
         propertyId: propertyId as never,
         targetIndex
       });
+      return true;
     } catch (error) {
       propertyMutationError = describeError(error, 'Unable to reorder property.');
+      return false;
     }
   }
 
@@ -876,10 +883,16 @@
   // source and frozen while a drag is in flight.
   let activeDndItems = $state<{ id: string; item: VisibleListItem }[]>([]);
   let isDraggingActive = $state(false);
+  let pendingActiveOrder = $state<string[] | null>(null);
 
   $effect(() => {
     const next = activeItems.map((item) => ({ id: item._id, item }));
     if (isDraggingActive) return;
+    if (pendingActiveOrder) {
+      const sourceOrder = next.map((entry) => entry.id);
+      if (sourceOrder.join('\0') !== pendingActiveOrder.join('\0')) return;
+      pendingActiveOrder = null;
+    }
     activeDndItems = next;
   });
 
@@ -890,12 +903,11 @@
 
   async function handleActiveFinalize(event: CustomEvent<DndEvent<{ id: string; item: VisibleListItem }>>) {
     activeDndItems = event.detail.items;
-    isDraggingActive = false;
-    activeDragDisabled = true;
-
     const nextOrder = event.detail.items.map((entry) => entry.id);
     const movedId = event.detail.info.id;
     const targetIndex = nextOrder.indexOf(movedId);
+    pendingActiveOrder = targetIndex >= 0 ? nextOrder : null;
+    isDraggingActive = false;
     if (targetIndex < 0) return;
 
     if (usePreviewData) {
@@ -913,6 +925,7 @@
     try {
       await reorderListItem({ itemId: movedId as never, targetIndex });
     } catch (error) {
+      pendingActiveOrder = null;
       itemMutationError = describeError(error, 'Unable to reorder item.');
     }
   }
@@ -1053,7 +1066,7 @@
         rightPanel = 'closed';
         closeMobileDetails();
       }}
-      onReorder={(propertyId, targetIndex) => void handleReorderProperty(propertyId, targetIndex)}
+      onReorder={handleReorderProperty}
       {propertyRenameId}
       {propertyRenameName}
       setPropertyRenameName={(value) => (propertyRenameName = value)}
@@ -1295,7 +1308,7 @@
                 {#if activeDndItems.length}
                   <ul
                     class="mt-3 flex flex-col divide-y divide-warm-border/60"
-                    use:dndzone={{ items: activeDndItems, dragDisabled: activeDragDisabled, flipDurationMs: 160, dropTargetStyle: {} }}
+                    use:dragHandleZone={{ items: activeDndItems, flipDurationMs: 160, dropTargetStyle: {} }}
                     onconsider={handleActiveConsider}
                     onfinalize={handleActiveFinalize}
                   >
@@ -1306,8 +1319,6 @@
                           valueSummary={summarizeItemValues(entry.item)}
                           completed={false}
                           selected={selectedItemId === entry.item._id}
-                          dragDisabled={activeDragDisabled}
-                          onHandlePointerDown={() => (activeDragDisabled = false)}
                           onToggleComplete={() => void toggleItemCompletion(entry.item)}
                           onOpenDetail={() => openItemDetails(entry.item._id)}
                           onDelete={() => void removeItem(entry.item._id)}
@@ -1328,8 +1339,6 @@
                           valueSummary={summarizeItemValues(item)}
                           completed={true}
                           selected={selectedItemId === item._id}
-                          dragDisabled={true}
-                          onHandlePointerDown={() => {}}
                           onToggleComplete={() => void toggleItemCompletion(item)}
                           onOpenDetail={() => openItemDetails(item._id)}
                           onDelete={() => void removeItem(item._id)}

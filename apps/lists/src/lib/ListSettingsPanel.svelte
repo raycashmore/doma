@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { type DndEvent,dndzone } from 'svelte-dnd-action';
+  import { type DndEvent, dragHandle, dragHandleZone } from 'svelte-dnd-action';
 
   import ListIcon from '$lib/ListIcon.svelte';
   import type { VisibleListProperty } from '$lib/lists-presenter';
@@ -31,7 +31,7 @@
     properties: VisibleListProperty[];
     error: string | null;
     onClose: () => void;
-    onReorder: (propertyId: string, targetIndex: number) => void;
+    onReorder: (propertyId: string, targetIndex: number) => Promise<boolean>;
     propertyRenameId: string | null;
     propertyRenameName: string;
     setPropertyRenameName: (value: string) => void;
@@ -52,16 +52,20 @@
     propertyTypeLabel: (t: VisibleListProperty['type']) => string;
   } = $props();
 
-  let dragDisabled = $state(true);
-
   // Local $state for the dnd list, seeded from the `properties` prop and frozen
-  // mid-drag (svelte-dnd-action mutates the array it is given on every event).
+  // mid-drag or while a reorder is waiting for the query to confirm it.
   let dndItems = $state<{ id: string; property: VisibleListProperty }[]>([]);
   let isDragging = $state(false);
+  let pendingOrder = $state<string[] | null>(null);
 
   $effect(() => {
     const next = properties.map((property) => ({ id: property._id, property }));
     if (isDragging) return;
+    if (pendingOrder) {
+      const sourceOrder = next.map((entry) => entry.id);
+      if (sourceOrder.join('\0') !== pendingOrder.join('\0')) return;
+      pendingOrder = null;
+    }
     dndItems = next;
   });
 
@@ -70,14 +74,17 @@
     dndItems = event.detail.items;
   }
 
-  function handleFinalize(event: CustomEvent<DndEvent<{ id: string; property: VisibleListProperty }>>) {
+  async function handleFinalize(event: CustomEvent<DndEvent<{ id: string; property: VisibleListProperty }>>) {
     dndItems = event.detail.items;
-    isDragging = false;
-    dragDisabled = true;
     const order = event.detail.items.map((entry) => entry.id);
     const movedId = event.detail.info.id;
     const targetIndex = order.indexOf(movedId);
-    if (targetIndex >= 0) onReorder(movedId, targetIndex);
+    pendingOrder = targetIndex >= 0 ? order : null;
+    isDragging = false;
+    if (targetIndex < 0) return;
+
+    const succeeded = await onReorder(movedId, targetIndex);
+    if (!succeeded) pendingOrder = null;
   }
 </script>
 
@@ -101,7 +108,7 @@
   {#if dndItems.length}
     <ul
       class="flex flex-col gap-2"
-      use:dndzone={{ items: dndItems, dragDisabled, flipDurationMs: 160, dropTargetStyle: {} }}
+      use:dragHandleZone={{ items: dndItems, flipDurationMs: 160, dropTargetStyle: {} }}
       onconsider={handleConsider}
       onfinalize={handleFinalize}
     >
@@ -128,14 +135,13 @@
             </form>
           {:else}
             <div class="flex items-center gap-2">
-              <button
-                type="button"
+              <span
+                use:dragHandle
                 class="flex h-7 w-6 shrink-0 cursor-grab items-center justify-center text-warm-text-tertiary active:cursor-grabbing"
                 aria-label={`Drag to reorder ${entry.property.name}`}
-                onpointerdown={() => (dragDisabled = false)}
               >
                 <ListIcon name="grip" size={16} />
-              </button>
+              </span>
               <div class="min-w-0 flex-1">
                 <p class="truncate text-sm font-semibold text-warm-text-primary">{entry.property.name}</p>
                 <p class="text-[11px] uppercase tracking-[0.16em] text-warm-text-secondary">{propertyTypeLabel(entry.property.type)}</p>
