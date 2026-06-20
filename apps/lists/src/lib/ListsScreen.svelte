@@ -32,6 +32,7 @@
     writeLastListPublicId
   } from '$lib/lists-routing';
   import ListSettingsPanel from '$lib/ListSettingsPanel.svelte';
+  import { parsePastedItems } from '$lib/paste-parser';
 
   const USE_DEV_FIXTURE = dev && !import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
   // How long an authed dev session waits on an unresponsive Convex backend before
@@ -54,6 +55,7 @@
   const renameList = useMutation(api.lists.mutations.renameList);
   const deleteList = useMutation(api.lists.mutations.deleteList);
   const createListItem = useMutation(api.lists.mutations.createListItem);
+  const createListItems = useMutation(api.lists.mutations.createListItems);
   const renameListItem = useMutation(api.lists.mutations.renameListItem);
   const deleteListItem = useMutation(api.lists.mutations.deleteListItem);
   const completeListItem = useMutation(api.lists.mutations.completeListItem);
@@ -75,6 +77,7 @@
   let mutationError = $state<string | null>(null);
   let itemDraft = $state('');
   let itemMutationError = $state<string | null>(null);
+  let pastePreview = $state<{ items: string[]; headings: string[] } | null>(null);
   let listFilter = $state<'personal' | 'shared'>('personal');
   let menuTargetPublicId = $state<string | null>(null);
   let renameTargetPublicId = $state<string | null>(null);
@@ -456,6 +459,69 @@
       itemDraft = '';
     } catch (error) {
       itemMutationError = describeError(error, 'Unable to add item.');
+    }
+  }
+
+  // Intercept a paste so newlines survive the single-line input: if the clipboard
+  // parses into more than one item, hold them for confirmation instead of typing.
+  function handleItemPaste(event: ClipboardEvent) {
+    const text = event.clipboardData?.getData('text') ?? '';
+    const parsed = parsePastedItems(text);
+    if (parsed.items.length < 2) return;
+
+    event.preventDefault();
+    itemMutationError = null;
+    pastePreview = parsed;
+  }
+
+  function removePastePreviewItem(index: number) {
+    if (!pastePreview) return;
+    pastePreview = {
+      ...pastePreview,
+      items: pastePreview.items.filter((_, current) => current !== index)
+    };
+  }
+
+  async function confirmPastePreview() {
+    if (!selectedRow?.publicId || !pastePreview) return;
+    const titles = pastePreview.items;
+    if (titles.length === 0) {
+      pastePreview = null;
+      return;
+    }
+
+    itemMutationError = null;
+
+    if (usePreviewData) {
+      updatePreviewListData(selectedRow.publicId, (current) => {
+        const now = Date.now();
+        const nextItems: VisibleListItem[] = titles.map((title, index) => ({
+          _id: `preview-item-${crypto.randomUUID()}`,
+          listId: current.list._id,
+          title,
+          sortOrder: current.activeItems.length + index,
+          createdAt: now,
+          updatedAt: now,
+          propertyValues: []
+        }));
+
+        return {
+          ...current,
+          activeItems: [...current.activeItems, ...nextItems]
+        };
+      });
+      pastePreview = null;
+      return;
+    }
+
+    try {
+      await createListItems({
+        listPublicId: selectedRow.publicId,
+        titles
+      });
+      pastePreview = null;
+    } catch (error) {
+      itemMutationError = describeError(error, 'Unable to add items.');
     }
   }
 
@@ -1273,6 +1339,7 @@
                 <span class="text-warm-accent"><ListIcon name="plus" size={18} /></span>
                 <input
                   bind:value={itemDraft}
+                  onpaste={handleItemPaste}
                   class="flex-1 bg-transparent text-sm text-warm-text-primary outline-none placeholder:text-warm-text-tertiary"
                   placeholder="Add an item or paste a list..."
                 />
@@ -1434,6 +1501,70 @@
         >
           <ListIcon name="plus" size={16} /> New list
         </button>
+      </section>
+    {/if}
+
+    {#if pastePreview}
+      <button
+        type="button"
+        class="fixed inset-0 z-40 bg-[#2D2D2D99]"
+        aria-label="Close paste preview"
+        onclick={() => (pastePreview = null)}
+      ></button>
+
+      <section
+        class="fixed inset-x-4 top-1/2 z-50 max-w-md -translate-y-1/2 rounded-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_24px_60px_rgba(61,46,34,0.2)] min-[1200px]:left-1/2 min-[1200px]:right-auto min-[1200px]:w-full min-[1200px]:-translate-x-1/2"
+      >
+        <h2 class="font-warm-display text-[20px] text-warm-text-primary">Add pasted items</h2>
+        <p class="mt-1 text-sm text-warm-text-secondary">
+          Review the items below before adding them to the list.
+        </p>
+
+        <ul class="mt-4 flex max-h-[46vh] flex-col gap-1.5 overflow-y-auto">
+          {#each pastePreview.items as item, index (index)}
+            <li
+              class="flex items-center justify-between gap-2 rounded-2xl border border-warm-border bg-warm-bg px-3 py-2"
+            >
+              <span class="text-sm text-warm-text-primary">{item}</span>
+              <button
+                type="button"
+                class="text-warm-text-tertiary hover:text-warm-accent"
+                aria-label={`Remove ${item}`}
+                onclick={() => removePastePreviewItem(index)}
+              >
+                <ListIcon name="close" size={16} />
+              </button>
+            </li>
+          {/each}
+
+          {#each pastePreview.headings as heading (heading)}
+            <li class="flex items-center gap-2 px-3 py-1.5 text-xs text-warm-text-tertiary">
+              <span class="font-semibold uppercase tracking-wide">{heading}</span>
+              <span class="rounded-full bg-warm-section-mortgage px-2 py-0.5 text-[10px] font-semibold">
+                heading · skipped
+              </span>
+            </li>
+          {/each}
+        </ul>
+
+        <div class="mt-5 flex gap-2">
+          <button
+            type="button"
+            class="flex-1 rounded-full border border-warm-border px-4 py-3 text-sm font-medium text-warm-text-secondary"
+            onclick={() => (pastePreview = null)}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="flex-1 rounded-full bg-warm-text-primary px-4 py-3 text-sm font-bold text-warm-text-on-dark disabled:opacity-60"
+            disabled={pastePreview.items.length === 0}
+            onclick={() => void confirmPastePreview()}
+          >
+            Add {pastePreview.items.length}
+            {pastePreview.items.length === 1 ? 'item' : 'items'}
+          </button>
+        </div>
       </section>
     {/if}
 

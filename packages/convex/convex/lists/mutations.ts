@@ -6,6 +6,7 @@ import {
   clearCompletedListItemsHandler,
   completeListItemHandler,
   createListItemHandler,
+  createListItemsHandler,
   deleteListItemHandler,
   deleteListSubtree,
   renameListItemHandler,
@@ -174,6 +175,14 @@ export const createListItem = mutation({
     title: v.string()
   },
   handler: createListItemHandler
+});
+
+export const createListItems = mutation({
+  args: {
+    listPublicId: v.string(),
+    titles: v.array(v.string())
+  },
+  handler: createListItemsHandler
 });
 
 export const renameListItem = mutation({
