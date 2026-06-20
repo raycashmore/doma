@@ -11,6 +11,7 @@
       "default": "./convex/_generated/api.js"
     },
     "./lists/model": "./convex/lists/model.ts",
+    "./lists/transitions": "./convex/lists/transitions.ts",
     "./schema": "./convex/schema.ts",
     "./auth": "./convex/auth.config.ts",
     "./helpers": "./convex/helpers.ts",

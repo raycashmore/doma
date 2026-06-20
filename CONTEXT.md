@@ -68,6 +68,10 @@ _Avoid_: Formula field, file field, reminder field
 A checkable entry inside a **list**. A **list item** has its own completion state, a manual order while active, and may store values for the list's properties.
 _Avoid_: Task, shopping row
 
+**Active item order**:
+The manual ordering of active **list items**. A new active item is placed after the highest existing order (one past the current maximum), so completing or deleting items may leave gaps in the order numbers without affecting how items read. Gaps are harmless: items show in ascending order, ties broken by creation time. A reorder renumbers the active items densely from the top. Placing a new item by active count rather than highest-order-plus-one is a bug, because it can slot the item into an existing gap instead of the end.
+_Avoid_: Sort index, position field, dense rank
+
 **Completed list item**:
 A **list item** that has been marked done but remains part of the list until it is explicitly cleared or removed. Completion is a visible state, not automatic deletion; completed list items are shown separately in completion-time order.
 _Avoid_: Deleted item, archived item

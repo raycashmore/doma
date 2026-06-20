@@ -10,15 +10,11 @@ import {
   requireVisibleList,
   sortListProperties
 } from './items';
+import { type ListItemPropertyValueInput, propertyValuePatch, reorderByIndex } from './transitions';
 
 type ListPropertyType = 'text' | 'number' | 'date' | 'select' | 'checkbox';
 type ListPropertyOption = { id: string; label: string };
-type SetListItemPropertyValue =
-  | { type: 'text'; text: string }
-  | { type: 'number'; number: number }
-  | { type: 'date'; date: number }
-  | { type: 'select'; optionId: string }
-  | { type: 'checkbox'; checked: boolean };
+type SetListItemPropertyValue = ListItemPropertyValueInput;
 
 type ListItemRow = Awaited<ReturnType<typeof requireEditableItem>>['item'];
 
@@ -65,29 +61,6 @@ async function serializeListItemPropertyValueMutation(ctx: ListsMutationCtx, ite
   });
 }
 
-function buildPropertyValuePatch(
-  property: Awaited<ReturnType<typeof findListPropertyById>> extends infer T ? NonNullable<T> : never,
-  value: SetListItemPropertyValue
-) {
-  if (property.type !== value.type) throw new Error('List property value is invalid');
-
-  switch (value.type) {
-    case 'text':
-      return { textValue: value.text };
-    case 'number':
-      return { numberValue: value.number };
-    case 'date':
-      return { dateValue: value.date };
-    case 'checkbox':
-      return { checkboxValue: value.checked };
-    case 'select': {
-      const optionIsValid = property.options?.some((option) => option.id === value.optionId) ?? false;
-      if (!optionIsValid) throw new Error('List property option is invalid');
-      return { selectOptionId: value.optionId };
-    }
-  }
-}
-
 export async function createListPropertyHandler(
   ctx: ListsMutationCtx,
   args: { listPublicId: string; name: string; type: ListPropertyType; options?: ListPropertyOption[] }
@@ -132,31 +105,25 @@ export async function reorderListPropertyHandler(
 ) {
   const { list, property } = await requireEditableProperty(ctx, propertyId);
   const orderedProperties = sortListProperties(await readListProperties(ctx, list._id));
-  const currentIndex = orderedProperties.findIndex((candidate) => candidate._id === property._id);
-  if (currentIndex === -1) throw new Error('List property unavailable');
-
-  const boundedTargetIndex = Math.max(0, Math.min(targetIndex, orderedProperties.length - 1));
-  if (boundedTargetIndex === currentIndex) return orderedProperties;
-
-  const reordered = [...orderedProperties];
-  const [movedProperty] = reordered.splice(currentIndex, 1);
-  if (!movedProperty) throw new Error('List property unavailable');
-  reordered.splice(boundedTargetIndex, 0, movedProperty);
-
-  const now = Date.now();
-
-  for (const [index, listProperty] of reordered.entries()) {
-    if (listProperty.sortOrder === index) continue;
-    await ctx.db.patch(listProperty._id, {
-      sortOrder: index,
-      updatedAt: now
-    });
+  if (!orderedProperties.some((candidate) => candidate._id === property._id)) {
+    throw new Error('List property unavailable');
   }
 
-  return reordered.map((listProperty, index) => ({
-    ...listProperty,
-    sortOrder: index,
-    updatedAt: listProperty.sortOrder === index ? listProperty.updatedAt : now
+  const now = Date.now();
+  const originalOrderById = new Map(
+    orderedProperties.map((listProperty) => [listProperty._id, listProperty.sortOrder])
+  );
+  const desired = reorderByIndex(orderedProperties, property._id, targetIndex);
+
+  for (const desiredProperty of desired) {
+    if (originalOrderById.get(desiredProperty._id) === desiredProperty.sortOrder) continue;
+    await ctx.db.patch(desiredProperty._id, { sortOrder: desiredProperty.sortOrder, updatedAt: now });
+  }
+
+  return desired.map((desiredProperty) => ({
+    ...desiredProperty,
+    updatedAt:
+      originalOrderById.get(desiredProperty._id) === desiredProperty.sortOrder ? desiredProperty.updatedAt : now
   }));
 }
 
@@ -240,7 +207,7 @@ export async function setListItemPropertyValueHandler(
 
   const now = Date.now();
   await serializeListItemPropertyValueMutation(ctx, item, now);
-  const valuePatch = buildPropertyValuePatch(property, args.value);
+  const valuePatch = propertyValuePatch(property, args.value);
   const existing = await findItemPropertyValue(ctx, item._id, property._id);
 
   if (existing) {
