@@ -241,6 +241,21 @@ export async function renameListItemHandler(
   return { ...item, ...patch };
 }
 
+export async function setListItemNotesHandler(
+  ctx: ListsMutationCtx,
+  { itemId, notes }: { itemId: Id<'listItems'>; notes: string }
+) {
+  const { item } = await requireEditableItem(ctx, itemId);
+  const trimmed = notes.trim();
+  const patch = {
+    notes: trimmed ? trimmed : undefined,
+    updatedAt: Date.now()
+  };
+
+  await ctx.db.patch(item._id, patch);
+  return { ...item, ...patch };
+}
+
 export async function deleteListItemHandler(ctx: ListsMutationCtx, { itemId }: { itemId: Id<'listItems'> }) {
   const { list, item } = await requireEditableItem(ctx, itemId);
   await deleteListItemPropertyValuesForItems(ctx, list._id, [item._id]);

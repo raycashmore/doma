@@ -2,20 +2,22 @@
   import { api } from '@repo/convex';
   import { slugifyListName } from '@repo/convex/lists/model';
   import { useMutation, useQuery } from 'convex-svelte';
+  import { type DndEvent, dragHandleZone } from 'svelte-dnd-action';
 
   import { browser, dev } from '$app/environment';
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import { page } from '$app/state';
+  import ItemDetailPanel from '$lib/ItemDetailPanel.svelte';
+  import ListIcon from '$lib/ListIcon.svelte';
+  import ListItemRow from '$lib/ListItemRow.svelte';
   import {
     describeListMeta,
     getSelectedItem,
-    getUnsetPropertiesForItem,
     type PresentedList,
     presentLists,
     previewItemsByListPublicId,
     previewVisibleLists,
-    projectDraggedItems,
     type VisibleList,
     type VisibleListItem,
     type VisibleListItemPropertyValue,
@@ -28,8 +30,13 @@
     readLastListPublicId,
     writeLastListPublicId
   } from '$lib/lists-routing';
+  import ListSettingsPanel from '$lib/ListSettingsPanel.svelte';
 
   const USE_DEV_FIXTURE = dev && !import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+  // How long an authed dev session waits on an unresponsive Convex backend before
+  // dropping to fixtures. Generous on purpose: the fallback is reversible, so this
+  // only needs to outlast a normal cold connect, not race it.
+  const OFFLINE_FALLBACK_MS = 4000;
 
   let {
     selectedPublicId = null
@@ -58,6 +65,7 @@
   const removeListProperty = useMutation(api.lists.mutations.removeListProperty);
   const setListItemPropertyValue = useMutation(api.lists.mutations.setListItemPropertyValue);
   const clearListItemPropertyValue = useMutation(api.lists.mutations.clearListItemPropertyValue);
+  const setListItemNotes = useMutation(api.lists.mutations.setListItemNotes);
 
   let createName = $state('');
   let createVisibility = $state<'personal' | 'shared'>('personal');
@@ -71,13 +79,17 @@
   let renameTargetPublicId = $state<string | null>(null);
   let deleteTargetPublicId = $state<string | null>(null);
   let showCreateDialog = $state(false);
-  let editingItemId = $state<string | null>(null);
-  let editingItemTitle = $state('');
-  let draggingItemId = $state<string | null>(null);
-  let dragOverItemId = $state<string | null>(null);
   let selectedItemId = $state<string | null>(null);
+  let rightPanel = $state<'closed' | 'item' | 'settings'>('closed');
   let showMobileDetails = $state(false);
-  let usePreviewData = $state(USE_DEV_FIXTURE);
+  let showListSwitcher = $state(false);
+  // Reversible offline fallback for an authed dev session whose Convex backend never
+  // responds (e.g. `npx convex dev` not running). It clears the instant real data or a
+  // real error arrives, so a merely-slow backend can't silently strand a live session
+  // in non-persisting fixture mode. The explicit `dev:no-auth` mode stays sticky via
+  // USE_DEV_FIXTURE below.
+  let autoOfflineFallback = $state(false);
+  const usePreviewData = $derived(USE_DEV_FIXTURE || autoOfflineFallback);
   let previewLists = $state([...previewVisibleLists]);
   let previewItemsByList = $state(structuredClone(previewItemsByListPublicId));
   let propertyMutationError = $state<string | null>(null);
@@ -189,14 +201,22 @@
 
   function closeMobileDetails() {
     showMobileDetails = false;
+    selectedItemId = null;
+    rightPanel = 'closed';
+    propertyRenameId = null;
+    propertyRenameName = '';
+    pendingRemovePropertyId = null;
+    resetValueEditor();
   }
 
   function clearSelectedItem() {
     selectedItemId = null;
+    rightPanel = 'closed';
   }
 
   function openItemDetails(itemId: string) {
     selectedItemId = itemId;
+    rightPanel = 'item';
     showMobileDetails = true;
     propertyMutationError = null;
   }
@@ -438,44 +458,6 @@
     }
   }
 
-  function beginEditingItem(item: VisibleListItem) {
-    editingItemId = item._id;
-    editingItemTitle = item.title;
-    itemMutationError = null;
-  }
-
-  async function saveEditedItem() {
-    if (!editingItemId) return;
-    itemMutationError = null;
-
-    if (usePreviewData) {
-      if (!selectedRow?.publicId) return;
-      updatePreviewListData(selectedRow.publicId, (current) => ({
-        ...current,
-        activeItems: current.activeItems.map((item) =>
-          item._id === editingItemId ? { ...item, title: editingItemTitle.trim(), updatedAt: Date.now() } : item
-        ),
-        completedItems: current.completedItems.map((item) =>
-          item._id === editingItemId ? { ...item, title: editingItemTitle.trim(), updatedAt: Date.now() } : item
-        )
-      }));
-      editingItemId = null;
-      editingItemTitle = '';
-      return;
-    }
-
-    try {
-      await renameListItem({
-        itemId: editingItemId as never,
-        title: editingItemTitle
-      });
-      editingItemId = null;
-      editingItemTitle = '';
-    } catch (error) {
-      itemMutationError = describeError(error, 'Unable to rename item.');
-    }
-  }
-
   async function removeItem(itemId: string) {
     itemMutationError = null;
 
@@ -493,6 +475,49 @@
       await deleteListItem({ itemId: itemId as never });
     } catch (error) {
       itemMutationError = describeError(error, 'Unable to delete item.');
+    }
+  }
+
+  async function handleRenameSelectedItem(title: string) {
+    if (!selectedItem) return;
+    itemMutationError = null;
+    if (usePreviewData) {
+      if (!selectedRow?.publicId) return;
+      updatePreviewListData(selectedRow.publicId, (current) => ({
+        ...current,
+        activeItems: current.activeItems.map((entry) =>
+          entry._id === selectedItem._id ? { ...entry, title, updatedAt: Date.now() } : entry
+        ),
+        completedItems: current.completedItems.map((entry) =>
+          entry._id === selectedItem._id ? { ...entry, title, updatedAt: Date.now() } : entry
+        )
+      }));
+      return;
+    }
+    try {
+      await renameListItem({ itemId: selectedItem._id as never, title });
+    } catch (error) {
+      itemMutationError = describeError(error, 'Unable to rename item.');
+    }
+  }
+
+  async function handleSaveSelectedNotes(notes: string) {
+    if (!selectedItem) return;
+    itemMutationError = null;
+    const trimmed = notes.trim();
+    if (usePreviewData) {
+      if (!selectedRow?.publicId) return;
+      updatePreviewListData(selectedRow.publicId, (current) => {
+        const apply = (entry: VisibleListItem) =>
+          entry._id === selectedItem._id ? { ...entry, notes: trimmed || undefined, updatedAt: Date.now() } : entry;
+        return { ...current, activeItems: current.activeItems.map(apply), completedItems: current.completedItems.map(apply) };
+      });
+      return;
+    }
+    try {
+      await setListItemNotes({ itemId: selectedItem._id as never, notes: trimmed });
+    } catch (error) {
+      itemMutationError = describeError(error, 'Unable to save notes.');
     }
   }
 
@@ -632,7 +657,7 @@
     propertyMutationError = null;
 
     if (usePreviewData) {
-      if (!selectedRow?.publicId) return;
+      if (!selectedRow?.publicId) return false;
       updatePreviewListData(selectedRow.publicId, (current) => {
         const currentIndex = current.properties.findIndex((property) => property._id === propertyId);
         if (currentIndex < 0) return current;
@@ -650,7 +675,7 @@
           properties: normalizePreviewProperties(nextProperties)
         };
       });
-      return;
+      return true;
     }
 
     try {
@@ -658,8 +683,10 @@
         propertyId: propertyId as never,
         targetIndex
       });
+      return true;
     } catch (error) {
       propertyMutationError = describeError(error, 'Unable to reorder property.');
+      return false;
     }
   }
 
@@ -820,73 +847,6 @@
     }
   }
 
-  async function persistPreviewReorder(itemId: string, targetItemId: string) {
-    if (!selectedRow?.publicId) return;
-    updatePreviewListData(selectedRow.publicId, (current) => {
-      const dragged = projectDraggedItems(current.activeItems, itemId, targetItemId);
-      return {
-        ...current,
-        activeItems: normalizePreviewItems(dragged)
-      };
-    });
-  }
-
-  async function persistItemReorder(itemId: string, targetItemId: string) {
-    const baseItems = selectedListData?.activeItems ?? [];
-    const targetIndex = baseItems.findIndex((item) => item._id === targetItemId);
-    if (targetIndex < 0) return;
-
-    if (usePreviewData) {
-      await persistPreviewReorder(itemId, targetItemId);
-      return;
-    }
-
-    try {
-      await reorderListItem({
-        itemId: itemId as never,
-        targetIndex
-      });
-    } catch (error) {
-      itemMutationError = describeError(error, 'Unable to reorder item.');
-    }
-  }
-
-  function startDragging(itemId: string, event: PointerEvent) {
-    if (!browser) return;
-
-    event.preventDefault();
-    itemMutationError = null;
-    draggingItemId = itemId;
-    dragOverItemId = itemId;
-
-    const move = (moveEvent: PointerEvent) => {
-      const target = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY);
-      if (!(target instanceof HTMLElement)) return;
-      const row = target.closest<HTMLElement>('[data-active-item-id]');
-      if (row?.dataset.activeItemId) {
-        dragOverItemId = row.dataset.activeItemId;
-      }
-    };
-
-    const finish = async () => {
-      window.removeEventListener('pointermove', move);
-      window.removeEventListener('pointerup', finish);
-      window.removeEventListener('pointercancel', finish);
-
-      const draggedItemId = draggingItemId;
-      const targetItemId = dragOverItemId;
-      draggingItemId = null;
-      dragOverItemId = null;
-
-      if (!draggedItemId || !targetItemId || draggedItemId === targetItemId) return;
-      await persistItemReorder(draggedItemId, targetItemId);
-    };
-
-    window.addEventListener('pointermove', move);
-    window.addEventListener('pointerup', finish);
-    window.addEventListener('pointercancel', finish);
-  }
-
   const visibleListRows = $derived(usePreviewData ? previewLists : (visibleLists.data ?? []));
   const previewSelectedListData = $derived(
     selectedPublicId ? previewItemsByList[selectedPublicId] ?? null : null
@@ -899,16 +859,76 @@
   const selectedRow = $derived(selectedListData?.list ?? null);
   const presentedLists = $derived(presentLists(visibleListRows, selectedRow?.publicId ?? selectedPublicId));
   const filteredLists = $derived(presentedLists.filter((list) => list.visibility === listFilter));
-  const activeItems = $derived(
-    projectDraggedItems(selectedListData?.activeItems ?? [], draggingItemId, dragOverItemId)
-  );
+  const activeItems = $derived(selectedListData?.activeItems ?? []);
   const completedItems = $derived(selectedListData?.completedItems ?? []);
   const visibleProperties = $derived(selectedListData?.properties ?? []);
   const selectedItem = $derived(getSelectedItem(activeItems, completedItems, selectedItemId));
-  const unsetProperties = $derived(getUnsetPropertiesForItem(visibleProperties, selectedItem));
   const metaLabel = $derived(
     describeListMeta(selectedRow, selectedListData?.activeItems.length ?? 0, selectedListData?.completedItems.length ?? 0)
   );
+
+  function summarizeItemValues(item: VisibleListItem) {
+    const parts: string[] = [];
+    for (const property of visibleProperties) {
+      const value = findPropertyValue(item, property._id);
+      if (!value) continue;
+      const described = describePropertyValue(property, value);
+      if (described) parts.push(described);
+    }
+    return parts.join(' · ');
+  }
+
+  // svelte-dnd-action requires the bound `items` array to be updated on EVERY
+  // consider/finalize event, so it is local $state seeded from the query/preview
+  // source and frozen while a drag is in flight.
+  let activeDndItems = $state<{ id: string; item: VisibleListItem }[]>([]);
+  let isDraggingActive = $state(false);
+  let pendingActiveOrder = $state<string[] | null>(null);
+
+  $effect(() => {
+    const next = activeItems.map((item) => ({ id: item._id, item }));
+    if (isDraggingActive) return;
+    if (pendingActiveOrder) {
+      const sourceOrder = next.map((entry) => entry.id);
+      if (sourceOrder.join('\0') !== pendingActiveOrder.join('\0')) return;
+      pendingActiveOrder = null;
+    }
+    activeDndItems = next;
+  });
+
+  function handleActiveConsider(event: CustomEvent<DndEvent<{ id: string; item: VisibleListItem }>>) {
+    isDraggingActive = true;
+    activeDndItems = event.detail.items;
+  }
+
+  async function handleActiveFinalize(event: CustomEvent<DndEvent<{ id: string; item: VisibleListItem }>>) {
+    activeDndItems = event.detail.items;
+    const nextOrder = event.detail.items.map((entry) => entry.id);
+    const movedId = event.detail.info.id;
+    const targetIndex = nextOrder.indexOf(movedId);
+    pendingActiveOrder = targetIndex >= 0 ? nextOrder : null;
+    isDraggingActive = false;
+    if (targetIndex < 0) return;
+
+    if (usePreviewData) {
+      if (!selectedRow?.publicId) return;
+      updatePreviewListData(selectedRow.publicId, (current) => {
+        const byId = new Map(current.activeItems.map((entry) => [entry._id, entry]));
+        const reordered = nextOrder
+          .map((id) => byId.get(id))
+          .filter((entry): entry is VisibleListItem => Boolean(entry));
+        return { ...current, activeItems: normalizePreviewItems(reordered) };
+      });
+      return;
+    }
+
+    try {
+      await reorderListItem({ itemId: movedId as never, targetIndex });
+    } catch (error) {
+      pendingActiveOrder = null;
+      itemMutationError = describeError(error, 'Unable to reorder item.');
+    }
+  }
 
   $effect(() => {
     if (!browser) return;
@@ -958,12 +978,19 @@
   });
 
   $effect(() => {
-    if (!browser || !dev || usePreviewData) return;
-    if (visibleLists.data || visibleLists.error || listItems.data || listItems.error) return;
+    // Explicit no-auth fixture mode is sticky and owns preview state; never override it.
+    if (!browser || !dev || USE_DEV_FIXTURE) return;
 
+    // A real response (data or error) means the backend is reachable — leave fallback.
+    if (visibleLists.data || visibleLists.error || listItems.data || listItems.error) {
+      autoOfflineFallback = false;
+      return;
+    }
+
+    // Still no response — assume the Convex dev backend isn't running and fall back.
     const timeoutId = window.setTimeout(() => {
-      usePreviewData = true;
-    }, 1500);
+      autoOfflineFallback = true;
+    }, OFFLINE_FALLBACK_MS);
 
     return () => {
       window.clearTimeout(timeoutId);
@@ -976,6 +1003,7 @@
     previousListPublicId = listPublicId;
     selectedItemId = null;
     showMobileDetails = false;
+    rightPanel = 'closed';
     resetValueEditor();
     cancelPropertyRename();
     pendingRemovePropertyId = null;
@@ -987,331 +1015,92 @@
     if (selectedItem) return;
     selectedItemId = null;
     showMobileDetails = false;
+    rightPanel = 'closed';
     resetValueEditor();
   });
 </script>
 
 {#snippet detailSurface()}
   <div class="flex h-full flex-col gap-4">
-    {#if selectedItem}
-      <div class="flex items-start justify-between gap-3">
-        <div>
-          <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-warm-text-secondary">Item details</p>
-          <h3 class="mt-2 text-lg font-bold text-warm-text-primary">{selectedItem.title}</h3>
-        </div>
-        <button
-          type="button"
-          class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary"
-          onclick={() => {
-            clearSelectedItem();
-            closeMobileDetails();
-          }}
-        >
-          List properties
-        </button>
-      </div>
-
-      {#if propertyMutationError}
-        <p class="text-sm text-warm-accent">{propertyMutationError}</p>
-      {/if}
-
-      <div class="flex flex-col gap-3">
-        {#each visibleProperties as property (property._id)}
-          {@const currentValue = findPropertyValue(selectedItem, property._id)}
-          <div class="rounded-[22px] border border-warm-border bg-warm-bg-card p-4">
-            <div class="flex items-start justify-between gap-3">
-              <div class="min-w-0">
-                <p class="truncate text-sm font-semibold text-warm-text-primary">{property.name}</p>
-                <p class="mt-1 text-[11px] uppercase tracking-[0.16em] text-warm-text-secondary">
-                  {propertyTypeLabel(property.type)}
-                </p>
-              </div>
-
-              {#if currentValue}
-                <div class="flex items-center gap-2">
-                  <button
-                    type="button"
-                    class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary"
-                    onclick={() => openValueEditor(property, currentValue)}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-accent"
-                    onclick={() => void handleClearPropertyValue(property._id)}
-                  >
-                    Clear
-                  </button>
-                </div>
-              {:else}
-                <button
-                  type="button"
-                  class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary"
-                  onclick={() => openValueEditor(property, null)}
-                >
-                  Add
-                </button>
-              {/if}
-            </div>
-
-            {#if valueEditorPropertyId === property._id}
-              <div class="mt-4 flex flex-col gap-3">
-                {#if property.type === 'text'}
-                  <input
-                    bind:value={valueDraftText}
-                    class="rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary outline-none"
-                    placeholder={`Add ${property.name.toLowerCase()}`}
-                  />
-                {:else if property.type === 'number'}
-                  <input
-                    bind:value={valueDraftNumber}
-                    type="number"
-                    class="rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary outline-none"
-                    placeholder="0"
-                  />
-                {:else if property.type === 'date'}
-                  <input
-                    bind:value={valueDraftDate}
-                    type="date"
-                    class="rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary outline-none"
-                  />
-                {:else if property.type === 'select'}
-                  <select
-                    bind:value={valueDraftSelectOptionId}
-                    class="rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary outline-none"
-                  >
-                    {#each property.options ?? [] as option (option.id)}
-                      <option value={option.id}>{option.label}</option>
-                    {/each}
-                  </select>
-                {:else}
-                  <label class="flex items-center justify-between rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary">
-                    <span>Checked</span>
-                    <input bind:checked={valueDraftCheckbox} type="checkbox" class="h-4 w-4" />
-                  </label>
-                {/if}
-
-                <div class="flex gap-2">
-                  <button
-                    type="button"
-                    class="flex-1 rounded-full border border-warm-border px-4 py-3 text-sm font-medium text-warm-text-secondary"
-                    onclick={() => resetValueEditor()}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    class="flex-1 rounded-full bg-warm-text-primary px-4 py-3 text-sm font-bold text-warm-text-on-dark disabled:opacity-60"
-                    disabled={
-                      (property.type === 'text' && !valueDraftText.trim()) ||
-                      (property.type === 'number' && valueDraftNumber === '') ||
-                      (property.type === 'date' && !valueDraftDate) ||
-                      (property.type === 'select' && !valueDraftSelectOptionId)
-                    }
-                    onclick={() => void handleSavePropertyValue(property)}
-                  >
-                    Save value
-                  </button>
-                </div>
-              </div>
-            {:else if currentValue}
-              <p class="mt-4 text-sm text-warm-text-secondary">{describePropertyValue(property, currentValue)}</p>
-            {/if}
-          </div>
-        {/each}
-
-        {#if !visibleProperties.length}
-          <div class="rounded-[22px] border border-dashed border-warm-border bg-warm-bg-card px-4 py-5 text-sm text-warm-text-secondary">
-            Add list properties first, then attach values to this item here.
-          </div>
-        {:else if unsetProperties.length && !valueEditorPropertyId}
-          <div class="rounded-[22px] border border-dashed border-warm-border bg-warm-bg-card px-4 py-4">
-            <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-warm-text-secondary">Unset fields</p>
-            <div class="mt-3 flex flex-wrap gap-2">
-              {#each unsetProperties as property (property._id)}
-                <button
-                  type="button"
-                  class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary"
-                  onclick={() => openValueEditor(property, null)}
-                >
-                  Add {property.name}
-                </button>
-              {/each}
-            </div>
-          </div>
-        {/if}
-      </div>
-    {:else}
-      <div class="flex items-start justify-between gap-3">
-        <div>
-          <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-warm-text-secondary">List properties</p>
-          <h3 class="mt-2 text-lg font-bold text-warm-text-primary">Fields available to every item</h3>
-        </div>
-      </div>
-
-      {#if propertyMutationError}
-        <p class="text-sm text-warm-accent">{propertyMutationError}</p>
-      {/if}
-
-      <div class="flex flex-col gap-3">
-        {#if visibleProperties.length}
-          {#each visibleProperties as property, index (property._id)}
-            <div class="rounded-[22px] border border-warm-border bg-warm-bg-card p-4">
-              {#if propertyRenameId === property._id}
-                <form
-                  class="flex flex-col gap-3"
-                  onsubmit={(event) => {
-                    event.preventDefault();
-                    void handleRenameProperty();
-                  }}
-                >
-                  <input
-                    bind:value={propertyRenameName}
-                    class="rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary outline-none"
-                    placeholder="Property name"
-                  />
-                  <div class="flex gap-2">
-                    <button
-                      type="button"
-                      class="flex-1 rounded-full border border-warm-border px-4 py-3 text-sm font-medium text-warm-text-secondary"
-                      onclick={() => cancelPropertyRename()}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      class="flex-1 rounded-full bg-warm-text-primary px-4 py-3 text-sm font-bold text-warm-text-on-dark disabled:opacity-60"
-                      disabled={!propertyRenameName.trim()}
-                    >
-                      Save
-                    </button>
-                  </div>
-                </form>
-              {:else}
-                <div class="flex items-start justify-between gap-3">
-                  <div class="min-w-0">
-                    <p class="truncate text-sm font-semibold text-warm-text-primary">{property.name}</p>
-                    <p class="mt-1 text-[11px] uppercase tracking-[0.16em] text-warm-text-secondary">
-                      {propertyTypeLabel(property.type)}
-                    </p>
-                    {#if property.type === 'select' && property.options?.length}
-                      <p class="mt-2 text-xs text-warm-text-secondary">
-                        {property.options.map((option) => option.label).join(' · ')}
-                      </p>
-                    {/if}
-                  </div>
-                  <div class="flex flex-wrap justify-end gap-2">
-                    <button
-                      type="button"
-                      class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary disabled:opacity-50"
-                      disabled={index === 0}
-                      onclick={() => void handleReorderProperty(property._id, index - 1)}
-                    >
-                      Up
-                    </button>
-                    <button
-                      type="button"
-                      class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary disabled:opacity-50"
-                      disabled={index === visibleProperties.length - 1}
-                      onclick={() => void handleReorderProperty(property._id, index + 1)}
-                    >
-                      Down
-                    </button>
-                    <button
-                      type="button"
-                      class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary"
-                      onclick={() => beginPropertyRename(property)}
-                    >
-                      Rename
-                    </button>
-                    <button
-                      type="button"
-                      class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-accent"
-                      onclick={() => {
-                        pendingRemovePropertyId = property._id;
-                        cancelPropertyRename();
-                      }}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                </div>
-
-                {#if pendingRemovePropertyId === property._id}
-                  <div class="mt-4 rounded-2xl border border-warm-border bg-warm-bg px-4 py-4">
-                    <p class="text-sm text-warm-text-secondary">Removing this property also clears its values from every item.</p>
-                    <div class="mt-3 flex gap-2">
-                      <button
-                        type="button"
-                        class="flex-1 rounded-full border border-warm-border px-4 py-3 text-sm font-medium text-warm-text-secondary"
-                        onclick={() => (pendingRemovePropertyId = null)}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        class="flex-1 rounded-full bg-warm-accent px-4 py-3 text-sm font-bold text-warm-text-on-dark"
-                        onclick={() => void handleRemoveProperty()}
-                      >
-                        Confirm remove
-                      </button>
-                    </div>
-                  </div>
-                {/if}
-              {/if}
-            </div>
-          {/each}
-        {:else}
-          <div class="rounded-[22px] border border-dashed border-warm-border bg-warm-bg-card px-4 py-5 text-sm text-warm-text-secondary">
-            No properties yet. Add one to shape what details each item can hold.
-          </div>
-        {/if}
-      </div>
-
-      <form
-        class="mt-2 flex flex-col gap-3 rounded-[24px] border border-warm-border bg-warm-bg-card p-4"
-        onsubmit={(event) => {
-          event.preventDefault();
-          void handleCreateProperty();
+    {#if rightPanel === 'item' && selectedItem}
+      <ItemDetailPanel
+        item={selectedItem}
+        properties={visibleProperties}
+        completed={selectedItem.completedAt !== undefined}
+        error={itemMutationError ?? propertyMutationError}
+        onClose={() => {
+          clearSelectedItem();
+          closeMobileDetails();
         }}
-      >
-        <div>
-          <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-warm-text-secondary">Add property</p>
-        </div>
-        <input
-          bind:value={propertyDraftName}
-          class="rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary outline-none"
-          placeholder="Priority"
-        />
-        <select
-          bind:value={propertyDraftType}
-          class="rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary outline-none"
-        >
-          <option value="text">Text</option>
-          <option value="number">Number</option>
-          <option value="date">Date</option>
-          <option value="select">Select</option>
-          <option value="checkbox">Checkbox</option>
-        </select>
-        {#if propertyDraftType === 'select'}
-          <input
-            bind:value={propertyDraftOptions}
-            class="rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary outline-none"
-            placeholder="High, Medium, Low"
-          />
-        {/if}
-        <button
-          type="submit"
-          class="rounded-full bg-warm-text-primary px-4 py-3 text-sm font-bold text-warm-text-on-dark disabled:opacity-60"
-          disabled={!propertyDraftName.trim() || (propertyDraftType === 'select' && !propertyDraftOptions.trim())}
-        >
-          Add property
-        </button>
-      </form>
+        onRename={(title) => void handleRenameSelectedItem(title)}
+        onSaveNotes={(notes) => void handleSaveSelectedNotes(notes)}
+        onToggleComplete={() => void toggleItemCompletion(selectedItem)}
+        onDelete={() => {
+          void removeItem(selectedItem._id);
+          clearSelectedItem();
+          closeMobileDetails();
+        }}
+        {valueEditorPropertyId}
+        {openValueEditor}
+        {resetValueEditor}
+        onSaveValue={(property) => void handleSavePropertyValue(property)}
+        onClearValue={(propertyId) => void handleClearPropertyValue(propertyId)}
+        {valueDraftText}
+        {valueDraftNumber}
+        {valueDraftDate}
+        {valueDraftSelectOptionId}
+        {valueDraftCheckbox}
+        setValueDraftText={(value) => (valueDraftText = value)}
+        setValueDraftNumber={(value) => (valueDraftNumber = value)}
+        setValueDraftDate={(value) => (valueDraftDate = value)}
+        setValueDraftSelectOptionId={(value) => (valueDraftSelectOptionId = value)}
+        setValueDraftCheckbox={(value) => (valueDraftCheckbox = value)}
+        {describePropertyValue}
+        {findPropertyValue}
+      />
+    {:else}
+    <ListSettingsPanel
+      properties={visibleProperties}
+      error={propertyMutationError}
+      onClose={() => {
+        rightPanel = 'closed';
+        closeMobileDetails();
+      }}
+      onReorder={handleReorderProperty}
+      {propertyRenameId}
+      {propertyRenameName}
+      setPropertyRenameName={(value) => (propertyRenameName = value)}
+      beginRename={beginPropertyRename}
+      cancelRename={cancelPropertyRename}
+      onSaveRename={() => void handleRenameProperty()}
+      pendingRemoveId={pendingRemovePropertyId}
+      requestRemove={(propertyId) => {
+        pendingRemovePropertyId = propertyId;
+        cancelPropertyRename();
+      }}
+      cancelRemove={() => (pendingRemovePropertyId = null)}
+      onConfirmRemove={() => void handleRemoveProperty()}
+      draftName={propertyDraftName}
+      setDraftName={(value) => (propertyDraftName = value)}
+      draftType={propertyDraftType}
+      setDraftType={(value) => (propertyDraftType = value)}
+      draftOptions={propertyDraftOptions}
+      setDraftOptions={(value) => (propertyDraftOptions = value)}
+      onCreate={() => void handleCreateProperty()}
+      {propertyTypeLabel}
+    />
     {/if}
   </div>
 {/snippet}
+
+{#if autoOfflineFallback}
+  <div
+    role="status"
+    class="mb-4 rounded-2xl border border-warm-border bg-warm-bg-card px-4 py-2 text-xs text-warm-accent"
+  >
+    Offline demo data — the Convex backend isn’t responding, so changes won’t be saved.
+  </div>
+{/if}
 
 {#if selectedPublicId && !usePreviewData && listItems.data === null && !listItems.isLoading}
   <section class="rounded-[32px] border border-warm-border bg-warm-bg-card p-8 text-sm text-warm-text-secondary">
@@ -1325,7 +1114,7 @@
   </section>
 {:else}
   <section class="flex min-h-full flex-col gap-4 text-warm-text-primary min-[1100px]:flex-row">
-    <aside class="rounded-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_18px_44px_rgb(20_17_12_/_10%)] min-[1100px]:w-[300px]">
+    <aside class="hidden rounded-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_18px_44px_rgb(20_17_12_/_10%)] min-[900px]:block min-[1100px]:w-[300px]">
       <div class="flex items-center justify-between">
         <div>
           <h2 class="text-base font-semibold text-warm-text-primary">My Lists</h2>
@@ -1422,6 +1211,27 @@
     <section class="min-w-0 flex-1 rounded-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_18px_44px_rgb(20_17_12_/_10%)]">
       {#if selectedRow}
         <div class="flex flex-col gap-4">
+          <div class="flex items-center justify-between gap-2 min-[900px]:hidden">
+            <button
+              type="button"
+              class="flex items-center gap-2 rounded-full bg-warm-bg-dark px-4 py-2 text-sm font-semibold text-warm-text-on-dark"
+              onclick={() => (showListSwitcher = true)}
+            >
+              {selectedRow?.name ?? 'Lists'}
+              <ListIcon name="chevron-down" size={16} />
+            </button>
+            <button
+              type="button"
+              class="flex h-9 w-9 items-center justify-center rounded-full bg-warm-bg-dark text-warm-text-on-dark"
+              aria-label="New list"
+              onclick={() => {
+                showCreateDialog = true;
+                createVisibility = listFilter;
+              }}
+            >
+              <ListIcon name="plus" size={18} />
+            </button>
+          </div>
           <div class="flex flex-col gap-2 min-[700px]:flex-row min-[700px]:items-end min-[700px]:justify-between">
             <div>
               <p class="text-xs text-warm-text-secondary">{metaLabel}</p>
@@ -1429,216 +1239,123 @@
                 {selectedRow.name}
               </h2>
             </div>
-            <button
-              type="button"
-              class="rounded-full border border-warm-border px-4 py-2 text-sm font-semibold text-warm-text-secondary min-[900px]:hidden"
-              onclick={() => (showMobileDetails = true)}
-            >
-              {selectedItem ? 'Item details' : 'List properties'}
-            </button>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                class="flex h-9 w-9 items-center justify-center rounded-full border border-warm-border text-warm-text-secondary hover:text-warm-text-primary"
+                aria-label="List settings"
+                onclick={() => {
+                  selectedItemId = null;
+                  rightPanel = rightPanel === 'settings' ? 'closed' : 'settings';
+                  showMobileDetails = rightPanel === 'settings';
+                }}
+              >
+                <ListIcon name="settings" size={18} />
+              </button>
+            </div>
           </div>
-
-          <form
-            class="flex flex-col gap-2 rounded-[24px] border border-warm-border bg-warm-bg p-3 min-[700px]:flex-row"
-            onsubmit={(event) => {
-              event.preventDefault();
-              void handleCreateItem();
-            }}
-          >
-            <input
-              bind:value={itemDraft}
-              class="flex-1 rounded-2xl bg-transparent px-2 py-2 text-sm text-warm-text-primary outline-none"
-              placeholder="Add an item"
-            />
-            <button
-              type="submit"
-              class="rounded-full bg-warm-text-primary px-4 py-2 text-sm font-semibold text-warm-text-on-dark disabled:opacity-60"
-              disabled={!itemDraft.trim()}
-            >
-              Add item
-            </button>
-          </form>
 
           {#if itemMutationError}
             <p class="text-sm text-warm-accent">{itemMutationError}</p>
           {/if}
 
-          <div class="grid gap-4 min-[900px]:grid-cols-[minmax(0,1fr)_260px]">
+          <div class={`grid gap-4 ${rightPanel !== 'closed' ? 'min-[900px]:grid-cols-[minmax(0,1fr)_300px]' : ''}`}>
             <div class="flex flex-col gap-4">
+              <form
+                class="flex items-center gap-3 rounded-2xl border border-warm-border bg-warm-bg px-4 py-3"
+                onsubmit={(event) => {
+                  event.preventDefault();
+                  void handleCreateItem();
+                }}
+              >
+                <span class="text-warm-accent"><ListIcon name="plus" size={18} /></span>
+                <input
+                  bind:value={itemDraft}
+                  class="flex-1 bg-transparent text-sm text-warm-text-primary outline-none placeholder:text-warm-text-tertiary"
+                  placeholder="Add an item or paste a recipe..."
+                />
+                <button
+                  type="submit"
+                  class="rounded-full bg-warm-text-primary px-4 py-1.5 text-sm font-semibold text-warm-text-on-dark disabled:opacity-60"
+                  disabled={!itemDraft.trim()}
+                >
+                  Add
+                </button>
+              </form>
               <section class="rounded-[24px] border border-warm-border bg-warm-bg p-4">
                 <div class="flex items-center justify-between gap-3">
                   <div>
-                    <h3 class="text-sm font-bold text-warm-text-primary">Active items</h3>
+                    <h3 class="text-sm font-bold text-warm-text-primary">Items</h3>
                     <p class="mt-1 text-xs text-warm-text-secondary">Drag by the handle to reorder.</p>
                   </div>
-                  <span class="rounded-full bg-warm-section-mortgage px-3 py-1 text-[11px] font-semibold text-warm-text-secondary">
-                    {activeItems.length}
-                  </span>
+                  <div class="flex items-center gap-2">
+                    <span class="rounded-full bg-warm-section-mortgage px-3 py-1 text-[11px] font-semibold text-warm-text-secondary">
+                      {activeItems.length}
+                    </span>
+                    <button
+                      type="button"
+                      class="flex h-8 w-8 items-center justify-center rounded-full text-warm-text-tertiary hover:text-warm-accent disabled:opacity-40"
+                      aria-label="Clear completed items"
+                      title="Clear completed"
+                      disabled={!completedItems.length}
+                      onclick={() => void handleClearCompletedItems()}
+                    >
+                      <ListIcon name="trash" size={16} />
+                    </button>
+                  </div>
                 </div>
 
-                {#if activeItems.length}
-                  <ul class="mt-4 flex flex-col gap-2">
-                    {#each activeItems as item (item._id)}
-                      <li
-                        data-active-item-id={item._id}
-                        class={`rounded-2xl border px-3 py-3 ${
-                          draggingItemId === item._id
-                            ? 'border-warm-accent bg-warm-section-spend'
-                            : dragOverItemId === item._id
-                              ? 'border-warm-accent/60 bg-warm-section-spend/60'
-                              : selectedItemId === item._id
-                                ? 'border-warm-accent/70 bg-warm-section-spend/40'
-                              : 'border-warm-border bg-warm-bg-card'
-                        }`}
-                      >
-                        {#if editingItemId === item._id}
-                          <form
-                            class="flex flex-col gap-2 min-[700px]:flex-row"
-                            onsubmit={(event) => {
-                              event.preventDefault();
-                              void saveEditedItem();
-                            }}
-                          >
-                            <input
-                              bind:value={editingItemTitle}
-                              class="flex-1 rounded-2xl border border-warm-border bg-warm-bg px-3 py-2 text-sm text-warm-text-primary outline-none"
-                            />
-                            <div class="flex gap-2">
-                              <button
-                                type="button"
-                                class="rounded-full border border-warm-border px-3 py-2 text-xs font-semibold text-warm-text-secondary"
-                                onclick={() => {
-                                  editingItemId = null;
-                                  editingItemTitle = '';
-                                }}
-                              >
-                                Cancel
-                              </button>
-                              <button
-                                type="submit"
-                                class="rounded-full bg-warm-text-primary px-3 py-2 text-xs font-semibold text-warm-text-on-dark disabled:opacity-60"
-                                disabled={!editingItemTitle.trim()}
-                              >
-                                Save
-                              </button>
-                            </div>
-                          </form>
-                        {:else}
-                          <div class="flex items-center gap-3">
-                            <button
-                              type="button"
-                              class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-warm-section-income"
-                              aria-label={`Mark ${item.title} complete`}
-                              onclick={() => void toggleItemCompletion(item)}
-                            >
-                              <span class="h-2.5 w-2.5 rounded-full bg-warm-section-income"></span>
-                            </button>
-                            <button
-                              type="button"
-                              class="flex h-9 w-9 shrink-0 cursor-grab items-center justify-center rounded-full bg-warm-section-mortgage text-sm text-warm-text-secondary active:cursor-grabbing"
-                              aria-label={`Drag to reorder ${item.title}`}
-                              onpointerdown={(event) => startDragging(item._id, event)}
-                            >
-                              ≡
-                            </button>
-                            <button
-                              type="button"
-                              class="min-w-0 flex-1 text-left text-sm font-semibold text-warm-text-primary"
-                              onclick={() => openItemDetails(item._id)}
-                            >
-                              {item.title}
-                            </button>
-                            <div class="flex items-center gap-2">
-                              <button
-                                type="button"
-                                class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary"
-                                onclick={() => beginEditingItem(item)}
-                              >
-                                Edit
-                              </button>
-                              <button
-                                type="button"
-                                class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-accent"
-                                onclick={() => void removeItem(item._id)}
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          </div>
-                        {/if}
+                {#if activeDndItems.length}
+                  <ul
+                    class="mt-3 flex flex-col divide-y divide-warm-border/60"
+                    use:dragHandleZone={{ items: activeDndItems, flipDurationMs: 160, dropTargetStyle: {} }}
+                    onconsider={handleActiveConsider}
+                    onfinalize={handleActiveFinalize}
+                  >
+                    {#each activeDndItems as entry (entry.id)}
+                      <li>
+                        <ListItemRow
+                          item={entry.item}
+                          valueSummary={summarizeItemValues(entry.item)}
+                          completed={false}
+                          selected={selectedItemId === entry.item._id}
+                          onToggleComplete={() => void toggleItemCompletion(entry.item)}
+                          onOpenDetail={() => openItemDetails(entry.item._id)}
+                          onDelete={() => void removeItem(entry.item._id)}
+                        />
                       </li>
                     {/each}
                   </ul>
                 {:else}
-                  <p class="mt-4 text-sm text-warm-text-secondary">No active items yet.</p>
+                  <p class="mt-4 text-sm text-warm-text-secondary">No items yet.</p>
                 {/if}
-              </section>
-
-              <section class="rounded-[24px] border border-warm-border bg-warm-bg p-4">
-                <div class="flex items-center justify-between gap-3">
-                  <div>
-                    <h3 class="text-sm font-bold text-warm-text-primary">Completed items</h3>
-                    <p class="mt-1 text-xs text-warm-text-secondary">Newest completions stay visible until you clear or remove them.</p>
-                  </div>
-                  <button
-                    type="button"
-                    class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary disabled:opacity-60"
-                    onclick={() => void handleClearCompletedItems()}
-                    disabled={!completedItems.length}
-                  >
-                    Clear completed
-                  </button>
-                </div>
 
                 {#if completedItems.length}
-                  <ul class="mt-4 flex flex-col gap-2">
+                  <ul class="mt-1 flex flex-col divide-y divide-warm-border/60">
                     {#each completedItems as item (item._id)}
-                      <li class="rounded-2xl border border-warm-border bg-warm-bg-card px-3 py-3">
-                        <div class="flex items-center gap-3">
-                          <button
-                            type="button"
-                            class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-warm-accent bg-warm-section-spend text-[11px] text-warm-accent"
-                            aria-label={`Undo completion for ${item.title}`}
-                            onclick={() => void toggleItemCompletion(item)}
-                          >
-                            ✓
-                          </button>
-                          <button
-                            type="button"
-                            class="min-w-0 flex-1 text-left text-sm text-warm-text-secondary line-through"
-                            onclick={() => openItemDetails(item._id)}
-                          >
-                            {item.title}
-                          </button>
-                          <div class="flex items-center gap-2">
-                            <button
-                              type="button"
-                              class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-text-secondary"
-                              onclick={() => void toggleItemCompletion(item)}
-                            >
-                              Undo
-                            </button>
-                            <button
-                              type="button"
-                              class="rounded-full border border-warm-border px-3 py-2 text-[11px] font-semibold text-warm-accent"
-                              onclick={() => void removeItem(item._id)}
-                            >
-                              Remove
-                            </button>
-                          </div>
-                        </div>
+                      <li>
+                        <ListItemRow
+                          {item}
+                          valueSummary={summarizeItemValues(item)}
+                          completed={true}
+                          selected={selectedItemId === item._id}
+                          onToggleComplete={() => void toggleItemCompletion(item)}
+                          onOpenDetail={() => openItemDetails(item._id)}
+                          onDelete={() => void removeItem(item._id)}
+                        />
                       </li>
                     {/each}
                   </ul>
-                {:else}
-                  <p class="mt-4 text-sm text-warm-text-secondary">No completed items yet.</p>
                 {/if}
               </section>
+
             </div>
 
-            <aside class="hidden rounded-[24px] border border-warm-border bg-warm-bg p-4 min-[900px]:block">
-              {@render detailSurface()}
-            </aside>
+            {#if rightPanel !== 'closed'}
+              <aside class="hidden h-full rounded-[24px] border border-warm-border bg-warm-bg p-4 min-[900px]:block">
+                {@render detailSurface()}
+              </aside>
+            {/if}
           </div>
         </div>
       {:else}
@@ -1667,6 +1384,56 @@
           </button>
         </div>
         {@render detailSurface()}
+      </section>
+    {/if}
+
+    {#if showListSwitcher}
+      <button
+        type="button"
+        class="fixed inset-0 z-40 bg-[#2D2D2D99] min-[900px]:hidden"
+        aria-label="Close list switcher"
+        onclick={() => (showListSwitcher = false)}
+      ></button>
+      <section class="fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-y-auto rounded-t-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_-12px_40px_rgba(61,46,34,0.18)] min-[900px]:hidden">
+        <div class="mb-3 flex items-center justify-between">
+          <h2 class="text-base font-semibold text-warm-text-primary">My Lists</h2>
+          <button type="button" class="flex h-8 w-8 items-center justify-center rounded-full text-warm-text-secondary" aria-label="Close list switcher" onclick={() => (showListSwitcher = false)}>
+            <ListIcon name="close" size={16} />
+          </button>
+        </div>
+        <div class="flex rounded-full bg-warm-section-mortgage p-1">
+          <button type="button" class={`flex-1 rounded-full px-3 py-2 text-[11px] font-bold ${listFilter === 'personal' ? 'bg-warm-text-primary text-warm-text-on-dark' : 'text-warm-text-secondary'}`} onclick={() => (listFilter = 'personal')}>Personal</button>
+          <button type="button" class={`flex-1 rounded-full px-3 py-2 text-[11px] font-bold ${listFilter === 'shared' ? 'bg-warm-text-primary text-warm-text-on-dark' : 'text-warm-text-secondary'}`} onclick={() => (listFilter = 'shared')}>Shared</button>
+        </div>
+        <div class="mt-3 flex flex-col gap-2">
+          {#each filteredLists as list (list.publicId)}
+            <button
+              type="button"
+              class={`rounded-2xl border p-3 text-left ${list.selected ? 'border-warm-accent bg-warm-section-spend' : 'border-warm-border bg-warm-bg-card'}`}
+              onclick={() => {
+                showListSwitcher = false;
+                void navigateToList(list);
+              }}
+            >
+              <p class={`truncate text-sm ${list.selected ? 'font-bold text-warm-text-primary' : 'font-semibold text-warm-text-secondary'}`}>{list.name}</p>
+              <p class="mt-0.5 text-[11px] text-warm-text-secondary">{list.description}</p>
+            </button>
+          {/each}
+          {#if !filteredLists.length}
+            <p class="text-sm text-warm-text-secondary">No {listFilter} lists yet.</p>
+          {/if}
+        </div>
+        <button
+          type="button"
+          class="mt-3 flex w-full items-center justify-center gap-2 rounded-full border border-warm-border px-4 py-2 text-sm font-semibold text-warm-text-secondary"
+          onclick={() => {
+            showListSwitcher = false;
+            showCreateDialog = true;
+            createVisibility = listFilter;
+          }}
+        >
+          <ListIcon name="plus" size={16} /> New list
+        </button>
       </section>
     {/if}
 
