@@ -11,6 +11,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@media (display-mode: standalone) {
+  .mobile-app-nav {
+    display: none;
+  }
+}
+
 @layer base {
   * {
     @apply box-border border-border outline-ring/50;

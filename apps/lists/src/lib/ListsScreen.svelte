@@ -2,6 +2,8 @@
   import { api } from '@repo/convex';
   import { slugifyListName } from '@repo/convex/lists/model';
   import { useMutation, useQuery } from 'convex-svelte';
+  import { cubicOut } from 'svelte/easing';
+  import { fade, fly } from 'svelte/transition';
   import { type DndEvent, dragHandleZone } from 'svelte-dnd-action';
 
   import { browser, dev } from '$app/environment';
@@ -12,7 +14,6 @@
   import ListIcon from '$lib/ListIcon.svelte';
   import ListItemRow from '$lib/ListItemRow.svelte';
   import {
-    describeListMeta,
     getSelectedItem,
     type PresentedList,
     presentLists,
@@ -863,9 +864,6 @@
   const completedItems = $derived(selectedListData?.completedItems ?? []);
   const visibleProperties = $derived(selectedListData?.properties ?? []);
   const selectedItem = $derived(getSelectedItem(activeItems, completedItems, selectedItemId));
-  const metaLabel = $derived(
-    describeListMeta(selectedRow, selectedListData?.activeItems.length ?? 0, selectedListData?.completedItems.length ?? 0)
-  );
 
   function summarizeItemValues(item: VisibleListItem) {
     const parts: string[] = [];
@@ -1115,14 +1113,11 @@
 {:else}
   <section class="flex min-h-full flex-col gap-4 text-warm-text-primary min-[1100px]:flex-row">
     <aside class="hidden rounded-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_18px_44px_rgb(20_17_12_/_10%)] min-[900px]:block min-[1100px]:w-[300px]">
-      <div class="flex items-center justify-between">
-        <div>
-          <h2 class="text-base font-semibold text-warm-text-primary">My Lists</h2>
-          <p class="mt-1 text-xs text-warm-text-secondary">Plain working household lists.</p>
-        </div>
-        <button
-          type="button"
-          class="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-warm-bg-dark text-sm font-semibold text-warm-text-on-dark"
+       <div class="flex items-center justify-between">
+          <h2 class="!mb-0 text-xl font-semibold text-warm-text-primary">My Lists</h2>
+          <button
+           type="button"
+           class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-warm-bg-dark text-sm font-semibold text-warm-text-on-dark"
           onclick={() => {
             showCreateDialog = true;
             createVisibility = listFilter;
@@ -1156,43 +1151,55 @@
       <div class="mt-4 flex flex-col gap-3">
         {#if filteredLists.length}
           {#each filteredLists as list (list.publicId)}
-            <div
-              class={`rounded-2xl border p-[14px] ${
-                list.selected ? 'border-warm-accent bg-warm-section-spend' : 'border-warm-border bg-warm-bg-card'
+            <button
+              type="button"
+              class={`w-full cursor-pointer rounded-2xl border p-[14px] text-left transition-colors ${
+                list.selected ? 'border-warm-accent bg-warm-section-spend' : 'border-warm-border bg-warm-bg-card hover:bg-warm-section-mortgage'
               }`}
+              onclick={() => void navigateToList(list)}
             >
-              <div class="flex items-start gap-3">
-                <button type="button" class="min-w-0 flex-1 text-left" onclick={() => void navigateToList(list)}>
+              <div class="flex items-center gap-3">
+                <div class="min-w-0 flex-1">
                   <p class={`truncate text-sm ${list.selected ? 'font-bold text-warm-text-primary' : 'font-semibold text-warm-text-secondary'}`}>
                     {list.name}
                   </p>
                   <p class="mt-1 text-[11px] text-warm-text-secondary">{list.description}</p>
-                </button>
+                </div>
                 <div class="relative">
-                  <button
-                    type="button"
-                    class="rounded-full px-2 py-1 text-sm text-warm-text-secondary"
+                  <!-- svelte-ignore a11y_click_events_have_key_events -->
+                  <span
+                    role="button"
+                    tabindex="0"
+                    class="rounded-full px-2 py-1 text-sm text-warm-text-secondary hover:text-warm-text-primary"
                     aria-label={`List actions for ${list.name}`}
-                    onclick={() => {
+                    onclick={(e) => {
+                      e.stopPropagation();
                       menuTargetPublicId = menuTargetPublicId === list.publicId ? null : list.publicId;
                     }}
                   >
                     •••
-                  </button>
+                  </span>
 
                   {#if menuTargetPublicId === list.publicId}
+                    <!-- svelte-ignore a11y_click_events_have_key_events -->
+                    <div
+                      role="button"
+                      tabindex="-1"
+                      class="fixed inset-0 z-10"
+                      onclick={(e) => { e.stopPropagation(); menuTargetPublicId = null; }}
+                    ></div>
                     <div class="absolute right-0 top-8 z-20 w-36 rounded-2xl border border-warm-border bg-warm-bg-card p-2 shadow-[0_20px_40px_rgba(61,46,34,0.16)]">
                       <button
                         type="button"
                         class="flex w-full rounded-xl px-3 py-2 text-left text-sm text-warm-text-primary hover:bg-warm-bg"
-                        onclick={() => beginRename(list)}
+                        onclick={(e) => { e.stopPropagation(); beginRename(list); }}
                       >
                         Rename
                       </button>
                       <button
                         type="button"
                         class="flex w-full rounded-xl px-3 py-2 text-left text-sm text-warm-accent hover:bg-warm-bg"
-                        onclick={() => beginDelete(list)}
+                        onclick={(e) => { e.stopPropagation(); beginDelete(list); }}
                       >
                         Delete
                       </button>
@@ -1200,7 +1207,7 @@
                   {/if}
                 </div>
               </div>
-            </div>
+            </button>
           {/each}
         {:else}
           <p class="text-sm text-warm-text-secondary">No {listFilter} lists yet.</p>
@@ -1232,27 +1239,22 @@
               <ListIcon name="plus" size={18} />
             </button>
           </div>
-          <div class="flex flex-col gap-2 min-[700px]:flex-row min-[700px]:items-end min-[700px]:justify-between">
-            <div>
-              <p class="text-xs text-warm-text-secondary">{metaLabel}</p>
-              <h2 class="font-warm-display text-[28px] leading-none text-warm-text-primary min-[700px]:text-[34px]">
-                {selectedRow.name}
-              </h2>
-            </div>
-            <div class="flex items-center gap-2">
-              <button
-                type="button"
-                class="flex h-9 w-9 items-center justify-center rounded-full border border-warm-border text-warm-text-secondary hover:text-warm-text-primary"
-                aria-label="List settings"
-                onclick={() => {
-                  selectedItemId = null;
-                  rightPanel = rightPanel === 'settings' ? 'closed' : 'settings';
-                  showMobileDetails = rightPanel === 'settings';
-                }}
-              >
-                <ListIcon name="settings" size={18} />
-              </button>
-            </div>
+          <div class="flex items-center justify-between">
+            <h2 class="!mb-0 font-warm-display text-xl font-semibold text-warm-text-primary">
+              {selectedRow.name}
+            </h2>
+            <button
+              type="button"
+              class="flex h-8 w-8 items-center justify-center rounded-full border border-warm-border text-warm-text-secondary hover:text-warm-text-primary"
+              aria-label="List settings"
+              onclick={() => {
+                selectedItemId = null;
+                rightPanel = rightPanel === 'settings' ? 'closed' : 'settings';
+                showMobileDetails = rightPanel === 'settings';
+              }}
+            >
+              <ListIcon name="settings" size={18} />
+            </button>
           </div>
 
           {#if itemMutationError}
@@ -1272,7 +1274,7 @@
                 <input
                   bind:value={itemDraft}
                   class="flex-1 bg-transparent text-sm text-warm-text-primary outline-none placeholder:text-warm-text-tertiary"
-                  placeholder="Add an item or paste a recipe..."
+                  placeholder="Add an item or paste a list..."
                 />
                 <button
                   type="submit"
@@ -1282,11 +1284,11 @@
                   Add
                 </button>
               </form>
-              <section class="rounded-[24px] border border-warm-border bg-warm-bg p-4">
+              <section class="rounded-[24px] border border-warm-border bg-warm-bg p-2">
                 <div class="flex items-center justify-between gap-3">
                   <div>
-                    <h3 class="text-sm font-bold text-warm-text-primary">Items</h3>
-                    <p class="mt-1 text-xs text-warm-text-secondary">Drag by the handle to reorder.</p>
+                    <h3 class="pl-2 text-sm font-bold text-warm-text-primary">Items</h3>
+
                   </div>
                   <div class="flex items-center gap-2">
                     <span class="rounded-full bg-warm-section-mortgage px-3 py-1 text-[11px] font-semibold text-warm-text-secondary">
@@ -1326,8 +1328,8 @@
                       </li>
                     {/each}
                   </ul>
-                {:else}
-                  <p class="mt-4 text-sm text-warm-text-secondary">No items yet.</p>
+                {:else if !completedItems.length}
+                  <p class="mt-4 pl-4 text-sm text-warm-text-secondary">No items yet.</p>
                 {/if}
 
                 {#if completedItems.length}
@@ -1371,18 +1373,12 @@
         class="fixed inset-0 z-40 bg-[#2D2D2D99] min-[900px]:hidden"
         aria-label="Close details"
         onclick={() => closeMobileDetails()}
+        transition:fade={{ duration: 250 }}
       ></button>
-      <section class="fixed inset-x-0 bottom-0 z-50 max-h-[82vh] overflow-y-auto rounded-t-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_-12px_40px_rgba(61,46,34,0.18)] min-[900px]:hidden">
-        <div class="mb-4 flex items-center justify-between gap-3">
-          <div class="h-1.5 w-14 rounded-full bg-warm-border"></div>
-          <button
-            type="button"
-            class="rounded-full border border-warm-border px-3 py-2 text-xs font-semibold text-warm-text-secondary"
-            onclick={() => closeMobileDetails()}
-          >
-            Done
-          </button>
-        </div>
+      <section
+        class="fixed inset-x-0 bottom-0 z-50 max-h-[82vh] overflow-y-auto rounded-t-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_-12px_40px_rgba(61,46,34,0.18)] min-[900px]:hidden"
+        transition:fly={{ y: 800, duration: 350, easing: cubicOut }}
+      >
         {@render detailSurface()}
       </section>
     {/if}
@@ -1393,10 +1389,14 @@
         class="fixed inset-0 z-40 bg-[#2D2D2D99] min-[900px]:hidden"
         aria-label="Close list switcher"
         onclick={() => (showListSwitcher = false)}
+        transition:fade={{ duration: 250 }}
       ></button>
-      <section class="fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-y-auto rounded-t-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_-12px_40px_rgba(61,46,34,0.18)] min-[900px]:hidden">
+      <section
+        class="fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-y-auto rounded-t-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_-12px_40px_rgba(61,46,34,0.18)] min-[900px]:hidden"
+        transition:fly={{ y: 800, duration: 350, easing: cubicOut }}
+      >
         <div class="mb-3 flex items-center justify-between">
-          <h2 class="text-base font-semibold text-warm-text-primary">My Lists</h2>
+          <h2 class="!mb-0 text-base font-semibold text-warm-text-primary">My Lists</h2>
           <button type="button" class="flex h-8 w-8 items-center justify-center rounded-full text-warm-text-secondary" aria-label="Close list switcher" onclick={() => (showListSwitcher = false)}>
             <ListIcon name="close" size={16} />
           </button>
@@ -1452,22 +1452,15 @@
 
       <section class="fixed inset-x-4 top-1/2 z-50 max-w-md -translate-y-1/2 rounded-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_24px_60px_rgba(61,46,34,0.2)] min-[1200px]:left-1/2 min-[1200px]:right-auto min-[1200px]:w-full min-[1200px]:-translate-x-1/2">
         {#if showCreateDialog}
-          <h2 class="font-warm-display text-[26px] text-warm-text-primary">New list</h2>
-          <p class="mt-2 text-sm text-warm-text-secondary">Create a personal or shared list.</p>
+          <h2 class="font-warm-display text-[20px] text-warm-text-primary">New list</h2>
 
           <form
-            class="mt-5 flex flex-col gap-3"
+            class="mt-4 flex flex-col gap-3"
             onsubmit={(event) => {
               event.preventDefault();
               void handleCreateList();
             }}
           >
-            <input
-              bind:value={createName}
-              class="rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary outline-none ring-0"
-              placeholder="Weekly shop"
-            />
-
             <div class="flex rounded-full bg-warm-section-mortgage p-1">
               <button
                 type="button"
@@ -1490,6 +1483,12 @@
                 Shared
               </button>
             </div>
+
+            <input
+              bind:value={createName}
+              class="rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary outline-none ring-0"
+              placeholder="Weekly shop"
+            />
 
             <div class="mt-2 flex gap-2">
               <button

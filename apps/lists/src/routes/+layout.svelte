@@ -153,7 +153,7 @@
 
       <nav
         aria-label="App navigation"
-        class="flex items-stretch justify-around border-t border-warm-border bg-warm-bg-dark px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 md:hidden"
+        class="mobile-app-nav flex items-stretch justify-around border-t border-warm-border bg-warm-bg-dark px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 md:hidden"
       >
         {#each appNavItems as item (item.id)}
           {@const isActive = item.id === activeAppId}

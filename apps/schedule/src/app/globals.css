@@ -10,6 +10,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@media (display-mode: standalone) {
+  .mobile-app-nav {
+    display: none;
+  }
+}
+
 body {
   @apply m-0;
   -webkit-font-smoothing: antialiased;

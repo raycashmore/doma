@@ -2,6 +2,26 @@ import { mount, tick, unmount } from 'svelte';
 import { createSubscriber } from 'svelte/reactivity';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+// jsdom doesn't implement Web Animations API – stub with instant completion
+if (!Element.prototype.animate) {
+  Element.prototype.animate = function () {
+    const anim = {
+      finished: Promise.resolve(this),
+      cancel() {},
+      finish() {},
+      onfinish: null as ((this: Animation, ev: AnimationPlaybackEvent) => void) | null,
+      currentTime: null,
+      playState: 'finished'
+    };
+    // Fire onfinish synchronously so Svelte outro transitions clean up immediately
+    queueMicrotask(() => {
+      if (typeof anim.onfinish === 'function')
+        anim.onfinish.call(anim as unknown as Animation, new Event('finish') as AnimationPlaybackEvent);
+    });
+    return anim as unknown as Animation;
+  };
+}
+
 import type { VisibleList, VisibleListItemsResult } from '$lib/lists-presenter';
 import { previewItemsByListPublicId, previewVisibleLists } from '$lib/lists-presenter';
 
@@ -92,15 +112,20 @@ describe('ListsScreen mobile details', () => {
     const target = await renderScreen();
     await provideLiveData();
 
-    [...target.querySelectorAll('button')].find((button) => button.textContent?.trim() === 'Bananas')?.click();
+    target.querySelectorAll<HTMLElement>('[role="button"]').forEach((el) => {
+      if (el.textContent?.includes('Bananas')) el.click();
+    });
     await tick();
     expect(target.querySelector('textarea')?.value).toBe('Buy firm ones so they last the week.');
 
     target.querySelector<HTMLButtonElement>('button[aria-label="Close details"]')?.click();
     await tick();
+    await tick();
     expect(target.querySelector('textarea')).toBeNull();
 
-    [...target.querySelectorAll('button')].find((button) => button.textContent?.trim() === 'Bananas')?.click();
+    target.querySelectorAll<HTMLElement>('[role="button"]').forEach((el) => {
+      if (el.textContent?.includes('Bananas')) el.click();
+    });
     await tick();
     expect(target.querySelector('textarea')?.value).toBe('Buy firm ones so they last the week.');
   });

@@ -24,7 +24,7 @@ export function MobileNav({ activeAppId, isDev }: MobileNavProps) {
   return (
     <nav
       aria-label="App navigation"
-      className="flex items-stretch justify-around border-t border-warm-border bg-warm-bg-dark px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] md:hidden"
+      className="mobile-app-nav flex items-stretch justify-around border-t border-warm-border bg-warm-bg-dark px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] md:hidden"
     >
       {items.map((app) => {
         const Icon = app.icon;

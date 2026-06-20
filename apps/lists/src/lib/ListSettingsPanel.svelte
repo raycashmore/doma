@@ -93,7 +93,7 @@
     <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-warm-text-secondary">List settings</p>
     <button
       type="button"
-      class="flex h-8 w-8 items-center justify-center rounded-full text-warm-text-secondary hover:text-warm-text-primary"
+      class="flex h-9 w-9 items-center justify-center rounded-full bg-warm-bg-dark text-warm-text-on-dark"
       aria-label="Close settings"
       onclick={onClose}
     >

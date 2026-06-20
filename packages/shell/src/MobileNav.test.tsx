@@ -10,6 +10,8 @@ describe('MobileNav', () => {
   it('renders a link per enabled app plus home, marking the active one', () => {
     render(<MobileNav activeAppId="budget" isDev={false} />);
 
+    expect(screen.getByRole('navigation', { name: 'App navigation' }).classList.contains('mobile-app-nav')).toBe(true);
+
     const home = screen.getByRole('link', { name: 'Home' });
     expect(home.getAttribute('href')).toBe('/');
 
