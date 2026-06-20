@@ -208,23 +208,43 @@ export async function createListItemHandler(
   ctx: ListsMutationCtx,
   { listPublicId, title }: { listPublicId: string; title: string }
 ) {
+  const [created] = await insertListItems(ctx, listPublicId, [normalizeListItemTitle(title)]);
+  return created;
+}
+
+export async function createListItemsHandler(
+  ctx: ListsMutationCtx,
+  { listPublicId, titles }: { listPublicId: string; titles: string[] }
+) {
+  const normalized = titles.map((title) => title.trim()).filter((title) => title.length > 0);
+  return insertListItems(ctx, listPublicId, normalized);
+}
+
+async function insertListItems(ctx: ListsMutationCtx, listPublicId: string, titles: string[]) {
   const visible = await requireVisibleList(ctx, listPublicId);
   if (!visible) throw new Error('List unavailable');
 
   assertCanEditList(visible.list, visible.currentUserId);
-  const normalizedTitle = normalizeListItemTitle(title);
   const now = Date.now();
+  // Continue past the highest existing active order. Using the active count
+  // would collide with existing orders once completed/deleted items leave gaps.
   const activeItems = sortActiveItems(await readListItems(ctx, visible.list._id));
-  const row = {
-    listId: visible.list._id,
-    title: normalizedTitle,
-    sortOrder: activeItems.length,
-    createdAt: now,
-    updatedAt: now
-  };
+  const baseSortOrder = activeItems.reduce((max, item) => Math.max(max, item.sortOrder + 1), 0);
 
-  const id = await ctx.db.insert('listItems', row);
-  return { _id: id, ...row };
+  const created = [];
+  for (const [index, title] of titles.entries()) {
+    const row = {
+      listId: visible.list._id,
+      title,
+      sortOrder: baseSortOrder + index,
+      createdAt: now,
+      updatedAt: now
+    };
+    const id = await ctx.db.insert('listItems', row);
+    created.push({ _id: id, ...row });
+  }
+
+  return created;
 }
 
 export async function renameListItemHandler(

@@ -32,6 +32,7 @@
     writeLastListPublicId
   } from '$lib/lists-routing';
   import ListSettingsPanel from '$lib/ListSettingsPanel.svelte';
+  import { parsePastedItems,type PasteEntry } from '$lib/paste-parser';
 
   const USE_DEV_FIXTURE = dev && !import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
   // How long an authed dev session waits on an unresponsive Convex backend before
@@ -54,6 +55,7 @@
   const renameList = useMutation(api.lists.mutations.renameList);
   const deleteList = useMutation(api.lists.mutations.deleteList);
   const createListItem = useMutation(api.lists.mutations.createListItem);
+  const createListItems = useMutation(api.lists.mutations.createListItems);
   const renameListItem = useMutation(api.lists.mutations.renameListItem);
   const deleteListItem = useMutation(api.lists.mutations.deleteListItem);
   const completeListItem = useMutation(api.lists.mutations.completeListItem);
@@ -75,11 +77,22 @@
   let mutationError = $state<string | null>(null);
   let itemDraft = $state('');
   let itemMutationError = $state<string | null>(null);
+  let pastePreview = $state<PasteEntry[] | null>(null);
+  let pasteSubmitting = $state(false);
+  let pastePreviewError = $state<string | null>(null);
+  let pasteDialog = $state<HTMLDialogElement>();
+  let listDialog = $state<HTMLDialogElement>();
+  const pastePreviewItemCount = $derived(
+    pastePreview ? pastePreview.filter((entry) => entry.kind === 'item').length : 0
+  );
   let listFilter = $state<'personal' | 'shared'>('personal');
   let menuTargetPublicId = $state<string | null>(null);
   let renameTargetPublicId = $state<string | null>(null);
   let deleteTargetPublicId = $state<string | null>(null);
   let showCreateDialog = $state(false);
+  const listDialogOpen = $derived(
+    showCreateDialog || renameTargetPublicId !== null || deleteTargetPublicId !== null
+  );
   let selectedItemId = $state<string | null>(null);
   let rightPanel = $state<'closed' | 'item' | 'settings'>('closed');
   let showMobileDetails = $state(false);
@@ -456,6 +469,95 @@
       itemDraft = '';
     } catch (error) {
       itemMutationError = describeError(error, 'Unable to add item.');
+    }
+  }
+
+  // Intercept a paste so newlines survive the single-line input: if the clipboard
+  // parses into more than one item, hold them for confirmation instead of typing.
+  function handleItemPaste(event: ClipboardEvent) {
+    const text = event.clipboardData?.getData('text') ?? '';
+    const parsed = parsePastedItems(text);
+    if (parsed.items.length < 2) return;
+
+    event.preventDefault();
+    pasteSubmitting = false;
+    pastePreviewError = null;
+    pastePreview = parsed.entries;
+  }
+
+  // Drive native <dialog> elements from state so we inherit focus trapping,
+  // Escape handling, focus restoration, and an inert background for free.
+  function syncDialog(dialog: HTMLDialogElement | undefined, open: boolean) {
+    if (!dialog) return;
+    if (open && !dialog.open) dialog.showModal?.();
+    else if (!open && dialog.open) dialog.close?.();
+  }
+
+  $effect(() => syncDialog(pasteDialog, pastePreview !== null));
+  $effect(() => syncDialog(listDialog, listDialogOpen));
+
+  function resetListDialog() {
+    showCreateDialog = false;
+    renameTargetPublicId = null;
+    deleteTargetPublicId = null;
+    menuTargetPublicId = null;
+    mutationError = null;
+  }
+
+  function resetPastePreview() {
+    pastePreview = null;
+    pasteSubmitting = false;
+    pastePreviewError = null;
+  }
+
+  function removePastePreviewItem(index: number) {
+    if (!pastePreview) return;
+    pastePreview = pastePreview.filter((_, current) => current !== index);
+  }
+
+  async function confirmPastePreview() {
+    if (!selectedRow?.publicId || !pastePreview || pasteSubmitting) return;
+    const titles = pastePreview.filter((entry) => entry.kind === 'item').map((entry) => entry.text);
+    if (titles.length === 0) {
+      pasteDialog?.close();
+      return;
+    }
+
+    pasteSubmitting = true;
+    pastePreviewError = null;
+
+    if (usePreviewData) {
+      updatePreviewListData(selectedRow.publicId, (current) => {
+        const now = Date.now();
+        const base = current.activeItems.reduce((max, item) => Math.max(max, item.sortOrder + 1), 0);
+        const nextItems: VisibleListItem[] = titles.map((title, index) => ({
+          _id: `preview-item-${crypto.randomUUID()}`,
+          listId: current.list._id,
+          title,
+          sortOrder: base + index,
+          createdAt: now,
+          updatedAt: now,
+          propertyValues: []
+        }));
+
+        return {
+          ...current,
+          activeItems: [...current.activeItems, ...nextItems]
+        };
+      });
+      pasteDialog?.close();
+      return;
+    }
+
+    try {
+      await createListItems({
+        listPublicId: selectedRow.publicId,
+        titles
+      });
+      pasteDialog?.close();
+    } catch (error) {
+      pastePreviewError = describeError(error, 'Unable to add items.');
+      pasteSubmitting = false;
     }
   }
 
@@ -1111,7 +1213,7 @@
     {describeError(visibleLists.error, 'Unable to load lists right now.')}
   </section>
 {:else}
-  <section class="flex min-h-full flex-col gap-4 text-warm-text-primary min-[1100px]:flex-row">
+  <section class="flex min-h-full flex-col gap-4 text-warm-text-primary md:h-full md:min-h-0 min-[1100px]:flex-row">
     <aside class="hidden rounded-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_18px_44px_rgb(20_17_12_/_10%)] min-[900px]:block min-[1100px]:w-[300px]">
        <div class="flex items-center justify-between">
           <h2 class="!mb-0 text-xl font-semibold text-warm-text-primary">My Lists</h2>
@@ -1215,9 +1317,9 @@
       </div>
     </aside>
 
-    <section class="min-w-0 flex-1 rounded-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_18px_44px_rgb(20_17_12_/_10%)]">
+    <section class="min-w-0 flex-1 rounded-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_18px_44px_rgb(20_17_12_/_10%)] md:flex md:min-h-0 md:flex-col">
       {#if selectedRow}
-        <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-4 md:min-h-0 md:flex-1">
           <div class="flex items-center justify-between gap-2 min-[900px]:hidden">
             <button
               type="button"
@@ -1261,8 +1363,8 @@
             <p class="text-sm text-warm-accent">{itemMutationError}</p>
           {/if}
 
-          <div class={`grid gap-4 ${rightPanel !== 'closed' ? 'min-[900px]:grid-cols-[minmax(0,1fr)_300px]' : ''}`}>
-            <div class="flex flex-col gap-4">
+          <div class={`grid gap-4 md:min-h-0 md:flex-1 md:grid-rows-[minmax(0,1fr)] ${rightPanel !== 'closed' ? 'min-[900px]:grid-cols-[minmax(0,1fr)_300px]' : ''}`}>
+            <div class="flex flex-col gap-4 md:min-h-0">
               <form
                 class="flex items-center gap-3 rounded-2xl border border-warm-border bg-warm-bg px-4 py-3"
                 onsubmit={(event) => {
@@ -1273,6 +1375,7 @@
                 <span class="text-warm-accent"><ListIcon name="plus" size={18} /></span>
                 <input
                   bind:value={itemDraft}
+                  onpaste={handleItemPaste}
                   class="flex-1 bg-transparent text-sm text-warm-text-primary outline-none placeholder:text-warm-text-tertiary"
                   placeholder="Add an item or paste a list..."
                 />
@@ -1284,7 +1387,7 @@
                   Add
                 </button>
               </form>
-              <section class="rounded-[24px] border border-warm-border bg-warm-bg p-2">
+              <section class="rounded-[24px] border border-warm-border bg-warm-bg p-2 md:flex md:min-h-0 md:flex-1 md:flex-col">
                 <div class="flex items-center justify-between gap-3">
                   <div>
                     <h3 class="pl-2 text-sm font-bold text-warm-text-primary">Items</h3>
@@ -1307,6 +1410,7 @@
                   </div>
                 </div>
 
+                <div class="md:min-h-0 md:flex-1 md:overflow-y-auto">
                 {#if activeDndItems.length}
                   <ul
                     class="mt-3 flex flex-col divide-y divide-warm-border/60"
@@ -1349,6 +1453,7 @@
                     {/each}
                   </ul>
                 {/if}
+                </div>
               </section>
 
             </div>
@@ -1437,22 +1542,91 @@
       </section>
     {/if}
 
-    {#if showCreateDialog || renameTargetPublicId || deleteTargetPublicId}
-      <button
-        type="button"
-        class="fixed inset-0 z-40 bg-[#2D2D2D99]"
-        aria-label="Close dialog"
-        onclick={() => {
-          showCreateDialog = false;
-          renameTargetPublicId = null;
-          deleteTargetPublicId = null;
-          menuTargetPublicId = null;
-        }}
-      ></button>
+    <dialog
+      bind:this={pasteDialog}
+      aria-labelledby="paste-preview-title"
+      class="m-auto w-[calc(100vw-2rem)] max-w-md rounded-[28px] border border-warm-border bg-warm-bg-card p-5 text-warm-text-primary shadow-[0_24px_60px_rgba(61,46,34,0.2)] backdrop:bg-[#2D2D2D99]"
+      onclose={resetPastePreview}
+      onclick={(event) => {
+        if (event.target === pasteDialog) pasteDialog?.close();
+      }}
+    >
+      {#if pastePreview}
+        <h2 id="paste-preview-title" class="font-warm-display text-[20px] text-warm-text-primary">
+          Add pasted items
+        </h2>
+        <p class="mt-1 text-sm text-warm-text-secondary">
+          Review the items below before adding them to the list.
+        </p>
 
-      <section class="fixed inset-x-4 top-1/2 z-50 max-w-md -translate-y-1/2 rounded-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_24px_60px_rgba(61,46,34,0.2)] min-[1200px]:left-1/2 min-[1200px]:right-auto min-[1200px]:w-full min-[1200px]:-translate-x-1/2">
+        <ul class="mt-4 flex max-h-[46vh] flex-col gap-1.5 overflow-y-auto">
+          {#each pastePreview as entry, index (index)}
+            {#if entry.kind === 'item'}
+              <li
+                class="flex items-center justify-between gap-2 rounded-2xl border border-warm-border bg-warm-bg px-3 py-2"
+              >
+                <span class="text-sm text-warm-text-primary">{entry.text}</span>
+                <button
+                  type="button"
+                  class="text-warm-text-tertiary hover:text-warm-accent"
+                  aria-label={`Remove ${entry.text}`}
+                  onclick={() => removePastePreviewItem(index)}
+                >
+                  <ListIcon name="close" size={16} />
+                </button>
+              </li>
+            {:else}
+              <li class="flex items-center gap-2 px-3 py-1.5 text-xs text-warm-text-tertiary">
+                <span class="font-semibold uppercase tracking-wide">{entry.text}</span>
+                <span class="rounded-full bg-warm-section-mortgage px-2 py-0.5 text-[10px] font-semibold">
+                  heading · skipped
+                </span>
+              </li>
+            {/if}
+          {/each}
+        </ul>
+
+        {#if pastePreviewError}
+          <p class="mt-3 text-sm text-warm-accent" role="alert">{pastePreviewError}</p>
+        {/if}
+
+        <div class="mt-5 flex gap-2">
+          <button
+            type="button"
+            class="flex-1 rounded-full border border-warm-border px-4 py-3 text-sm font-medium text-warm-text-secondary"
+            onclick={() => pasteDialog?.close()}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="flex-1 rounded-full bg-warm-text-primary px-4 py-3 text-sm font-bold text-warm-text-on-dark disabled:opacity-60"
+            disabled={pastePreviewItemCount === 0 || pasteSubmitting}
+            onclick={() => void confirmPastePreview()}
+          >
+            {#if pasteSubmitting}
+              Adding…
+            {:else}
+              Add {pastePreviewItemCount}
+              {pastePreviewItemCount === 1 ? 'item' : 'items'}
+            {/if}
+          </button>
+        </div>
+      {/if}
+    </dialog>
+
+    <dialog
+      bind:this={listDialog}
+      aria-labelledby="list-dialog-title"
+      class="m-auto w-[calc(100vw-2rem)] max-w-md rounded-[28px] border border-warm-border bg-warm-bg-card p-5 text-warm-text-primary shadow-[0_24px_60px_rgba(61,46,34,0.2)] backdrop:bg-[#2D2D2D99]"
+      onclose={resetListDialog}
+      onclick={(event) => {
+        if (event.target === listDialog) listDialog?.close();
+      }}
+    >
+      {#if listDialogOpen}
         {#if showCreateDialog}
-          <h2 class="font-warm-display text-[20px] text-warm-text-primary">New list</h2>
+          <h2 id="list-dialog-title" class="font-warm-display text-[20px] text-warm-text-primary">New list</h2>
 
           <form
             class="mt-4 flex flex-col gap-3"
@@ -1494,7 +1668,7 @@
               <button
                 type="button"
                 class="flex-1 rounded-full border border-warm-border px-4 py-3 text-sm font-medium text-warm-text-secondary"
-                onclick={() => (showCreateDialog = false)}
+                onclick={() => listDialog?.close()}
               >
                 Cancel
               </button>
@@ -1508,7 +1682,7 @@
             </div>
           </form>
         {:else if renameTargetPublicId}
-          <h2 class="font-warm-display text-[26px] text-warm-text-primary">Rename list</h2>
+          <h2 id="list-dialog-title" class="font-warm-display text-[26px] text-warm-text-primary">Rename list</h2>
           <p class="mt-2 text-sm text-warm-text-secondary">Update the list name and canonical slug.</p>
 
           <form
@@ -1528,10 +1702,7 @@
               <button
                 type="button"
                 class="flex-1 rounded-full border border-warm-border px-4 py-3 text-sm font-medium text-warm-text-secondary"
-                onclick={() => {
-                  renameTargetPublicId = null;
-                  menuTargetPublicId = null;
-                }}
+                onclick={() => listDialog?.close()}
               >
                 Cancel
               </button>
@@ -1545,17 +1716,14 @@
             </div>
           </form>
         {:else if deleteTargetPublicId}
-          <h2 class="font-warm-display text-[26px] text-warm-text-primary">Delete list</h2>
+          <h2 id="list-dialog-title" class="font-warm-display text-[26px] text-warm-text-primary">Delete list</h2>
           <p class="mt-2 text-sm text-warm-text-secondary">This removes the list and its items from the current view.</p>
 
           <div class="mt-5 flex gap-2">
             <button
               type="button"
               class="flex-1 rounded-full border border-warm-border px-4 py-3 text-sm font-medium text-warm-text-secondary"
-              onclick={() => {
-                deleteTargetPublicId = null;
-                menuTargetPublicId = null;
-              }}
+              onclick={() => listDialog?.close()}
             >
               Cancel
             </button>
@@ -1572,7 +1740,7 @@
         {#if mutationError}
           <p class="mt-3 text-sm text-warm-accent">{mutationError}</p>
         {/if}
-      </section>
-    {/if}
+      {/if}
+    </dialog>
   </section>
 {/if}

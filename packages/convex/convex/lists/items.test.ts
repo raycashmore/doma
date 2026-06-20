@@ -35,6 +35,7 @@ const {
   clearCompletedListItemsHandler,
   completeListItemHandler,
   createListItemHandler,
+  createListItemsHandler,
   deleteListItemHandler,
   readVisibleListItemsByPublicId,
   renameListItemHandler,
@@ -365,6 +366,69 @@ describe('createListItem', () => {
         title: '   '
       })
     ).rejects.toThrow('List item title is required');
+  });
+});
+
+describe('createListItems', () => {
+  it('appends every title after the active items with contiguous sort order', async () => {
+    const { ctx, insertedRows } = createItemsCtx({ subject: 'user_b' }, [sharedList], [activeItemA, completedItem]);
+    vi.spyOn(Date, 'now').mockReturnValue(200);
+
+    await expect(
+      createListItemsHandler(ctx as never, {
+        listPublicId: sharedList.publicId,
+        titles: ['  eggs  ', 'bread', 'milk']
+      })
+    ).resolves.toMatchObject([
+      { _id: 'new_item_id', title: 'eggs', sortOrder: 1 },
+      { _id: 'new_item_id', title: 'bread', sortOrder: 2 },
+      { _id: 'new_item_id', title: 'milk', sortOrder: 3 }
+    ]);
+
+    expect(insertedRows).toEqual([
+      { listId: sharedList._id, title: 'eggs', sortOrder: 1, createdAt: 200, updatedAt: 200 },
+      { listId: sharedList._id, title: 'bread', sortOrder: 2, createdAt: 200, updatedAt: 200 },
+      { listId: sharedList._id, title: 'milk', sortOrder: 3, createdAt: 200, updatedAt: 200 }
+    ]);
+  });
+
+  it('continues from the highest existing sort order, not the active count', async () => {
+    // Completing or deleting items leaves gaps, so the active count would
+    // collide with existing non-zero orders. Derive from the max instead.
+    const gappedA: TestListItemRow = { ...activeItemA, _id: 'item_gap_a', sortOrder: 99 };
+    const gappedB: TestListItemRow = { ...activeItemB, _id: 'item_gap_b', sortOrder: 100 };
+    const { ctx, insertedRows } = createItemsCtx({ subject: 'user_b' }, [sharedList], [gappedA, gappedB]);
+    vi.spyOn(Date, 'now').mockReturnValue(200);
+
+    await createListItemsHandler(ctx as never, {
+      listPublicId: sharedList.publicId,
+      titles: ['eggs', 'milk']
+    });
+
+    expect(insertedRows.map((row) => row.sortOrder)).toEqual([101, 102]);
+  });
+
+  it('drops blank titles instead of throwing', async () => {
+    const { ctx, insertedRows } = createItemsCtx({ subject: 'user_b' }, [sharedList], []);
+    vi.spyOn(Date, 'now').mockReturnValue(200);
+
+    await createListItemsHandler(ctx as never, {
+      listPublicId: sharedList.publicId,
+      titles: ['eggs', '   ', '', 'milk']
+    });
+
+    expect(insertedRows.map((row) => row.title)).toEqual(['eggs', 'milk']);
+  });
+
+  it('rejects when the list is not editable by the caller', async () => {
+    const { ctx } = createItemsCtx({ subject: 'user_b' }, [personalList], []);
+
+    await expect(
+      createListItemsHandler(ctx as never, {
+        listPublicId: personalList.publicId,
+        titles: ['eggs']
+      })
+    ).rejects.toThrow();
   });
 });
 
