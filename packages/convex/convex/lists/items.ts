@@ -226,7 +226,10 @@ async function insertListItems(ctx: ListsMutationCtx, listPublicId: string, titl
 
   assertCanEditList(visible.list, visible.currentUserId);
   const now = Date.now();
-  const baseSortOrder = sortActiveItems(await readListItems(ctx, visible.list._id)).length;
+  // Continue past the highest existing active order. Using the active count
+  // would collide with existing orders once completed/deleted items leave gaps.
+  const activeItems = sortActiveItems(await readListItems(ctx, visible.list._id));
+  const baseSortOrder = activeItems.reduce((max, item) => Math.max(max, item.sortOrder + 1), 0);
 
   const created = [];
   for (const [index, title] of titles.entries()) {

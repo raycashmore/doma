@@ -392,6 +392,22 @@ describe('createListItems', () => {
     ]);
   });
 
+  it('continues from the highest existing sort order, not the active count', async () => {
+    // Completing or deleting items leaves gaps, so the active count would
+    // collide with existing non-zero orders. Derive from the max instead.
+    const gappedA: TestListItemRow = { ...activeItemA, _id: 'item_gap_a', sortOrder: 99 };
+    const gappedB: TestListItemRow = { ...activeItemB, _id: 'item_gap_b', sortOrder: 100 };
+    const { ctx, insertedRows } = createItemsCtx({ subject: 'user_b' }, [sharedList], [gappedA, gappedB]);
+    vi.spyOn(Date, 'now').mockReturnValue(200);
+
+    await createListItemsHandler(ctx as never, {
+      listPublicId: sharedList.publicId,
+      titles: ['eggs', 'milk']
+    });
+
+    expect(insertedRows.map((row) => row.sortOrder)).toEqual([101, 102]);
+  });
+
   it('drops blank titles instead of throwing', async () => {
     const { ctx, insertedRows } = createItemsCtx({ subject: 'user_b' }, [sharedList], []);
     vi.spyOn(Date, 'now').mockReturnValue(200);
