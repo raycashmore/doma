@@ -1177,7 +1177,7 @@
     {describeError(visibleLists.error, 'Unable to load lists right now.')}
   </section>
 {:else}
-  <section class="flex min-h-full flex-col gap-4 text-warm-text-primary min-[1100px]:flex-row">
+  <section class="flex min-h-full flex-col gap-4 text-warm-text-primary md:h-full md:min-h-0 min-[1100px]:flex-row">
     <aside class="hidden rounded-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_18px_44px_rgb(20_17_12_/_10%)] min-[900px]:block min-[1100px]:w-[300px]">
        <div class="flex items-center justify-between">
           <h2 class="!mb-0 text-xl font-semibold text-warm-text-primary">My Lists</h2>
@@ -1281,9 +1281,9 @@
       </div>
     </aside>
 
-    <section class="min-w-0 flex-1 rounded-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_18px_44px_rgb(20_17_12_/_10%)]">
+    <section class="min-w-0 flex-1 rounded-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_18px_44px_rgb(20_17_12_/_10%)] md:flex md:min-h-0 md:flex-col">
       {#if selectedRow}
-        <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-4 md:min-h-0 md:flex-1">
           <div class="flex items-center justify-between gap-2 min-[900px]:hidden">
             <button
               type="button"
@@ -1327,8 +1327,8 @@
             <p class="text-sm text-warm-accent">{itemMutationError}</p>
           {/if}
 
-          <div class={`grid gap-4 ${rightPanel !== 'closed' ? 'min-[900px]:grid-cols-[minmax(0,1fr)_300px]' : ''}`}>
-            <div class="flex flex-col gap-4">
+          <div class={`grid gap-4 md:min-h-0 md:flex-1 md:grid-rows-[minmax(0,1fr)] ${rightPanel !== 'closed' ? 'min-[900px]:grid-cols-[minmax(0,1fr)_300px]' : ''}`}>
+            <div class="flex flex-col gap-4 md:min-h-0">
               <form
                 class="flex items-center gap-3 rounded-2xl border border-warm-border bg-warm-bg px-4 py-3"
                 onsubmit={(event) => {
@@ -1351,7 +1351,7 @@
                   Add
                 </button>
               </form>
-              <section class="rounded-[24px] border border-warm-border bg-warm-bg p-2">
+              <section class="rounded-[24px] border border-warm-border bg-warm-bg p-2 md:flex md:min-h-0 md:flex-1 md:flex-col">
                 <div class="flex items-center justify-between gap-3">
                   <div>
                     <h3 class="pl-2 text-sm font-bold text-warm-text-primary">Items</h3>
@@ -1374,6 +1374,7 @@
                   </div>
                 </div>
 
+                <div class="md:min-h-0 md:flex-1 md:overflow-y-auto">
                 {#if activeDndItems.length}
                   <ul
                     class="mt-3 flex flex-col divide-y divide-warm-border/60"
@@ -1416,6 +1417,7 @@
                     {/each}
                   </ul>
                 {/if}
+                </div>
               </section>
 
             </div>
