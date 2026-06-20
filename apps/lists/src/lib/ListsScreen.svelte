@@ -81,6 +81,7 @@
   let pasteSubmitting = $state(false);
   let pastePreviewError = $state<string | null>(null);
   let pasteDialog = $state<HTMLDialogElement>();
+  let listDialog = $state<HTMLDialogElement>();
   const pastePreviewItemCount = $derived(
     pastePreview ? pastePreview.filter((entry) => entry.kind === 'item').length : 0
   );
@@ -89,6 +90,9 @@
   let renameTargetPublicId = $state<string | null>(null);
   let deleteTargetPublicId = $state<string | null>(null);
   let showCreateDialog = $state(false);
+  const listDialogOpen = $derived(
+    showCreateDialog || renameTargetPublicId !== null || deleteTargetPublicId !== null
+  );
   let selectedItemId = $state<string | null>(null);
   let rightPanel = $state<'closed' | 'item' | 'settings'>('closed');
   let showMobileDetails = $state(false);
@@ -481,14 +485,24 @@
     pastePreview = parsed.entries;
   }
 
-  // Drive the native <dialog> from state so we inherit focus trapping, Escape
-  // handling, focus restoration, and an inert background for free.
-  $effect(() => {
-    const dialog = pasteDialog;
+  // Drive native <dialog> elements from state so we inherit focus trapping,
+  // Escape handling, focus restoration, and an inert background for free.
+  function syncDialog(dialog: HTMLDialogElement | undefined, open: boolean) {
     if (!dialog) return;
-    if (pastePreview && !dialog.open) dialog.showModal?.();
-    else if (!pastePreview && dialog.open) dialog.close?.();
-  });
+    if (open && !dialog.open) dialog.showModal?.();
+    else if (!open && dialog.open) dialog.close?.();
+  }
+
+  $effect(() => syncDialog(pasteDialog, pastePreview !== null));
+  $effect(() => syncDialog(listDialog, listDialogOpen));
+
+  function resetListDialog() {
+    showCreateDialog = false;
+    renameTargetPublicId = null;
+    deleteTargetPublicId = null;
+    menuTargetPublicId = null;
+    mutationError = null;
+  }
 
   function resetPastePreview() {
     pastePreview = null;
@@ -1601,22 +1615,18 @@
       {/if}
     </dialog>
 
-    {#if showCreateDialog || renameTargetPublicId || deleteTargetPublicId}
-      <button
-        type="button"
-        class="fixed inset-0 z-40 bg-[#2D2D2D99]"
-        aria-label="Close dialog"
-        onclick={() => {
-          showCreateDialog = false;
-          renameTargetPublicId = null;
-          deleteTargetPublicId = null;
-          menuTargetPublicId = null;
-        }}
-      ></button>
-
-      <section class="fixed inset-x-4 top-1/2 z-50 max-w-md -translate-y-1/2 rounded-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_24px_60px_rgba(61,46,34,0.2)] min-[1200px]:left-1/2 min-[1200px]:right-auto min-[1200px]:w-full min-[1200px]:-translate-x-1/2">
+    <dialog
+      bind:this={listDialog}
+      aria-labelledby="list-dialog-title"
+      class="m-auto w-[calc(100vw-2rem)] max-w-md rounded-[28px] border border-warm-border bg-warm-bg-card p-5 text-warm-text-primary shadow-[0_24px_60px_rgba(61,46,34,0.2)] backdrop:bg-[#2D2D2D99]"
+      onclose={resetListDialog}
+      onclick={(event) => {
+        if (event.target === listDialog) listDialog?.close();
+      }}
+    >
+      {#if listDialogOpen}
         {#if showCreateDialog}
-          <h2 class="font-warm-display text-[20px] text-warm-text-primary">New list</h2>
+          <h2 id="list-dialog-title" class="font-warm-display text-[20px] text-warm-text-primary">New list</h2>
 
           <form
             class="mt-4 flex flex-col gap-3"
@@ -1658,7 +1668,7 @@
               <button
                 type="button"
                 class="flex-1 rounded-full border border-warm-border px-4 py-3 text-sm font-medium text-warm-text-secondary"
-                onclick={() => (showCreateDialog = false)}
+                onclick={() => listDialog?.close()}
               >
                 Cancel
               </button>
@@ -1672,7 +1682,7 @@
             </div>
           </form>
         {:else if renameTargetPublicId}
-          <h2 class="font-warm-display text-[26px] text-warm-text-primary">Rename list</h2>
+          <h2 id="list-dialog-title" class="font-warm-display text-[26px] text-warm-text-primary">Rename list</h2>
           <p class="mt-2 text-sm text-warm-text-secondary">Update the list name and canonical slug.</p>
 
           <form
@@ -1692,10 +1702,7 @@
               <button
                 type="button"
                 class="flex-1 rounded-full border border-warm-border px-4 py-3 text-sm font-medium text-warm-text-secondary"
-                onclick={() => {
-                  renameTargetPublicId = null;
-                  menuTargetPublicId = null;
-                }}
+                onclick={() => listDialog?.close()}
               >
                 Cancel
               </button>
@@ -1709,17 +1716,14 @@
             </div>
           </form>
         {:else if deleteTargetPublicId}
-          <h2 class="font-warm-display text-[26px] text-warm-text-primary">Delete list</h2>
+          <h2 id="list-dialog-title" class="font-warm-display text-[26px] text-warm-text-primary">Delete list</h2>
           <p class="mt-2 text-sm text-warm-text-secondary">This removes the list and its items from the current view.</p>
 
           <div class="mt-5 flex gap-2">
             <button
               type="button"
               class="flex-1 rounded-full border border-warm-border px-4 py-3 text-sm font-medium text-warm-text-secondary"
-              onclick={() => {
-                deleteTargetPublicId = null;
-                menuTargetPublicId = null;
-              }}
+              onclick={() => listDialog?.close()}
             >
               Cancel
             </button>
@@ -1736,7 +1740,7 @@
         {#if mutationError}
           <p class="mt-3 text-sm text-warm-accent">{mutationError}</p>
         {/if}
-      </section>
-    {/if}
+      {/if}
+    </dialog>
   </section>
 {/if}
