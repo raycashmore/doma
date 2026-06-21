@@ -15,6 +15,7 @@ const config: BotConfig = {
   convexUrl: 'https://convex.example.com',
   scheduleCapabilityTimeoutMs: 15_000,
   listsCapabilityTimeoutMs: 15_000,
+  intentRouterAiTimeoutMs: 10_000,
   pairingEnabled: true,
   telegramBotToken: 'telegram-bot-token',
   telegramWebhookSecret: 'telegram-webhook-secret',

@@ -24,6 +24,7 @@ export type IntentClassification = {
 };
 
 const DEFAULT_MIN_CONFIDENCE = 0.5;
+const MAX_CONFIDENCE = 1;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -94,7 +95,16 @@ function parseClassifierResponse(
     return { capability: NO_CAPABILITY };
   }
 
-  if (typeof value.confidence === 'number' && value.confidence < minConfidence) {
+  // A mutating capability must only be reached on a valid confidence signal.
+  // Reject missing, non-numeric, non-finite, or out-of-range values so a
+  // provider or schema regression cannot route without one.
+  const { confidence } = value;
+  if (
+    typeof confidence !== 'number' ||
+    !Number.isFinite(confidence) ||
+    confidence < minConfidence ||
+    confidence > MAX_CONFIDENCE
+  ) {
     return { capability: NO_CAPABILITY };
   }
 

@@ -14,6 +14,7 @@ const config: BotConfig = {
   convexUrl: 'https://convex.example.com',
   scheduleCapabilityTimeoutMs: 15_000,
   listsCapabilityTimeoutMs: 15_000,
+  intentRouterAiTimeoutMs: 10_000,
   pairingEnabled: true,
   telegramBotToken: 'telegram-bot-token',
   telegramWebhookSecret: 'telegram-webhook-secret',
@@ -39,8 +40,8 @@ function telegramRequest(text: string, secret = config.telegramWebhookSecret) {
         from: {
           id: 789,
           is_bot: false,
-          first_name: 'Ray',
-          username: 'ray_cashmore'
+          first_name: 'Sam',
+          username: 'household_user'
         },
         chat: {
           id: -100123,
@@ -72,8 +73,8 @@ function telegramRequestWithChat(
         from: {
           id: 789,
           is_bot: false,
-          first_name: 'Ray',
-          username: 'ray_cashmore'
+          first_name: 'Sam',
+          username: 'household_user'
         },
         chat: {
           id: chatId,
@@ -185,7 +186,7 @@ describe('createTelegramWebhookRoutes', () => {
       status: 'active',
       createdAt: now,
       updatedAt: now,
-      displayLabel: 'ray_cashmore'
+      displayLabel: 'household_user'
     });
     await expect(consumePairingToken({ storage, token: pairing.token, now })).resolves.toBeNull();
     expect(sendTelegramMessage).toHaveBeenCalledWith({
@@ -325,7 +326,7 @@ describe('createTelegramWebhookRoutes', () => {
       status: 'active',
       createdAt: 1,
       updatedAt: 1,
-      displayLabel: 'ray_cashmore'
+      displayLabel: 'household_user'
     });
     const schedule = vi.fn(async () => ({
       kind: 'reply' as const,
@@ -363,6 +364,50 @@ describe('createTelegramWebhookRoutes', () => {
     });
   });
 
+  it('routes free text through the injected classifier to the selected capability unchanged', async () => {
+    const storage = createMemoryStorage();
+    await storage.upsertChannelLink({
+      clerkUserId: 'user_123',
+      provider: 'telegram',
+      providerUserId: '789',
+      providerChatId: '-100123',
+      status: 'active',
+      createdAt: 1,
+      updatedAt: 1,
+      displayLabel: 'household_user'
+    });
+    const lists = vi.fn(async () => ({ kind: 'reply' as const, text: 'Added to your list.' }));
+    const classify = vi.fn(async () => ({ capability: 'lists' }));
+    const sendTelegramMessage = vi.fn(async () => ({ ok: true as const }));
+    const routes = createTelegramWebhookRoutes({
+      config,
+      storage,
+      capabilities: { lists },
+      classify,
+      sendTelegramMessage
+    });
+
+    const response = await routes.request(telegramRequest('we are out of milk and eggs'));
+
+    expect(response.status).toBe(200);
+    expect(classify).toHaveBeenCalledWith('we are out of milk and eggs');
+    expect(lists).toHaveBeenCalledWith({
+      userId: 'user_123',
+      command: undefined,
+      messageText: 'we are out of milk and eggs',
+      receivedAt: 1_700_000_000_000,
+      providerContext: {
+        provider: 'telegram',
+        providerUserId: '789',
+        providerChatId: '-100123'
+      }
+    } satisfies CapabilityRequest);
+    expect(sendTelegramMessage).toHaveBeenCalledWith({
+      chatId: '-100123',
+      text: 'Added to your list.'
+    });
+  });
+
   it('does not fail the webhook when sending a reply fails', async () => {
     const storage = createMemoryStorage();
     await storage.upsertChannelLink({
@@ -373,7 +418,7 @@ describe('createTelegramWebhookRoutes', () => {
       status: 'active',
       createdAt: 1,
       updatedAt: 1,
-      displayLabel: 'ray_cashmore'
+      displayLabel: 'household_user'
     });
     const sendTelegramMessage = vi.fn(async () => ({
       ok: false as const,
@@ -408,7 +453,7 @@ describe('createTelegramWebhookRoutes', () => {
       status: 'active',
       createdAt: 1,
       updatedAt: 1,
-      displayLabel: 'ray_cashmore'
+      displayLabel: 'household_user'
     });
     const sendTelegramMessage = vi.fn(() => new Promise<never>(() => undefined));
     const routes = createTelegramWebhookRoutes({
@@ -441,7 +486,7 @@ describe('createTelegramWebhookRoutes', () => {
       status: 'active',
       createdAt: 1,
       updatedAt: 1,
-      displayLabel: 'ray_cashmore'
+      displayLabel: 'household_user'
     });
     const routes = createTelegramWebhookRoutes({ config, storage });
 
@@ -467,7 +512,7 @@ describe('createTelegramWebhookRoutes', () => {
       status: 'active',
       createdAt: 1,
       updatedAt: 1,
-      displayLabel: 'ray_cashmore'
+      displayLabel: 'household_user'
     });
     const routes = createTelegramWebhookRoutes({ config, storage });
 

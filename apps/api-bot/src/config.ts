@@ -42,6 +42,7 @@ const botConfigSchema = z.object({
   LISTS_CAPABILITY_TIMEOUT_MS: z.coerce.number().int().positive().default(15_000),
   OPENAI_API_KEY: z.string().min(1).optional(),
   INTENT_ROUTER_AI_MODEL: z.string().min(1).optional(),
+  INTENT_ROUTER_AI_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
   VERCEL_ENV: z.enum(['production', 'preview', 'development']).optional(),
   TELEGRAM_BOT_TOKEN: z.string().min(1),
   TELEGRAM_WEBHOOK_SECRET: z.string().min(1),
@@ -65,6 +66,7 @@ export type BotConfig = {
   listsCapabilityTimeoutMs: number;
   openAiApiKey?: string;
   intentRouterAiModel?: string;
+  intentRouterAiTimeoutMs: number;
   pairingEnabled: boolean;
   telegramBotToken: string;
   telegramWebhookSecret: string;
@@ -92,6 +94,7 @@ export function parseConfig(env: Record<string, unknown>): BotConfig {
     listsCapabilityTimeoutMs: result.data.LISTS_CAPABILITY_TIMEOUT_MS,
     openAiApiKey: result.data.OPENAI_API_KEY,
     intentRouterAiModel: result.data.INTENT_ROUTER_AI_MODEL,
+    intentRouterAiTimeoutMs: result.data.INTENT_ROUTER_AI_TIMEOUT_MS,
     pairingEnabled: result.data.VERCEL_ENV === 'production',
     telegramBotToken: result.data.TELEGRAM_BOT_TOKEN,
     telegramWebhookSecret: result.data.TELEGRAM_WEBHOOK_SECRET,

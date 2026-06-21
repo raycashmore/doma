@@ -361,6 +361,9 @@ Production checks:
 | `SCHEDULE_CAPABILITY_URL`     | Vercel Bot gateway, `.env.local`              | Schedule API route for `/schedule`, for example `https://schedule.example.com/schedule/api/bot/schedule` |
 | `LISTS_CAPABILITY_URL`        | Vercel Bot gateway, `.env.local`              | Lists API route for free-text capture, for example `https://lists.example.com/lists/api/bot/lists`       |
 | `LISTS_CAPABILITY_TIMEOUT_MS` | Vercel Bot gateway, `.env.local`              | Optional; per-request timeout for the lists capability (default 15000)                                   |
+| `OPENAI_API_KEY`              | Vercel Bot gateway, Convex, `.env.local`      | Enables the LLM intent router on the gateway; also used by Convex for AI item/briefing parsing           |
+| `INTENT_ROUTER_AI_MODEL`      | Vercel Bot gateway, `.env.local`              | Model the intent router uses; required with `OPENAI_API_KEY` to enable free-text routing                 |
+| `INTENT_ROUTER_AI_TIMEOUT_MS` | Vercel Bot gateway, `.env.local`              | Optional; per-request timeout for the intent router AI call (default 10000)                              |
 | `TELEGRAM_BOT_TOKEN`          | Vercel Bot gateway, `.env.local`              | Bot token from BotFather                                                                                 |
 | `TELEGRAM_WEBHOOK_SECRET`     | Vercel Bot gateway, Telegram                  | Sent as Telegram's webhook secret token                                                                  |
 | `TELEGRAM_BOT_USERNAME`       | Vercel Bot gateway, `.env.local`              | Bot username, ending in `bot`, without `@`                                                               |
@@ -392,8 +395,14 @@ The Schedule capability supports these Telegram commands:
 
 Doma no longer sends proactive event-level schedule reminders.
 
-The Bot gateway routes free-text (non-slash) Telegram messages to the Lists
-capability, which captures **list items** into the sender's **default list**.
+The Bot gateway classifies free-text (non-slash) Telegram messages with an LLM
+intent router and dispatches each message to a single capability — for example
+the Lists capability, which captures **list items** into the sender's **default
+list**. The router runs on the gateway and needs `OPENAI_API_KEY` and
+`INTENT_ROUTER_AI_MODEL` set there; without them the gateway has no classifier
+and every free-text message returns a capabilities hint instead of routing. See
+`docs/adr/0002-llm-intent-router.md` for the routing design.
+
 The lists capability route (`/lists/api/bot/lists` in production) and the Convex
 `lists.bot.*` functions both validate `BOT_SERVICE_TOKEN`. Set the same value in
 the Bot gateway, Lists app, and the target Convex deployment, and set

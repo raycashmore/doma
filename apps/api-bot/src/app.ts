@@ -66,7 +66,8 @@ function createRuntimeClassifier(config: BotConfig): RouteClassifier | undefined
   const provider = createOpenAiIntentClassifierProvider({
     apiKey: config.openAiApiKey,
     model: config.intentRouterAiModel,
-    descriptors: defaultIntentDescriptors
+    descriptors: defaultIntentDescriptors,
+    timeoutMs: config.intentRouterAiTimeoutMs
   });
 
   return (messageText: string) => classifyIntent({ messageText, descriptors: defaultIntentDescriptors, provider });

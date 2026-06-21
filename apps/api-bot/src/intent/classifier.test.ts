@@ -74,6 +74,46 @@ describe('classifyIntent', () => {
     });
   });
 
+  it('falls back to none when confidence is missing', async () => {
+    const provider: IntentClassifierProvider = vi.fn(async () => ({ capability: 'lists' }));
+
+    await expect(classifyIntent({ messageText: 'add milk', descriptors, provider })).resolves.toEqual({
+      capability: NO_CAPABILITY
+    });
+  });
+
+  it('falls back to none when confidence is not a number', async () => {
+    const provider: IntentClassifierProvider = vi.fn(async () => ({ capability: 'lists', confidence: 'low' }));
+
+    await expect(classifyIntent({ messageText: 'add milk', descriptors, provider })).resolves.toEqual({
+      capability: NO_CAPABILITY
+    });
+  });
+
+  it('falls back to none when confidence is not finite', async () => {
+    const provider: IntentClassifierProvider = vi.fn(async () => ({ capability: 'lists', confidence: Number.NaN }));
+
+    await expect(classifyIntent({ messageText: 'add milk', descriptors, provider })).resolves.toEqual({
+      capability: NO_CAPABILITY
+    });
+  });
+
+  it('falls back to none when confidence is above the valid range', async () => {
+    const provider: IntentClassifierProvider = vi.fn(async () => ({ capability: 'lists', confidence: 1.5 }));
+
+    await expect(classifyIntent({ messageText: 'add milk', descriptors, provider })).resolves.toEqual({
+      capability: NO_CAPABILITY
+    });
+  });
+
+  it('falls back to none when confidence is below the valid range', async () => {
+    const provider: IntentClassifierProvider = vi.fn(async () => ({ capability: 'lists', confidence: -0.1 }));
+
+    await expect(classifyIntent({ messageText: 'add milk', descriptors, provider })).resolves.toEqual({
+      capability: NO_CAPABILITY
+    });
+  });
+
   it('falls back to none when the provider returns a capability that is not registered', async () => {
     const provider: IntentClassifierProvider = vi.fn(async () => ({ capability: 'weather', confidence: 0.99 }));
 
