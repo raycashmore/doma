@@ -392,7 +392,7 @@ describe('createTelegramWebhookRoutes', () => {
       ok: true,
       dispatchResult: {
         kind: 'reply',
-        text: 'I can help with scheduling soon. Try /schedule.'
+        text: buildCapabilitiesHint()
       }
     });
   });
@@ -426,12 +426,12 @@ describe('createTelegramWebhookRoutes', () => {
       ok: true,
       dispatchResult: {
         kind: 'reply',
-        text: 'I can help with scheduling soon. Try /schedule.'
+        text: buildCapabilitiesHint()
       }
     });
   });
 
-  it('returns default dispatch help for linked plain text', async () => {
+  it('returns the capabilities hint for unroutable linked plain text', async () => {
     const storage = createMemoryStorage();
     await storage.upsertChannelLink({
       clerkUserId: 'user_123',
@@ -452,7 +452,7 @@ describe('createTelegramWebhookRoutes', () => {
       ok: true,
       dispatchResult: {
         kind: 'reply',
-        text: 'I can help with scheduling soon. Try /schedule.'
+        text: buildCapabilitiesHint()
       }
     });
   });
