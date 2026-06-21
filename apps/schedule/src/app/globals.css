@@ -16,6 +16,14 @@
   }
 }
 
+/* Reclaim vertical space for the compact week timeline on landscape phones by
+   hiding the app's "Schedule" title bar (not the event panel's own header). */
+@media (orientation: landscape) and (max-height: 600px) {
+  div:has(> main) > header {
+    display: none;
+  }
+}
+
 body {
   @apply m-0;
   -webkit-font-smoothing: antialiased;

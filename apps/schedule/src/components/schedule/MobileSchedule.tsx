@@ -1,4 +1,4 @@
-import { MapPin, Repeat } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import { useState } from 'react';
 
 import { DAY_LABELS, type DayLabel, type ScheduleMember } from './scheduleData';
@@ -19,11 +19,6 @@ function formatTime(minutes: number): string {
   const suffix = hour >= 12 ? 'pm' : 'am';
   const displayHour = hour % 12 === 0 ? 12 : hour % 12;
   return `${displayHour}:${minute.toString().padStart(2, '0')}${suffix}`;
-}
-
-function formatEventTime(event: ScheduleEvent): string {
-  if (event.allDay) return 'All day';
-  return `${formatTime(event.startMinutes)} - ${formatTime(event.endMinutes)}`;
 }
 
 export function MobileSchedule({
@@ -50,41 +45,67 @@ export function MobileSchedule({
             type="button"
             role="tab"
             aria-selected={candidate === day}
-            className={
-              candidate === day ? 'schedule-mobile__day schedule-mobile__day--selected' : 'schedule-mobile__day'
-            }
+            className={`schedule-mobile__day${candidate === day ? ' schedule-mobile__day--selected' : ''}${
+              candidate === todayDay ? ' schedule-mobile__day--today' : ''
+            }`}
             onClick={() => setDay(candidate)}
           >
-            {candidate}
+            <span className="schedule-mobile__day-short" aria-hidden>
+              {candidate.charAt(0)}
+            </span>
+            <span className="schedule-mobile__day-full">{candidate}</span>
           </button>
         ))}
       </div>
       <div className="schedule-mobile__agenda">
         {dayEvents.length > 0 ? (
           dayEvents.map((event) => {
-            const member = members.find((candidate) => candidate.id === event.who[0]);
+            const eventMembers = event.who
+              .map((id) => members.find((candidate) => candidate.id === id))
+              .filter((member): member is ScheduleMember => member !== undefined);
+            const primary = eventMembers[0];
             return (
               <button
-                className={`mobile-event mobile-event--${member?.colorClass ?? 'member-a'}${
+                className={`mobile-event mobile-event--${primary?.colorClass ?? 'member-a'}${
                   event.kind === 'dailyRequirements' ? ' mobile-event--daily-requirements' : ''
                 }${selectedEventId === event.id ? ' mobile-event--selected' : ''}`}
                 key={`${event.id}-${event.day}`}
                 type="button"
                 onClick={() => onSelect(event)}
               >
-                <span className="mobile-event__time">{formatEventTime(event)}</span>
-                <span className="mobile-event__body">
-                  <strong>{event.title}</strong>
-                  <small>
-                    {event.recurring ? <Repeat aria-hidden size={11} /> : null}
-                    {event.location ? (
-                      <>
-                        <MapPin aria-hidden size={11} />
-                        {event.location}
-                      </>
-                    ) : null}
-                  </small>
+                <span className="mobile-event__time">
+                  {event.allDay ? (
+                    <strong>All day</strong>
+                  ) : (
+                    <>
+                      <strong>{formatTime(event.startMinutes)}</strong>
+                      <small>{formatTime(event.endMinutes)}</small>
+                    </>
+                  )}
                 </span>
+                <span className="mobile-event__body">
+                  <strong className="mobile-event__title">{event.title}</strong>
+                  {event.location ? (
+                    <span className="mobile-event__meta">
+                      <span className="mobile-event__tag">
+                        <MapPin aria-hidden size={12} />
+                        {event.location}
+                      </span>
+                    </span>
+                  ) : null}
+                </span>
+                {eventMembers.length > 0 ? (
+                  <span className="mobile-event__who" aria-hidden>
+                    {eventMembers.slice(0, 3).map((member) => (
+                      <span
+                        key={member.id}
+                        className={`schedule-avatar schedule-avatar--small schedule-avatar--${member.colorClass}`}
+                      >
+                        {member.initials}
+                      </span>
+                    ))}
+                  </span>
+                ) : null}
               </button>
             );
           })
