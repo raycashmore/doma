@@ -70,10 +70,26 @@ describe('InMemoryListStore list lifecycle', () => {
 
     const target = await store.createList({ name: 'Weekend Trip', visibility: 'personal' });
 
-    expect(target).toEqual({ publicId: 'weekend-trip', slug: 'weekend-trip' });
-    expect(store.lists.map((list) => list.publicId)).toContain('weekend-trip');
-    select('weekend-trip');
+    expect(target.slug).toBe('weekend-trip');
+    // Public id is opaque, not the slug (so duplicate names cannot collide).
+    expect(target.publicId).not.toBe('weekend-trip');
+    expect(store.lists.map((list) => list.publicId)).toContain(target.publicId);
+    select(target.publicId);
     expect(store.selected?.list.name).toBe('Weekend Trip');
+  });
+
+  it('keeps two lists with the same name as distinct identities', async () => {
+    const { store } = makeStore(null);
+
+    const first = await store.createList({ name: 'Weekly shop', visibility: 'shared' });
+    await store.createItem({ listPublicId: first.publicId, title: 'Eggs' });
+    const second = await store.createList({ name: 'Weekly shop', visibility: 'shared' });
+
+    expect(second.publicId).not.toBe(first.publicId);
+    expect(second.slug).toBe(first.slug);
+    // The first list's data survives — the second did not overwrite it.
+    const firstData = store.lists.filter((list) => list.publicId === first.publicId);
+    expect(firstData).toHaveLength(1);
   });
 
   it('renames a list and reslugs it', async () => {
@@ -83,6 +99,40 @@ describe('InMemoryListStore list lifecycle', () => {
 
     expect(target.slug).toBe('fortnightly-shop');
     expect(store.lists.find((list) => list.publicId === 'weekly-shop')?.name).toBe('Fortnightly Shop');
+  });
+});
+
+describe('InMemoryListStore parity with the backend', () => {
+  it('throws unavailable-resource errors instead of silently succeeding', async () => {
+    const { store } = makeStore('weekly-shop');
+
+    await expect(store.deleteItem({ itemId: 'missing-item' })).rejects.toThrow('List item unavailable');
+    await expect(store.createItem({ listPublicId: 'missing-list', title: 'X' })).rejects.toThrow('List unavailable');
+    await expect(store.renameProperty({ propertyId: 'missing-prop', name: 'X' })).rejects.toThrow(
+      'List property unavailable'
+    );
+    await expect(
+      store.setPropertyValue({
+        itemId: 'preview-item-bread',
+        propertyId: 'missing-prop',
+        value: { type: 'text', text: 'x' }
+      })
+    ).rejects.toThrow('List property unavailable');
+  });
+
+  it('stamps the item updatedAt when a property value changes', async () => {
+    const { store } = makeStore('weekly-shop');
+    const before = store.selected!.activeItems.find((item) => item.title === 'Bread')!.updatedAt;
+
+    await store.setPropertyValue({
+      itemId: 'preview-item-bread',
+      propertyId: 'preview-property-aisle',
+      value: { type: 'text', text: 'Bakery' }
+    });
+
+    const after = store.selected!.activeItems.find((item) => item.title === 'Bread')!.updatedAt;
+    expect(after).toBeGreaterThanOrEqual(before);
+    expect(after).not.toBe(before);
   });
 });
 

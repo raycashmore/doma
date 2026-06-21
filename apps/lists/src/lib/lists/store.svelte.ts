@@ -112,9 +112,13 @@ export class InMemoryListStore implements ListStore {
     return first ? (this.#itemsByPublicId[first.publicId] ?? null) : null;
   }
 
+  // The update helpers throw when their target is missing, mirroring the Convex
+  // handlers' unavailable-resource errors. A silent no-op would let a stale
+  // command (e.g. issued across an adapter switch) resolve successfully and let
+  // the UI clear a draft or close a dialog though nothing changed.
   #updateList(publicId: string, updater: (current: VisibleListItemsResult) => VisibleListItemsResult) {
     const current = this.#itemsByPublicId[publicId];
-    if (!current) return;
+    if (!current) throw new Error('List unavailable');
     this.#itemsByPublicId = { ...this.#itemsByPublicId, [publicId]: updater(current) };
   }
 
@@ -127,7 +131,8 @@ export class InMemoryListStore implements ListStore {
 
   #updateItemList(itemId: string, updater: (current: VisibleListItemsResult) => VisibleListItemsResult) {
     const publicId = this.#publicIdForItem(itemId);
-    if (publicId) this.#updateList(publicId, updater);
+    if (!publicId) throw new Error('List item unavailable');
+    this.#updateList(publicId, updater);
   }
 
   #updatePropertyList(propertyId: string, updater: (current: VisibleListItemsResult) => VisibleListItemsResult) {
@@ -137,6 +142,7 @@ export class InMemoryListStore implements ListStore {
         return;
       }
     }
+    throw new Error('List property unavailable');
   }
 
   #patchItem(itemId: string, patch: (item: VisibleListItem) => VisibleListItem) {
@@ -157,9 +163,12 @@ export class InMemoryListStore implements ListStore {
   }): Promise<ListRouteTarget> {
     const resolvedName = name.trim() || 'Untitled list';
     const slug = slugifyListName(resolvedName);
+    // Opaque public id, independent of the slug — like Convex. Deriving it from
+    // the slug would collide for two lists with the same name and overwrite the
+    // first list's data in `itemsByPublicId`.
     const created: VisibleList = {
       _id: `preview-${crypto.randomUUID()}`,
-      publicId: slug,
+      publicId: `preview-list-${crypto.randomUUID()}`,
       slug,
       name: resolvedName,
       visibility,
@@ -342,8 +351,9 @@ export class InMemoryListStore implements ListStore {
   }): Promise<void> {
     this.#updateItemList(itemId, (current) => {
       const property = current.properties.find((entry) => entry._id === propertyId);
-      if (!property) return current;
+      if (!property) throw new Error('List property unavailable');
       const patch = propertyValuePatch(property, value);
+      const now = Date.now();
 
       const apply = (item: VisibleListItem): VisibleListItem => {
         if (item._id !== itemId) return item;
@@ -358,7 +368,8 @@ export class InMemoryListStore implements ListStore {
           existingIndex >= 0
             ? item.propertyValues.map((entry, index) => (index === existingIndex ? nextValue : entry))
             : [...item.propertyValues, nextValue];
-        return { ...item, propertyValues };
+        // Mirror Convex, which stamps the item's updatedAt on any value change.
+        return { ...item, propertyValues, updatedAt: now };
       };
 
       return {
@@ -371,9 +382,14 @@ export class InMemoryListStore implements ListStore {
 
   async clearPropertyValue({ itemId, propertyId }: { itemId: string; propertyId: string }): Promise<void> {
     this.#updateItemList(itemId, (current) => {
+      const now = Date.now();
       const apply = (item: VisibleListItem): VisibleListItem =>
         item._id === itemId
-          ? { ...item, propertyValues: item.propertyValues.filter((entry) => entry.listPropertyId !== propertyId) }
+          ? {
+              ...item,
+              propertyValues: item.propertyValues.filter((entry) => entry.listPropertyId !== propertyId),
+              updatedAt: now
+            }
           : item;
       return {
         ...current,
