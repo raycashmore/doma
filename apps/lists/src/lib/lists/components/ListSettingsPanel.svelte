@@ -26,7 +26,8 @@
     draftOptions,
     setDraftOptions,
     onCreate,
-    propertyTypeLabel
+    propertyTypeLabel,
+    onDeleteList
   }: {
     properties: VisibleListProperty[];
     error: string | null;
@@ -50,6 +51,7 @@
     setDraftOptions: (v: string) => void;
     onCreate: () => void;
     propertyTypeLabel: (t: VisibleListProperty['type']) => string;
+    onDeleteList: () => void;
   } = $props();
 
   // Local $state for the dnd list, seeded from the `properties` prop and frozen
@@ -212,4 +214,15 @@
       Add property
     </button>
   </form>
+
+  <div class="mt-auto pt-2">
+    <button
+      type="button"
+      class="flex w-full items-center justify-center gap-2 rounded-full border border-warm-accent px-4 py-2 text-sm font-semibold text-warm-accent"
+      onclick={onDeleteList}
+    >
+      <ListIcon name="trash" size={15} />
+      Delete list
+    </button>
+  </div>
 </div>

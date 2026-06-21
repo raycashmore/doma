@@ -50,7 +50,8 @@ function renderPanel(onReorder = vi.fn(async () => true)) {
       draftOptions: '',
       setDraftOptions: vi.fn(),
       onCreate: vi.fn(),
-      propertyTypeLabel: (type: VisibleListProperty['type']) => type
+      propertyTypeLabel: (type: VisibleListProperty['type']) => type,
+      onDeleteList: vi.fn()
     }
   });
   mounted.push(component);

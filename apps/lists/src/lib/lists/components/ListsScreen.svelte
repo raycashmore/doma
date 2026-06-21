@@ -773,6 +773,9 @@
       setDraftOptions={(value) => (propertyDraftOptions = value)}
       onCreate={() => void handleCreateProperty()}
       {propertyTypeLabel}
+      onDeleteList={() => {
+        if (selectedRow) beginDelete(selectedRow as PresentedList);
+      }}
     />
     {/if}
   </div>

@@ -27,6 +27,7 @@ import type * as lists_mutations from "../lists/mutations.js";
 import type * as lists_properties from "../lists/properties.js";
 import type * as lists_queries from "../lists/queries.js";
 import type * as lists_testHelpers from "../lists/testHelpers.js";
+import type * as lists_transitions from "../lists/transitions.js";
 import type * as monthDetail from "../monthDetail.js";
 import type * as monthlyBreakdown from "../monthlyBreakdown.js";
 import type * as mutations from "../mutations.js";
@@ -70,6 +71,7 @@ declare const fullApi: ApiFromModules<{
   "lists/properties": typeof lists_properties;
   "lists/queries": typeof lists_queries;
   "lists/testHelpers": typeof lists_testHelpers;
+  "lists/transitions": typeof lists_transitions;
   monthDetail: typeof monthDetail;
   monthlyBreakdown: typeof monthlyBreakdown;
   mutations: typeof mutations;
