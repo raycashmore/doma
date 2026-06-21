@@ -25,7 +25,7 @@ export const listItemsSystemPrompt = [
   'Use concise plain titles. Do not invent items, quantities, notes, or list names.',
   'If the message names a list or contains chatter like "add ... to the list", capture only the items, not the framing words.',
   'The user message includes the lists you may target, each with an id and name.',
-  'If the message names one of those lists, set targetListId to that list\'s id; otherwise set targetListId to null.',
+  "If the message names one of those lists, set targetListId to that list's id; otherwise set targetListId to null.",
   'Never invent a targetListId that is not in the provided lists.',
   'If the message names or describes a target list, set requestedListName to the list name the user referenced (even if it is not in the provided lists); otherwise set it to null.',
   'Return only the requested structured object.'

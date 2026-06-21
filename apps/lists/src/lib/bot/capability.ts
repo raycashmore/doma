@@ -59,9 +59,7 @@ export async function handleListsCapabilityRequest(
       return { kind: 'reply', text: formatConfirmation({ kind: 'empty_parse' }) };
     }
 
-    const namedList = parsed.targetListId
-      ? lists.find((list) => list.id === parsed.targetListId)
-      : undefined;
+    const namedList = parsed.targetListId ? lists.find((list) => list.id === parsed.targetListId) : undefined;
 
     // Resolution: a resolved named list wins; otherwise fall back to the
     // default. With neither, we cannot create anything.
