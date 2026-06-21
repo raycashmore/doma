@@ -5,8 +5,12 @@ import { Hono } from 'hono';
 import type { BotConfig } from './config.js';
 import { getConfig } from './config.js';
 import { createHttpCapability } from './dispatch/httpCapability.js';
+import type { RouteClassifier } from './dispatch/router.js';
 import type { CapabilityHandler } from './dispatch/types.js';
 import { jsonOk } from './http/json.js';
+import { classifyIntent } from './intent/classifier.js';
+import { createOpenAiIntentClassifierProvider } from './intent/openAiClassifier.js';
+import { defaultIntentDescriptors } from './intent/registry.js';
 import { createLinkingRoutes } from './linking/routes.js';
 import { createNotificationRoutes } from './notifications/routes.js';
 import { sendTelegramMessage, type TelegramMessageSender } from './providers/telegram/client.js';
@@ -17,6 +21,7 @@ export type CreateAppOptions = {
   config?: BotConfig;
   storage?: BotStorage;
   capabilities?: Record<string, CapabilityHandler>;
+  classify?: RouteClassifier;
   sendTelegramMessage?: TelegramMessageSender;
 };
 
@@ -36,7 +41,7 @@ function createRuntimeCapabilities(config: BotConfig): Record<string, Capability
   }
 
   if (config.listsCapabilityUrl) {
-    // Free-text messages are routed here by the dispatcher (FREE_TEXT_CAPABILITY).
+    // The LLM intent router classifies free-text messages to this capability.
     capabilities.lists = createHttpCapability({
       endpointUrl: config.listsCapabilityUrl,
       serviceToken: config.botServiceToken,
@@ -47,10 +52,32 @@ function createRuntimeCapabilities(config: BotConfig): Record<string, Capability
   return capabilities;
 }
 
+/**
+ * Build the gateway's free-text intent router. The router runs inside api-bot
+ * with direct LLM access (one hop, no Convex round-trip). When LLM access is not
+ * configured, returns undefined so the dispatcher replies with a capabilities
+ * hint rather than guessing.
+ */
+function createRuntimeClassifier(config: BotConfig): RouteClassifier | undefined {
+  if (!config.openAiApiKey || !config.intentRouterAiModel) {
+    return undefined;
+  }
+
+  const provider = createOpenAiIntentClassifierProvider({
+    apiKey: config.openAiApiKey,
+    model: config.intentRouterAiModel,
+    descriptors: defaultIntentDescriptors
+  });
+
+  return (messageText: string) =>
+    classifyIntent({ messageText, descriptors: defaultIntentDescriptors, provider });
+}
+
 export function createApp(options: CreateAppOptions = {}) {
   const config = options.config ?? getConfig();
   const storage = options.storage ?? createRuntimeStorage(config);
   const capabilities = options.capabilities ?? createRuntimeCapabilities(config);
+  const classify = options.classify ?? createRuntimeClassifier(config);
   const sendTelegram =
     options.sendTelegramMessage ??
     (({ chatId, text }: { chatId: string; text: string }) =>
@@ -77,6 +104,7 @@ export function createApp(options: CreateAppOptions = {}) {
       config,
       storage,
       capabilities,
+      classify,
       sendTelegramMessage: sendTelegram
     })
   );

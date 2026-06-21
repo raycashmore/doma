@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { BotConfig } from '../../config.js';
+import { buildCapabilitiesHint } from '../../dispatch/router.js';
 import type { CapabilityRequest } from '../../dispatch/types.js';
 import { consumePairingToken, createPairingToken } from '../../linking/pairing.js';
 import { createMemoryStorage } from '../../storage/memory.js';

@@ -2,7 +2,7 @@ import type { Context } from 'hono';
 import { Hono } from 'hono';
 
 import type { BotConfig } from '../../config.js';
-import { createCommandDispatcher } from '../../dispatch/router.js';
+import { createCommandDispatcher, type RouteClassifier } from '../../dispatch/router.js';
 import type { CapabilityHandler } from '../../dispatch/types.js';
 import { jsonError, jsonOk } from '../../http/json.js';
 import { consumePairingToken } from '../../linking/pairing.js';
@@ -15,6 +15,7 @@ export type CreateTelegramWebhookRoutesOptions = {
   config: BotConfig;
   storage: BotStorage;
   capabilities?: Record<string, CapabilityHandler>;
+  classify?: RouteClassifier;
   sendTelegramMessage?: TelegramMessageSender;
 };
 
@@ -41,10 +42,11 @@ export function createTelegramWebhookRoutes({
   config,
   storage,
   capabilities = {},
+  classify,
   sendTelegramMessage
 }: CreateTelegramWebhookRoutesOptions) {
   const routes = new Hono();
-  const dispatcher = createCommandDispatcher({ capabilities });
+  const dispatcher = createCommandDispatcher({ capabilities, classify });
 
   async function sendReply(chatId: string, text: string) {
     if (!sendTelegramMessage) {
