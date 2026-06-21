@@ -318,12 +318,12 @@
     renameSeededFor = null;
   }
 
-  async function handleSetDefaultList() {
-    if (!selectedRow?.publicId) return;
+  async function handleSetDefaultList(publicId: string) {
+    if (!publicId) return;
     propertyMutationError = null;
 
     try {
-      await store.setDefaultList({ publicId: selectedRow.publicId });
+      await store.setDefaultList({ publicId });
     } catch (error) {
       propertyMutationError = describeError(error, 'Unable to set default list.');
     }
@@ -575,9 +575,6 @@
   const visibleProperties = $derived(selectedListData?.properties ?? []);
   const selectedItem = $derived(getSelectedItem(activeItems, completedItems, selectedItemId));
   const currentDefaultList = $derived(store.defaultList);
-  const isCurrentListDefault = $derived(
-    selectedRow !== null && currentDefaultList?.publicId === selectedRow.publicId
-  );
 
   function summarizeItemValues(item: VisibleListItem) {
     const parts: string[] = [];
@@ -791,8 +788,9 @@
       onDeleteList={() => {
         if (selectedRow) beginDelete(selectedRow as PresentedList);
       }}
-      isCurrentDefault={isCurrentListDefault}
-      onSetAsDefault={() => void handleSetDefaultList()}
+      availableLists={visibleListRows}
+      currentDefaultPublicId={currentDefaultList?.publicId ?? null}
+      onSetDefaultList={(publicId) => void handleSetDefaultList(publicId)}
     />
     {/if}
   </div>
