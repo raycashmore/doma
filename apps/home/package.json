@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "check-types": "tsc --noEmit",
-    "lint": "eslint --fix",
+    "lint": "eslint",
+    "lint:fix": "eslint --fix",
     "format": "prettier",
     "check": "prettier --write . && eslint --fix",
     "start": "node .output/server/index.mjs"
