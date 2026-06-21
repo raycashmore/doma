@@ -69,8 +69,7 @@ function createRuntimeClassifier(config: BotConfig): RouteClassifier | undefined
     descriptors: defaultIntentDescriptors
   });
 
-  return (messageText: string) =>
-    classifyIntent({ messageText, descriptors: defaultIntentDescriptors, provider });
+  return (messageText: string) => classifyIntent({ messageText, descriptors: defaultIntentDescriptors, provider });
 }
 
 export function createApp(options: CreateAppOptions = {}) {

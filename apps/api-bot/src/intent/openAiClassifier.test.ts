@@ -25,9 +25,10 @@ describe('createOpenAiIntentClassifierProvider', () => {
       fetchImpl
     });
 
-    await expect(
-      provider({ messageText: 'add milk', prompt: 'PROMPT' })
-    ).resolves.toEqual({ capability: 'lists', confidence: 0.9 });
+    await expect(provider({ messageText: 'add milk', prompt: 'PROMPT' })).resolves.toEqual({
+      capability: 'lists',
+      confidence: 0.9
+    });
 
     expect(requests[0]?.url).toBe('https://api.openai.com/v1/chat/completions');
     expect(requests[0]?.body).toMatchObject({

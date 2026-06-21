@@ -45,17 +45,17 @@ describe('classifyIntent', () => {
   it('routes a message to the capability the provider selects', async () => {
     const provider: IntentClassifierProvider = vi.fn(async () => ({ capability: 'lists', confidence: 0.9 }));
 
-    await expect(
-      classifyIntent({ messageText: 'add milk and eggs', descriptors, provider })
-    ).resolves.toEqual({ capability: 'lists' });
+    await expect(classifyIntent({ messageText: 'add milk and eggs', descriptors, provider })).resolves.toEqual({
+      capability: 'lists'
+    });
   });
 
   it('routes a schedule-style ask to the schedule capability', async () => {
     const provider: IntentClassifierProvider = vi.fn(async () => ({ capability: 'schedule', confidence: 0.8 }));
 
-    await expect(
-      classifyIntent({ messageText: "what's on today", descriptors, provider })
-    ).resolves.toEqual({ capability: 'schedule' });
+    await expect(classifyIntent({ messageText: "what's on today", descriptors, provider })).resolves.toEqual({
+      capability: 'schedule'
+    });
   });
 
   it('returns none when the provider selects none', async () => {
@@ -69,9 +69,9 @@ describe('classifyIntent', () => {
   it('falls back to none on low confidence below the threshold', async () => {
     const provider: IntentClassifierProvider = vi.fn(async () => ({ capability: 'lists', confidence: 0.2 }));
 
-    await expect(
-      classifyIntent({ messageText: 'hmm', descriptors, provider, minConfidence: 0.5 })
-    ).resolves.toEqual({ capability: NO_CAPABILITY });
+    await expect(classifyIntent({ messageText: 'hmm', descriptors, provider, minConfidence: 0.5 })).resolves.toEqual({
+      capability: NO_CAPABILITY
+    });
   });
 
   it('falls back to none when the provider returns a capability that is not registered', async () => {
