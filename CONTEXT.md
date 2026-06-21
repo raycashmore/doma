@@ -88,6 +88,10 @@ _Avoid_: Team list, collaborative workspace
 A signed-in Doma user who is allowed to use the app. Household users can all read and edit shared lists; personal lists remain limited to their creator.
 _Avoid_: Team member, collaborator, invited user
 
+**Default list**:
+The single **list** a **household user** has chosen to receive captures that do not name a list — used by the Telegram bot when a message names no list, or names one it cannot resolve. A **default list** is stored by **list** identity, so it survives renames, and may point at a **personal list** or a **shared list**. Each household user has at most one default list; when none is set, the bot creates nothing and asks the user to set one.
+_Avoid_: Inbox list, fallback bucket, primary list
+
 ## Example Dialogue
 
 Dev: "The card spend by category for April does not add up to the credit-card budget total. Is that invalid?"
