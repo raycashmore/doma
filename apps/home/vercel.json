@@ -3,6 +3,13 @@
   "framework": null,
   "buildCommand": "pnpm build",
   "outputDirectory": ".output/public",
+  "redirects": [
+    {
+      "source": "/lists",
+      "destination": "/lists/",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/bot",
@@ -35,10 +42,6 @@
     {
       "source": "/schedule/:path*",
       "destination": "https://schedule.rayandromana.com/schedule/:path*"
-    },
-    {
-      "source": "/lists",
-      "destination": "https://lists.rayandromana.com/lists/"
     },
     {
       "source": "/lists/",
