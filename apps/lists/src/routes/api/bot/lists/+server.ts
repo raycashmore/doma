@@ -68,9 +68,20 @@ export async function POST({ request }: { request: Request }) {
 
   const client = new ConvexHttpClient(convexUrl);
   const result = await handleListsCapabilityRequest(capabilityRequest, {
-    parseItems: ({ messageText }) => client.action(api.lists.bot.parseListItemsForBot, { serviceToken, messageText }),
-    loadDefaultList: ({ userId }) =>
-      client.query(api.lists.bot.defaultListForBot, { serviceToken, clerkUserId: userId }),
+    loadAddressableContext: async ({ userId }) => {
+      const [lists, defaultList] = await Promise.all([
+        client.query(api.lists.bot.addressableListsForBot, { serviceToken, clerkUserId: userId }),
+        client.query(api.lists.bot.defaultListForBot, { serviceToken, clerkUserId: userId })
+      ]);
+      return { lists, defaultList };
+    },
+    parseItems: ({ messageText, addressableLists, defaultListId }) =>
+      client.action(api.lists.bot.parseListItemsForBot, {
+        serviceToken,
+        messageText,
+        addressableLists,
+        defaultListId
+      }),
     createItems: ({ userId, listPublicId, titles }) =>
       client.mutation(api.lists.bot.createListItemsForBot, {
         serviceToken,
