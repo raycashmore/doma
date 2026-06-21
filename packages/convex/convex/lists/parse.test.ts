@@ -37,14 +37,31 @@ describe('parseListItemsMessage', () => {
     });
   });
 
-  it('falls back deterministically when the provider throws', async () => {
+  it('falls back to a newline split for multi-line input when the provider throws', async () => {
     const provider: ListItemsParseProvider = async () => {
       throw new Error('AI unavailable');
     };
 
-    const result = await parseListItemsMessage({ messageText: 'batteries', provider });
+    const result = await parseListItemsMessage({ messageText: 'batteries\nlightbulbs', provider });
 
-    expect(result).toEqual({ targetListId: null, items: ['batteries'] });
+    expect(result).toEqual({ targetListId: null, items: ['batteries', 'lightbulbs'] });
+  });
+
+  it('captures nothing for single-line input when the AI is unavailable', async () => {
+    // Without AI we cannot tell a real item ("batteries") from chatter ("hello"),
+    // so a single line yields no items rather than a verbatim, possibly-junk item.
+    const provider: ListItemsParseProvider = async () => {
+      throw new Error('AI unavailable');
+    };
+
+    await expect(parseListItemsMessage({ messageText: 'add milk to the shopping list', provider })).resolves.toEqual({
+      targetListId: null,
+      items: []
+    });
+    await expect(parseListItemsMessage({ messageText: 'hello', provider })).resolves.toEqual({
+      targetListId: null,
+      items: []
+    });
   });
 
   it('returns no items when there is nothing usable to capture', async () => {
@@ -53,6 +70,17 @@ describe('parseListItemsMessage', () => {
     const result = await parseListItemsMessage({ messageText: '   ', provider });
 
     expect(result).toEqual({ targetListId: null, items: [] });
+  });
+
+  it('bounds the number of items and the length of each title', async () => {
+    const provider: ListItemsParseProvider = async () => ({
+      items: [`${'a'.repeat(500)}`, ...Array.from({ length: 200 }, (_, index) => `item ${index}`)]
+    });
+
+    const result = await parseListItemsMessage({ messageText: 'lots', provider });
+
+    expect(result.items.length).toBeLessThanOrEqual(50);
+    expect(Math.max(...result.items.map((item) => item.length))).toBeLessThanOrEqual(200);
   });
 });
 

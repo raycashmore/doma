@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { createListItemsForBotHandler, defaultListForBotHandler, parseListItemsForBotHandler } from './bot';
 import { createListItemsForUser, readDefaultListForUser, setDefaultListForUser } from './botModel';
 import type { ListsMutationCtx } from './items';
 
@@ -96,6 +97,41 @@ describe('default list for a household user', () => {
     await expect(readDefaultListForUser(ctx, { currentUserId: 'user_b' })).resolves.toBeNull();
   });
 
+  it('replaces an existing default rather than adding a second row', async () => {
+    const otherList: Row = { ...sharedList, _id: 'lists_other', publicId: 'list_other', name: 'Hardware' };
+    const { ctx, tables } = createCtx({ lists: [sharedList, otherList] });
+
+    await setDefaultListForUser(ctx, { currentUserId: 'user_b', publicId: 'list_shared' });
+    await setDefaultListForUser(ctx, { currentUserId: 'user_b', publicId: 'list_other' });
+
+    expect((tables.listDefaults ?? []).filter((row) => row.userId === 'user_b')).toHaveLength(1);
+    await expect(readDefaultListForUser(ctx, { currentUserId: 'user_b' })).resolves.toEqual({
+      publicId: 'list_other',
+      name: 'Hardware'
+    });
+  });
+
+  it('allows defaulting to the user’s own personal list', async () => {
+    const ownPersonal: Row = {
+      _id: 'lists_own',
+      publicId: 'list_own',
+      name: 'My errands',
+      slug: 'my-errands',
+      visibility: 'personal',
+      createdByUserId: 'user_b',
+      createdAt: 1,
+      updatedAt: 1
+    };
+    const { ctx } = createCtx({ lists: [ownPersonal] });
+
+    await setDefaultListForUser(ctx, { currentUserId: 'user_b', publicId: 'list_own' });
+
+    await expect(readDefaultListForUser(ctx, { currentUserId: 'user_b' })).resolves.toEqual({
+      publicId: 'list_own',
+      name: 'My errands'
+    });
+  });
+
   it('refuses to default to another user’s personal list', async () => {
     const personalList: Row = {
       _id: 'lists_personal',
@@ -154,5 +190,67 @@ describe('createListItemsForUser', () => {
     await expect(
       createListItemsForUser(ctx, { currentUserId: 'user_b', listPublicId: 'list_personal', titles: ['milk'] })
     ).rejects.toThrow('List unavailable');
+  });
+});
+
+describe('bot function service-token guard', () => {
+  beforeEach(() => {
+    process.env.BOT_SERVICE_TOKEN = 'service-token';
+  });
+
+  afterEach(() => {
+    delete process.env.BOT_SERVICE_TOKEN;
+  });
+
+  it('allows reads, writes, and parsing with a valid token', async () => {
+    const { ctx } = createCtx({ lists: [sharedList] });
+
+    await expect(
+      defaultListForBotHandler(ctx, { serviceToken: 'service-token', clerkUserId: 'user_b' })
+    ).resolves.toBeNull();
+
+    const created = await createListItemsForBotHandler(ctx, {
+      serviceToken: 'service-token',
+      clerkUserId: 'user_b',
+      listPublicId: 'list_shared',
+      titles: ['milk']
+    });
+    expect(created.items.map((item) => item.title)).toEqual(['milk']);
+
+    // No OPENAI_API_KEY/LIST_ITEMS_AI_MODEL set, so parsing uses the deterministic fallback.
+    await expect(parseListItemsForBotHandler({ serviceToken: 'service-token', messageText: 'a\nb' })).resolves.toEqual({
+      targetListId: null,
+      items: ['a', 'b']
+    });
+  });
+
+  it('rejects an invalid token on every bot function and writes nothing', async () => {
+    const { ctx, tables } = createCtx({ lists: [sharedList] });
+
+    await expect(defaultListForBotHandler(ctx, { serviceToken: 'wrong', clerkUserId: 'user_b' })).rejects.toThrow(
+      'Unauthorized'
+    );
+    await expect(
+      createListItemsForBotHandler(ctx, {
+        serviceToken: 'wrong',
+        clerkUserId: 'user_b',
+        listPublicId: 'list_shared',
+        titles: ['milk']
+      })
+    ).rejects.toThrow('Unauthorized');
+    await expect(parseListItemsForBotHandler({ serviceToken: 'wrong', messageText: 'a\nb' })).rejects.toThrow(
+      'Unauthorized'
+    );
+
+    expect(tables.listItems ?? []).toHaveLength(0);
+  });
+
+  it('rejects when no service token is configured', async () => {
+    delete process.env.BOT_SERVICE_TOKEN;
+    const { ctx } = createCtx({ lists: [sharedList] });
+
+    await expect(defaultListForBotHandler(ctx, { serviceToken: '', clerkUserId: 'user_b' })).rejects.toThrow(
+      'Unauthorized'
+    );
   });
 });

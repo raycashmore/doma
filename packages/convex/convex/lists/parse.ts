@@ -89,14 +89,26 @@ export function parseListItemsAiResponse(value: unknown): { items: string[] } | 
   return { items: value.items as string[] };
 }
 
+// Guard rails applied to every parsed result before it can reach a mutation.
+export const MAX_LIST_ITEMS = 50;
+export const MAX_LIST_ITEM_TITLE_LENGTH = 200;
+
+function boundItems(items: string[]): string[] {
+  return items.slice(0, MAX_LIST_ITEMS).map((item) => item.slice(0, MAX_LIST_ITEM_TITLE_LENGTH));
+}
+
 /**
  * Deterministic fallback used when the AI is unavailable or returns something
- * unusable. Splits on newlines only, so a single line like "Milk, 2L" is kept
- * as one item rather than mangled. This is intentionally independent of the
- * in-app composer paste-split heuristic (ADR-0001), which is not shared across
- * the HTTP boundary.
+ * unusable. Only handles the multi-line paste case (split on newlines, so a
+ * line like "Milk, 2L" stays one item). A single line is returned as no items:
+ * without the AI we cannot distinguish a real item ("batteries") from chatter
+ * ("hello") or strip framing words ("add milk to the shopping list"), so we
+ * decline rather than capture a verbatim, possibly-junk item. This is
+ * intentionally independent of the in-app composer paste-split heuristic
+ * (ADR-0001), which is not shared across the HTTP boundary.
  */
 export function deterministicListItems(messageText: string): string[] {
+  if (!messageText.includes('\n')) return [];
   return cleanItems(messageText.split('\n'));
 }
 
@@ -120,6 +132,6 @@ export async function parseListItemsMessage({
 
   return {
     targetListId: null,
-    items: items ?? deterministicListItems(messageText)
+    items: boundItems(items ?? deterministicListItems(messageText))
   };
 }

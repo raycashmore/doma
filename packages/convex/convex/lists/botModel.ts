@@ -12,6 +12,9 @@ import { nextActiveSortOrder } from './transitions';
 type BotReadCtx = ListsReadCtx;
 type BotWriteCtx = ListsMutationCtx;
 
+export type ListsBotReadCtx = BotReadCtx;
+export type ListsBotMutationCtx = BotWriteCtx;
+
 export type DefaultListSummary = { publicId: string; name: string };
 
 async function findDefaultRow(ctx: BotReadCtx, currentUserId: string) {

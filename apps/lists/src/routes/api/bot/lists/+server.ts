@@ -1,3 +1,5 @@
+import { createHash, timingSafeEqual } from 'node:crypto';
+
 import { api } from '@repo/convex';
 import { ConvexHttpClient } from 'convex/browser';
 
@@ -6,6 +8,19 @@ import { handleListsCapabilityRequest, type ListsCapabilityRequest } from '$lib/
 function bearerToken(request: Request): string | null {
   const match = /^Bearer\s+(.+)$/i.exec(request.headers.get('authorization') ?? '');
   return match?.[1] ?? null;
+}
+
+// Hash to a fixed length before timingSafeEqual so the comparison time does not
+// leak the token length. Mirrors the api-bot service-auth boundary.
+function constantTimeEquals(value: string, expected: string): boolean {
+  const valueDigest = createHash('sha256').update(value).digest();
+  const expectedDigest = createHash('sha256').update(expected).digest();
+  return timingSafeEqual(valueDigest, expectedDigest);
+}
+
+function isAuthorized(request: Request, serviceToken: string): boolean {
+  const token = bearerToken(request);
+  return token !== null && constantTimeEquals(token, serviceToken);
 }
 
 function json(body: unknown, status = 200) {
@@ -30,7 +45,7 @@ function parseCapabilityRequest(value: unknown): ListsCapabilityRequest | null {
 
 export async function POST({ request }: { request: Request }) {
   const serviceToken = process.env.BOT_SERVICE_TOKEN;
-  if (!serviceToken || bearerToken(request) !== serviceToken) {
+  if (!serviceToken || !isAuthorized(request, serviceToken)) {
     return json({ error: 'unauthorized' }, 401);
   }
 
