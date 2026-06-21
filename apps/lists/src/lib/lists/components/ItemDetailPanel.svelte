@@ -1,12 +1,12 @@
 <script lang="ts">
   import { untrack } from 'svelte';
 
-  import ListIcon from '$lib/ListIcon.svelte';
+  import ListIcon from '$lib/lists/components/ListIcon.svelte';
   import type {
     VisibleListItem,
     VisibleListItemPropertyValue,
     VisibleListProperty
-  } from '$lib/lists-presenter';
+  } from '$lib/lists/presenter';
 
   let {
     item,

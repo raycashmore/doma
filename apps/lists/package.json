@@ -9,7 +9,8 @@
     "preview": "vite preview --port 3004",
     "check-types": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "test": "vitest run",
-    "lint": "eslint --fix .",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
     "format": "prettier --write ."
   },
   "dependencies": {

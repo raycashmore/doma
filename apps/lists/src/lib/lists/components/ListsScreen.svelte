@@ -1,7 +1,5 @@
 <script lang="ts">
-  import { api } from '@repo/convex';
   import { slugifyListName } from '@repo/convex/lists/model';
-  import { useMutation, useQuery } from 'convex-svelte';
   import { cubicOut } from 'svelte/easing';
   import { fade, fly } from 'svelte/transition';
   import { type DndEvent, dragHandleZone } from 'svelte-dnd-action';
@@ -10,29 +8,28 @@
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import { page } from '$app/state';
-  import ItemDetailPanel from '$lib/ItemDetailPanel.svelte';
-  import ListIcon from '$lib/ListIcon.svelte';
-  import ListItemRow from '$lib/ListItemRow.svelte';
+  import ItemDetailPanel from '$lib/lists/components/ItemDetailPanel.svelte';
+  import ListIcon from '$lib/lists/components/ListIcon.svelte';
+  import ListItemRow from '$lib/lists/components/ListItemRow.svelte';
+  import ListSettingsPanel from '$lib/lists/components/ListSettingsPanel.svelte';
+  import { parsePastedItems,type PasteEntry } from '$lib/lists/paste-parser';
   import {
     getSelectedItem,
     type PresentedList,
     presentLists,
     previewItemsByListPublicId,
     previewVisibleLists,
-    type VisibleList,
     type VisibleListItem,
     type VisibleListItemPropertyValue,
-    type VisibleListItemsResult,
     type VisibleListProperty
-  } from '$lib/lists-presenter';
+  } from '$lib/lists/presenter';
   import {
     buildListHref,
     buildListsHomeHref,
     readLastListPublicId,
     writeLastListPublicId
-  } from '$lib/lists-routing';
-  import ListSettingsPanel from '$lib/ListSettingsPanel.svelte';
-  import { parsePastedItems,type PasteEntry } from '$lib/paste-parser';
+  } from '$lib/lists/routing';
+  import { type ListItemPropertyValueInput,ListStoreFacade } from '$lib/lists/store.svelte';
 
   const USE_DEV_FIXTURE = dev && !import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
   // How long an authed dev session waits on an unresponsive Convex backend before
@@ -45,30 +42,6 @@
   }: {
     selectedPublicId?: string | null;
   } = $props();
-
-  const visibleLists = useQuery(api.lists.queries.listVisibleToMe, () => (USE_DEV_FIXTURE ? 'skip' : {}));
-  const listItems = useQuery(api.lists.queries.getVisibleListItemsByPublicId, () =>
-    USE_DEV_FIXTURE || !selectedPublicId ? 'skip' : { publicId: selectedPublicId }
-  );
-
-  const createList = useMutation(api.lists.mutations.createList);
-  const renameList = useMutation(api.lists.mutations.renameList);
-  const deleteList = useMutation(api.lists.mutations.deleteList);
-  const createListItem = useMutation(api.lists.mutations.createListItem);
-  const createListItems = useMutation(api.lists.mutations.createListItems);
-  const renameListItem = useMutation(api.lists.mutations.renameListItem);
-  const deleteListItem = useMutation(api.lists.mutations.deleteListItem);
-  const completeListItem = useMutation(api.lists.mutations.completeListItem);
-  const uncompleteListItem = useMutation(api.lists.mutations.uncompleteListItem);
-  const reorderListItem = useMutation(api.lists.mutations.reorderListItem);
-  const clearCompletedListItems = useMutation(api.lists.mutations.clearCompletedListItems);
-  const createListProperty = useMutation(api.lists.mutations.createListProperty);
-  const renameListProperty = useMutation(api.lists.mutations.renameListProperty);
-  const reorderListProperty = useMutation(api.lists.mutations.reorderListProperty);
-  const removeListProperty = useMutation(api.lists.mutations.removeListProperty);
-  const setListItemPropertyValue = useMutation(api.lists.mutations.setListItemPropertyValue);
-  const clearListItemPropertyValue = useMutation(api.lists.mutations.clearListItemPropertyValue);
-  const setListItemNotes = useMutation(api.lists.mutations.setListItemNotes);
 
   let createName = $state('');
   let createVisibility = $state<'personal' | 'shared'>('personal');
@@ -104,8 +77,19 @@
   // USE_DEV_FIXTURE below.
   let autoOfflineFallback = $state(false);
   const usePreviewData = $derived(USE_DEV_FIXTURE || autoOfflineFallback);
-  let previewLists = $state([...previewVisibleLists]);
-  let previewItemsByList = $state(structuredClone(previewItemsByListPublicId));
+
+  // One seam over both backends: the live Convex adapter and an in-memory
+  // adapter (dev fixture / offline fallback), selected by `usePreviewData`. The
+  // screen reads `store.lists` / `store.selected` and calls command methods,
+  // never branching on which backend answers.
+  const store = new ListStoreFacade({
+    useDevFixture: USE_DEV_FIXTURE,
+    getUsePreview: () => usePreviewData,
+    getSelectedPublicId: () => selectedPublicId,
+    seedLists: previewVisibleLists,
+    seedItemsByListPublicId: previewItemsByListPublicId
+  });
+
   let propertyMutationError = $state<string | null>(null);
   let propertyDraftName = $state('');
   let propertyDraftType = $state<VisibleListProperty['type']>('text');
@@ -128,24 +112,6 @@
     if (message.includes('List unavailable')) return 'This list may have been deleted or is no longer visible to you.';
     if (message.includes('List item unavailable')) return 'This item is unavailable.';
     return message;
-  }
-
-  function normalizePreviewItems(items: VisibleListItem[]) {
-    return items.map((item, index) => ({ ...item, sortOrder: index }));
-  }
-
-  function normalizePreviewProperties(properties: VisibleListProperty[]) {
-    return properties.map((property, index) => ({ ...property, sortOrder: index }));
-  }
-
-  function updatePreviewListData(publicId: string, updater: (current: VisibleListItemsResult) => VisibleListItemsResult) {
-    const current = previewItemsByList[publicId];
-    if (!current) return;
-
-    previewItemsByList = {
-      ...previewItemsByList,
-      [publicId]: updater(current)
-    };
   }
 
   function propertyTypeLabel(type: VisibleListProperty['type']) {
@@ -281,40 +247,8 @@
   async function handleCreateList() {
     mutationError = null;
 
-    if (usePreviewData) {
-      const name = createName.trim() || 'Untitled list';
-      const slug = slugifyListName(name);
-      const created = {
-        _id: `preview-${crypto.randomUUID()}`,
-        publicId: slug,
-        slug,
-        name,
-        visibility: createVisibility,
-        createdByUserId: 'preview-user'
-      } satisfies VisibleList;
-
-      previewLists = [created, ...previewLists];
-      previewItemsByList = {
-        ...previewItemsByList,
-        [created.publicId]: {
-          list: created,
-          properties: [],
-          activeItems: [],
-          completedItems: []
-        }
-      };
-      createName = '';
-      showCreateDialog = false;
-      await goto(buildListHref(base, created), { noScroll: true, keepFocus: true });
-      return;
-    }
-
     try {
-      const created = await createList({
-        name: createName,
-        visibility: createVisibility
-      });
-
+      const created = await store.createList({ name: createName, visibility: createVisibility });
       createName = '';
       showCreateDialog = false;
       await goto(buildListHref(base, created), { noScroll: true, keepFocus: true });
@@ -327,52 +261,11 @@
     if (!renameTargetPublicId) return;
     mutationError = null;
 
-    if (usePreviewData) {
-      const name = renameName.trim() || 'Untitled list';
-      const slug = slugifyListName(name);
-
-      previewLists = previewLists.map((list) =>
-        list.publicId === renameTargetPublicId ? { ...list, name, slug } : list
-      );
-
-      const current = previewItemsByList[renameTargetPublicId];
-      if (current) {
-        const nextList = { ...current.list, name, slug };
-        previewItemsByList = {
-          ...previewItemsByList,
-          [renameTargetPublicId]: {
-            ...current,
-            list: nextList
-          }
-        };
-      }
-
-      const renamed = previewLists.find((list) => list.slug === slug && list.name === name);
-      renameTargetPublicId = null;
-      menuTargetPublicId = null;
-      if (renamed) {
-        await goto(buildListHref(base, renamed), {
-          replaceState: true,
-          noScroll: true,
-          keepFocus: true
-        });
-      }
-      return;
-    }
-
     try {
-      const renamed = await renameList({
-        publicId: renameTargetPublicId,
-        name: renameName
-      });
-
+      const renamed = await store.renameList({ publicId: renameTargetPublicId, name: renameName });
       renameTargetPublicId = null;
       menuTargetPublicId = null;
-      await goto(buildListHref(base, renamed), {
-        replaceState: true,
-        noScroll: true,
-        keepFocus: true
-      });
+      await goto(buildListHref(base, renamed), { replaceState: true, noScroll: true, keepFocus: true });
     } catch (error) {
       mutationError = error instanceof Error ? error.message : 'Unable to rename list.';
     }
@@ -402,19 +295,8 @@
       });
     }
 
-    if (usePreviewData) {
-      previewLists = previewLists.filter((list) => list.publicId !== deleteTargetPublicId);
-      const rest = { ...previewItemsByList };
-      delete rest[deleteTargetPublicId];
-      previewItemsByList = rest;
-      deleteTargetPublicId = null;
-      menuTargetPublicId = null;
-      await navigateAfterDelete();
-      return;
-    }
-
     try {
-      await deleteList({ publicId: deleteTargetPublicId });
+      await store.deleteList({ publicId: deleteTargetPublicId });
       deleteTargetPublicId = null;
       menuTargetPublicId = null;
       await navigateAfterDelete();
@@ -440,32 +322,8 @@
     if (!selectedRow?.publicId) return;
     itemMutationError = null;
 
-    if (usePreviewData) {
-      updatePreviewListData(selectedRow.publicId, (current) => {
-        const nextItem: VisibleListItem = {
-          _id: `preview-item-${crypto.randomUUID()}`,
-          listId: current.list._id,
-          title: itemDraft.trim(),
-          sortOrder: current.activeItems.length,
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-          propertyValues: []
-        };
-
-        return {
-          ...current,
-          activeItems: [...current.activeItems, nextItem]
-        };
-      });
-      itemDraft = '';
-      return;
-    }
-
     try {
-      await createListItem({
-        listPublicId: selectedRow.publicId,
-        title: itemDraft
-      });
+      await store.createItem({ listPublicId: selectedRow.publicId, title: itemDraft });
       itemDraft = '';
     } catch (error) {
       itemMutationError = describeError(error, 'Unable to add item.');
@@ -526,34 +384,8 @@
     pasteSubmitting = true;
     pastePreviewError = null;
 
-    if (usePreviewData) {
-      updatePreviewListData(selectedRow.publicId, (current) => {
-        const now = Date.now();
-        const base = current.activeItems.reduce((max, item) => Math.max(max, item.sortOrder + 1), 0);
-        const nextItems: VisibleListItem[] = titles.map((title, index) => ({
-          _id: `preview-item-${crypto.randomUUID()}`,
-          listId: current.list._id,
-          title,
-          sortOrder: base + index,
-          createdAt: now,
-          updatedAt: now,
-          propertyValues: []
-        }));
-
-        return {
-          ...current,
-          activeItems: [...current.activeItems, ...nextItems]
-        };
-      });
-      pasteDialog?.close();
-      return;
-    }
-
     try {
-      await createListItems({
-        listPublicId: selectedRow.publicId,
-        titles
-      });
+      await store.createItems({ listPublicId: selectedRow.publicId, titles });
       pasteDialog?.close();
     } catch (error) {
       pastePreviewError = describeError(error, 'Unable to add items.');
@@ -564,18 +396,8 @@
   async function removeItem(itemId: string) {
     itemMutationError = null;
 
-    if (usePreviewData) {
-      if (!selectedRow?.publicId) return;
-      updatePreviewListData(selectedRow.publicId, (current) => ({
-        ...current,
-        activeItems: normalizePreviewItems(current.activeItems.filter((item) => item._id !== itemId)),
-        completedItems: current.completedItems.filter((item) => item._id !== itemId)
-      }));
-      return;
-    }
-
     try {
-      await deleteListItem({ itemId: itemId as never });
+      await store.deleteItem({ itemId });
     } catch (error) {
       itemMutationError = describeError(error, 'Unable to delete item.');
     }
@@ -584,21 +406,8 @@
   async function handleRenameSelectedItem(title: string) {
     if (!selectedItem) return;
     itemMutationError = null;
-    if (usePreviewData) {
-      if (!selectedRow?.publicId) return;
-      updatePreviewListData(selectedRow.publicId, (current) => ({
-        ...current,
-        activeItems: current.activeItems.map((entry) =>
-          entry._id === selectedItem._id ? { ...entry, title, updatedAt: Date.now() } : entry
-        ),
-        completedItems: current.completedItems.map((entry) =>
-          entry._id === selectedItem._id ? { ...entry, title, updatedAt: Date.now() } : entry
-        )
-      }));
-      return;
-    }
     try {
-      await renameListItem({ itemId: selectedItem._id as never, title });
+      await store.renameItem({ itemId: selectedItem._id, title });
     } catch (error) {
       itemMutationError = describeError(error, 'Unable to rename item.');
     }
@@ -607,18 +416,8 @@
   async function handleSaveSelectedNotes(notes: string) {
     if (!selectedItem) return;
     itemMutationError = null;
-    const trimmed = notes.trim();
-    if (usePreviewData) {
-      if (!selectedRow?.publicId) return;
-      updatePreviewListData(selectedRow.publicId, (current) => {
-        const apply = (entry: VisibleListItem) =>
-          entry._id === selectedItem._id ? { ...entry, notes: trimmed || undefined, updatedAt: Date.now() } : entry;
-        return { ...current, activeItems: current.activeItems.map(apply), completedItems: current.completedItems.map(apply) };
-      });
-      return;
-    }
     try {
-      await setListItemNotes({ itemId: selectedItem._id as never, notes: trimmed });
+      await store.setItemNotes({ itemId: selectedItem._id, notes });
     } catch (error) {
       itemMutationError = describeError(error, 'Unable to save notes.');
     }
@@ -627,39 +426,9 @@
   async function toggleItemCompletion(item: VisibleListItem) {
     itemMutationError = null;
 
-    if (usePreviewData) {
-      if (!selectedRow?.publicId) return;
-      updatePreviewListData(selectedRow.publicId, (current) => {
-        if (item.completedAt === undefined) {
-          const activeItems = normalizePreviewItems(current.activeItems.filter((entry) => entry._id !== item._id));
-          const completedItems = [
-            { ...item, completedAt: Date.now(), updatedAt: Date.now() },
-            ...current.completedItems
-          ];
-          return { ...current, activeItems, completedItems };
-        }
-
-        const activeItems = [
-          ...current.activeItems,
-          {
-            ...item,
-            completedAt: undefined,
-            sortOrder: current.activeItems.length,
-            updatedAt: Date.now()
-          }
-        ];
-        const completedItems = current.completedItems.filter((entry) => entry._id !== item._id);
-        return { ...current, activeItems, completedItems };
-      });
-      return;
-    }
-
     try {
-      if (item.completedAt === undefined) {
-        await completeListItem({ itemId: item._id as never });
-      } else {
-        await uncompleteListItem({ itemId: item._id as never });
-      }
+      if (item.completedAt === undefined) await store.completeItem({ itemId: item._id });
+      else await store.uncompleteItem({ itemId: item._id });
     } catch (error) {
       itemMutationError = describeError(error, 'Unable to update item.');
     }
@@ -669,18 +438,8 @@
     if (!selectedRow?.publicId) return;
     itemMutationError = null;
 
-    if (usePreviewData) {
-      updatePreviewListData(selectedRow.publicId, (current) => ({
-        ...current,
-        completedItems: []
-      }));
-      return;
-    }
-
     try {
-      await clearCompletedListItems({
-        listPublicId: selectedRow.publicId
-      });
+      await store.clearCompleted({ listPublicId: selectedRow.publicId });
     } catch (error) {
       itemMutationError = describeError(error, 'Unable to clear completed items.');
     }
@@ -692,33 +451,11 @@
 
     const options = propertyDraftType === 'select' ? parsePropertyOptions(propertyDraftOptions) : undefined;
 
-    if (usePreviewData) {
-      updatePreviewListData(selectedRow.publicId, (current) => {
-        const nextProperty: VisibleListProperty = {
-          _id: `preview-property-${crypto.randomUUID()}`,
-          listId: current.list._id,
-          name: propertyDraftName.trim(),
-          type: propertyDraftType,
-          sortOrder: current.properties.length,
-          options
-        };
-
-        return {
-          ...current,
-          properties: [...current.properties, nextProperty]
-        };
-      });
-      propertyDraftName = '';
-      propertyDraftType = 'text';
-      propertyDraftOptions = '';
-      return;
-    }
-
     try {
-      await createListProperty({
+      await store.createProperty({
         listPublicId: selectedRow.publicId,
         name: propertyDraftName,
-        type: propertyDraftType as never,
+        type: propertyDraftType,
         options
       });
       propertyDraftName = '';
@@ -733,23 +470,8 @@
     if (!propertyRenameId) return;
     propertyMutationError = null;
 
-    if (usePreviewData) {
-      if (!selectedRow?.publicId) return;
-      updatePreviewListData(selectedRow.publicId, (current) => ({
-        ...current,
-        properties: current.properties.map((property) =>
-          property._id === propertyRenameId ? { ...property, name: propertyRenameName.trim() } : property
-        )
-      }));
-      cancelPropertyRename();
-      return;
-    }
-
     try {
-      await renameListProperty({
-        propertyId: propertyRenameId as never,
-        name: propertyRenameName
-      });
+      await store.renameProperty({ propertyId: propertyRenameId, name: propertyRenameName });
       cancelPropertyRename();
     } catch (error) {
       propertyMutationError = describeError(error, 'Unable to rename property.');
@@ -759,33 +481,8 @@
   async function handleReorderProperty(propertyId: string, targetIndex: number) {
     propertyMutationError = null;
 
-    if (usePreviewData) {
-      if (!selectedRow?.publicId) return false;
-      updatePreviewListData(selectedRow.publicId, (current) => {
-        const currentIndex = current.properties.findIndex((property) => property._id === propertyId);
-        if (currentIndex < 0) return current;
-
-        const boundedTarget = Math.max(0, Math.min(targetIndex, current.properties.length - 1));
-        if (boundedTarget === currentIndex) return current;
-
-        const nextProperties = [...current.properties];
-        const [moved] = nextProperties.splice(currentIndex, 1);
-        if (!moved) return current;
-        nextProperties.splice(boundedTarget, 0, moved);
-
-        return {
-          ...current,
-          properties: normalizePreviewProperties(nextProperties)
-        };
-      });
-      return true;
-    }
-
     try {
-      await reorderListProperty({
-        propertyId: propertyId as never,
-        targetIndex
-      });
+      await store.reorderProperty({ propertyId, targetIndex });
       return true;
     } catch (error) {
       propertyMutationError = describeError(error, 'Unable to reorder property.');
@@ -798,31 +495,10 @@
     propertyMutationError = null;
     const propertyId = pendingRemovePropertyId;
 
-    if (usePreviewData) {
-      if (!selectedRow?.publicId) return;
-      updatePreviewListData(selectedRow.publicId, (current) => ({
-        ...current,
-        properties: normalizePreviewProperties(current.properties.filter((property) => property._id !== propertyId)),
-        activeItems: current.activeItems.map((item) => ({
-          ...item,
-          propertyValues: item.propertyValues.filter((value) => value.listPropertyId !== propertyId)
-        })),
-        completedItems: current.completedItems.map((item) => ({
-          ...item,
-          propertyValues: item.propertyValues.filter((value) => value.listPropertyId !== propertyId)
-        }))
-      }));
+    try {
+      await store.removeProperty({ propertyId });
       pendingRemovePropertyId = null;
       if (valueEditorPropertyId === propertyId) resetValueEditor();
-      return;
-    }
-
-    try {
-      await removeListProperty({
-        propertyId: propertyId as never
-      });
-      pendingRemovePropertyId = null;
-      resetValueEditor();
     } catch (error) {
       propertyMutationError = describeError(error, 'Unable to remove property.');
     }
@@ -832,12 +508,7 @@
     if (!selectedItem) return;
     propertyMutationError = null;
 
-    let payload:
-      | { type: 'text'; text: string }
-      | { type: 'number'; number: number }
-      | { type: 'date'; date: number }
-      | { type: 'select'; optionId: string }
-      | { type: 'checkbox'; checked: boolean };
+    let payload: ListItemPropertyValueInput;
 
     switch (property.type) {
       case 'text':
@@ -863,51 +534,8 @@
         break;
     }
 
-    if (usePreviewData) {
-      if (!selectedRow?.publicId) return;
-      updatePreviewListData(selectedRow.publicId, (current) => {
-        const updateItem = (item: VisibleListItem) => {
-          if (item._id !== selectedItem._id) return item;
-
-          const existingIndex = item.propertyValues.findIndex((value) => value.listPropertyId === property._id);
-          const nextValue: VisibleListItemPropertyValue = {
-            _id:
-              existingIndex >= 0
-                ? item.propertyValues[existingIndex]!._id
-                : `preview-value-${crypto.randomUUID()}`,
-            listItemId: item._id,
-            listPropertyId: property._id,
-            ...(payload.type === 'text' ? { textValue: payload.text } : {}),
-            ...(payload.type === 'number' ? { numberValue: payload.number } : {}),
-            ...(payload.type === 'date' ? { dateValue: payload.date } : {}),
-            ...(payload.type === 'select' ? { selectOptionId: payload.optionId } : {}),
-            ...(payload.type === 'checkbox' ? { checkboxValue: payload.checked } : {})
-          };
-
-          const propertyValues =
-            existingIndex >= 0
-              ? item.propertyValues.map((value, index) => (index === existingIndex ? nextValue : value))
-              : [...item.propertyValues, nextValue];
-
-          return { ...item, propertyValues };
-        };
-
-        return {
-          ...current,
-          activeItems: current.activeItems.map(updateItem),
-          completedItems: current.completedItems.map(updateItem)
-        };
-      });
-      resetValueEditor();
-      return;
-    }
-
     try {
-      await setListItemPropertyValue({
-        itemId: selectedItem._id as never,
-        propertyId: property._id as never,
-        value: payload as never
-      });
+      await store.setPropertyValue({ itemId: selectedItem._id, propertyId: property._id, value: payload });
       resetValueEditor();
     } catch (error) {
       propertyMutationError = describeError(error, 'Unable to save value.');
@@ -918,47 +546,16 @@
     if (!selectedItem) return;
     propertyMutationError = null;
 
-    if (usePreviewData) {
-      if (!selectedRow?.publicId) return;
-      updatePreviewListData(selectedRow.publicId, (current) => {
-        const updateItem = (item: VisibleListItem) =>
-          item._id === selectedItem._id
-            ? {
-                ...item,
-                propertyValues: item.propertyValues.filter((value) => value.listPropertyId !== propertyId)
-              }
-            : item;
-
-        return {
-          ...current,
-          activeItems: current.activeItems.map(updateItem),
-          completedItems: current.completedItems.map(updateItem)
-        };
-      });
-      if (valueEditorPropertyId === propertyId) resetValueEditor();
-      return;
-    }
-
     try {
-      await clearListItemPropertyValue({
-        itemId: selectedItem._id as never,
-        propertyId: propertyId as never
-      });
+      await store.clearPropertyValue({ itemId: selectedItem._id, propertyId });
       if (valueEditorPropertyId === propertyId) resetValueEditor();
     } catch (error) {
       propertyMutationError = describeError(error, 'Unable to clear value.');
     }
   }
 
-  const visibleListRows = $derived(usePreviewData ? previewLists : (visibleLists.data ?? []));
-  const previewSelectedListData = $derived(
-    selectedPublicId ? previewItemsByList[selectedPublicId] ?? null : null
-  );
-  const selectedListData = $derived(
-    usePreviewData
-      ? previewSelectedListData ?? (visibleListRows[0] ? previewItemsByList[visibleListRows[0].publicId] ?? null : null)
-      : listItems.data ?? null
-  );
+  const visibleListRows = $derived(store.lists);
+  const selectedListData = $derived(store.selected);
   const selectedRow = $derived(selectedListData?.list ?? null);
   const presentedLists = $derived(presentLists(visibleListRows, selectedRow?.publicId ?? selectedPublicId));
   const filteredLists = $derived(presentedLists.filter((list) => list.visibility === listFilter));
@@ -1010,20 +607,8 @@
     isDraggingActive = false;
     if (targetIndex < 0) return;
 
-    if (usePreviewData) {
-      if (!selectedRow?.publicId) return;
-      updatePreviewListData(selectedRow.publicId, (current) => {
-        const byId = new Map(current.activeItems.map((entry) => [entry._id, entry]));
-        const reordered = nextOrder
-          .map((id) => byId.get(id))
-          .filter((entry): entry is VisibleListItem => Boolean(entry));
-        return { ...current, activeItems: normalizePreviewItems(reordered) };
-      });
-      return;
-    }
-
     try {
-      await reorderListItem({ itemId: movedId as never, targetIndex });
+      await store.reorderItem({ itemId: movedId, targetIndex });
     } catch (error) {
       pendingActiveOrder = null;
       itemMutationError = describeError(error, 'Unable to reorder item.');
@@ -1082,7 +667,7 @@
     if (!browser || !dev || USE_DEV_FIXTURE) return;
 
     // A real response (data or error) means the backend is reachable — leave fallback.
-    if (visibleLists.data || visibleLists.error || listItems.data || listItems.error) {
+    if (store.backendHasResponded) {
       autoOfflineFallback = false;
       return;
     }
@@ -1202,15 +787,15 @@
   </div>
 {/if}
 
-{#if selectedPublicId && !usePreviewData && listItems.data === null && !listItems.isLoading}
+{#if selectedPublicId && !usePreviewData && store.selected === null && !store.selectedLoading}
   <section class="rounded-[32px] border border-warm-border bg-warm-bg-card p-8 text-sm text-warm-text-secondary">
     This list is unavailable.
   </section>
-{:else if !usePreviewData && (visibleLists.isLoading || (selectedPublicId && listItems.isLoading))}
+{:else if !usePreviewData && (store.listsLoading || (selectedPublicId && store.selectedLoading))}
   <section aria-hidden="true" class="sr-only">Loading Lists...</section>
-{:else if !usePreviewData && visibleLists.error}
+{:else if !usePreviewData && store.listsError}
   <section class="rounded-[32px] border border-warm-border bg-warm-bg-card p-8 text-sm text-warm-text-secondary">
-    {describeError(visibleLists.error, 'Unable to load lists right now.')}
+    {describeError(store.listsError, 'Unable to load lists right now.')}
   </section>
 {:else}
   <section class="flex min-h-full flex-col gap-4 text-warm-text-primary md:h-full md:min-h-0 min-[1100px]:flex-row">

@@ -7,10 +7,10 @@
 
   import { dev } from '$app/environment';
   import { base } from '$app/paths';
-  import { type ClerkAuthState, loadClerkSession } from '$lib/auth';
-  import ConvexAuthGate from '$lib/ConvexAuthGate.svelte';
-  import NavIcon from '$lib/NavIcon.svelte';
-  import { appNavItems, getAppHref } from '$lib/navigation';
+  import { type ClerkAuthState, loadClerkSession } from '$lib/shell/auth';
+  import ConvexAuthGate from '$lib/shell/ConvexAuthGate.svelte';
+  import NavIcon from '$lib/shell/NavIcon.svelte';
+  import { appNavItems, getAppHref } from '$lib/shell/navigation';
 
   let { children }: { children: Snippet } = $props();
   let signInElement = $state<HTMLDivElement>();

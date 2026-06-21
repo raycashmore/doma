@@ -1,5 +1,6 @@
 import type { Doc, Id } from '../_generated/dataModel';
 import type { MutationCtx, QueryCtx } from '../_generated/server';
+import { markActive, markCompleted, nextActiveSortOrder, reorderByIndex } from './transitions';
 
 export type ListsQueryCtx = Pick<QueryCtx, 'auth' | 'db'>;
 export type ListsMutationCtx = Pick<MutationCtx, 'auth' | 'db'>;
@@ -229,7 +230,7 @@ async function insertListItems(ctx: ListsMutationCtx, listPublicId: string, titl
   // Continue past the highest existing active order. Using the active count
   // would collide with existing orders once completed/deleted items leave gaps.
   const activeItems = sortActiveItems(await readListItems(ctx, visible.list._id));
-  const baseSortOrder = activeItems.reduce((max, item) => Math.max(max, item.sortOrder + 1), 0);
+  const baseSortOrder = nextActiveSortOrder(activeItems);
 
   const created = [];
   for (const [index, title] of titles.entries()) {
@@ -285,28 +286,21 @@ export async function deleteListItemHandler(ctx: ListsMutationCtx, { itemId }: {
 
 export async function completeListItemHandler(ctx: ListsMutationCtx, { itemId }: { itemId: Id<'listItems'> }) {
   const { item } = await requireEditableItem(ctx, itemId);
-  const now = Date.now();
-  const patch = {
-    completedAt: now,
-    updatedAt: now
-  };
-
-  await ctx.db.patch(item._id, patch);
-  return { ...item, ...patch };
+  const next = markCompleted(item, Date.now());
+  await ctx.db.patch(item._id, { completedAt: next.completedAt, updatedAt: next.updatedAt });
+  return next;
 }
 
 export async function uncompleteListItemHandler(ctx: ListsMutationCtx, { itemId }: { itemId: Id<'listItems'> }) {
   const { list, item } = await requireEditableItem(ctx, itemId);
-  const now = Date.now();
   const activeItems = sortActiveItems(await readListItems(ctx, list._id));
-  const patch = {
-    completedAt: undefined,
-    sortOrder: activeItems.length,
-    updatedAt: now
-  };
-
-  await ctx.db.patch(item._id, patch);
-  return { ...item, ...patch };
+  const next = markActive(item, activeItems, Date.now());
+  await ctx.db.patch(item._id, {
+    completedAt: next.completedAt,
+    sortOrder: next.sortOrder,
+    updatedAt: next.updatedAt
+  });
+  return next;
 }
 
 export async function reorderListItemHandler(
@@ -318,29 +312,21 @@ export async function reorderListItemHandler(
 
   const now = Date.now();
   const activeItems = sortActiveItems(await readListItems(ctx, list._id));
-  const currentIndex = activeItems.findIndex((candidate) => candidate._id === itemId);
-  if (currentIndex === -1) throw new Error('List item unavailable');
+  if (!activeItems.some((candidate) => candidate._id === itemId)) throw new Error('List item unavailable');
 
-  const boundedTargetIndex = Math.max(0, Math.min(targetIndex, activeItems.length - 1));
-  if (boundedTargetIndex === currentIndex) return activeItems;
+  // Pure function computes the desired dense order; the shell patches only the
+  // rows whose order actually changed and stamps those with `now`.
+  const originalOrderById = new Map(activeItems.map((activeItem) => [activeItem._id, activeItem.sortOrder]));
+  const desired = reorderByIndex(activeItems, itemId, targetIndex);
 
-  const reordered = [...activeItems];
-  const [movedItem] = reordered.splice(currentIndex, 1);
-  if (!movedItem) throw new Error('List item unavailable');
-  reordered.splice(boundedTargetIndex, 0, movedItem);
-
-  for (const [index, activeItem] of reordered.entries()) {
-    if (activeItem.sortOrder === index) continue;
-    await ctx.db.patch(activeItem._id, {
-      sortOrder: index,
-      updatedAt: now
-    });
+  for (const desiredItem of desired) {
+    if (originalOrderById.get(desiredItem._id) === desiredItem.sortOrder) continue;
+    await ctx.db.patch(desiredItem._id, { sortOrder: desiredItem.sortOrder, updatedAt: now });
   }
 
-  return reordered.map((activeItem, index) => ({
-    ...activeItem,
-    sortOrder: index,
-    updatedAt: activeItem.sortOrder === index ? activeItem.updatedAt : now
+  return desired.map((desiredItem) => ({
+    ...desiredItem,
+    updatedAt: originalOrderById.get(desiredItem._id) === desiredItem.sortOrder ? desiredItem.updatedAt : now
   }));
 }
 

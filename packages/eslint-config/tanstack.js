@@ -12,6 +12,12 @@ export const tanStackConfig = [
   eslintConfigPrettier,
   ...tanstackConfig,
   {
+    // The flat-config file isn't part of any tsconfig program, so TanStack's
+    // type-aware parser (`parserOptions.project: true`) can't resolve it. It
+    // needs no linting of its own — ignore it globally.
+    ignores: ['eslint.config.js']
+  },
+  {
     // TanStack's config already enforces import/order; disable our sorter so the
     // two autofixers don't fight.
     rules: {

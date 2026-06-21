@@ -10,7 +10,7 @@ const config = {
     adapter: adapter(),
     paths: {
       base: isProduction ? '/lists' : '',
-      relative: false
+      relative: true
     }
   }
 };

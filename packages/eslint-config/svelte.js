@@ -18,7 +18,9 @@ export const svelteConfig = [
     }
   },
   {
-    files: ['**/*.svelte'],
+    // `.svelte.ts`/`.svelte.js` are rune-enabled module files: the svelte parser
+    // handles them but needs the TS parser as its script sub-parser.
+    files: ['**/*.svelte', '**/*.svelte.ts', '**/*.svelte.js'],
     languageOptions: {
       parserOptions: {
         parser: tseslint.parser,

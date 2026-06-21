@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "dotenv -e ../../.env.local -- tsx src/dev.ts",
     "build": "tsc --noEmit",
-    "lint": "eslint --fix",
+    "lint": "eslint",
+    "lint:fix": "eslint --fix",
     "check-types": "tsc --noEmit",
     "test": "vitest run"
   },

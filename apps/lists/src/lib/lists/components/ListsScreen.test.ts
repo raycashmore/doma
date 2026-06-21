@@ -22,8 +22,8 @@ if (!Element.prototype.animate) {
   };
 }
 
-import type { VisibleList, VisibleListItemsResult } from '$lib/lists-presenter';
-import { previewItemsByListPublicId, previewVisibleLists } from '$lib/lists-presenter';
+import type { VisibleList, VisibleListItemsResult } from '$lib/lists/presenter';
+import { previewItemsByListPublicId, previewVisibleLists } from '$lib/lists/presenter';
 
 type QueryValue = VisibleList[] | VisibleListItemsResult | null | undefined;
 
@@ -79,7 +79,7 @@ vi.mock('svelte-dnd-action', () => ({
   dragHandleZone: vi.fn()
 }));
 
-import ListsScreen from '$lib/ListsScreen.svelte';
+import ListsScreen from '$lib/lists/components/ListsScreen.svelte';
 
 let mounted: ReturnType<typeof mount> | null = null;
 
