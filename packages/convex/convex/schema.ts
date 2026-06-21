@@ -222,6 +222,14 @@ export default defineSchema({
   })
     .index('by_list_id', ['listId'])
     .index('by_list_id_and_sort_order', ['listId', 'sortOrder']),
+  // Per-household-user default list, referenced by list id so it survives
+  // renames. Read by the Telegram bot to route captures with no named list.
+  listDefaults: defineTable({
+    userId: v.string(),
+    listId: v.id('lists'),
+    createdAt: v.number(),
+    updatedAt: v.number()
+  }).index('by_user', ['userId']),
   listItemPropertyValues: defineTable({
     listId: v.id('lists'),
     listItemId: v.id('listItems'),
