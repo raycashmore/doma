@@ -60,6 +60,28 @@ describe('createCommandDispatcher', () => {
     });
   });
 
+  it('routes free text to the lists capability when one is registered', async () => {
+    const lists = vi.fn(async () => ({ kind: 'reply' as const, text: 'Added 1 item to Shopping:\n• milk' }));
+    const dispatcher = createCommandDispatcher({ capabilities: { lists, schedule: vi.fn() } });
+
+    const freeText = request({ messageText: 'milk' });
+    const result = await dispatcher.dispatch(freeText);
+
+    expect(result).toEqual({ kind: 'reply', text: 'Added 1 item to Shopping:\n• milk' });
+    expect(lists).toHaveBeenCalledWith(freeText);
+  });
+
+  it('does not send slash commands to the lists capability', async () => {
+    const lists = vi.fn(async () => ({ kind: 'reply' as const, text: 'should not be called' }));
+    const dispatcher = createCommandDispatcher({ capabilities: { lists } });
+
+    await expect(dispatcher.dispatch(request({ command: 'schedule', messageText: '/schedule' }))).resolves.toEqual({
+      kind: 'reply',
+      text: DEFAULT_HELP
+    });
+    expect(lists).not.toHaveBeenCalled();
+  });
+
   it('passes through no_response capability results', async () => {
     const dispatcher = createCommandDispatcher({
       capabilities: {

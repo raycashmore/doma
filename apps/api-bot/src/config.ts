@@ -38,6 +38,8 @@ const botConfigSchema = z.object({
   CONVEX_URL: z.string().url().optional(),
   SCHEDULE_CAPABILITY_URL: z.string().url().optional(),
   SCHEDULE_CAPABILITY_TIMEOUT_MS: z.coerce.number().int().positive().default(15_000),
+  LISTS_CAPABILITY_URL: z.string().url().optional(),
+  LISTS_CAPABILITY_TIMEOUT_MS: z.coerce.number().int().positive().default(15_000),
   VERCEL_ENV: z.enum(['production', 'preview', 'development']).optional(),
   TELEGRAM_BOT_TOKEN: z.string().min(1),
   TELEGRAM_WEBHOOK_SECRET: z.string().min(1),
@@ -57,6 +59,8 @@ export type BotConfig = {
   convexUrl?: string;
   scheduleCapabilityUrl?: string;
   scheduleCapabilityTimeoutMs: number;
+  listsCapabilityUrl?: string;
+  listsCapabilityTimeoutMs: number;
   pairingEnabled: boolean;
   telegramBotToken: string;
   telegramWebhookSecret: string;
@@ -80,6 +84,8 @@ export function parseConfig(env: Record<string, unknown>): BotConfig {
     convexUrl: result.data.CONVEX_URL,
     scheduleCapabilityUrl: result.data.SCHEDULE_CAPABILITY_URL,
     scheduleCapabilityTimeoutMs: result.data.SCHEDULE_CAPABILITY_TIMEOUT_MS,
+    listsCapabilityUrl: result.data.LISTS_CAPABILITY_URL,
+    listsCapabilityTimeoutMs: result.data.LISTS_CAPABILITY_TIMEOUT_MS,
     pairingEnabled: result.data.VERCEL_ENV === 'production',
     telegramBotToken: result.data.TELEGRAM_BOT_TOKEN,
     telegramWebhookSecret: result.data.TELEGRAM_WEBHOOK_SECRET,
