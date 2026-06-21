@@ -50,7 +50,7 @@ export function BudgetChartTooltip({ date, spend, sinkOrSwim, mortgage, top, lef
         <span>{formatCurrency(spend)}</span>
       </div>
       <div className="flex items-center justify-between gap-3 font-semibold text-warm-text-secondary">
-        <span>Total spend</span>
+        <span>Total out</span>
         <span>{formatCurrency(spend + mortgage)}</span>
       </div>
     </TooltipWithBounds>

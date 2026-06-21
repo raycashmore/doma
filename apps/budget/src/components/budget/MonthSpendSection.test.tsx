@@ -3,6 +3,18 @@ import { describe, expect, it } from 'vitest';
 import { MonthSpendSection } from './MonthSpendSection';
 
 describe('MonthSpendSection', () => {
+  it('scrolls within the desktop modal when its content exceeds the available height', () => {
+    const { container, unmount } = render(
+      <MonthSpendSection credit1={10_000} credit2={20_000} credit3={30_000} categories={[]} oneOffs={4_000} />
+    );
+
+    const section = container.querySelector('section');
+    unmount();
+
+    expect(section?.className).toContain('md:min-h-0');
+    expect(section?.className).toContain('md:overflow-y-auto');
+  });
+
   it('shows credit card totals and category rows without the old category title', () => {
     render(
       <MonthSpendSection

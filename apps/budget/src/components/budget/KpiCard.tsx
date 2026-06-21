@@ -34,7 +34,9 @@ export function KpiCard({ label, value, delta, deltaPct, kind, periodLabel }: Kp
 
   return (
     <div className="rounded-2xl border border-warm-border bg-warm-bg-card-soft px-5 py-4">
-      <div className="text-[11px] uppercase tracking-[0.06em] font-semibold text-warm-text-secondary">{label}</div>
+      <div className="text-[11px] uppercase tracking-[0.06em] font-semibold text-warm-text-secondary">
+        {label} ({periodLabel})
+      </div>
       <div className="mt-2 text-[24px] leading-none font-warm-display text-warm-text-primary">
         {formatValue(value, kind)}
       </div>
