@@ -1,7 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createListItemsForBotHandler, defaultListForBotHandler, parseListItemsForBotHandler } from './bot';
-import { createListItemsForUser, readDefaultListForUser, setDefaultListForUser } from './botModel';
+import {
+  createListItemsForUser,
+  readAddressableListsForUser,
+  readDefaultListForUser,
+  setDefaultListForUser
+} from './botModel';
 import type { ListsMutationCtx } from './items';
 
 type Row = Record<string, unknown> & { _id: string };
@@ -148,6 +153,45 @@ describe('default list for a household user', () => {
     await expect(setDefaultListForUser(ctx, { currentUserId: 'user_b', publicId: 'list_personal' })).rejects.toThrow(
       'List unavailable'
     );
+  });
+});
+
+describe('readAddressableListsForUser', () => {
+  const ownPersonal: Row = {
+    _id: 'lists_own',
+    publicId: 'list_own',
+    name: 'My errands',
+    slug: 'my-errands',
+    visibility: 'personal',
+    createdByUserId: 'user_b',
+    createdAt: 1,
+    updatedAt: 1
+  };
+  const otherPersonal: Row = {
+    _id: 'lists_other_personal',
+    publicId: 'list_other_personal',
+    name: 'Their secrets',
+    slug: 'their-secrets',
+    visibility: 'personal',
+    createdByUserId: 'user_a',
+    createdAt: 1,
+    updatedAt: 1
+  };
+
+  it('returns the user’s own personal lists plus every shared list, by id and name', async () => {
+    const { ctx } = createCtx({ lists: [sharedList, ownPersonal, otherPersonal] });
+
+    const result = await readAddressableListsForUser(ctx, { currentUserId: 'user_b' });
+
+    // Shared list (created by user_a) + user_b's own personal list; not user_a's personal list.
+    expect(result).toEqual(
+      expect.arrayContaining([
+        { id: 'list_shared', name: 'Shopping' },
+        { id: 'list_own', name: 'My errands' }
+      ])
+    );
+    expect(result).toHaveLength(2);
+    expect(result.map((list) => list.id)).not.toContain('list_other_personal');
   });
 });
 

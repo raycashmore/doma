@@ -16,6 +16,7 @@ vi.mock('@repo/convex', () => ({
       bot: {
         parseListItemsForBot: 'lists.bot.parseListItemsForBot',
         defaultListForBot: 'lists.bot.defaultListForBot',
+        addressableListsForBot: 'lists.bot.addressableListsForBot',
         createListItemsForBot: 'lists.bot.createListItemsForBot'
       }
     }
@@ -79,9 +80,13 @@ describe('lists bot route', () => {
     expect(convex.client).not.toHaveBeenCalled();
   });
 
-  it('parses, creates items in the default list, and returns a confirmation', async () => {
+  it('parses against the addressable lists, creates in the default list, and returns a confirmation', async () => {
     convex.action.mockResolvedValue({ targetListId: null, items: ['milk', 'bread', 'eggs'] });
-    convex.query.mockResolvedValue({ publicId: 'list_shared', name: 'Shopping' });
+    convex.query.mockImplementation(async (name: string) => {
+      if (name === 'lists.bot.defaultListForBot') return { publicId: 'list_shared', name: 'Shopping' };
+      if (name === 'lists.bot.addressableListsForBot') return [{ id: 'list_shared', name: 'Shopping' }];
+      return null;
+    });
     convex.mutation.mockResolvedValue({
       list: { publicId: 'list_shared', name: 'Shopping' },
       items: [
@@ -99,13 +104,19 @@ describe('lists bot route', () => {
       text: 'Added 3 items to Shopping:\n• milk\n• bread\n• eggs'
     });
     expect(convex.client).toHaveBeenCalledWith('https://convex.example.com');
-    expect(convex.action).toHaveBeenCalledWith('lists.bot.parseListItemsForBot', {
-      serviceToken: 'service-token',
-      messageText: 'milk, bread, eggs'
-    });
     expect(convex.query).toHaveBeenCalledWith('lists.bot.defaultListForBot', {
       serviceToken: 'service-token',
       clerkUserId: 'user_b'
+    });
+    expect(convex.query).toHaveBeenCalledWith('lists.bot.addressableListsForBot', {
+      serviceToken: 'service-token',
+      clerkUserId: 'user_b'
+    });
+    expect(convex.action).toHaveBeenCalledWith('lists.bot.parseListItemsForBot', {
+      serviceToken: 'service-token',
+      messageText: 'milk, bread, eggs',
+      addressableLists: [{ id: 'list_shared', name: 'Shopping' }],
+      defaultListId: 'list_shared'
     });
     expect(convex.mutation).toHaveBeenCalledWith('lists.bot.createListItemsForBot', {
       serviceToken: 'service-token',

@@ -1,8 +1,18 @@
-export type ListItemsParseInput = { messageText: string };
+export type AddressableList = { id: string; name: string };
+
+export type ListItemsParseInput = {
+  messageText: string;
+  addressableLists?: AddressableList[];
+  defaultListId?: string | null;
+};
 
 export type ListItemsParseProvider = (input: ListItemsParseInput) => Promise<unknown>;
 
-export type ParsedListItems = { targetListId: null; items: string[] };
+// targetListId is a list publicId from the addressable set (so it survives a
+// rename), or null when the message names no resolvable list. requestedListName
+// is the list name the user referenced, present whenever the message named a
+// list — even one that did not resolve — so the bot can explain a fallback.
+export type ParsedListItems = { targetListId: string | null; requestedListName?: string; items: string[] };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -14,17 +24,31 @@ export const listItemsSystemPrompt = [
   'Split distinct things into separate items, but keep a single item whole when commas describe one thing (e.g. "Milk, 2L").',
   'Use concise plain titles. Do not invent items, quantities, notes, or list names.',
   'If the message names a list or contains chatter like "add ... to the list", capture only the items, not the framing words.',
+  'The user message includes the lists you may target, each with an id and name.',
+  'If the message names one of those lists, set targetListId to that list\'s id; otherwise set targetListId to null.',
+  'Never invent a targetListId that is not in the provided lists.',
+  'If the message names or describes a target list, set requestedListName to the list name the user referenced (even if it is not in the provided lists); otherwise set it to null.',
   'Return only the requested structured object.'
 ].join('\n');
 
 export const listItemsOutputJsonSchema = {
   type: 'object',
   additionalProperties: false,
-  required: ['items'],
+  required: ['items', 'targetListId', 'requestedListName'],
   properties: {
-    items: { type: 'array', items: { type: 'string' } }
+    items: { type: 'array', items: { type: 'string' } },
+    targetListId: { type: ['string', 'null'] },
+    requestedListName: { type: ['string', 'null'] }
   }
 } as const;
+
+function listsContextForPrompt(addressableLists: AddressableList[], defaultListId: string | null | undefined): string {
+  if (addressableLists.length === 0) return 'Lists you may target: (none).';
+  const lines = addressableLists.map(
+    (list) => `- id: ${list.id}, name: ${list.name}${list.id === defaultListId ? ' (default)' : ''}`
+  );
+  return ['Lists you may target:', ...lines].join('\n');
+}
 
 function openAiMessageContent(body: unknown): string | null {
   if (!isRecord(body) || !Array.isArray(body.choices)) return null;
@@ -42,7 +66,10 @@ export function createOpenAiListItemsProvider({
   model: string;
   fetchImpl?: typeof fetch;
 }): ListItemsParseProvider {
-  return async ({ messageText }) => {
+  return async ({ messageText, addressableLists = [], defaultListId = null }) => {
+    const userContent = [listsContextForPrompt(addressableLists, defaultListId), '', `Message: ${messageText}`].join(
+      '\n'
+    );
     const response = await fetchImpl('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -53,7 +80,7 @@ export function createOpenAiListItemsProvider({
         model,
         messages: [
           { role: 'system', content: listItemsSystemPrompt },
-          { role: 'user', content: messageText }
+          { role: 'user', content: userContent }
         ],
         response_format: {
           type: 'json_schema',
@@ -79,14 +106,19 @@ function cleanItems(items: string[]): string[] {
 }
 
 /**
- * Parse a structured AI response into a list of item titles. Returns null when
- * the response is not the expected `{ items: string[] }` shape so the caller can
- * fall back deterministically.
+ * Parse a structured AI response into item titles and an optional target list
+ * id. Returns null when the response is not the expected shape so the caller can
+ * fall back deterministically. `targetListId` is whatever the model returned; it
+ * is validated against the addressable set by the caller.
  */
-export function parseListItemsAiResponse(value: unknown): { items: string[] } | null {
+export function parseListItemsAiResponse(
+  value: unknown
+): { items: string[]; targetListId: string | null; requestedListName: string | null } | null {
   if (!isRecord(value) || !Array.isArray(value.items)) return null;
   if (!value.items.every((item) => typeof item === 'string')) return null;
-  return { items: value.items as string[] };
+  const targetListId = typeof value.targetListId === 'string' ? value.targetListId : null;
+  const requestedListName = typeof value.requestedListName === 'string' ? value.requestedListName : null;
+  return { items: value.items as string[], targetListId, requestedListName };
 }
 
 // Guard rails applied to every parsed result before it can reach a mutation.
@@ -114,24 +146,40 @@ export function deterministicListItems(messageText: string): string[] {
 
 export async function parseListItemsMessage({
   messageText,
-  provider
+  provider,
+  addressableLists = [],
+  defaultListId = null
 }: {
   messageText: string;
   provider: ListItemsParseProvider | null;
+  addressableLists?: AddressableList[];
+  defaultListId?: string | null;
 }): Promise<ParsedListItems> {
   let items: string[] | null = null;
+  let targetListId: string | null = null;
+  let requestedListName: string | null = null;
 
   if (provider) {
     try {
-      const parsed = parseListItemsAiResponse(await provider({ messageText }));
+      const parsed = parseListItemsAiResponse(await provider({ messageText, addressableLists, defaultListId }));
       items = parsed ? cleanItems(parsed.items) : null;
+      // Only trust an id that names a real addressable list; this survives a
+      // rename because we match on id, not on the message's wording.
+      if (parsed?.targetListId && addressableLists.some((list) => list.id === parsed.targetListId)) {
+        targetListId = parsed.targetListId;
+      }
+      const trimmedName = parsed?.requestedListName?.trim();
+      requestedListName = trimmedName ? trimmedName : null;
     } catch {
       items = null;
     }
   }
 
+  // Only surface a requested name when the user named a list we could not
+  // resolve, so the caller can explain a fallback to the default list.
   return {
-    targetListId: null,
+    targetListId,
+    ...(targetListId === null && requestedListName ? { requestedListName } : {}),
     items: boundItems(items ?? deterministicListItems(messageText))
   };
 }

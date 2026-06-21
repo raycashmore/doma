@@ -7,6 +7,11 @@ import {
   parseListItemsMessage
 } from './parse';
 
+const addressableLists = [
+  { id: 'list_shopping', name: 'Shopping' },
+  { id: 'list_garden', name: 'Garden' }
+];
+
 describe('parseListItemsMessage', () => {
   it('extracts the items the AI provider returns with a null target list', async () => {
     const provider: ListItemsParseProvider = async ({ messageText }) => {
@@ -20,6 +25,37 @@ describe('parseListItemsMessage', () => {
     });
 
     expect(result).toEqual({ targetListId: null, items: ['milk', 'bread', 'eggs'] });
+  });
+
+  it('passes the addressable lists to the provider and returns the id it picks', async () => {
+    const provider: ListItemsParseProvider = async (input) => {
+      expect(input.addressableLists).toEqual(addressableLists);
+      expect(input.defaultListId).toBe('list_shopping');
+      return { items: ['compost'], targetListId: 'list_garden' };
+    };
+
+    const result = await parseListItemsMessage({
+      messageText: 'add compost to the garden list',
+      provider,
+      addressableLists,
+      defaultListId: 'list_shopping'
+    });
+
+    expect(result).toEqual({ targetListId: 'list_garden', items: ['compost'] });
+  });
+
+  it('drops a target id the provider invents that is not an addressable list', async () => {
+    const provider: ListItemsParseProvider = async () => ({ items: ['compost'], targetListId: 'list_made_up' });
+
+    const result = await parseListItemsMessage({
+      messageText: 'add compost to the patio list',
+      provider,
+      addressableLists,
+      defaultListId: 'list_shopping'
+    });
+
+    // Unknown id is not trusted; caller treats null as "no list named".
+    expect(result).toEqual({ targetListId: null, items: ['compost'] });
   });
 
   it('falls back to a conservative newline split when the AI output is malformed', async () => {
@@ -86,12 +122,12 @@ describe('parseListItemsMessage', () => {
 
 describe('createOpenAiListItemsProvider', () => {
   it('requests a strict structured item list and parses the JSON response', async () => {
-    const requests: unknown[] = [];
+    const requests: { body: Record<string, unknown> }[] = [];
     const fetchImpl: typeof fetch = async (_url, init) => {
-      requests.push(JSON.parse(String(init?.body)));
+      requests.push({ body: JSON.parse(String(init?.body)) });
       return new Response(
         JSON.stringify({
-          choices: [{ message: { content: JSON.stringify({ items: ['milk', 'bread'] }) } }]
+          choices: [{ message: { content: JSON.stringify({ items: ['milk', 'bread'], targetListId: 'list_garden' }) } }]
         }),
         { status: 200 }
       );
@@ -99,16 +135,30 @@ describe('createOpenAiListItemsProvider', () => {
 
     const provider = createOpenAiListItemsProvider({ apiKey: 'test-key', model: 'test-model', fetchImpl });
 
-    await expect(provider({ messageText: 'add milk and bread' })).resolves.toEqual({ items: ['milk', 'bread'] });
+    await expect(
+      provider({
+        messageText: 'add milk and bread to the garden list',
+        addressableLists: [{ id: 'list_garden', name: 'Garden' }],
+        defaultListId: null
+      })
+    ).resolves.toEqual({ items: ['milk', 'bread'], targetListId: 'list_garden' });
     expect(requests).toMatchObject([
       {
-        model: 'test-model',
-        response_format: {
-          type: 'json_schema',
-          json_schema: { name: 'list_items', strict: true, schema: listItemsOutputJsonSchema }
+        body: {
+          model: 'test-model',
+          response_format: {
+            type: 'json_schema',
+            json_schema: { name: 'list_items', strict: true, schema: listItemsOutputJsonSchema }
+          }
         }
       }
     ]);
+    // The addressable lists are handed to the model so it can pick a real id.
+    const userMessage = (requests[0]?.body.messages as { role: string; content: string }[]).find(
+      (message) => message.role === 'user'
+    );
+    expect(userMessage?.content).toContain('list_garden');
+    expect(userMessage?.content).toContain('Garden');
   });
 
   it('throws when the AI request is not ok so the caller can fall back', async () => {
