@@ -352,19 +352,21 @@ Production checks:
 
 `apps/api-bot` requires these environment variables in local, preview, staging, and production:
 
-| Variable                   | Where it lives                                | Notes                                                                                                    |
-| -------------------------- | --------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `CLERK_SECRET_KEY`         | Vercel Bot gateway, `.env.local`              | Used to verify Clerk bearer tokens                                                                       |
-| `CLERK_PUBLISHABLE_KEY`    | Vercel Bot gateway, `.env.local`              | Clerk backend configuration                                                                              |
-| `BOT_SERVICE_TOKEN`        | Vercel Bot gateway, Schedule, Convex, callers | Shared bearer token for service-to-service sends and schedule bot reads                                  |
-| `CONVEX_URL`               | Vercel Bot gateway, `.env.local`              | Optional; Convex deployment URL for future gateway service clients                                       |
-| `SCHEDULE_CAPABILITY_URL`  | Vercel Bot gateway, `.env.local`              | Schedule API route for `/schedule`, for example `https://schedule.example.com/schedule/api/bot/schedule` |
-| `TELEGRAM_BOT_TOKEN`       | Vercel Bot gateway, `.env.local`              | Bot token from BotFather                                                                                 |
-| `TELEGRAM_WEBHOOK_SECRET`  | Vercel Bot gateway, Telegram                  | Sent as Telegram's webhook secret token                                                                  |
-| `TELEGRAM_BOT_USERNAME`    | Vercel Bot gateway, `.env.local`              | Bot username, ending in `bot`, without `@`                                                               |
-| `UPSTASH_REDIS_REST_URL`   | Vercel Bot gateway, `.env.local`              | HTTPS Upstash REST URL                                                                                   |
-| `UPSTASH_REDIS_REST_TOKEN` | Vercel Bot gateway, `.env.local`              | Upstash REST token                                                                                       |
-| `APP_ORIGIN`               | Vercel Bot gateway, `.env.local`              | Public Home origin, for example `https://doma.example.com`                                               |
+| Variable                      | Where it lives                                | Notes                                                                                                    |
+| ----------------------------- | --------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `CLERK_SECRET_KEY`            | Vercel Bot gateway, `.env.local`              | Used to verify Clerk bearer tokens                                                                       |
+| `CLERK_PUBLISHABLE_KEY`       | Vercel Bot gateway, `.env.local`              | Clerk backend configuration                                                                              |
+| `BOT_SERVICE_TOKEN`           | Vercel Bot gateway, Schedule, Convex, callers | Shared bearer token for service-to-service sends and schedule bot reads                                  |
+| `CONVEX_URL`                  | Vercel Bot gateway, `.env.local`              | Optional; Convex deployment URL for future gateway service clients                                       |
+| `SCHEDULE_CAPABILITY_URL`     | Vercel Bot gateway, `.env.local`              | Schedule API route for `/schedule`, for example `https://schedule.example.com/schedule/api/bot/schedule` |
+| `LISTS_CAPABILITY_URL`        | Vercel Bot gateway, `.env.local`              | Lists API route for free-text capture, for example `https://lists.example.com/lists/api/bot/lists`       |
+| `LISTS_CAPABILITY_TIMEOUT_MS` | Vercel Bot gateway, `.env.local`              | Optional; per-request timeout for the lists capability (default 15000)                                   |
+| `TELEGRAM_BOT_TOKEN`          | Vercel Bot gateway, `.env.local`              | Bot token from BotFather                                                                                 |
+| `TELEGRAM_WEBHOOK_SECRET`     | Vercel Bot gateway, Telegram                  | Sent as Telegram's webhook secret token                                                                  |
+| `TELEGRAM_BOT_USERNAME`       | Vercel Bot gateway, `.env.local`              | Bot username, ending in `bot`, without `@`                                                               |
+| `UPSTASH_REDIS_REST_URL`      | Vercel Bot gateway, `.env.local`              | HTTPS Upstash REST URL                                                                                   |
+| `UPSTASH_REDIS_REST_TOKEN`    | Vercel Bot gateway, `.env.local`              | Upstash REST token                                                                                       |
+| `APP_ORIGIN`                  | Vercel Bot gateway, `.env.local`              | Public Home origin, for example `https://doma.example.com`                                               |
 
 `VERCEL_ENV` is read from Vercel's system environment variables and should not
 be set by hand in the dashboard. Pairing links are created only when
@@ -390,6 +392,17 @@ The Schedule capability supports these Telegram commands:
 
 Doma no longer sends proactive event-level schedule reminders.
 
+The Bot gateway routes free-text (non-slash) Telegram messages to the Lists
+capability, which captures **list items** into the sender's **default list**.
+The lists capability route (`/lists/api/bot/lists` in production) and the Convex
+`lists.bot.*` functions both validate `BOT_SERVICE_TOKEN`. Set the same value in
+the Bot gateway, Lists app, and the target Convex deployment, and set
+`LISTS_CAPABILITY_URL` to the lists route, before enabling free-text capture.
+The Lists route reads `CONVEX_URL` (falling back to `VITE_CONVEX_URL`) to reach
+Convex. AI item parsing is optional: with `OPENAI_API_KEY` and
+`LIST_ITEMS_AI_MODEL` set on Convex it uses the model, otherwise it falls back
+to a deterministic newline split.
+
 Morning briefing delivery runs from Convex cron, not Vercel Cron. This keeps
 the Bot gateway deployable on Vercel Hobby, where frequent cron schedules are
 rejected. Convex checks the delivery cycle every 10 minutes, only sends during
@@ -401,14 +414,15 @@ records the briefing delivery attempt in Convex per recipient.
 Set these Convex env vars on every Convex deployment that should send morning
 briefings:
 
-| Variable                              | Where it lives             | Notes                                                                                          |
-| ------------------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------- |
-| `BOT_GATEWAY_ORIGIN`                  | Convex                     | Public Bot gateway origin, for example `https://bot.example.com`; no path or trailing slash    |
-| `BOT_SERVICE_TOKEN`                   | Convex, Vercel Bot gateway | Bearer token Convex sends to `/notifications/send` and Schedule validates for bot capability   |
-| `MORNING_BRIEFING_RECIPIENT_USER_IDS` | Convex                     | Comma-separated Clerk user IDs that should receive scheduled morning briefings                 |
-| `MORNING_BRIEFING_TZ`                 | Convex                     | Optional; falls back to `SCHEDULE_TZ`, then `Australia/Sydney`                                 |
-| `MORNING_BRIEFING_AI_MODEL`           | Convex                     | Required with `OPENAI_API_KEY` for AI generation; otherwise generation uses deterministic text |
-| `OPENAI_API_KEY`                      | Convex                     | Required with `MORNING_BRIEFING_AI_MODEL` for AI generation                                    |
+| Variable                              | Where it lives             | Notes                                                                                                                                                 |
+| ------------------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `BOT_GATEWAY_ORIGIN`                  | Convex                     | Public Bot gateway origin, for example `https://bot.example.com`; no path or trailing slash                                                           |
+| `BOT_SERVICE_TOKEN`                   | Convex, Vercel Bot gateway | Bearer token Convex sends to `/notifications/send` and Schedule validates for bot capability                                                          |
+| `MORNING_BRIEFING_RECIPIENT_USER_IDS` | Convex                     | Comma-separated Clerk user IDs that should receive scheduled morning briefings                                                                        |
+| `MORNING_BRIEFING_TZ`                 | Convex                     | Optional; falls back to `SCHEDULE_TZ`, then `Australia/Sydney`                                                                                        |
+| `MORNING_BRIEFING_AI_MODEL`           | Convex                     | Required with `OPENAI_API_KEY` for AI generation; otherwise generation uses deterministic text                                                        |
+| `LIST_ITEMS_AI_MODEL`                 | Convex                     | Optional; with `OPENAI_API_KEY`, the model used to parse free-text Telegram captures into list items; otherwise a deterministic newline split is used |
+| `OPENAI_API_KEY`                      | Convex                     | Required with `MORNING_BRIEFING_AI_MODEL` (or `LIST_ITEMS_AI_MODEL`) for AI generation                                                                |
 
 Morning briefing operations:
 

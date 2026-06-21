@@ -3,6 +3,11 @@ import { CAPABILITY_FALLBACK_RESPONSE } from './types.js';
 
 export const DEFAULT_HELP = 'I can help with scheduling soon. Try /schedule.';
 
+// Free-text (non-slash) messages are routed to this capability. This is the
+// single-capability shortcut for the tracer slice; a multi-capability intent
+// router replaces it in a later slice.
+const FREE_TEXT_CAPABILITY = 'lists';
+
 export type CreateCommandDispatcherOptions = {
   capabilities: Record<string, CapabilityHandler>;
 };
@@ -10,7 +15,8 @@ export type CreateCommandDispatcherOptions = {
 export function createCommandDispatcher({ capabilities }: CreateCommandDispatcherOptions) {
   return {
     async dispatch(request: CapabilityRequest): Promise<CapabilityResponse> {
-      const capability = request.command ? capabilities[request.command] : undefined;
+      const capabilityName = request.command ?? FREE_TEXT_CAPABILITY;
+      const capability = capabilities[capabilityName];
 
       if (capability) {
         try {

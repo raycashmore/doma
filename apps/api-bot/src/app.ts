@@ -23,22 +23,28 @@ export type CreateAppOptions = {
 let runtimeApp: BotApp | undefined;
 
 function createRuntimeCapabilities(config: BotConfig): Record<string, CapabilityHandler> {
-  if (!config.scheduleCapabilityUrl) {
-    return {};
+  const capabilities: Record<string, CapabilityHandler> = {};
+
+  if (config.scheduleCapabilityUrl) {
+    const scheduleCapability = createHttpCapability({
+      endpointUrl: config.scheduleCapabilityUrl,
+      serviceToken: config.botServiceToken,
+      timeoutMs: config.scheduleCapabilityTimeoutMs
+    });
+    capabilities.briefing = scheduleCapability;
+    capabilities.schedule = scheduleCapability;
   }
 
-  return {
-    briefing: createHttpCapability({
-      endpointUrl: config.scheduleCapabilityUrl,
+  if (config.listsCapabilityUrl) {
+    // Free-text messages are routed here by the dispatcher (FREE_TEXT_CAPABILITY).
+    capabilities.lists = createHttpCapability({
+      endpointUrl: config.listsCapabilityUrl,
       serviceToken: config.botServiceToken,
-      timeoutMs: config.scheduleCapabilityTimeoutMs
-    }),
-    schedule: createHttpCapability({
-      endpointUrl: config.scheduleCapabilityUrl,
-      serviceToken: config.botServiceToken,
-      timeoutMs: config.scheduleCapabilityTimeoutMs
-    })
-  };
+      timeoutMs: config.listsCapabilityTimeoutMs
+    });
+  }
+
+  return capabilities;
 }
 
 export function createApp(options: CreateAppOptions = {}) {

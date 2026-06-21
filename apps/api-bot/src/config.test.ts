@@ -24,6 +24,8 @@ describe('parseConfig', () => {
       convexUrl: 'https://convex.example.com',
       scheduleCapabilityUrl: undefined,
       scheduleCapabilityTimeoutMs: 15_000,
+      listsCapabilityUrl: undefined,
+      listsCapabilityTimeoutMs: 15_000,
       pairingEnabled: false,
       telegramBotToken: 'telegram-bot-token',
       telegramWebhookSecret: 'telegram-webhook-secret',
@@ -49,6 +51,19 @@ describe('parseConfig', () => {
         SCHEDULE_CAPABILITY_URL: 'https://schedule.example.com/schedule/api/bot/schedule'
       }).scheduleCapabilityUrl
     ).toBe('https://schedule.example.com/schedule/api/bot/schedule');
+  });
+
+  it('accepts an optional lists capability URL', () => {
+    expect(
+      parseConfig({
+        ...validEnv,
+        LISTS_CAPABILITY_URL: 'https://lists.example.com/api/bot/lists'
+      }).listsCapabilityUrl
+    ).toBe('https://lists.example.com/api/bot/lists');
+  });
+
+  it('accepts an optional positive lists capability timeout', () => {
+    expect(parseConfig({ ...validEnv, LISTS_CAPABILITY_TIMEOUT_MS: '20000' }).listsCapabilityTimeoutMs).toBe(20_000);
   });
 
   it('accepts an optional positive schedule capability timeout', () => {
