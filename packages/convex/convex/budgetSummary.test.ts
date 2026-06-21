@@ -45,13 +45,14 @@ describe('summarizeBudgetForPeriod', () => {
     expect(r.netGain.value).toBe(0);
   });
 
-  it('ALL period uses every row, prior window empty', () => {
+  it('ALL period uses every row and compares the latest month with the prior month', () => {
     const rows = [row(month(1), 100_000, 0, 0, 30_000, 0, 0, 0, 0), row(month(2), 200_000, 0, 0, 40_000, 0, 0, 0, 0)];
     const r = summarizeBudgetForPeriod(rows, [], 'ALL', month(2));
     expect(r.avgIncome.value).toBe(150_000); // (100000 + 200000) / 2
     expect(r.avgSpend.value).toBe(35_000); // (30000 + 40000) / 2
     expect(r.netGain.value).toBe(115_000); // 150000 - 35000
-    expect(r.avgIncome.delta).toBeNull();
+    expect(r.avgIncome.delta).toBe(100_000);
+    expect(r.avgIncome.deltaPct).toBe(100);
   });
 
   it('savings rate is in basis points', () => {
@@ -61,16 +62,16 @@ describe('summarizeBudgetForPeriod', () => {
     expect(r.savingsRate.value).toBe(1200);
   });
 
-  it('12M window picks last 12 months and prior 12 for delta', () => {
+  it('12M value uses the selected window while its delta compares the latest two months', () => {
     const rows: BudgetRow[] = [];
-    // 24 months of synthetic data, income doubling in second 12
     for (let i = 0; i < 24; i++) {
-      rows.push(row(month(i + 1), i < 12 ? 100_000 : 200_000, 0, 0, 0, 0, 0, 0, 0));
+      const income = i === 23 ? 300_000 : i === 22 ? 200_000 : 100_000;
+      rows.push(row(month(i + 1), income, 0, 0, 0, 0, 0, 0, 0));
     }
     const r = summarizeBudgetForPeriod(rows, [], '12M', month(24));
-    expect(r.avgIncome.value).toBe(200_000);
-    expect(r.avgIncome.delta).toBe(100_000); // 200000 - 100000
-    expect(r.avgIncome.deltaPct).toBeCloseTo(100, 1); // +100%
+    expect(r.avgIncome.value).toBe(125_000);
+    expect(r.avgIncome.delta).toBe(100_000);
+    expect(r.avgIncome.deltaPct).toBeCloseTo(50, 1);
   });
 
   it('periodLabel reflects window choice', () => {

@@ -38,11 +38,11 @@ function avg(values: number[]): number {
   return Math.round(sum / values.length);
 }
 
-function metric(current: number, prior: number | null): SummaryMetric {
-  if (prior === null) return { value: current, delta: null, deltaPct: null };
-  const delta = current - prior;
-  const deltaPct = prior === 0 ? null : (delta / Math.abs(prior)) * 100;
-  return { value: current, delta, deltaPct };
+function metric(value: number, currentMonth: number, priorMonth: number | null): SummaryMetric {
+  if (priorMonth === null) return { value, delta: null, deltaPct: null };
+  const delta = currentMonth - priorMonth;
+  const deltaPct = priorMonth === 0 ? null : (delta / Math.abs(priorMonth)) * 100;
+  return { value, delta, deltaPct };
 }
 
 function computeWindow(rows: BudgetRow[], mortgageByMonth: Map<string, MortgageRow>) {
@@ -86,28 +86,25 @@ export function summarizeBudgetForPeriod(
   const window = windowMs(period);
 
   let currentRows: BudgetRow[];
-  let priorRows: BudgetRow[];
-
   if (window === null) {
     currentRows = sorted;
-    priorRows = [];
   } else {
     const currentStart = now - window;
-    const priorStart = currentStart - window;
     currentRows = sorted.filter((r) => r.date > currentStart && r.date <= now);
-    priorRows = sorted.filter((r) => r.date > priorStart && r.date <= currentStart);
   }
 
   const mortgageByMonth = buildMortgageByMonth(mortgageRows);
 
   const cur = computeWindow(currentRows, mortgageByMonth);
-  const prior = priorRows.length > 0 ? computeWindow(priorRows, mortgageByMonth) : null;
+  const comparisonRows = sorted.filter((row) => row.date <= now).slice(-2);
+  const currentMonth = computeWindow(comparisonRows.slice(-1), mortgageByMonth);
+  const priorMonth = comparisonRows.length === 2 ? computeWindow(comparisonRows.slice(0, 1), mortgageByMonth) : null;
 
   return {
-    avgSpend: metric(cur.avgSpend, prior?.avgSpend ?? null),
-    avgIncome: metric(cur.avgIncome, prior?.avgIncome ?? null),
-    savingsRate: metric(cur.savingsRate, prior?.savingsRate ?? null),
-    netGain: metric(cur.netGain, prior?.netGain ?? null),
+    avgSpend: metric(cur.avgSpend, currentMonth.avgSpend, priorMonth?.avgSpend ?? null),
+    avgIncome: metric(cur.avgIncome, currentMonth.avgIncome, priorMonth?.avgIncome ?? null),
+    savingsRate: metric(cur.savingsRate, currentMonth.savingsRate, priorMonth?.savingsRate ?? null),
+    netGain: metric(cur.netGain, currentMonth.netGain, priorMonth?.netGain ?? null),
     periodLabel: labelFor(period)
   };
 }
