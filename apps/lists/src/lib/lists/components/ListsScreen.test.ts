@@ -94,9 +94,9 @@ afterEach(async () => {
   document.body.innerHTML = '';
 });
 
-async function renderScreen() {
+async function renderScreen(selectedPublicId: string | null = 'weekly-shop') {
   const target = document.body.appendChild(document.createElement('div'));
-  mounted = mount(ListsScreen, { target, props: { selectedPublicId: 'weekly-shop' } });
+  mounted = mount(ListsScreen, { target, props: { selectedPublicId } });
   await tick();
   return target;
 }
@@ -144,5 +144,23 @@ describe('ListsScreen offline fallback', () => {
     await tick();
 
     expect(target.querySelector('[role="status"]')).toBeNull();
+  });
+});
+
+describe('ListsScreen empty state', () => {
+  it('opens the create-list dialog when no list is selected', async () => {
+    const target = await renderScreen(null);
+    queryResults[0]?.set({ data: [], isLoading: false });
+    await tick();
+
+    const createButton = Array.from(target.querySelectorAll<HTMLButtonElement>('button')).find(
+      (button) => button.textContent?.trim() === 'Create list'
+    );
+    expect(createButton).toBeDefined();
+
+    createButton?.click();
+    await tick();
+
+    expect(target.querySelector('#list-dialog-title')?.textContent).toBe('New list');
   });
 });

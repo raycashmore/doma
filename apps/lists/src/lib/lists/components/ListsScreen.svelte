@@ -1055,7 +1055,17 @@
         </div>
       {:else}
         <div class="rounded-[24px] border border-warm-border bg-warm-bg p-6 text-sm text-warm-text-secondary">
-          Create a list or select one from the sidebar.
+          <p>Create a list or select one from the sidebar.</p>
+          <button
+            type="button"
+            class="mt-4 inline-flex items-center gap-2 rounded-full bg-warm-text-primary px-4 py-2 font-semibold text-warm-text-on-dark"
+            onclick={() => {
+              showCreateDialog = true;
+              createVisibility = listFilter;
+            }}
+          >
+            <ListIcon name="plus" size={16} /> Create list
+          </button>
         </div>
       {/if}
     </section>
