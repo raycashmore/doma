@@ -27,7 +27,9 @@
     setDraftOptions,
     onCreate,
     propertyTypeLabel,
-    onDeleteList
+    onDeleteList,
+    isCurrentDefault,
+    onSetAsDefault
   }: {
     properties: VisibleListProperty[];
     error: string | null;
@@ -52,6 +54,10 @@
     onCreate: () => void;
     propertyTypeLabel: (t: VisibleListProperty['type']) => string;
     onDeleteList: () => void;
+    /** Whether this list is the user's default list for bot captures. */
+    isCurrentDefault: boolean;
+    /** Called when the user wants to set this list as their default. */
+    onSetAsDefault: () => void;
   } = $props();
 
   // Local $state for the dnd list, seeded from the `properties` prop and frozen
@@ -106,6 +112,32 @@
   {#if error}
     <p class="text-sm text-warm-accent">{error}</p>
   {/if}
+
+  <div class="rounded-2xl border border-warm-border bg-warm-bg-card p-3">
+    <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-warm-text-secondary">Bot captures</p>
+    <p class="mt-1 text-xs text-warm-text-secondary">
+      When a Telegram message names no list, captures land on your default list.
+    </p>
+    {#if isCurrentDefault}
+      <p
+        class="mt-2 text-xs font-semibold text-warm-text-primary"
+        aria-label="This list is your default list"
+        data-testid="default-list-indicator"
+      >
+        Default list
+      </p>
+    {:else}
+      <button
+        type="button"
+        class="mt-2 rounded-full border border-warm-border px-3 py-1.5 text-xs font-semibold text-warm-text-secondary hover:border-warm-text-primary hover:text-warm-text-primary"
+        aria-label="Set as default list for bot captures"
+        data-testid="set-default-list-button"
+        onclick={onSetAsDefault}
+      >
+        Set as default list
+      </button>
+    {/if}
+  </div>
 
   {#if dndItems.length}
     <ul

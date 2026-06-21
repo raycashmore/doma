@@ -57,3 +57,28 @@ export const getVisibleListItemsByPublicId = query({
   args: { publicId: v.string() },
   handler: readVisibleListItemsByPublicId
 });
+
+/**
+ * Read the signed-in user's default list, or null when none is set.
+ * Stored by list id, so it survives renames; returns null if the target list
+ * was deleted or is no longer visible to the user.
+ */
+export const getDefaultList = query({
+  args: {},
+  handler: async (ctx) => {
+    const currentUserId = await requireUserId(ctx);
+    const row = await ctx.db
+      .query('listDefaults')
+      .withIndex('by_user', (q) => q.eq('userId', currentUserId))
+      .unique();
+    if (!row) return null;
+
+    const list = await ctx.db.get(row.listId);
+    if (!list) return null;
+
+    const visibleLists = filterVisibleLists([list], currentUserId);
+    if (!visibleLists.length) return null;
+
+    return { publicId: list.publicId, name: list.name };
+  }
+});
