@@ -1,6 +1,6 @@
 export type ConfirmationOutcome =
   | { kind: 'created'; listName: string; itemTitles: string[] }
-  | { kind: 'created_with_fallback'; requestedListName: string; listName: string; itemTitles: string[] }
+  | { kind: 'created_with_fallback'; requestedListName: string | null; listName: string; itemTitles: string[] }
   | { kind: 'no_default' }
   | { kind: 'empty_parse' };
 
@@ -25,7 +25,9 @@ export function formatConfirmation(outcome: ConfirmationOutcome): string {
       return createdLines(
         outcome.listName,
         outcome.itemTitles,
-        `I couldn't find '${outcome.requestedListName}' — added to ${outcome.listName} (your default).`
+        outcome.requestedListName
+          ? `I couldn't find '${outcome.requestedListName}' — added to ${outcome.listName} (your default).`
+          : `I couldn't tell which list you meant — added to ${outcome.listName} (your default).`
       );
     case 'no_default':
       return NO_DEFAULT_MESSAGE;

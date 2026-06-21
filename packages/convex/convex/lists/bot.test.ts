@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { createListItemsForBotHandler, defaultListForBotHandler, parseListItemsForBotHandler } from './bot';
+import {
+  addressableListsForBotHandler,
+  createListItemsForBotHandler,
+  defaultListForBotHandler,
+  parseListItemsForBotHandler
+} from './bot';
 import {
   createListItemsForUser,
   readAddressableListsForUser,
@@ -193,6 +198,17 @@ describe('readAddressableListsForUser', () => {
     expect(result).toHaveLength(2);
     expect(result.map((list) => list.id)).not.toContain('list_other_personal');
   });
+
+  it('does not duplicate a shared list the requesting user created', async () => {
+    // sharedList is created by user_a; make the requester its creator so it is
+    // returned by both the by_created_by and by_visibility index reads.
+    const ownShared: Row = { ...sharedList, createdByUserId: 'user_b' };
+    const { ctx } = createCtx({ lists: [ownShared] });
+
+    const result = await readAddressableListsForUser(ctx, { currentUserId: 'user_b' });
+
+    expect(result).toEqual([{ id: 'list_shared', name: 'Shopping' }]);
+  });
 });
 
 describe('createListItemsForUser', () => {
@@ -253,6 +269,10 @@ describe('bot function service-token guard', () => {
       defaultListForBotHandler(ctx, { serviceToken: 'service-token', clerkUserId: 'user_b' })
     ).resolves.toBeNull();
 
+    await expect(
+      addressableListsForBotHandler(ctx, { serviceToken: 'service-token', clerkUserId: 'user_b' })
+    ).resolves.toEqual([{ id: 'list_shared', name: 'Shopping' }]);
+
     const created = await createListItemsForBotHandler(ctx, {
       serviceToken: 'service-token',
       clerkUserId: 'user_b',
@@ -272,6 +292,9 @@ describe('bot function service-token guard', () => {
     const { ctx, tables } = createCtx({ lists: [sharedList] });
 
     await expect(defaultListForBotHandler(ctx, { serviceToken: 'wrong', clerkUserId: 'user_b' })).rejects.toThrow(
+      'Unauthorized'
+    );
+    await expect(addressableListsForBotHandler(ctx, { serviceToken: 'wrong', clerkUserId: 'user_b' })).rejects.toThrow(
       'Unauthorized'
     );
     await expect(
@@ -294,6 +317,9 @@ describe('bot function service-token guard', () => {
     const { ctx } = createCtx({ lists: [sharedList] });
 
     await expect(defaultListForBotHandler(ctx, { serviceToken: '', clerkUserId: 'user_b' })).rejects.toThrow(
+      'Unauthorized'
+    );
+    await expect(addressableListsForBotHandler(ctx, { serviceToken: '', clerkUserId: 'user_b' })).rejects.toThrow(
       'Unauthorized'
     );
   });

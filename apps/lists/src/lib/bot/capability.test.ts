@@ -104,6 +104,33 @@ describe('handleListsCapabilityRequest', () => {
     }
   });
 
+  it('falls back to the default with a generic explanation when the parser is unresolved without a name', async () => {
+    const createItems = vi.fn(deps().createItems);
+
+    const response = await handleListsCapabilityRequest(
+      request,
+      deps({
+        // Unresolved-target state with no trustworthy requested name (e.g. the
+        // model returned an invalid non-null id). Key is present, value is null.
+        parseItems: async () => ({ targetListId: null, requestedListName: null, items: ['gravel'] }),
+        createItems
+      })
+    );
+
+    expect(createItems).toHaveBeenCalledWith({
+      userId: 'user_b',
+      listPublicId: 'list_shared',
+      titles: ['gravel']
+    });
+    expect(response.kind).toBe('reply');
+    if (response.kind === 'reply') {
+      expect(response.text).not.toContain("couldn't find '");
+      expect(response.text).toContain('Shopping');
+      expect(response.text).toContain('your default');
+      expect(response.text).toContain('• gravel');
+    }
+  });
+
   it('asks the user to set a default when none is configured and no list resolves, creating nothing', async () => {
     const createItems = vi.fn(deps().createItems);
 

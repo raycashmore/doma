@@ -21,9 +21,11 @@ export type ParsedListItems = {
   // A list publicId resolved from the addressable set, or null when the message
   // named no resolvable list.
   targetListId: string | null;
-  // Set when the message named a list the parser could not resolve, so the
-  // confirmation can explain the fallback to the default list.
-  requestedListName?: string;
+  // Present (key, even with a null value) when the parser saw routing intent it
+  // could not resolve, so the confirmation can explain the fallback to the
+  // default list. The string is the requested name; null means no trustworthy
+  // name exists and the confirmation uses a generic explanation.
+  requestedListName?: string | null;
   items: string[];
 };
 
@@ -75,15 +77,16 @@ export async function handleListsCapabilityRequest(
       titles: parsed.items
     });
 
-    // A named-but-unresolvable list (we have a requested name yet no resolved
-    // list) means we landed on the default; say so.
-    const usedFallback = !namedList && parsed.requestedListName !== undefined;
+    // An unresolved-target state (the parser saw routing intent yet no list
+    // resolved) means we landed on the default; say so. The requested name may
+    // be null, in which case the confirmation explains the fallback generically.
+    const usedFallback = !namedList && 'requestedListName' in parsed;
     if (usedFallback) {
       return {
         kind: 'reply',
         text: formatConfirmation({
           kind: 'created_with_fallback',
-          requestedListName: parsed.requestedListName as string,
+          requestedListName: parsed.requestedListName ?? null,
           listName: created.list.name,
           itemTitles: created.items.map((item) => item.title)
         })

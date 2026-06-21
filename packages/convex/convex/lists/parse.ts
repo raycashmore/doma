@@ -8,11 +8,15 @@ export type ListItemsParseInput = {
 
 export type ListItemsParseProvider = (input: ListItemsParseInput) => Promise<unknown>;
 
-// targetListId is a list publicId from the addressable set (so it survives a
-// rename), or null when the message names no resolvable list. requestedListName
-// is the list name the user referenced, present whenever the message named a
-// list — even one that did not resolve — so the bot can explain a fallback.
-export type ParsedListItems = { targetListId: string | null; requestedListName?: string; items: string[] };
+// The model's routing is a small state machine: unnamed, resolved, unresolved.
+// - targetListId is a list publicId from the addressable set (so it survives a
+//   rename), set only in the resolved state; null otherwise.
+// - requestedListName signals the unresolved state. The key is present whenever
+//   the message named (or the model tried to route to) a list we could not
+//   resolve, so the bot can explain a fallback. Its value is the name the user
+//   referenced, or null when no trustworthy name exists (a generic fallback).
+//   The key is absent in the unnamed and resolved states.
+export type ParsedListItems = { targetListId: string | null; requestedListName?: string | null; items: string[] };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -157,29 +161,44 @@ export async function parseListItemsMessage({
 }): Promise<ParsedListItems> {
   let items: string[] | null = null;
   let targetListId: string | null = null;
-  let requestedListName: string | null = null;
+  // null = unnamed/resolved (no unresolved state); { name } = unresolved, where
+  // name is the trustworthy requested name or null for a generic fallback.
+  let unresolved: { name: string | null } | null = null;
 
   if (provider) {
     try {
       const parsed = parseListItemsAiResponse(await provider({ messageText, addressableLists, defaultListId }));
       items = parsed ? cleanItems(parsed.items) : null;
-      // Only trust an id that names a real addressable list; this survives a
-      // rename because we match on id, not on the message's wording.
-      if (parsed?.targetListId && addressableLists.some((list) => list.id === parsed.targetListId)) {
-        targetListId = parsed.targetListId;
+      if (parsed) {
+        // Only trust an id that names a real addressable list; this survives a
+        // rename because we match on id, not on the message's wording.
+        const resolved =
+          parsed.targetListId !== null && addressableLists.some((list) => list.id === parsed.targetListId);
+        if (resolved) {
+          targetListId = parsed.targetListId;
+        } else {
+          const trimmedName = parsed.requestedListName?.trim();
+          // Unresolved whenever the model named a list (requestedListName) or
+          // tried to route to a non-null id we could not resolve. A non-null id
+          // is untrusted structured output, but it still expresses routing
+          // intent we must honour with an explained fallback.
+          if (trimmedName) {
+            unresolved = { name: trimmedName };
+          } else if (parsed.targetListId !== null) {
+            unresolved = { name: null };
+          }
+        }
       }
-      const trimmedName = parsed?.requestedListName?.trim();
-      requestedListName = trimmedName ? trimmedName : null;
     } catch {
       items = null;
     }
   }
 
-  // Only surface a requested name when the user named a list we could not
-  // resolve, so the caller can explain a fallback to the default list.
+  // Surface the unresolved state so the caller can explain a fallback to the
+  // default list. The key is absent in the unnamed and resolved states.
   return {
     targetListId,
-    ...(targetListId === null && requestedListName ? { requestedListName } : {}),
+    ...(unresolved ? { requestedListName: unresolved.name } : {}),
     items: boundItems(items ?? deterministicListItems(messageText))
   };
 }

@@ -47,4 +47,18 @@ describe('formatConfirmation', () => {
     expect(text).toContain('• compost');
     expect(text).toContain('• seeds');
   });
+
+  it('explains the fallback generically when no trustworthy requested name exists', () => {
+    const text = formatConfirmation({
+      kind: 'created_with_fallback',
+      requestedListName: null,
+      listName: 'Shopping',
+      itemTitles: ['compost']
+    });
+
+    expect(text).not.toContain("couldn't find '");
+    expect(text).toContain('Shopping');
+    expect(text).toContain('your default');
+    expect(text).toContain('• compost');
+  });
 });
