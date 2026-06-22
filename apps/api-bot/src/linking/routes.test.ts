@@ -131,7 +131,7 @@ describe('linking routes', () => {
       status: 'active',
       createdAt: 1,
       updatedAt: 1,
-      displayLabel: 'ray_cashmore'
+      displayLabel: 'household_user'
     });
     const routes = createLinkingRoutes({
       config: { ...config, pairingEnabled: true },
@@ -145,7 +145,7 @@ describe('linking routes', () => {
       linked: true,
       pairingEnabled: true,
       provider: 'telegram',
-      displayLabel: 'ray_cashmore'
+      displayLabel: 'household_user'
     });
   });
 });
