@@ -14,8 +14,8 @@ describe('normalizeTelegramUpdate', () => {
         from: {
           id: 789,
           is_bot: false,
-          first_name: 'Ray',
-          username: 'ray_cashmore'
+          first_name: 'Sam',
+          username: 'household_user'
         },
         chat: {
           id: -100123,
@@ -32,7 +32,7 @@ describe('normalizeTelegramUpdate', () => {
       command: 'start',
       commandBotUsername: 'Doma_Bot',
       receivedAt: 1_700_000_000_000,
-      displayLabel: 'ray_cashmore',
+      displayLabel: 'household_user',
       rawUpdateId: '123'
     });
   });
@@ -47,7 +47,7 @@ describe('normalizeTelegramUpdate', () => {
         from: {
           id: 790,
           is_bot: false,
-          first_name: 'Rae'
+          first_name: 'Alex'
         },
         chat: {
           id: 790,
@@ -56,7 +56,7 @@ describe('normalizeTelegramUpdate', () => {
       }
     };
 
-    expect(normalizeTelegramUpdate(update)?.displayLabel).toBe('Rae');
+    expect(normalizeTelegramUpdate(update)?.displayLabel).toBe('Alex');
   });
 
   it('normalizes slash commands without bot suffix', () => {
@@ -69,7 +69,7 @@ describe('normalizeTelegramUpdate', () => {
         from: {
           id: 791,
           is_bot: false,
-          first_name: 'Ray'
+          first_name: 'Sam'
         },
         chat: {
           id: 791,
@@ -91,7 +91,7 @@ describe('normalizeTelegramUpdate', () => {
         from: {
           id: 792,
           is_bot: false,
-          first_name: 'Ray'
+          first_name: 'Sam'
         },
         chat: {
           id: 792,
@@ -113,7 +113,7 @@ describe('normalizeTelegramUpdate', () => {
           message_id: 461,
           date: 1_700_000_005,
           text: 'edited',
-          from: { id: 794, is_bot: false, first_name: 'Ray' },
+          from: { id: 794, is_bot: false, first_name: 'Sam' },
           chat: { id: 794, type: 'private' }
         }
       }
@@ -138,7 +138,7 @@ describe('normalizeTelegramUpdate', () => {
           message_id: 463,
           date: 1_700_000_007,
           text: 'hello',
-          from: { id: 793, is_bot: false, first_name: 'Ray' },
+          from: { id: 793, is_bot: false, first_name: 'Sam' },
           chat: { id: 793, type: 'private' }
         }
       }
@@ -150,7 +150,7 @@ describe('normalizeTelegramUpdate', () => {
         message: {
           message_id: 464,
           date: 1_700_000_008,
-          from: { id: 794, is_bot: false, first_name: 'Ray' },
+          from: { id: 794, is_bot: false, first_name: 'Sam' },
           chat: { id: 794, type: 'private' }
         }
       }
@@ -163,7 +163,7 @@ describe('normalizeTelegramUpdate', () => {
           message_id: 465,
           date: 1_700_000_009,
           text: 123,
-          from: { id: 795, is_bot: false, first_name: 'Ray' },
+          from: { id: 795, is_bot: false, first_name: 'Sam' },
           chat: { id: 795, type: 'private' }
         }
       }
@@ -176,7 +176,7 @@ describe('normalizeTelegramUpdate', () => {
           message_id: 466,
           date: 'not-a-number',
           text: 'hello',
-          from: { id: 796, is_bot: false, first_name: 'Ray' },
+          from: { id: 796, is_bot: false, first_name: 'Sam' },
           chat: { id: 796, type: 'private' }
         }
       }
@@ -201,7 +201,7 @@ describe('normalizeTelegramUpdate', () => {
           message_id: 468,
           date: 1_700_000_011,
           text: 'hello',
-          from: { id: 'not-a-number', is_bot: false, first_name: 'Ray' },
+          from: { id: 'not-a-number', is_bot: false, first_name: 'Sam' },
           chat: { id: 798, type: 'private' }
         }
       }
@@ -214,7 +214,7 @@ describe('normalizeTelegramUpdate', () => {
           message_id: 469,
           date: 1_700_000_012,
           text: 'hello',
-          from: { id: 799, is_bot: false, first_name: 'Ray' }
+          from: { id: 799, is_bot: false, first_name: 'Sam' }
         }
       }
     ],
@@ -226,7 +226,7 @@ describe('normalizeTelegramUpdate', () => {
           message_id: 470,
           date: 1_700_000_013,
           text: 'hello',
-          from: { id: 800, is_bot: false, first_name: 'Ray' },
+          from: { id: 800, is_bot: false, first_name: 'Sam' },
           chat: { id: 'not-a-number', type: 'private' }
         }
       }

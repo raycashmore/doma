@@ -26,6 +26,9 @@ describe('parseConfig', () => {
       scheduleCapabilityTimeoutMs: 15_000,
       listsCapabilityUrl: undefined,
       listsCapabilityTimeoutMs: 15_000,
+      openAiApiKey: undefined,
+      intentRouterAiModel: undefined,
+      intentRouterAiTimeoutMs: 10_000,
       pairingEnabled: false,
       telegramBotToken: 'telegram-bot-token',
       telegramWebhookSecret: 'telegram-webhook-secret',
@@ -69,6 +72,27 @@ describe('parseConfig', () => {
   it('accepts an optional positive schedule capability timeout', () => {
     expect(parseConfig({ ...validEnv, SCHEDULE_CAPABILITY_TIMEOUT_MS: '20000' }).scheduleCapabilityTimeoutMs).toBe(
       20_000
+    );
+  });
+
+  it('accepts the optional intent router LLM access for the gateway', () => {
+    const config = parseConfig({
+      ...validEnv,
+      OPENAI_API_KEY: 'openai-key',
+      INTENT_ROUTER_AI_MODEL: 'intent-model'
+    });
+
+    expect(config.openAiApiKey).toBe('openai-key');
+    expect(config.intentRouterAiModel).toBe('intent-model');
+  });
+
+  it('accepts an optional positive intent router AI timeout', () => {
+    expect(parseConfig({ ...validEnv, INTENT_ROUTER_AI_TIMEOUT_MS: '20000' }).intentRouterAiTimeoutMs).toBe(20_000);
+  });
+
+  it('throws a stable config error when the intent router AI timeout is invalid', () => {
+    expect(() => parseConfig({ ...validEnv, INTENT_ROUTER_AI_TIMEOUT_MS: '0' })).toThrow(
+      new Error('Invalid bot gateway config')
     );
   });
 

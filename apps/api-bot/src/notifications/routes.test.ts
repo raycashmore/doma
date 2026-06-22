@@ -39,7 +39,7 @@ const linkedTelegramChannel: ChannelLinkRecord = {
   status: 'active',
   createdAt: 1,
   updatedAt: 1,
-  displayLabel: 'ray_cashmore'
+  displayLabel: 'household_user'
 };
 
 describe('createNotificationRoutes', () => {
