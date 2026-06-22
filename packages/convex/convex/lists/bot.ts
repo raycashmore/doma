@@ -2,14 +2,21 @@ import { v } from 'convex/values';
 
 import { action, mutation, query } from '../_generated/server';
 import {
+  type AddressableListSummary,
   createListItemsForUser,
   type ListsBotMutationCtx,
   type ListsBotReadCtx,
+  readAddressableListsForUser,
   readDefaultListForUser,
   setDefaultListForUser
 } from './botModel';
 import { requireUserId } from './items';
-import { createOpenAiListItemsProvider, type ListItemsParseProvider, parseListItemsMessage } from './parse';
+import {
+  type AddressableList,
+  createOpenAiListItemsProvider,
+  type ListItemsParseProvider,
+  parseListItemsMessage
+} from './parse';
 
 export function assertAuthorizedServiceToken(serviceToken: string) {
   const expectedToken = process.env.BOT_SERVICE_TOKEN;
@@ -35,6 +42,14 @@ export async function defaultListForBotHandler(
   return readDefaultListForUser(ctx, { currentUserId: clerkUserId });
 }
 
+export async function addressableListsForBotHandler(
+  ctx: ListsBotReadCtx,
+  { serviceToken, clerkUserId }: { serviceToken: string; clerkUserId: string }
+): Promise<AddressableListSummary[]> {
+  assertAuthorizedServiceToken(serviceToken);
+  return readAddressableListsForUser(ctx, { currentUserId: clerkUserId });
+}
+
 export async function createListItemsForBotHandler(
   ctx: ListsBotMutationCtx,
   {
@@ -51,13 +66,22 @@ export async function createListItemsForBotHandler(
 
 export async function parseListItemsForBotHandler({
   serviceToken,
-  messageText
+  messageText,
+  addressableLists = [],
+  defaultListId = null
 }: {
   serviceToken: string;
   messageText: string;
+  addressableLists?: AddressableList[];
+  defaultListId?: string | null;
 }) {
   assertAuthorizedServiceToken(serviceToken);
-  return parseListItemsMessage({ messageText, provider: listItemsProviderFromEnv() });
+  return parseListItemsMessage({
+    messageText,
+    provider: listItemsProviderFromEnv(),
+    addressableLists,
+    defaultListId
+  });
 }
 
 /** In-app: set the signed-in user's default list. The bot reads this later. */
@@ -74,6 +98,11 @@ export const defaultListForBot = query({
   handler: (ctx, args) => defaultListForBotHandler(ctx, args)
 });
 
+export const addressableListsForBot = query({
+  args: { serviceToken: v.string(), clerkUserId: v.string() },
+  handler: (ctx, args) => addressableListsForBotHandler(ctx, args)
+});
+
 export const createListItemsForBot = mutation({
   args: {
     serviceToken: v.string(),
@@ -85,6 +114,11 @@ export const createListItemsForBot = mutation({
 });
 
 export const parseListItemsForBot = action({
-  args: { serviceToken: v.string(), messageText: v.string() },
+  args: {
+    serviceToken: v.string(),
+    messageText: v.string(),
+    addressableLists: v.optional(v.array(v.object({ id: v.string(), name: v.string() }))),
+    defaultListId: v.optional(v.union(v.string(), v.null()))
+  },
   handler: (_ctx, args) => parseListItemsForBotHandler(args)
 });

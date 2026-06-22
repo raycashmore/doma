@@ -31,4 +31,34 @@ describe('formatConfirmation', () => {
 
     expect(text).toContain("couldn't");
   });
+
+  it('notes the fallback to the default list when a named list could not be resolved', () => {
+    const text = formatConfirmation({
+      kind: 'created_with_fallback',
+      requestedListName: 'garden',
+      listName: 'Shopping',
+      itemTitles: ['compost', 'seeds']
+    });
+
+    expect(text).toContain("couldn't find 'garden'");
+    expect(text).toContain('Shopping');
+    expect(text).toContain('your default');
+    // Still echoes every captured item title.
+    expect(text).toContain('• compost');
+    expect(text).toContain('• seeds');
+  });
+
+  it('explains the fallback generically when no trustworthy requested name exists', () => {
+    const text = formatConfirmation({
+      kind: 'created_with_fallback',
+      requestedListName: null,
+      listName: 'Shopping',
+      itemTitles: ['compost']
+    });
+
+    expect(text).not.toContain("couldn't find '");
+    expect(text).toContain('Shopping');
+    expect(text).toContain('your default');
+    expect(text).toContain('• compost');
+  });
 });

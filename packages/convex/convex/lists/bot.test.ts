@@ -1,7 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { createListItemsForBotHandler, defaultListForBotHandler, parseListItemsForBotHandler } from './bot';
-import { createListItemsForUser, readDefaultListForUser, setDefaultListForUser } from './botModel';
+import {
+  addressableListsForBotHandler,
+  createListItemsForBotHandler,
+  defaultListForBotHandler,
+  parseListItemsForBotHandler
+} from './bot';
+import {
+  createListItemsForUser,
+  readAddressableListsForUser,
+  readDefaultListForUser,
+  setDefaultListForUser
+} from './botModel';
 import type { ListsMutationCtx } from './items';
 
 type Row = Record<string, unknown> & { _id: string };
@@ -151,6 +161,56 @@ describe('default list for a household user', () => {
   });
 });
 
+describe('readAddressableListsForUser', () => {
+  const ownPersonal: Row = {
+    _id: 'lists_own',
+    publicId: 'list_own',
+    name: 'My errands',
+    slug: 'my-errands',
+    visibility: 'personal',
+    createdByUserId: 'user_b',
+    createdAt: 1,
+    updatedAt: 1
+  };
+  const otherPersonal: Row = {
+    _id: 'lists_other_personal',
+    publicId: 'list_other_personal',
+    name: 'Their secrets',
+    slug: 'their-secrets',
+    visibility: 'personal',
+    createdByUserId: 'user_a',
+    createdAt: 1,
+    updatedAt: 1
+  };
+
+  it('returns the user’s own personal lists plus every shared list, by id and name', async () => {
+    const { ctx } = createCtx({ lists: [sharedList, ownPersonal, otherPersonal] });
+
+    const result = await readAddressableListsForUser(ctx, { currentUserId: 'user_b' });
+
+    // Shared list (created by user_a) + user_b's own personal list; not user_a's personal list.
+    expect(result).toEqual(
+      expect.arrayContaining([
+        { id: 'list_shared', name: 'Shopping' },
+        { id: 'list_own', name: 'My errands' }
+      ])
+    );
+    expect(result).toHaveLength(2);
+    expect(result.map((list) => list.id)).not.toContain('list_other_personal');
+  });
+
+  it('does not duplicate a shared list the requesting user created', async () => {
+    // sharedList is created by user_a; make the requester its creator so it is
+    // returned by both the by_created_by and by_visibility index reads.
+    const ownShared: Row = { ...sharedList, createdByUserId: 'user_b' };
+    const { ctx } = createCtx({ lists: [ownShared] });
+
+    const result = await readAddressableListsForUser(ctx, { currentUserId: 'user_b' });
+
+    expect(result).toEqual([{ id: 'list_shared', name: 'Shopping' }]);
+  });
+});
+
 describe('createListItemsForUser', () => {
   it('creates title-only items in the target list, trimming and dropping blanks', async () => {
     const { ctx, tables } = createCtx({ lists: [sharedList] });
@@ -209,6 +269,10 @@ describe('bot function service-token guard', () => {
       defaultListForBotHandler(ctx, { serviceToken: 'service-token', clerkUserId: 'user_b' })
     ).resolves.toBeNull();
 
+    await expect(
+      addressableListsForBotHandler(ctx, { serviceToken: 'service-token', clerkUserId: 'user_b' })
+    ).resolves.toEqual([{ id: 'list_shared', name: 'Shopping' }]);
+
     const created = await createListItemsForBotHandler(ctx, {
       serviceToken: 'service-token',
       clerkUserId: 'user_b',
@@ -228,6 +292,9 @@ describe('bot function service-token guard', () => {
     const { ctx, tables } = createCtx({ lists: [sharedList] });
 
     await expect(defaultListForBotHandler(ctx, { serviceToken: 'wrong', clerkUserId: 'user_b' })).rejects.toThrow(
+      'Unauthorized'
+    );
+    await expect(addressableListsForBotHandler(ctx, { serviceToken: 'wrong', clerkUserId: 'user_b' })).rejects.toThrow(
       'Unauthorized'
     );
     await expect(
@@ -250,6 +317,9 @@ describe('bot function service-token guard', () => {
     const { ctx } = createCtx({ lists: [sharedList] });
 
     await expect(defaultListForBotHandler(ctx, { serviceToken: '', clerkUserId: 'user_b' })).rejects.toThrow(
+      'Unauthorized'
+    );
+    await expect(addressableListsForBotHandler(ctx, { serviceToken: '', clerkUserId: 'user_b' })).rejects.toThrow(
       'Unauthorized'
     );
   });

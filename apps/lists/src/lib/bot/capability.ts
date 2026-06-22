@@ -10,9 +10,32 @@ export type ListsCapabilityResponse = { kind: 'reply'; text: string } | { kind: 
 
 export type DefaultListSummary = { publicId: string; name: string };
 
+export type AddressableList = { id: string; name: string };
+
+export type AddressableContext = {
+  lists: AddressableList[];
+  defaultList: DefaultListSummary | null;
+};
+
+export type ParsedListItems = {
+  // A list publicId resolved from the addressable set, or null when the message
+  // named no resolvable list.
+  targetListId: string | null;
+  // Present (key, even with a null value) when the parser saw routing intent it
+  // could not resolve, so the confirmation can explain the fallback to the
+  // default list. The string is the requested name; null means no trustworthy
+  // name exists and the confirmation uses a generic explanation.
+  requestedListName?: string | null;
+  items: string[];
+};
+
 export type HandleListsCapabilityDeps = {
-  parseItems: (input: { messageText: string }) => Promise<{ targetListId: null; items: string[] }>;
-  loadDefaultList: (input: { userId: string }) => Promise<DefaultListSummary | null>;
+  loadAddressableContext: (input: { userId: string }) => Promise<AddressableContext>;
+  parseItems: (input: {
+    messageText: string;
+    addressableLists: AddressableList[];
+    defaultListId: string | null;
+  }) => Promise<ParsedListItems>;
   createItems: (input: {
     userId: string;
     listPublicId: string;
@@ -27,21 +50,48 @@ export async function handleListsCapabilityRequest(
   deps: HandleListsCapabilityDeps
 ): Promise<ListsCapabilityResponse> {
   try {
-    const { items } = await deps.parseItems({ messageText: request.messageText });
-    if (items.length === 0) {
+    const { lists, defaultList } = await deps.loadAddressableContext({ userId: request.userId });
+
+    const parsed = await deps.parseItems({
+      messageText: request.messageText,
+      addressableLists: lists,
+      defaultListId: defaultList?.publicId ?? null
+    });
+    if (parsed.items.length === 0) {
       return { kind: 'reply', text: formatConfirmation({ kind: 'empty_parse' }) };
     }
 
-    const defaultList = await deps.loadDefaultList({ userId: request.userId });
-    if (!defaultList) {
+    const namedList = parsed.targetListId ? lists.find((list) => list.id === parsed.targetListId) : undefined;
+
+    // Resolution: a resolved named list wins; otherwise fall back to the
+    // default. With neither, we cannot create anything.
+    const target = namedList ?? defaultList;
+    if (!target) {
       return { kind: 'reply', text: formatConfirmation({ kind: 'no_default' }) };
     }
+    const targetPublicId = namedList ? namedList.id : (target as DefaultListSummary).publicId;
 
     const created = await deps.createItems({
       userId: request.userId,
-      listPublicId: defaultList.publicId,
-      titles: items
+      listPublicId: targetPublicId,
+      titles: parsed.items
     });
+
+    // An unresolved-target state (the parser saw routing intent yet no list
+    // resolved) means we landed on the default; say so. The requested name may
+    // be null, in which case the confirmation explains the fallback generically.
+    const usedFallback = !namedList && 'requestedListName' in parsed;
+    if (usedFallback) {
+      return {
+        kind: 'reply',
+        text: formatConfirmation({
+          kind: 'created_with_fallback',
+          requestedListName: parsed.requestedListName ?? null,
+          listName: created.list.name,
+          itemTitles: created.items.map((item) => item.title)
+        })
+      };
+    }
 
     return {
       kind: 'reply',

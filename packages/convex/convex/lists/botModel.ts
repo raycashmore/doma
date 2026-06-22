@@ -17,6 +17,38 @@ export type ListsBotMutationCtx = BotWriteCtx;
 
 export type DefaultListSummary = { publicId: string; name: string };
 
+export type AddressableListSummary = { id: string; name: string };
+
+/**
+ * The lists a household user can have the bot target: their own personal lists
+ * plus every shared list. Returned by list publicId (stable across renames) so
+ * the parser resolves to an id, not the message's wording.
+ */
+export async function readAddressableListsForUser(
+  ctx: BotReadCtx,
+  { currentUserId }: { currentUserId: string }
+): Promise<AddressableListSummary[]> {
+  // Read only what the user can address: their own lists via by_created_by and
+  // every shared list via by_visibility. Cost scales with the addressable set,
+  // not the whole table. Merge by list _id so a shared list the user created
+  // (returned by both indexes) appears once.
+  const [ownLists, sharedLists] = await Promise.all([
+    ctx.db
+      .query('lists')
+      .withIndex('by_created_by', (q) => q.eq('createdByUserId', currentUserId))
+      .collect(),
+    ctx.db
+      .query('lists')
+      .withIndex('by_visibility', (q) => q.eq('visibility', 'shared'))
+      .collect()
+  ]);
+
+  const byId = new Map<Id<'lists'>, Doc<'lists'>>();
+  for (const list of [...ownLists, ...sharedLists]) byId.set(list._id, list);
+
+  return [...byId.values()].map((list) => ({ id: list.publicId, name: list.name }));
+}
+
 async function findDefaultRow(ctx: BotReadCtx, currentUserId: string) {
   return ctx.db
     .query('listDefaults')

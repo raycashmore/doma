@@ -1,5 +1,6 @@
 export type ConfirmationOutcome =
   | { kind: 'created'; listName: string; itemTitles: string[] }
+  | { kind: 'created_with_fallback'; requestedListName: string | null; listName: string; itemTitles: string[] }
   | { kind: 'no_default' }
   | { kind: 'empty_parse' };
 
@@ -8,14 +9,26 @@ const NO_DEFAULT_MESSAGE =
 
 const EMPTY_PARSE_MESSAGE = "I couldn't pick out anything to add. Try something like “milk, bread, eggs”.";
 
+function createdLines(listName: string, itemTitles: string[], heading?: string): string {
+  const count = itemTitles.length;
+  const noun = count === 1 ? 'item' : 'items';
+  const lines = itemTitles.map((title) => `• ${title}`);
+  const addedLine = `Added ${count} ${noun} to ${listName}:`;
+  return [...(heading ? [heading] : []), addedLine, ...lines].join('\n');
+}
+
 export function formatConfirmation(outcome: ConfirmationOutcome): string {
   switch (outcome.kind) {
-    case 'created': {
-      const count = outcome.itemTitles.length;
-      const noun = count === 1 ? 'item' : 'items';
-      const lines = outcome.itemTitles.map((title) => `• ${title}`);
-      return [`Added ${count} ${noun} to ${outcome.listName}:`, ...lines].join('\n');
-    }
+    case 'created':
+      return createdLines(outcome.listName, outcome.itemTitles);
+    case 'created_with_fallback':
+      return createdLines(
+        outcome.listName,
+        outcome.itemTitles,
+        outcome.requestedListName
+          ? `I couldn't find '${outcome.requestedListName}' — added to ${outcome.listName} (your default).`
+          : `I couldn't tell which list you meant — added to ${outcome.listName} (your default).`
+      );
     case 'no_default':
       return NO_DEFAULT_MESSAGE;
     case 'empty_parse':
