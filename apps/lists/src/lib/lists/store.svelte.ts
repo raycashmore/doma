@@ -20,6 +20,9 @@ import type {
 
 export type ListRouteTarget = { publicId: string; slug: string };
 
+/** The stored default list for the current household user. */
+export type DefaultList = { publicId: string; name: string };
+
 /**
  * The seam the Lists screen reads and writes through. Reactive getters expose
  * the visible lists and the selected list's items/properties; the command
@@ -34,10 +37,12 @@ export type ListStore = {
   readonly selected: VisibleListItemsResult | null;
   readonly selectedLoading: boolean;
   readonly selectedError: Error | null;
+  readonly defaultList: DefaultList | null;
 
   createList(input: { name: string; visibility: 'personal' | 'shared' }): Promise<ListRouteTarget>;
   renameList(input: { publicId: string; name: string }): Promise<ListRouteTarget>;
   deleteList(input: { publicId: string }): Promise<void>;
+  setDefaultList(input: { publicId: string }): Promise<void>;
 
   createItem(input: { listPublicId: string; title: string }): Promise<void>;
   createItems(input: { listPublicId: string; titles: string[] }): Promise<void>;
@@ -78,6 +83,7 @@ export class InMemoryListStore implements ListStore {
   #getSelectedPublicId: () => string | null;
   #lists = $state<VisibleList[]>([]);
   #itemsByPublicId = $state<Record<string, VisibleListItemsResult>>({});
+  #defaultList = $state<DefaultList | null>(null);
 
   constructor(seed: InMemorySeed) {
     this.#getSelectedPublicId = seed.getSelectedPublicId;
@@ -103,6 +109,10 @@ export class InMemoryListStore implements ListStore {
 
   get selectedError(): Error | null {
     return null;
+  }
+
+  get defaultList(): DefaultList | null {
+    return this.#defaultList;
   }
 
   get selected(): VisibleListItemsResult | null {
@@ -152,6 +162,12 @@ export class InMemoryListStore implements ListStore {
       activeItems: current.activeItems.map(apply),
       completedItems: current.completedItems.map(apply)
     }));
+  }
+
+  async setDefaultList({ publicId }: { publicId: string }): Promise<void> {
+    const list = this.#lists.find((l) => l.publicId === publicId);
+    if (!list) throw new Error('List unavailable');
+    this.#defaultList = { publicId: list.publicId, name: list.name };
   }
 
   async createList({
@@ -415,6 +431,8 @@ type ConvexSeed = {
 export class ConvexListStore implements ListStore {
   #lists;
   #items;
+  #defaultListQuery;
+  #setDefaultListMutation = useMutation(api.lists.bot.setDefaultList);
   #createList = useMutation(api.lists.mutations.createList);
   #renameList = useMutation(api.lists.mutations.renameList);
   #deleteList = useMutation(api.lists.mutations.deleteList);
@@ -441,6 +459,7 @@ export class ConvexListStore implements ListStore {
       const publicId = seed.getSelectedPublicId();
       return publicId ? { publicId } : 'skip';
     });
+    this.#defaultListQuery = useQuery(api.lists.queries.getDefaultList, () => (seed.enabled ? {} : 'skip'));
   }
 
   /** True once either live query has produced data or an error. */
@@ -471,6 +490,9 @@ export class ConvexListStore implements ListStore {
   get selectedError(): Error | null {
     return this.#items.error ?? null;
   }
+  get defaultList(): DefaultList | null {
+    return this.#defaultListQuery.data ?? null;
+  }
 
   async createList(input: { name: string; visibility: 'personal' | 'shared' }): Promise<ListRouteTarget> {
     const created = await this.#createList(input);
@@ -482,6 +504,9 @@ export class ConvexListStore implements ListStore {
   }
   async deleteList(input: { publicId: string }): Promise<void> {
     await this.#deleteList(input);
+  }
+  async setDefaultList(input: { publicId: string }): Promise<void> {
+    await this.#setDefaultListMutation(input);
   }
   async createItem(input: { listPublicId: string; title: string }): Promise<void> {
     await this.#createListItem(input);
@@ -612,6 +637,9 @@ export class ListStoreFacade implements ListStore {
   get selectedError(): Error | null {
     return this.#active.selectedError;
   }
+  get defaultList(): DefaultList | null {
+    return this.#active.defaultList;
+  }
 
   createList(input: { name: string; visibility: 'personal' | 'shared' }): Promise<ListRouteTarget> {
     return this.#active.createList(input);
@@ -621,6 +649,9 @@ export class ListStoreFacade implements ListStore {
   }
   deleteList(input: { publicId: string }): Promise<void> {
     return this.#active.deleteList(input);
+  }
+  setDefaultList(input: { publicId: string }): Promise<void> {
+    return this.#active.setDefaultList(input);
   }
   createItem(input: { listPublicId: string; title: string }): Promise<void> {
     return this.#active.createItem(input);

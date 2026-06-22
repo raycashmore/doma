@@ -2,7 +2,7 @@
   import { type DndEvent, dragHandle, dragHandleZone } from 'svelte-dnd-action';
 
   import ListIcon from '$lib/lists/components/ListIcon.svelte';
-  import type { VisibleListProperty } from '$lib/lists/presenter';
+  import type { VisibleList, VisibleListProperty } from '$lib/lists/presenter';
 
   let {
     properties,
@@ -27,7 +27,10 @@
     setDraftOptions,
     onCreate,
     propertyTypeLabel,
-    onDeleteList
+    onDeleteList,
+    availableLists,
+    currentDefaultPublicId,
+    onSetDefaultList
   }: {
     properties: VisibleListProperty[];
     error: string | null;
@@ -52,7 +55,16 @@
     onCreate: () => void;
     propertyTypeLabel: (t: VisibleListProperty['type']) => string;
     onDeleteList: () => void;
+    /** The household user's personal and shared lists, used as picker options. */
+    availableLists: VisibleList[];
+    /** The publicId of the user's current default list, or null when none is set. */
+    currentDefaultPublicId: string | null;
+    /** Called with the chosen list's stable publicId when the default changes. */
+    onSetDefaultList: (publicId: string) => void;
   } = $props();
+
+  const personalLists = $derived(availableLists.filter((list) => list.visibility === 'personal'));
+  const sharedLists = $derived(availableLists.filter((list) => list.visibility === 'shared'));
 
   // Local $state for the dnd list, seeded from the `properties` prop and frozen
   // mid-drag or while a reorder is waiting for the query to confirm it.
@@ -106,6 +118,46 @@
   {#if error}
     <p class="text-sm text-warm-accent">{error}</p>
   {/if}
+
+  <div class="rounded-2xl border border-warm-border bg-warm-bg-card p-3">
+    <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-warm-text-secondary">Bot captures</p>
+    <p class="mt-1 text-xs text-warm-text-secondary">
+      When a Telegram message names no list, captures land on your default list.
+    </p>
+    {#if personalLists.length || sharedLists.length}
+      <label class="mt-2 block">
+        <span class="sr-only">Default list for bot captures</span>
+        <select
+          class="w-full rounded-xl border border-warm-border bg-warm-bg px-3 py-2 text-sm text-warm-text-primary outline-none"
+          aria-label="Default list for bot captures"
+          data-testid="default-list-picker"
+          value={currentDefaultPublicId ?? ''}
+          onchange={(event) => {
+            const next = event.currentTarget.value;
+            if (next) onSetDefaultList(next);
+          }}
+        >
+          <option value="" disabled>No default list</option>
+          {#if personalLists.length}
+            <optgroup label="Personal lists">
+              {#each personalLists as list (list.publicId)}
+                <option value={list.publicId}>{list.name}</option>
+              {/each}
+            </optgroup>
+          {/if}
+          {#if sharedLists.length}
+            <optgroup label="Shared lists">
+              {#each sharedLists as list (list.publicId)}
+                <option value={list.publicId}>{list.name}</option>
+              {/each}
+            </optgroup>
+          {/if}
+        </select>
+      </label>
+    {:else}
+      <p class="mt-2 text-xs text-warm-text-secondary">Create a list to choose a default.</p>
+    {/if}
+  </div>
 
   {#if dndItems.length}
     <ul
