@@ -926,7 +926,7 @@
       </div>
     </aside>
 
-    <section class="min-w-0 flex-1 rounded-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_18px_44px_rgb(20_17_12_/_10%)] md:flex md:min-h-0 md:flex-col">
+    <section class="min-w-0 flex-1 rounded-[28px] border border-warm-border bg-warm-bg-card px-3 py-5 shadow-[0_18px_44px_rgb(20_17_12_/_10%)] md:flex md:min-h-0 md:flex-col md:p-5">
       {#if selectedRow}
         <div class="flex flex-col gap-4 md:min-h-0 md:flex-1">
           <div class="flex items-center justify-between gap-2 min-[900px]:hidden">
@@ -989,7 +989,7 @@
           <div class={`grid gap-4 md:min-h-0 md:flex-1 md:grid-rows-[minmax(0,1fr)] ${rightPanel !== 'closed' ? 'min-[900px]:grid-cols-[minmax(0,1fr)_300px]' : ''}`}>
             <div class="flex flex-col gap-4 md:min-h-0">
               <form
-                class="flex items-center gap-3 rounded-2xl border border-warm-border bg-warm-bg px-4 py-3"
+                class="flex items-center gap-3 rounded-2xl border border-warm-border bg-warm-bg px-3 py-3 md:px-4"
                 onsubmit={(event) => {
                   event.preventDefault();
                   void handleCreateItem();
