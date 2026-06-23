@@ -5,7 +5,5 @@ export { SignInLayout, UrlAuthProvider, useUrlAuth } from './auth';
 export { Header } from './Header';
 export { MobileNav } from './MobileNav';
 export { PwaUpdater, usePwaUpdate } from './pwa';
-export type { RegisterServiceWorkerOptions, ServiceWorkerController } from './pwa-core';
-export { registerServiceWorker } from './pwa-core';
 export { PwaUpdateToast } from './PwaUpdateToast';
 export { Sidebar } from './Sidebar';

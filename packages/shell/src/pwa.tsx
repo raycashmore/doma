@@ -1,8 +1,8 @@
 'use client';
 
+import { registerServiceWorker, type ServiceWorkerController } from '@repo/pwa';
 import { useEffect, useRef, useState } from 'react';
 
-import { registerServiceWorker, type ServiceWorkerController } from './pwa-core';
 import { PwaUpdateToast } from './PwaUpdateToast';
 
 export type UsePwaUpdateOptions = {

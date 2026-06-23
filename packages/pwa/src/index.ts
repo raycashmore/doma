@@ -1,24 +1,32 @@
 /**
- * Service-worker registration with update handling for the Lists PWA.
+ * Framework-agnostic service-worker registration with update handling.
  *
- * The worker is built in vite-plugin-pwa `prompt` mode, so a new build installs
- * and waits until we post `SKIP_WAITING`. We surface `onNeedRefresh` so the UI
- * can offer a "Reload" prompt, then `reload()` activates the waiting worker and
- * the page reloads via `controllerchange`.
+ * Works with both vite-plugin-pwa modes:
+ * - `autoUpdate`: the generated worker skips waiting and claims clients, so a
+ *   new build takes control and we reload silently via `controllerchange`.
+ * - `prompt`: the worker waits until the page posts `SKIP_WAITING`. We surface
+ *   `onNeedRefresh` so the UI can offer a "Reload" prompt, then `reload()`
+ *   activates the waiting worker and the page reloads via `controllerchange`.
  *
- * We also poll `registration.update()` on an interval so a long-lived,
- * foregrounded install picks up new builds instead of waiting for the browser's
- * own (~24h) background check. The poll only runs while the page is open.
+ * In both modes we poll `registration.update()` on an interval so a long-lived,
+ * foregrounded PWA picks up new builds instead of waiting for the browser's own
+ * (~24h) background check. The poll only runs while the page is open.
  */
 export type RegisterServiceWorkerOptions = {
+  /** URL of the generated service worker, e.g. `/sw.js` or `/lists/sw.js`. */
   swUrl: string;
+  /** Worker scope, typically the app's base path. */
   scope: string;
+  /** Called when a new version is installed and ready (prompt mode). */
   onNeedRefresh?: () => void;
+  /** How often to check for a new build while the app is open. Default 1h. */
   updateIntervalMs?: number;
 };
 
 export type ServiceWorkerController = {
+  /** Activate the waiting worker (prompt mode) and reload to the new build. */
   reload: () => void;
+  /** Tear down the poll and listeners. */
   dispose: () => void;
 };
 
@@ -34,11 +42,18 @@ export function registerServiceWorker(options: RegisterServiceWorkerOptions): Se
     return noopController;
   }
 
+  // Whether a worker already controls this page. On a first-ever visit this is
+  // false; the initial `clientsClaim` controllerchange must NOT trigger a
+  // reload, only a later update-driven takeover should.
   const hadController = Boolean(navigator.serviceWorker.controller);
 
   let registration: ServiceWorkerRegistration | undefined;
   let pollId: ReturnType<typeof setInterval> | undefined;
   let reloaded = false;
+  // Set by dispose(). Guards the async `start()`: if the caller tears down
+  // before registration resolves, we must not install a poll or listeners that
+  // would then outlive dispose().
+  let disposed = false;
 
   const reloadNow = () => {
     if (reloaded) return;
@@ -59,12 +74,18 @@ export function registerServiceWorker(options: RegisterServiceWorkerOptions): Se
   };
 
   const start = async () => {
+    let reg: ServiceWorkerRegistration;
     try {
-      registration = await navigator.serviceWorker.register(swUrl, { scope });
+      reg = await navigator.serviceWorker.register(swUrl, { scope });
     } catch {
       return;
     }
 
+    // The caller may have disposed while registration was in flight.
+    if (disposed) return;
+    registration = reg;
+
+    // A waiting worker may already exist when we register.
     notifyIfWaiting();
 
     registration.addEventListener('updatefound', () => {
@@ -92,9 +113,12 @@ export function registerServiceWorker(options: RegisterServiceWorkerOptions): Se
       if (waiting) {
         waiting.postMessage({ type: 'SKIP_WAITING' });
       }
+      // If nothing is controlling the page, no controllerchange will fire — fall
+      // back to a direct reload so the prompt still resolves.
       if (!hadController) reloadNow();
     },
     dispose: () => {
+      disposed = true;
       if (pollId) clearInterval(pollId);
       navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
     }

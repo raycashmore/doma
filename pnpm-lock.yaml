@@ -401,6 +401,9 @@ importers:
       '@repo/convex':
         specifier: workspace:*
         version: link:../../packages/convex
+      '@repo/pwa':
+        specifier: workspace:*
+        version: link:../../packages/pwa
       '@repo/tokens':
         specifier: workspace:*
         version: link:../../packages/tokens
@@ -636,11 +639,26 @@ importers:
         specifier: ^8.50.0
         version: 8.50.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.2)
 
+  packages/pwa:
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.2
+
   packages/shell:
     dependencies:
       '@repo/app-registry':
         specifier: workspace:*
         version: link:../app-registry
+      '@repo/pwa':
+        specifier: workspace:*
+        version: link:../pwa
       '@repo/tokens':
         specifier: workspace:*
         version: link:../tokens
