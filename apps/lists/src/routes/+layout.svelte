@@ -76,10 +76,7 @@
 
 <svelte:head>
   <title>Lists | Doma</title>
-  <meta
-    name="description"
-    content="Reusable household checklists for todos, shopping, and other arbitrary lists."
-  />
+  <meta name="description" content="Reusable household checklists for todos, shopping, and other arbitrary lists." />
 </svelte:head>
 
 <main class="auth-screen" class:auth-screen--hidden={!showAuthOverlay} aria-hidden={!showAuthOverlay}>
@@ -92,10 +89,7 @@
 
 <div class="min-h-screen bg-warm-bg-dark font-warm-body text-warm-text-primary md:h-screen md:overflow-hidden">
   <div class="flex h-screen overflow-hidden bg-warm-bg-dark md:h-full">
-    <nav
-      aria-label="App navigation"
-      class="hidden w-14 flex-col items-end py-6 text-warm-text-on-dark md:flex"
-    >
+    <nav aria-label="App navigation" class="hidden w-14 flex-col items-end py-6 text-warm-text-on-dark md:flex">
       <a
         class="flex h-12 w-12 items-center justify-center rounded-xl text-warm-text-tertiary transition-colors hover:bg-warm-bg-dark-muted hover:text-warm-text-on-dark"
         href={resolveAppHref(homeNavItem)}
@@ -137,17 +131,12 @@
 
     <div class="flex min-h-0 min-w-0 flex-1 flex-col">
       <header class="flex min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 pb-4 pt-2">
-        <h1 class="font-warm-display text-[24px] leading-[1.1] text-warm-text-on-dark md:text-[32px]">
-          Lists
-        </h1>
+        <h1 class="font-warm-display text-[24px] leading-[1.1] text-warm-text-on-dark md:text-[32px]">Lists</h1>
       </header>
 
       <main class="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 pb-4 md:overflow-hidden">
         {#if authState.status === 'loading'}
-          <StartupPlaceholder
-            message="Opening Lists..."
-            detail="Checking your session and preparing your lists."
-          />
+          <StartupPlaceholder message="Opening Lists..." detail="Checking your session and preparing your lists." />
         {:else if authState.status === 'disabled'}
           {@render children()}
         {:else if authState.status === 'ready' && authState.session && shouldUseConvexAuth}
@@ -157,10 +146,7 @@
         {:else if authState.status === 'ready' && authState.session}
           {@render children()}
         {:else}
-          <StartupPlaceholder
-            message="Opening Lists..."
-            detail="Waiting for sign-in before loading your lists."
-          />
+          <StartupPlaceholder message="Opening Lists..." detail="Waiting for sign-in before loading your lists." />
         {/if}
       </main>
 

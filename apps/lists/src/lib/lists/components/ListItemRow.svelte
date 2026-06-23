@@ -26,11 +26,16 @@
 <div
   role="button"
   tabindex="0"
-  class={`group flex items-center gap-2 rounded-xl px-1 py-2 transition-colors cursor-pointer ${
-    selected ? 'bg-warm-section-spend/50' : 'hover:bg-warm-bg-card'
+  class={`group flex cursor-pointer items-center gap-2 rounded-none px-2 py-2 transition-colors ${
+    selected ? 'bg-warm-section-spend/50' : 'hover:bg-warm-section-mortgage'
   }`}
   onclick={onOpenDetail}
-  onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenDetail(); } }}
+  onkeydown={(e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onOpenDetail();
+    }
+  }}
 >
   {#if completed}
     <span class="invisible flex h-7 w-6 shrink-0 items-center justify-center" aria-hidden="true">
@@ -52,10 +57,15 @@
   <button
     type="button"
     class={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 ${
-      completed ? 'border-warm-accent bg-warm-accent text-warm-text-on-dark' : 'border-warm-section-income text-transparent'
+      completed
+        ? 'border-warm-accent bg-warm-accent text-warm-text-on-dark'
+        : 'border-warm-section-income bg-warm-bg-card text-transparent'
     }`}
     aria-label={completed ? `Mark ${item.title} active` : `Mark ${item.title} complete`}
-    onclick={(e) => { e.stopPropagation(); onToggleComplete(); }}
+    onclick={(e) => {
+      e.stopPropagation();
+      onToggleComplete();
+    }}
   >
     <ListIcon name="check" size={12} />
   </button>
@@ -78,7 +88,10 @@
     type="button"
     class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-warm-accent opacity-0 transition-opacity hover:bg-warm-section-spend group-hover:opacity-100"
     aria-label={`Delete ${item.title}`}
-    onclick={(e) => { e.stopPropagation(); onDelete(); }}
+    onclick={(e) => {
+      e.stopPropagation();
+      onDelete();
+    }}
   >
     <ListIcon name="trash" size={15} />
   </button>

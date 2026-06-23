@@ -18,10 +18,7 @@
 {:else if !convexAuth.isAuthenticated}
   <section class="auth-panel" role="alert">Unable to authenticate with Lists data.</section>
 {:else if authStatus.isLoading}
-  <StartupPlaceholder
-    message="Opening Lists..."
-    detail="Connecting to your lists and preparing the workspace."
-  />
+  <StartupPlaceholder message="Opening Lists..." detail="Connecting to your lists and preparing the workspace." />
 {:else if authStatus.error}
   <section class="auth-panel" role="alert">Unable to load Lists data.</section>
 {:else if authStatus.data}

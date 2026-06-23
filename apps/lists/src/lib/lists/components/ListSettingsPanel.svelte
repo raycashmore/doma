@@ -120,16 +120,16 @@
   {/if}
 
   <div class="rounded-2xl border border-warm-border bg-warm-bg-card p-3">
-    <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-warm-text-secondary">Bot captures</p>
+    <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-warm-text-secondary">Default list</p>
     <p class="mt-1 text-xs text-warm-text-secondary">
       When a Telegram message names no list, captures land on your default list.
     </p>
     {#if personalLists.length || sharedLists.length}
       <label class="mt-2 block">
-        <span class="sr-only">Default list for bot captures</span>
+        <span class="sr-only">Default list</span>
         <select
           class="w-full rounded-xl border border-warm-border bg-warm-bg px-3 py-2 text-sm text-warm-text-primary outline-none"
-          aria-label="Default list for bot captures"
+          aria-label="Default list"
           data-testid="default-list-picker"
           value={currentDefaultPublicId ?? ''}
           onchange={(event) => {
@@ -183,8 +183,16 @@
                 placeholder="Property name"
               />
               <div class="flex gap-2">
-                <button type="button" class="flex-1 rounded-full border border-warm-border px-3 py-2 text-xs font-medium text-warm-text-secondary" onclick={cancelRename}>Cancel</button>
-                <button type="submit" class="flex-1 rounded-full bg-warm-text-primary px-3 py-2 text-xs font-bold text-warm-text-on-dark disabled:opacity-60" disabled={!propertyRenameName.trim()}>Save</button>
+                <button
+                  type="button"
+                  class="flex-1 rounded-full border border-warm-border px-3 py-2 text-xs font-medium text-warm-text-secondary"
+                  onclick={cancelRename}>Cancel</button
+                >
+                <button
+                  type="submit"
+                  class="flex-1 rounded-full bg-warm-text-primary px-3 py-2 text-xs font-bold text-warm-text-on-dark disabled:opacity-60"
+                  disabled={!propertyRenameName.trim()}>Save</button
+                >
               </div>
             </form>
           {:else}
@@ -198,20 +206,41 @@
               </span>
               <div class="min-w-0 flex-1">
                 <p class="truncate text-sm font-semibold text-warm-text-primary">{entry.property.name}</p>
-                <p class="text-[11px] uppercase tracking-[0.16em] text-warm-text-secondary">{propertyTypeLabel(entry.property.type)}</p>
+                <p class="text-[11px] uppercase tracking-[0.16em] text-warm-text-secondary">
+                  {propertyTypeLabel(entry.property.type)}
+                </p>
               </div>
-              <button type="button" class="rounded-full border border-warm-border px-3 py-1.5 text-[11px] font-semibold text-warm-text-secondary" onclick={() => beginRename(entry.property)}>Rename</button>
-              <button type="button" class="flex h-7 w-7 items-center justify-center rounded-full text-warm-accent hover:bg-warm-section-spend" aria-label={`Remove ${entry.property.name}`} onclick={() => requestRemove(entry.property._id)}>
+              <button
+                type="button"
+                class="rounded-full border border-warm-border px-3 py-1.5 text-[11px] font-semibold text-warm-text-secondary"
+                onclick={() => beginRename(entry.property)}>Rename</button
+              >
+              <button
+                type="button"
+                class="flex h-7 w-7 items-center justify-center rounded-full text-warm-accent hover:bg-warm-section-spend"
+                aria-label={`Remove ${entry.property.name}`}
+                onclick={() => requestRemove(entry.property._id)}
+              >
                 <ListIcon name="trash" size={15} />
               </button>
             </div>
 
             {#if pendingRemoveId === entry.property._id}
               <div class="mt-3 rounded-xl border border-warm-border bg-warm-bg px-3 py-3">
-                <p class="text-sm text-warm-text-secondary">Removing this property clears its values from every item.</p>
+                <p class="text-sm text-warm-text-secondary">
+                  Removing this property clears its values from every item.
+                </p>
                 <div class="mt-2 flex gap-2">
-                  <button type="button" class="flex-1 rounded-full border border-warm-border px-3 py-2 text-xs font-medium text-warm-text-secondary" onclick={cancelRemove}>Cancel</button>
-                  <button type="button" class="flex-1 rounded-full bg-warm-accent px-3 py-2 text-xs font-bold text-warm-text-on-dark" onclick={onConfirmRemove}>Confirm remove</button>
+                  <button
+                    type="button"
+                    class="flex-1 rounded-full border border-warm-border px-3 py-2 text-xs font-medium text-warm-text-secondary"
+                    onclick={cancelRemove}>Cancel</button
+                  >
+                  <button
+                    type="button"
+                    class="flex-1 rounded-full bg-warm-accent px-3 py-2 text-xs font-bold text-warm-text-on-dark"
+                    onclick={onConfirmRemove}>Confirm remove</button
+                  >
                 </div>
               </div>
             {/if}
@@ -220,7 +249,9 @@
       {/each}
     </ul>
   {:else}
-    <div class="rounded-2xl border border-dashed border-warm-border bg-warm-bg-card px-4 py-5 text-sm text-warm-text-secondary">
+    <div
+      class="rounded-2xl border border-dashed border-warm-border bg-warm-bg-card px-4 py-5 text-sm text-warm-text-secondary"
+    >
       No properties yet. Add one to shape what details each item can hold.
     </div>
   {/if}

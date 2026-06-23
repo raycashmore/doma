@@ -11,12 +11,6 @@
 <section class="startup-placeholder" role="status" aria-live="polite" aria-busy="true">
   <span class="sr-only">{message} {detail}</span>
 
-  <div class="startup-placeholder-copy" aria-hidden="true">
-    <p class="section-label">{message}</p>
-    <h2>Getting your lists ready</h2>
-    <p>{detail}</p>
-  </div>
-
   <div class="startup-skeleton-grid" aria-hidden="true">
     <aside class="startup-skeleton-panel startup-skeleton-picker">
       <div class="startup-skeleton-row startup-skeleton-row--heading"></div>

@@ -1,3 +1,27 @@
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('./fonts/dm-sans-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Merriweather';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./fonts/merriweather-700-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Merriweather';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('./fonts/merriweather-800-latin.woff2') format('woff2');
+}
+
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.141 0.005 285.823);
