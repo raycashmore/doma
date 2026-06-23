@@ -131,6 +131,61 @@ describe('ListsScreen mobile details', () => {
   });
 });
 
+describe('ListsScreen list actions', () => {
+  it('uses a full-card hit target for list navigation', async () => {
+    const target = await renderScreen();
+    await provideLiveData();
+
+    const listButton = target.querySelector<HTMLButtonElement>('button[aria-label="Open Home reset list"]');
+
+    expect(listButton).not.toBeNull();
+    expect(listButton?.className).toContain('w-full');
+    expect(listButton?.className).toContain('p-[14px]');
+  });
+
+  it('opens rename from the list actions menu', async () => {
+    const target = await renderScreen();
+    await provideLiveData();
+
+    target.querySelector<HTMLButtonElement>('button[aria-label="List actions for Home reset"]')?.click();
+    await tick();
+
+    const renameButton = Array.from(target.querySelectorAll<HTMLButtonElement>('button')).find(
+      (button) => button.textContent?.trim() === 'Rename'
+    );
+
+    expect(renameButton).toBeDefined();
+
+    renameButton?.click();
+    await tick();
+
+    expect(target.querySelector('#list-dialog-title')?.textContent).toBe('Rename list');
+  });
+
+  it('raises the open menu above nearby list cards and closes from the click-away layer', async () => {
+    const target = await renderScreen();
+    await provideLiveData();
+
+    target.querySelector<HTMLButtonElement>('button[aria-label="List actions for Home reset"]')?.click();
+    await tick();
+
+    const openMenuHost = target.querySelector('[data-list-menu-open="true"]');
+
+    expect(openMenuHost).not.toBeNull();
+    expect(openMenuHost?.className).toContain('z-30');
+    expect(target.querySelector('button[aria-label="Close list actions menu"]')).not.toBeNull();
+    expect(
+      target.querySelector('button[aria-label="Close list actions menu"]')?.closest('.-translate-y-1\\/2')
+    ).toBeNull();
+
+    target.querySelector<HTMLButtonElement>('button[aria-label="Close list actions menu"]')?.click();
+    await tick();
+
+    expect(target.querySelector('button[aria-label="Close list actions menu"]')).toBeNull();
+    expect(target.querySelector('[data-list-menu-open="true"]')).toBeNull();
+  });
+});
+
 describe('ListsScreen offline fallback', () => {
   it('leaves fallback mode as soon as a live query responds', async () => {
     vi.useFakeTimers();

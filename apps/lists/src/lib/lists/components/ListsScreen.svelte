@@ -860,26 +860,29 @@
       <div class="mt-4 flex flex-col gap-3">
         {#if filteredLists.length}
           {#each filteredLists as list (list.publicId)}
-            <button
-              type="button"
-              class={`w-full cursor-pointer rounded-2xl border p-[14px] text-left transition-colors ${
-                list.selected ? 'border-warm-accent bg-warm-section-spend' : 'border-warm-border bg-warm-bg-card hover:bg-warm-section-mortgage'
-              }`}
-              onclick={() => void navigateToList(list)}
+            {@const isMenuOpen = menuTargetPublicId === list.publicId}
+            <div
+              class={`relative w-full ${isMenuOpen ? 'z-30' : ''}`}
+              data-list-menu-open={isMenuOpen ? 'true' : undefined}
             >
-              <div class="flex items-center gap-3">
-                <div class="min-w-0 flex-1">
-                  <p class={`truncate text-sm ${list.selected ? 'font-bold text-warm-text-primary' : 'font-semibold text-warm-text-secondary'}`}>
-                    {list.name}
-                  </p>
-                  <p class="mt-1 text-[11px] text-warm-text-secondary">{list.description}</p>
-                </div>
+              <button
+                type="button"
+                aria-label={`Open ${list.name} list`}
+                class={`w-full rounded-2xl border p-[14px] pr-12 text-left transition-colors ${
+                  list.selected ? 'border-warm-accent bg-warm-section-spend' : 'border-warm-border bg-warm-bg-card hover:bg-warm-section-mortgage'
+                }`}
+                onclick={() => void navigateToList(list)}
+              >
+                <p class={`truncate text-sm ${list.selected ? 'font-bold text-warm-text-primary' : 'font-semibold text-warm-text-secondary'}`}>
+                  {list.name}
+                </p>
+                <p class="mt-1 text-[11px] text-warm-text-secondary">{list.description}</p>
+              </button>
+              <div class="absolute right-[14px] top-1/2 -translate-y-1/2">
                 <div class="relative">
-                  <!-- svelte-ignore a11y_click_events_have_key_events -->
-                  <span
-                    role="button"
-                    tabindex="0"
-                    class="rounded-full px-2 py-1 text-sm text-warm-text-secondary hover:text-warm-text-primary"
+                  <button
+                    type="button"
+                    class="rounded-full border-0 bg-transparent px-2 py-1 text-sm text-warm-text-secondary hover:text-warm-text-primary"
                     aria-label={`List actions for ${list.name}`}
                     onclick={(e) => {
                       e.stopPropagation();
@@ -887,36 +890,35 @@
                     }}
                   >
                     •••
-                  </span>
+                  </button>
 
-                  {#if menuTargetPublicId === list.publicId}
-                    <!-- svelte-ignore a11y_click_events_have_key_events -->
-                    <div
-                      role="button"
-                      tabindex="-1"
-                      class="fixed inset-0 z-10"
-                      onclick={(e) => { e.stopPropagation(); menuTargetPublicId = null; }}
-                    ></div>
-                    <div class="absolute right-0 top-8 z-20 w-36 rounded-2xl border border-warm-border bg-warm-bg-card p-2 shadow-[0_20px_40px_rgba(61,46,34,0.16)]">
-                      <button
-                        type="button"
-                        class="flex w-full rounded-xl px-3 py-2 text-left text-sm text-warm-text-primary hover:bg-warm-bg"
-                        onclick={(e) => { e.stopPropagation(); beginRename(list); }}
-                      >
-                        Rename
-                      </button>
-                      <button
-                        type="button"
-                        class="flex w-full rounded-xl px-3 py-2 text-left text-sm text-warm-accent hover:bg-warm-bg"
-                        onclick={(e) => { e.stopPropagation(); beginDelete(list); }}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  {/if}
                 </div>
               </div>
-            </button>
+              {#if isMenuOpen}
+                <button
+                  type="button"
+                  aria-label="Close list actions menu"
+                  class="fixed inset-0 z-10 cursor-default border-0 bg-transparent p-0"
+                  onclick={(e) => { e.stopPropagation(); menuTargetPublicId = null; }}
+                ></button>
+                <div class="absolute right-[14px] top-12 z-20 w-36 rounded-2xl border border-warm-border bg-warm-bg-card p-2 shadow-[0_20px_40px_rgba(61,46,34,0.16)]">
+                  <button
+                    type="button"
+                    class="flex w-full rounded-xl px-3 py-2 text-left text-sm text-warm-text-primary hover:bg-warm-bg"
+                    onclick={(e) => { e.stopPropagation(); beginRename(list); }}
+                  >
+                    Rename
+                  </button>
+                  <button
+                    type="button"
+                    class="flex w-full rounded-xl px-3 py-2 text-left text-sm text-warm-accent hover:bg-warm-bg"
+                    onclick={(e) => { e.stopPropagation(); beginDelete(list); }}
+                  >
+                    Delete
+                  </button>
+                </div>
+              {/if}
+            </div>
           {/each}
         {:else}
           <p class="text-sm text-warm-text-secondary">No {listFilter} lists yet.</p>
