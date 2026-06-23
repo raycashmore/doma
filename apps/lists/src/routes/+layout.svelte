@@ -11,6 +11,7 @@
   import ConvexAuthGate from '$lib/shell/ConvexAuthGate.svelte';
   import NavIcon from '$lib/shell/NavIcon.svelte';
   import { appNavItems, getAppHref } from '$lib/shell/navigation';
+  import StartupPlaceholder from '$lib/shell/StartupPlaceholder.svelte';
 
   let { children }: { children: Snippet } = $props();
   let signInElement = $state<HTMLDivElement>();
@@ -60,6 +61,9 @@
   const activeAppId = 'lists';
   const homeNavItem = appNavItems[0]!;
   const settingsPath = '/settings/notifications';
+  const showAuthOverlay = $derived(
+    authState.status === 'error' || (authState.status === 'ready' && !authState.session)
+  );
 
   function resolveAppHref(item: (typeof appNavItems)[number]): string {
     return getAppHref(item, dev);
@@ -78,19 +82,16 @@
   />
 </svelte:head>
 
-{#if authState.status !== 'disabled' && (authState.status !== 'ready' || !authState.session)}
-  <main class="auth-screen">
-    <div class="sign-in-host" bind:this={signInElement}></div>
+<main class="auth-screen" class:auth-screen--hidden={!showAuthOverlay} aria-hidden={!showAuthOverlay}>
+  <div class="sign-in-host" bind:this={signInElement}></div>
 
-    {#if authState.status === 'loading'}
-      <section class="sr-only" aria-live="polite">Loading Lists...</section>
-    {:else if authState.status === 'error'}
-      <section class="auth-panel" role="alert">{authState.message}</section>
-    {/if}
-  </main>
-{:else}
-  <div class="min-h-screen bg-warm-bg-dark font-warm-body text-warm-text-primary md:h-screen md:overflow-hidden">
-    <div class="flex h-screen overflow-hidden bg-warm-bg-dark md:h-full">
+  {#if authState.status === 'error'}
+    <section class="auth-panel" role="alert">{authState.message}</section>
+  {/if}
+</main>
+
+<div class="min-h-screen bg-warm-bg-dark font-warm-body text-warm-text-primary md:h-screen md:overflow-hidden">
+  <div class="flex h-screen overflow-hidden bg-warm-bg-dark md:h-full">
     <nav
       aria-label="App navigation"
       class="hidden w-14 flex-col items-end py-6 text-warm-text-on-dark md:flex"
@@ -142,12 +143,24 @@
       </header>
 
       <main class="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 pb-4 md:overflow-hidden">
-        {#if shouldUseConvexAuth}
+        {#if authState.status === 'loading'}
+          <StartupPlaceholder
+            message="Opening Lists..."
+            detail="Checking your session and preparing your lists."
+          />
+        {:else if authState.status === 'disabled'}
+          {@render children()}
+        {:else if authState.status === 'ready' && authState.session && shouldUseConvexAuth}
           <ConvexAuthGate>
             {@render children()}
           </ConvexAuthGate>
-        {:else}
+        {:else if authState.status === 'ready' && authState.session}
           {@render children()}
+        {:else}
+          <StartupPlaceholder
+            message="Opening Lists..."
+            detail="Waiting for sign-in before loading your lists."
+          />
         {/if}
       </main>
 
@@ -171,9 +184,8 @@
         {/each}
       </nav>
     </div>
-    </div>
   </div>
-{/if}
+</div>
 
 {#if base}
   <span class="base-path" aria-hidden="true">{base}</span>

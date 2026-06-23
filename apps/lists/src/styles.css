@@ -91,11 +91,126 @@
 
 @layer components {
   .auth-screen {
-    @apply flex min-h-screen items-center justify-center bg-warm-bg-dark px-6 py-10;
+    @apply fixed inset-0 z-50 flex min-h-screen items-center justify-center bg-warm-bg-dark px-6 py-10;
+  }
+
+  .auth-screen--hidden {
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
   }
 
   .auth-panel {
     @apply grid min-h-[12rem] w-full max-w-[28rem] place-items-center rounded-[1.75rem] border border-white/10 bg-warm-bg px-6 py-8 text-center text-warm-text-secondary shadow-[0_24px_80px_rgba(17,12,9,0.18)];
+  }
+
+  .startup-placeholder {
+    @apply grid min-h-full content-start gap-4 text-warm-text-primary;
+  }
+
+  .startup-placeholder-copy {
+    @apply rounded-[28px] border border-white/10 bg-warm-bg-dark-muted px-5 py-4 text-warm-text-on-dark md:hidden;
+  }
+
+  .startup-placeholder-copy h2 {
+    @apply mb-2 mt-2 text-[1.5rem] text-warm-text-on-dark;
+  }
+
+  .startup-placeholder-copy p:last-child {
+    @apply m-0 text-sm text-warm-text-tertiary;
+  }
+
+  .startup-skeleton-grid {
+    @apply grid min-h-screen grid-cols-1 gap-px overflow-hidden rounded-[2rem] bg-warm-border lg:min-h-[calc(100vh-56px)] lg:grid-cols-[minmax(220px,280px)_minmax(360px,1fr)_minmax(260px,340px)];
+  }
+
+  .startup-skeleton-panel {
+    @apply min-w-0 bg-warm-bg p-6;
+  }
+
+  .startup-skeleton-main {
+    padding: 30px clamp(22px, 4vw, 44px);
+  }
+
+  .startup-skeleton-detail {
+    @apply bg-warm-bg-card;
+  }
+
+  .startup-skeleton-picker,
+  .startup-skeleton-detail {
+    @apply hidden lg:block;
+  }
+
+  .startup-skeleton-row,
+  .startup-skeleton-pill,
+  .startup-skeleton-card,
+  .startup-skeleton-input,
+  .startup-skeleton-item,
+  .startup-skeleton-detail-box {
+    @apply relative overflow-hidden rounded-full bg-warm-bg-card-soft;
+  }
+
+  .startup-skeleton-row::after,
+  .startup-skeleton-pill::after,
+  .startup-skeleton-card::after,
+  .startup-skeleton-input::after,
+  .startup-skeleton-item::after,
+  .startup-skeleton-detail-box::after {
+    animation: startup-shimmer 1.8s ease-in-out infinite;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.34), transparent);
+    content: '';
+    inset: 0;
+    position: absolute;
+    transform: translateX(-100%);
+  }
+
+  .startup-skeleton-row {
+    @apply h-4 w-2/3;
+  }
+
+  .startup-skeleton-row--heading {
+    @apply mb-5 h-7 w-36;
+  }
+
+  .startup-skeleton-row--title {
+    @apply mb-5 h-8 w-52;
+  }
+
+  .startup-skeleton-row--short {
+    @apply w-1/2;
+  }
+
+  .startup-skeleton-pill {
+    @apply mb-5 h-11 w-full rounded-full bg-warm-section-mortgage;
+  }
+
+  .startup-skeleton-stack {
+    @apply grid gap-3;
+  }
+
+  .startup-skeleton-card {
+    @apply h-16 rounded-2xl;
+  }
+
+  .startup-skeleton-card--active,
+  .startup-skeleton-item {
+    @apply bg-warm-bg-card;
+  }
+
+  .startup-skeleton-input {
+    @apply mb-7 h-14 rounded-xl;
+  }
+
+  .startup-skeleton-item {
+    @apply h-14 rounded-xl;
+  }
+
+  .startup-skeleton-item--short {
+    @apply w-4/5;
+  }
+
+  .startup-skeleton-detail-box {
+    @apply mb-6 h-28 rounded-3xl;
   }
 
   .lists-screen {
@@ -289,8 +404,29 @@
   display: none;
 }
 
+@keyframes startup-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .startup-skeleton-row::after,
+  .startup-skeleton-pill::after,
+  .startup-skeleton-card::after,
+  .startup-skeleton-input::after,
+  .startup-skeleton-item::after,
+  .startup-skeleton-detail-box::after {
+    animation: none;
+  }
+}
+
 @media (max-width: 940px) {
   .lists-screen {
+    min-height: 100vh;
+  }
+
+  .startup-skeleton-grid {
     min-height: 100vh;
   }
 

@@ -143,7 +143,22 @@ describe('ListsScreen offline fallback', () => {
     queryResults[0]?.set({ data: previewVisibleLists, isLoading: false });
     await tick();
 
-    expect(target.querySelector('[role="status"]')).toBeNull();
+    const statusMessages = Array.from(target.querySelectorAll('[role="status"]')).map(
+      (status) => status.textContent ?? ''
+    );
+    expect(statusMessages.some((message) => message.includes('Offline demo data'))).toBe(false);
+  });
+});
+
+describe('ListsScreen loading state', () => {
+  it('shows visible startup feedback while live lists are loading', async () => {
+    const target = await renderScreen();
+
+    const loadingStatus = target.querySelector('[role="status"]');
+
+    expect(loadingStatus).not.toBeNull();
+    expect(loadingStatus?.textContent).toContain('Loading lists');
+    expect(loadingStatus?.getAttribute('aria-hidden')).toBeNull();
   });
 });
 

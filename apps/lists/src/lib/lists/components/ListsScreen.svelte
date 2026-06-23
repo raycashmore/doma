@@ -30,6 +30,7 @@
     writeLastListPublicId
   } from '$lib/lists/routing';
   import { type ListItemPropertyValueInput,ListStoreFacade } from '$lib/lists/store.svelte';
+  import StartupPlaceholder from '$lib/shell/StartupPlaceholder.svelte';
 
   const USE_DEV_FIXTURE = dev && !import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
   // How long an authed dev session waits on an unresponsive Convex backend before
@@ -810,7 +811,10 @@
     This list is unavailable.
   </section>
 {:else if !usePreviewData && (store.listsLoading || (selectedPublicId && store.selectedLoading))}
-  <section aria-hidden="true" class="sr-only">Loading Lists...</section>
+  <StartupPlaceholder
+    message="Loading lists..."
+    detail="Bringing your saved lists and recent items into view."
+  />
 {:else if !usePreviewData && store.listsError}
   <section class="rounded-[32px] border border-warm-border bg-warm-bg-card p-8 text-sm text-warm-text-secondary">
     {describeError(store.listsError, 'Unable to load lists right now.')}
