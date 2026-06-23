@@ -1021,9 +1021,9 @@
                 </button>
               </form>
               <section
-                class="rounded-[24px] border border-warm-border bg-warm-bg p-2 md:flex md:min-h-0 md:flex-1 md:flex-col"
+                class="rounded-[24px] border border-warm-border bg-warm-bg py-2 md:flex md:min-h-0 md:flex-1 md:flex-col"
               >
-                <div class="flex items-center justify-between gap-3">
+                <div class="flex items-center justify-between gap-3 px-2">
                   <div>
                     <h3 class="pl-2 text-sm font-bold text-warm-text-primary">Items</h3>
                   </div>

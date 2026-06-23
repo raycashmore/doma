@@ -26,7 +26,7 @@
 <div
   role="button"
   tabindex="0"
-  class={`group flex items-center gap-2 rounded-xl px-1 py-2 transition-colors cursor-pointer ${
+  class={`group flex cursor-pointer items-center gap-2 rounded-none px-2 py-2 transition-colors ${
     selected ? 'bg-warm-section-spend/50' : 'hover:bg-warm-bg-card'
   }`}
   onclick={onOpenDetail}

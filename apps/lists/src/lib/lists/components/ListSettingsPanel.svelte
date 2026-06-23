@@ -120,16 +120,16 @@
   {/if}
 
   <div class="rounded-2xl border border-warm-border bg-warm-bg-card p-3">
-    <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-warm-text-secondary">Bot captures</p>
+    <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-warm-text-secondary">Default list</p>
     <p class="mt-1 text-xs text-warm-text-secondary">
       When a Telegram message names no list, captures land on your default list.
     </p>
     {#if personalLists.length || sharedLists.length}
       <label class="mt-2 block">
-        <span class="sr-only">Default list for bot captures</span>
+        <span class="sr-only">Default list</span>
         <select
           class="w-full rounded-xl border border-warm-border bg-warm-bg px-3 py-2 text-sm text-warm-text-primary outline-none"
-          aria-label="Default list for bot captures"
+          aria-label="Default list"
           data-testid="default-list-picker"
           value={currentDefaultPublicId ?? ''}
           onchange={(event) => {
