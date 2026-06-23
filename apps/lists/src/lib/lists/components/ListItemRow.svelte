@@ -59,7 +59,7 @@
     class={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 ${
       completed
         ? 'border-warm-accent bg-warm-accent text-warm-text-on-dark'
-        : 'border-warm-section-income text-transparent'
+        : 'border-warm-section-income bg-warm-bg-card text-transparent'
     }`}
     aria-label={completed ? `Mark ${item.title} active` : `Mark ${item.title} complete`}
     onclick={(e) => {
