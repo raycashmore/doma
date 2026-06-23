@@ -10,6 +10,7 @@ yarn.lock
 **/.next
 **/.output
 **/.turbo
+.superpowers
 
 # Generated code
 **/convex/_generated

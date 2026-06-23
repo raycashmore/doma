@@ -30,7 +30,12 @@
     selected ? 'bg-warm-section-spend/50' : 'hover:bg-warm-bg-card'
   }`}
   onclick={onOpenDetail}
-  onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenDetail(); } }}
+  onkeydown={(e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onOpenDetail();
+    }
+  }}
 >
   {#if completed}
     <span class="invisible flex h-7 w-6 shrink-0 items-center justify-center" aria-hidden="true">
@@ -52,10 +57,15 @@
   <button
     type="button"
     class={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 ${
-      completed ? 'border-warm-accent bg-warm-accent text-warm-text-on-dark' : 'border-warm-section-income text-transparent'
+      completed
+        ? 'border-warm-accent bg-warm-accent text-warm-text-on-dark'
+        : 'border-warm-section-income text-transparent'
     }`}
     aria-label={completed ? `Mark ${item.title} active` : `Mark ${item.title} complete`}
-    onclick={(e) => { e.stopPropagation(); onToggleComplete(); }}
+    onclick={(e) => {
+      e.stopPropagation();
+      onToggleComplete();
+    }}
   >
     <ListIcon name="check" size={12} />
   </button>
@@ -78,7 +88,10 @@
     type="button"
     class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-warm-accent opacity-0 transition-opacity hover:bg-warm-section-spend group-hover:opacity-100"
     aria-label={`Delete ${item.title}`}
-    onclick={(e) => { e.stopPropagation(); onDelete(); }}
+    onclick={(e) => {
+      e.stopPropagation();
+      onDelete();
+    }}
   >
     <ListIcon name="trash" size={15} />
   </button>

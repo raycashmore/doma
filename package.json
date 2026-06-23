@@ -1,12 +1,13 @@
 {
   "name": "doma",
   "private": true,
+  "type": "module",
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,mjs,cjs,json,css,md,yaml,yml}\"",
-    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mjs,cjs,json,css,md,yaml,yml}\"",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,mjs,cjs,json,css,svelte,md,yaml,yml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mjs,cjs,json,css,svelte,md,yaml,yml}\"",
     "check-types": "turbo run check-types",
     "test": "turbo run test",
     "bot": "pnpm --filter api-bot dev",
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "prettier": "^3.7.4",
+    "prettier-plugin-svelte": "^3.4.0",
     "tsx": "^4.21.0",
     "turbo": "^2.8.3",
     "typescript": "5.9.2",

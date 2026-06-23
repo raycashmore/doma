@@ -12,7 +12,7 @@
   import ListIcon from '$lib/lists/components/ListIcon.svelte';
   import ListItemRow from '$lib/lists/components/ListItemRow.svelte';
   import ListSettingsPanel from '$lib/lists/components/ListSettingsPanel.svelte';
-  import { parsePastedItems,type PasteEntry } from '$lib/lists/paste-parser';
+  import { parsePastedItems, type PasteEntry } from '$lib/lists/paste-parser';
   import {
     getSelectedItem,
     type PresentedList,
@@ -23,13 +23,8 @@
     type VisibleListItemPropertyValue,
     type VisibleListProperty
   } from '$lib/lists/presenter';
-  import {
-    buildListHref,
-    buildListsHomeHref,
-    readLastListPublicId,
-    writeLastListPublicId
-  } from '$lib/lists/routing';
-  import { type ListItemPropertyValueInput,ListStoreFacade } from '$lib/lists/store.svelte';
+  import { buildListHref, buildListsHomeHref, readLastListPublicId, writeLastListPublicId } from '$lib/lists/routing';
+  import { type ListItemPropertyValueInput, ListStoreFacade } from '$lib/lists/store.svelte';
   import StartupPlaceholder from '$lib/shell/StartupPlaceholder.svelte';
 
   const USE_DEV_FIXTURE = dev && !import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -64,9 +59,7 @@
   let renameTargetPublicId = $state<string | null>(null);
   let deleteTargetPublicId = $state<string | null>(null);
   let showCreateDialog = $state(false);
-  const listDialogOpen = $derived(
-    showCreateDialog || renameTargetPublicId !== null || deleteTargetPublicId !== null
-  );
+  const listDialogOpen = $derived(showCreateDialog || renameTargetPublicId !== null || deleteTargetPublicId !== null);
   let selectedItemId = $state<string | null>(null);
   let rightPanel = $state<'closed' | 'item' | 'settings'>('closed');
   let showMobileDetails = $state(false);
@@ -757,42 +750,42 @@
         {findPropertyValue}
       />
     {:else}
-    <ListSettingsPanel
-      properties={visibleProperties}
-      error={propertyMutationError}
-      onClose={() => {
-        rightPanel = 'closed';
-        closeMobileDetails();
-      }}
-      onReorder={handleReorderProperty}
-      {propertyRenameId}
-      {propertyRenameName}
-      setPropertyRenameName={(value) => (propertyRenameName = value)}
-      beginRename={beginPropertyRename}
-      cancelRename={cancelPropertyRename}
-      onSaveRename={() => void handleRenameProperty()}
-      pendingRemoveId={pendingRemovePropertyId}
-      requestRemove={(propertyId) => {
-        pendingRemovePropertyId = propertyId;
-        cancelPropertyRename();
-      }}
-      cancelRemove={() => (pendingRemovePropertyId = null)}
-      onConfirmRemove={() => void handleRemoveProperty()}
-      draftName={propertyDraftName}
-      setDraftName={(value) => (propertyDraftName = value)}
-      draftType={propertyDraftType}
-      setDraftType={(value) => (propertyDraftType = value)}
-      draftOptions={propertyDraftOptions}
-      setDraftOptions={(value) => (propertyDraftOptions = value)}
-      onCreate={() => void handleCreateProperty()}
-      {propertyTypeLabel}
-      onDeleteList={() => {
-        if (selectedRow) beginDelete(selectedRow as PresentedList);
-      }}
-      availableLists={visibleListRows}
-      currentDefaultPublicId={currentDefaultList?.publicId ?? null}
-      onSetDefaultList={(publicId) => void handleSetDefaultList(publicId)}
-    />
+      <ListSettingsPanel
+        properties={visibleProperties}
+        error={propertyMutationError}
+        onClose={() => {
+          rightPanel = 'closed';
+          closeMobileDetails();
+        }}
+        onReorder={handleReorderProperty}
+        {propertyRenameId}
+        {propertyRenameName}
+        setPropertyRenameName={(value) => (propertyRenameName = value)}
+        beginRename={beginPropertyRename}
+        cancelRename={cancelPropertyRename}
+        onSaveRename={() => void handleRenameProperty()}
+        pendingRemoveId={pendingRemovePropertyId}
+        requestRemove={(propertyId) => {
+          pendingRemovePropertyId = propertyId;
+          cancelPropertyRename();
+        }}
+        cancelRemove={() => (pendingRemovePropertyId = null)}
+        onConfirmRemove={() => void handleRemoveProperty()}
+        draftName={propertyDraftName}
+        setDraftName={(value) => (propertyDraftName = value)}
+        draftType={propertyDraftType}
+        setDraftType={(value) => (propertyDraftType = value)}
+        draftOptions={propertyDraftOptions}
+        setDraftOptions={(value) => (propertyDraftOptions = value)}
+        onCreate={() => void handleCreateProperty()}
+        {propertyTypeLabel}
+        onDeleteList={() => {
+          if (selectedRow) beginDelete(selectedRow as PresentedList);
+        }}
+        availableLists={visibleListRows}
+        currentDefaultPublicId={currentDefaultList?.publicId ?? null}
+        onSetDefaultList={(publicId) => void handleSetDefaultList(publicId)}
+      />
     {/if}
   </div>
 {/snippet}
@@ -811,22 +804,21 @@
     This list is unavailable.
   </section>
 {:else if !usePreviewData && (store.listsLoading || (selectedPublicId && store.selectedLoading))}
-  <StartupPlaceholder
-    message="Loading lists..."
-    detail="Bringing your saved lists and recent items into view."
-  />
+  <StartupPlaceholder message="Loading lists..." detail="Bringing your saved lists and recent items into view." />
 {:else if !usePreviewData && store.listsError}
   <section class="rounded-[32px] border border-warm-border bg-warm-bg-card p-8 text-sm text-warm-text-secondary">
     {describeError(store.listsError, 'Unable to load lists right now.')}
   </section>
 {:else}
   <section class="flex min-h-full flex-col gap-4 text-warm-text-primary md:h-full md:min-h-0 min-[1100px]:flex-row">
-    <aside class="hidden rounded-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_18px_44px_rgb(20_17_12_/_10%)] min-[900px]:max-h-[42vh] min-[900px]:min-h-0 min-[900px]:flex-col min-[1100px]:h-full min-[1100px]:max-h-none min-[1100px]:w-[300px] min-[900px]:flex">
-       <div class="flex shrink-0 items-center justify-between">
-          <h2 class="!mb-0 text-xl font-semibold text-warm-text-primary">My Lists</h2>
-          <button
-           type="button"
-           class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-warm-bg-dark text-sm font-semibold text-warm-text-on-dark"
+    <aside
+      class="hidden rounded-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_18px_44px_rgb(20_17_12_/_10%)] min-[900px]:max-h-[42vh] min-[900px]:min-h-0 min-[900px]:flex-col min-[1100px]:h-full min-[1100px]:max-h-none min-[1100px]:w-[300px] min-[900px]:flex"
+    >
+      <div class="flex shrink-0 items-center justify-between">
+        <h2 class="!mb-0 text-xl font-semibold text-warm-text-primary">My Lists</h2>
+        <button
+          type="button"
+          class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-warm-bg-dark text-sm font-semibold text-warm-text-on-dark"
           onclick={() => {
             showCreateDialog = true;
             createVisibility = listFilter;
@@ -869,11 +861,15 @@
                 type="button"
                 aria-label={`Open ${list.name} list`}
                 class={`w-full rounded-2xl border p-[14px] pr-12 text-left transition-colors ${
-                  list.selected ? 'border-warm-accent bg-warm-section-spend' : 'border-warm-border bg-warm-bg-card hover:bg-warm-section-mortgage'
+                  list.selected
+                    ? 'border-warm-accent bg-warm-section-spend'
+                    : 'border-warm-border bg-warm-bg-card hover:bg-warm-section-mortgage'
                 }`}
                 onclick={() => void navigateToList(list)}
               >
-                <p class={`truncate text-sm ${list.selected ? 'font-bold text-warm-text-primary' : 'font-semibold text-warm-text-secondary'}`}>
+                <p
+                  class={`truncate text-sm ${list.selected ? 'font-bold text-warm-text-primary' : 'font-semibold text-warm-text-secondary'}`}
+                >
                   {list.name}
                 </p>
                 <p class="mt-1 text-[11px] text-warm-text-secondary">{list.description}</p>
@@ -891,7 +887,6 @@
                   >
                     •••
                   </button>
-
                 </div>
               </div>
               {#if isMenuOpen}
@@ -899,20 +894,31 @@
                   type="button"
                   aria-label="Close list actions menu"
                   class="fixed inset-0 z-10 cursor-default border-0 bg-transparent p-0"
-                  onclick={(e) => { e.stopPropagation(); menuTargetPublicId = null; }}
+                  onclick={(e) => {
+                    e.stopPropagation();
+                    menuTargetPublicId = null;
+                  }}
                 ></button>
-                <div class="absolute right-[14px] top-12 z-20 w-36 rounded-2xl border border-warm-border bg-warm-bg-card p-2 shadow-[0_20px_40px_rgba(61,46,34,0.16)]">
+                <div
+                  class="absolute right-[14px] top-12 z-20 w-36 rounded-2xl border border-warm-border bg-warm-bg-card p-2 shadow-[0_20px_40px_rgba(61,46,34,0.16)]"
+                >
                   <button
                     type="button"
                     class="flex w-full rounded-xl px-3 py-2 text-left text-sm text-warm-text-primary hover:bg-warm-bg"
-                    onclick={(e) => { e.stopPropagation(); beginRename(list); }}
+                    onclick={(e) => {
+                      e.stopPropagation();
+                      beginRename(list);
+                    }}
                   >
                     Rename
                   </button>
                   <button
                     type="button"
                     class="flex w-full rounded-xl px-3 py-2 text-left text-sm text-warm-accent hover:bg-warm-bg"
-                    onclick={(e) => { e.stopPropagation(); beginDelete(list); }}
+                    onclick={(e) => {
+                      e.stopPropagation();
+                      beginDelete(list);
+                    }}
                   >
                     Delete
                   </button>
@@ -926,7 +932,9 @@
       </div>
     </aside>
 
-    <section class="min-w-0 flex-1 rounded-[28px] border border-warm-border bg-warm-bg-card px-3 py-5 shadow-[0_18px_44px_rgb(20_17_12_/_10%)] md:flex md:min-h-0 md:flex-col md:p-5">
+    <section
+      class="min-w-0 flex-1 rounded-[28px] border border-warm-border bg-warm-bg-card px-3 py-5 shadow-[0_18px_44px_rgb(20_17_12_/_10%)] md:flex md:min-h-0 md:flex-col md:p-5"
+    >
       {#if selectedRow}
         <div class="flex flex-col gap-4 md:min-h-0 md:flex-1">
           <div class="flex items-center justify-between gap-2 min-[900px]:hidden">
@@ -986,7 +994,9 @@
             <p class="text-sm text-warm-accent">{itemMutationError}</p>
           {/if}
 
-          <div class={`grid gap-4 md:min-h-0 md:flex-1 md:grid-rows-[minmax(0,1fr)] ${rightPanel !== 'closed' ? 'min-[900px]:grid-cols-[minmax(0,1fr)_300px]' : ''}`}>
+          <div
+            class={`grid gap-4 md:min-h-0 md:flex-1 md:grid-rows-[minmax(0,1fr)] ${rightPanel !== 'closed' ? 'min-[900px]:grid-cols-[minmax(0,1fr)_300px]' : ''}`}
+          >
             <div class="flex flex-col gap-4 md:min-h-0">
               <form
                 class="flex items-center gap-3 rounded-2xl border border-warm-border bg-warm-bg px-3 py-3 md:px-4"
@@ -1010,14 +1020,17 @@
                   Add
                 </button>
               </form>
-              <section class="rounded-[24px] border border-warm-border bg-warm-bg p-2 md:flex md:min-h-0 md:flex-1 md:flex-col">
+              <section
+                class="rounded-[24px] border border-warm-border bg-warm-bg p-2 md:flex md:min-h-0 md:flex-1 md:flex-col"
+              >
                 <div class="flex items-center justify-between gap-3">
                   <div>
                     <h3 class="pl-2 text-sm font-bold text-warm-text-primary">Items</h3>
-
                   </div>
                   <div class="flex items-center gap-2">
-                    <span class="rounded-full bg-warm-section-mortgage px-3 py-1 text-[11px] font-semibold text-warm-text-secondary">
+                    <span
+                      class="rounded-full bg-warm-section-mortgage px-3 py-1 text-[11px] font-semibold text-warm-text-secondary"
+                    >
                       {activeItems.length}
                     </span>
                     <button
@@ -1034,51 +1047,50 @@
                 </div>
 
                 <div class="md:min-h-0 md:flex-1 md:overflow-y-auto">
-                {#if activeDndItems.length}
-                  <ul
-                    class="mt-3 flex flex-col divide-y divide-warm-border/60"
-                    use:dragHandleZone={{ items: activeDndItems, flipDurationMs: 160, dropTargetStyle: {} }}
-                    onconsider={handleActiveConsider}
-                    onfinalize={handleActiveFinalize}
-                  >
-                    {#each activeDndItems as entry (entry.id)}
-                      <li>
-                        <ListItemRow
-                          item={entry.item}
-                          valueSummary={summarizeItemValues(entry.item)}
-                          completed={false}
-                          selected={selectedItemId === entry.item._id}
-                          onToggleComplete={() => void toggleItemCompletion(entry.item)}
-                          onOpenDetail={() => openItemDetails(entry.item._id)}
-                          onDelete={() => void removeItem(entry.item._id)}
-                        />
-                      </li>
-                    {/each}
-                  </ul>
-                {:else if !completedItems.length}
-                  <p class="mt-4 pl-4 text-sm text-warm-text-secondary">No items yet.</p>
-                {/if}
+                  {#if activeDndItems.length}
+                    <ul
+                      class="mt-3 flex flex-col divide-y divide-warm-border/60"
+                      use:dragHandleZone={{ items: activeDndItems, flipDurationMs: 160, dropTargetStyle: {} }}
+                      onconsider={handleActiveConsider}
+                      onfinalize={handleActiveFinalize}
+                    >
+                      {#each activeDndItems as entry (entry.id)}
+                        <li>
+                          <ListItemRow
+                            item={entry.item}
+                            valueSummary={summarizeItemValues(entry.item)}
+                            completed={false}
+                            selected={selectedItemId === entry.item._id}
+                            onToggleComplete={() => void toggleItemCompletion(entry.item)}
+                            onOpenDetail={() => openItemDetails(entry.item._id)}
+                            onDelete={() => void removeItem(entry.item._id)}
+                          />
+                        </li>
+                      {/each}
+                    </ul>
+                  {:else if !completedItems.length}
+                    <p class="mt-4 pl-4 text-sm text-warm-text-secondary">No items yet.</p>
+                  {/if}
 
-                {#if completedItems.length}
-                  <ul class="mt-1 flex flex-col divide-y divide-warm-border/60">
-                    {#each completedItems as item (item._id)}
-                      <li>
-                        <ListItemRow
-                          {item}
-                          valueSummary={summarizeItemValues(item)}
-                          completed={true}
-                          selected={selectedItemId === item._id}
-                          onToggleComplete={() => void toggleItemCompletion(item)}
-                          onOpenDetail={() => openItemDetails(item._id)}
-                          onDelete={() => void removeItem(item._id)}
-                        />
-                      </li>
-                    {/each}
-                  </ul>
-                {/if}
+                  {#if completedItems.length}
+                    <ul class="mt-1 flex flex-col divide-y divide-warm-border/60">
+                      {#each completedItems as item (item._id)}
+                        <li>
+                          <ListItemRow
+                            {item}
+                            valueSummary={summarizeItemValues(item)}
+                            completed={true}
+                            selected={selectedItemId === item._id}
+                            onToggleComplete={() => void toggleItemCompletion(item)}
+                            onOpenDetail={() => openItemDetails(item._id)}
+                            onDelete={() => void removeItem(item._id)}
+                          />
+                        </li>
+                      {/each}
+                    </ul>
+                  {/if}
                 </div>
               </section>
-
             </div>
 
             {#if rightPanel !== 'closed'}
@@ -1135,13 +1147,26 @@
       >
         <div class="mb-3 flex shrink-0 items-center justify-between">
           <h2 class="!mb-0 text-base font-semibold text-warm-text-primary">My Lists</h2>
-          <button type="button" class="flex h-8 w-8 items-center justify-center rounded-full text-warm-text-secondary" aria-label="Close list switcher" onclick={() => (showListSwitcher = false)}>
+          <button
+            type="button"
+            class="flex h-8 w-8 items-center justify-center rounded-full text-warm-text-secondary"
+            aria-label="Close list switcher"
+            onclick={() => (showListSwitcher = false)}
+          >
             <ListIcon name="close" size={16} />
           </button>
         </div>
         <div class="flex shrink-0 rounded-full bg-warm-section-mortgage p-1">
-          <button type="button" class={`flex-1 rounded-full px-3 py-2 text-[11px] font-bold ${listFilter === 'personal' ? 'bg-warm-text-primary text-warm-text-on-dark' : 'text-warm-text-secondary'}`} onclick={() => (listFilter = 'personal')}>Personal</button>
-          <button type="button" class={`flex-1 rounded-full px-3 py-2 text-[11px] font-bold ${listFilter === 'shared' ? 'bg-warm-text-primary text-warm-text-on-dark' : 'text-warm-text-secondary'}`} onclick={() => (listFilter = 'shared')}>Shared</button>
+          <button
+            type="button"
+            class={`flex-1 rounded-full px-3 py-2 text-[11px] font-bold ${listFilter === 'personal' ? 'bg-warm-text-primary text-warm-text-on-dark' : 'text-warm-text-secondary'}`}
+            onclick={() => (listFilter = 'personal')}>Personal</button
+          >
+          <button
+            type="button"
+            class={`flex-1 rounded-full px-3 py-2 text-[11px] font-bold ${listFilter === 'shared' ? 'bg-warm-text-primary text-warm-text-on-dark' : 'text-warm-text-secondary'}`}
+            onclick={() => (listFilter = 'shared')}>Shared</button
+          >
         </div>
         <div class="mt-3 flex min-h-[180px] flex-1 flex-col gap-1.5 overflow-y-auto pr-1">
           {#each filteredLists as list (list.publicId)}
@@ -1153,7 +1178,11 @@
                 void navigateToList(list);
               }}
             >
-              <p class={`truncate text-sm ${list.selected ? 'font-bold text-warm-text-primary' : 'font-semibold text-warm-text-secondary'}`}>{list.name}</p>
+              <p
+                class={`truncate text-sm ${list.selected ? 'font-bold text-warm-text-primary' : 'font-semibold text-warm-text-secondary'}`}
+              >
+                {list.name}
+              </p>
               <p class="mt-0.5 text-[11px] text-warm-text-secondary">{list.description}</p>
             </button>
           {/each}
@@ -1185,12 +1214,8 @@
       }}
     >
       {#if pastePreview}
-        <h2 id="paste-preview-title" class="font-warm-display text-[20px] text-warm-text-primary">
-          Add pasted items
-        </h2>
-        <p class="mt-1 text-sm text-warm-text-secondary">
-          Review the items below before adding them to the list.
-        </p>
+        <h2 id="paste-preview-title" class="font-warm-display text-[20px] text-warm-text-primary">Add pasted items</h2>
+        <p class="mt-1 text-sm text-warm-text-secondary">Review the items below before adding them to the list.</p>
 
         <ul class="mt-4 flex max-h-[46vh] flex-col gap-1.5 overflow-y-auto">
           {#each pastePreview as entry, index (index)}
@@ -1283,7 +1308,9 @@
               <button
                 type="button"
                 class={`flex-1 rounded-full px-3 py-2 text-[11px] font-bold ${
-                  createVisibility === 'shared' ? 'bg-warm-text-primary text-warm-text-on-dark' : 'text-warm-text-secondary'
+                  createVisibility === 'shared'
+                    ? 'bg-warm-text-primary text-warm-text-on-dark'
+                    : 'text-warm-text-secondary'
                 }`}
                 onclick={() => (createVisibility = 'shared')}
               >
@@ -1350,7 +1377,9 @@
           </form>
         {:else if deleteTargetPublicId}
           <h2 id="list-dialog-title" class="font-warm-display text-[26px] text-warm-text-primary">Delete list</h2>
-          <p class="mt-2 text-sm text-warm-text-secondary">This removes the list and its items from the current view.</p>
+          <p class="mt-2 text-sm text-warm-text-secondary">
+            This removes the list and its items from the current view.
+          </p>
 
           <div class="mt-5 flex gap-2">
             <button

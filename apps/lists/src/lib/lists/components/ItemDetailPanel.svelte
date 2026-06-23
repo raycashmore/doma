@@ -2,11 +2,7 @@
   import { untrack } from 'svelte';
 
   import ListIcon from '$lib/lists/components/ListIcon.svelte';
-  import type {
-    VisibleListItem,
-    VisibleListItemPropertyValue,
-    VisibleListProperty
-  } from '$lib/lists/presenter';
+  import type { VisibleListItem, VisibleListItemPropertyValue, VisibleListProperty } from '$lib/lists/presenter';
 
   let {
     item,
@@ -187,7 +183,9 @@
                 {/each}
               </select>
             {:else}
-              <label class="flex items-center justify-between rounded-xl border border-warm-border bg-warm-bg px-3 py-2 text-sm text-warm-text-primary">
+              <label
+                class="flex items-center justify-between rounded-xl border border-warm-border bg-warm-bg px-3 py-2 text-sm text-warm-text-primary"
+              >
                 <span>Checked</span>
                 <input
                   type="checkbox"
@@ -217,12 +215,10 @@
               <button
                 type="button"
                 class="flex-1 rounded-full bg-warm-text-primary px-3 py-2 text-xs font-bold text-warm-text-on-dark disabled:opacity-60"
-                disabled={
-                  (property.type === 'text' && !valueDraftText.trim()) ||
+                disabled={(property.type === 'text' && !valueDraftText.trim()) ||
                   (property.type === 'number' && valueDraftNumber === '') ||
                   (property.type === 'date' && !valueDraftDate) ||
-                  (property.type === 'select' && !valueDraftSelectOptionId)
-                }
+                  (property.type === 'select' && !valueDraftSelectOptionId)}
                 onclick={() => onSaveValue(property)}
               >
                 Save
