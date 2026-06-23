@@ -821,8 +821,8 @@
   </section>
 {:else}
   <section class="flex min-h-full flex-col gap-4 text-warm-text-primary md:h-full md:min-h-0 min-[1100px]:flex-row">
-    <aside class="hidden rounded-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_18px_44px_rgb(20_17_12_/_10%)] min-[900px]:block min-[1100px]:w-[300px]">
-       <div class="flex items-center justify-between">
+    <aside class="hidden rounded-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_18px_44px_rgb(20_17_12_/_10%)] min-[900px]:max-h-[42vh] min-[900px]:min-h-0 min-[900px]:flex-col min-[1100px]:h-full min-[1100px]:max-h-none min-[1100px]:w-[300px] min-[900px]:flex">
+       <div class="flex shrink-0 items-center justify-between">
           <h2 class="!mb-0 text-xl font-semibold text-warm-text-primary">My Lists</h2>
           <button
            type="button"
@@ -836,7 +836,7 @@
         </button>
       </div>
 
-      <div class="mt-4 flex rounded-full bg-warm-section-mortgage p-1">
+      <div class="mt-4 flex shrink-0 rounded-full bg-warm-section-mortgage p-1">
         <button
           type="button"
           class={`flex-1 rounded-full px-3 py-2 text-[11px] font-bold ${
@@ -857,7 +857,7 @@
         </button>
       </div>
 
-      <div class="mt-4 flex flex-col gap-3">
+      <div class="mt-4 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1">
         {#if filteredLists.length}
           {#each filteredLists as list (list.publicId)}
             {@const isMenuOpen = menuTargetPublicId === list.publicId}
@@ -1130,20 +1130,20 @@
         transition:fade={{ duration: 250 }}
       ></button>
       <section
-        class="fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-y-auto rounded-t-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_-12px_40px_rgba(61,46,34,0.18)] min-[900px]:hidden"
+        class="fixed inset-x-0 bottom-0 z-50 flex max-h-[80vh] min-h-[48vh] flex-col rounded-t-[28px] border border-warm-border bg-warm-bg-card p-5 shadow-[0_-12px_40px_rgba(61,46,34,0.18)] min-[900px]:hidden"
         transition:fly={{ y: 800, duration: 350, easing: cubicOut }}
       >
-        <div class="mb-3 flex items-center justify-between">
+        <div class="mb-3 flex shrink-0 items-center justify-between">
           <h2 class="!mb-0 text-base font-semibold text-warm-text-primary">My Lists</h2>
           <button type="button" class="flex h-8 w-8 items-center justify-center rounded-full text-warm-text-secondary" aria-label="Close list switcher" onclick={() => (showListSwitcher = false)}>
             <ListIcon name="close" size={16} />
           </button>
         </div>
-        <div class="flex rounded-full bg-warm-section-mortgage p-1">
+        <div class="flex shrink-0 rounded-full bg-warm-section-mortgage p-1">
           <button type="button" class={`flex-1 rounded-full px-3 py-2 text-[11px] font-bold ${listFilter === 'personal' ? 'bg-warm-text-primary text-warm-text-on-dark' : 'text-warm-text-secondary'}`} onclick={() => (listFilter = 'personal')}>Personal</button>
           <button type="button" class={`flex-1 rounded-full px-3 py-2 text-[11px] font-bold ${listFilter === 'shared' ? 'bg-warm-text-primary text-warm-text-on-dark' : 'text-warm-text-secondary'}`} onclick={() => (listFilter = 'shared')}>Shared</button>
         </div>
-        <div class="mt-3 flex flex-col gap-2">
+        <div class="mt-3 flex min-h-[180px] flex-1 flex-col gap-1.5 overflow-y-auto pr-1">
           {#each filteredLists as list (list.publicId)}
             <button
               type="button"
@@ -1163,7 +1163,7 @@
         </div>
         <button
           type="button"
-          class="mt-3 flex w-full items-center justify-center gap-2 rounded-full border border-warm-border px-4 py-2 text-sm font-semibold text-warm-text-secondary"
+          class="mt-3 flex w-full shrink-0 items-center justify-center gap-2 rounded-full border border-warm-border px-4 py-2 text-sm font-semibold text-warm-text-secondary"
           onclick={() => {
             showListSwitcher = false;
             showCreateDialog = true;
