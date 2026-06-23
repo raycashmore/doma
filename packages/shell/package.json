@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@repo/app-registry": "workspace:*",
+    "@repo/pwa": "workspace:*",
     "@repo/tokens": "workspace:*",
     "clsx": "^2.1.1",
     "lucide-react": "^0.561.0"

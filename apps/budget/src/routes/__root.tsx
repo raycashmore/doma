@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
 import { TanStackDevtools } from '@tanstack/react-devtools';
 
-import { AppFrame } from '@repo/shell';
+import { AppFrame, PwaUpdater } from '@repo/shell';
 import ConvexProvider from '../integrations/convex/provider';
 import appCss from '../styles.css?url';
 import type { ReactNode } from 'react';
@@ -19,11 +19,6 @@ const APP_BASE_URL = getBudgetBaseUrl((import.meta as any).env.DEV);
 const IS_PROD = Boolean((import.meta as any).env.PROD);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const IS_DEV = Boolean((import.meta as any).env.DEV);
-const SERVICE_WORKER_SCRIPT = `if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('${APP_BASE_URL}sw.js', { scope: '${APP_BASE_URL}' });
-  });
-}`;
 
 export const Route = createRootRoute({
   head: () => ({
@@ -89,7 +84,7 @@ function RootDocument() {
             />
           </ConvexProvider>
         </AuthGate>
-        {IS_PROD ? <script dangerouslySetInnerHTML={{ __html: SERVICE_WORKER_SCRIPT }} /> : null}
+        <PwaUpdater swUrl={`${APP_BASE_URL}sw.js`} scope={APP_BASE_URL} enabled={IS_PROD} />
         <Scripts />
       </body>
     </html>

@@ -18,6 +18,7 @@
     "@clerk/shared": "^4.17.1",
     "@repo/app-registry": "workspace:*",
     "@repo/convex": "workspace:*",
+    "@repo/pwa": "workspace:*",
     "@repo/tokens": "workspace:*",
     "@sveltejs/adapter-vercel": "^6.3.3",
     "@sveltejs/kit": "^2.65.0",
