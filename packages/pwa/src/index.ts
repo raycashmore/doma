@@ -1,16 +1,18 @@
 /**
  * Framework-agnostic service-worker registration with update handling.
  *
- * Works with both vite-plugin-pwa modes:
- * - `autoUpdate`: the generated worker skips waiting and claims clients, so a
- *   new build takes control and we reload silently via `controllerchange`.
- * - `prompt`: the worker waits until the page posts `SKIP_WAITING`. We surface
- *   `onNeedRefresh` so the UI can offer a "Reload" prompt, then `reload()`
- *   activates the waiting worker and the page reloads via `controllerchange`.
+ * The apps register with `injectRegister: false`, so vite-plugin-pwa does not
+ * bake `skipWaiting`/`clientsClaim` into the generated worker regardless of
+ * `registerType` — the worker always installs and then waits for a
+ * `SKIP_WAITING` message. This module owns the update lifecycle instead:
+ * - When a new build is installed and waiting, we call `onNeedRefresh`. The
+ *   caller decides whether to prompt the user or update immediately.
+ * - `reload()` posts `SKIP_WAITING` to activate the waiting worker; the page
+ *   then reloads via `controllerchange`.
  *
- * In both modes we poll `registration.update()` on an interval so a long-lived,
- * foregrounded PWA picks up new builds instead of waiting for the browser's own
- * (~24h) background check. The poll only runs while the page is open.
+ * We poll `registration.update()` on an interval so a long-lived, foregrounded
+ * PWA picks up new builds instead of waiting for the browser's own (~24h)
+ * background check. The poll only runs while the page is open.
  */
 export type RegisterServiceWorkerOptions = {
   /** URL of the generated service worker, e.g. `/sw.js` or `/lists/sw.js`. */

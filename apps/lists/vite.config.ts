@@ -49,7 +49,11 @@ export default defineConfig(({ command }) => {
           ]
         },
         workbox: {
-          globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2,webmanifest}'],
+          // Exclude webmanifest from globbing: vite-plugin-pwa already adds the
+          // manifest to the precache from its `manifest` config, so globbing the
+          // static `manifest.webmanifest` too produces a duplicate precache entry
+          // with a conflicting revision (add-to-cache-list-conflicting-entries).
+          globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
           runtimeCaching: [
             {
               urlPattern: /^https:\/\/.*\.convex\.cloud\/.*/,
