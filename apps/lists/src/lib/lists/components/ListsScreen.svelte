@@ -932,25 +932,39 @@
           <div class="flex items-center justify-between gap-2 min-[900px]:hidden">
             <button
               type="button"
-              class="flex items-center gap-2 rounded-full bg-warm-bg-dark px-4 py-2 text-sm font-semibold text-warm-text-on-dark"
+              class="flex min-w-0 items-center gap-2 rounded-full bg-warm-bg-dark px-5 py-2.5 text-base font-semibold text-warm-text-on-dark"
               onclick={() => (showListSwitcher = true)}
             >
-              {selectedRow?.name ?? 'Lists'}
+              <span class="truncate">{selectedRow?.name ?? 'Lists'}</span>
               <ListIcon name="chevron-down" size={16} />
             </button>
-            <button
-              type="button"
-              class="flex h-9 w-9 items-center justify-center rounded-full bg-warm-bg-dark text-warm-text-on-dark"
-              aria-label="New list"
-              onclick={() => {
-                showCreateDialog = true;
-                createVisibility = listFilter;
-              }}
-            >
-              <ListIcon name="plus" size={18} />
-            </button>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                class="flex h-9 w-9 items-center justify-center rounded-full border border-warm-border text-warm-text-secondary hover:text-warm-text-primary"
+                aria-label="List settings"
+                onclick={() => {
+                  selectedItemId = null;
+                  rightPanel = rightPanel === 'settings' ? 'closed' : 'settings';
+                  showMobileDetails = rightPanel === 'settings';
+                }}
+              >
+                <ListIcon name="settings" size={18} />
+              </button>
+              <button
+                type="button"
+                class="flex h-9 w-9 items-center justify-center rounded-full bg-warm-bg-dark text-warm-text-on-dark"
+                aria-label="New list"
+                onclick={() => {
+                  showCreateDialog = true;
+                  createVisibility = listFilter;
+                }}
+              >
+                <ListIcon name="plus" size={18} />
+              </button>
+            </div>
           </div>
-          <div class="flex items-center justify-between">
+          <div class="hidden items-center justify-between min-[900px]:flex">
             <h2 class="!mb-0 font-warm-display text-xl font-semibold text-warm-text-primary">
               {selectedRow.name}
             </h2>
