@@ -206,14 +206,15 @@ describe('ListsScreen offline fallback', () => {
 });
 
 describe('ListsScreen loading state', () => {
-  it('shows visible startup feedback while live lists are loading', async () => {
+  it('shows skeleton loading feedback without the startup copy card', async () => {
     const target = await renderScreen();
 
     const loadingStatus = target.querySelector('[role="status"]');
 
     expect(loadingStatus).not.toBeNull();
     expect(loadingStatus?.textContent).toContain('Loading lists');
-    expect(loadingStatus?.getAttribute('aria-hidden')).toBeNull();
+    expect(target.textContent).not.toContain('Getting your lists ready');
+    expect(target.querySelector('.startup-skeleton-grid')).not.toBeNull();
   });
 });
 
