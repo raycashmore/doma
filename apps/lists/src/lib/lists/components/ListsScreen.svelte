@@ -933,7 +933,7 @@
     </aside>
 
     <section
-      class="min-w-0 flex-1 rounded-[28px] border border-warm-border bg-warm-bg-card px-3 py-5 shadow-[0_18px_44px_rgb(20_17_12_/_10%)] md:flex md:min-h-0 md:flex-col md:p-5"
+      class="min-w-0 flex-1 rounded-[28px] border border-warm-border bg-warm-bg-card px-3 py-3 shadow-[0_18px_44px_rgb(20_17_12_/_10%)] md:flex md:min-h-0 md:flex-col md:p-5"
     >
       {#if selectedRow}
         <div class="flex flex-col gap-4 md:min-h-0 md:flex-1">
