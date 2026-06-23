@@ -14,8 +14,8 @@ export default defineConfig(({ command }) => {
       tailwindcss(),
       sveltekit(),
       VitePWA({
-        injectRegister: 'auto',
-        registerType: 'autoUpdate',
+        injectRegister: false,
+        registerType: 'prompt',
         base: listsBaseUrl,
         scope: listsBaseUrl,
         manifest: {

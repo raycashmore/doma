@@ -3,7 +3,7 @@
 
   import { setupAuth, setupConvex } from 'convex-svelte';
   import type { Snippet } from 'svelte';
-  import { onMount } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
 
   import { dev } from '$app/environment';
   import { base } from '$app/paths';
@@ -11,11 +11,14 @@
   import ConvexAuthGate from '$lib/shell/ConvexAuthGate.svelte';
   import NavIcon from '$lib/shell/NavIcon.svelte';
   import { appNavItems, getAppHref } from '$lib/shell/navigation';
+  import { registerServiceWorker, type ServiceWorkerController } from '$lib/shell/pwa';
   import StartupPlaceholder from '$lib/shell/StartupPlaceholder.svelte';
 
   let { children }: { children: Snippet } = $props();
   let signInElement = $state<HTMLDivElement>();
   let authState = $state<ClerkAuthState>({ status: 'loading' });
+  let updateReady = $state(false);
+  let swController: ServiceWorkerController | undefined;
   const clerkPublishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefined;
   const convexUrl = import.meta.env.VITE_CONVEX_URL as string | undefined;
   const shouldUseConvexAuth = Boolean(clerkPublishableKey);
@@ -39,6 +42,16 @@
   }
 
   onMount(async () => {
+    if (!dev) {
+      swController = registerServiceWorker({
+        swUrl: `${base}/sw.js`,
+        scope: `${base}/`,
+        onNeedRefresh: () => {
+          updateReady = true;
+        }
+      });
+    }
+
     if (isMissingConvexUrl) {
       authState = {
         status: 'error',
@@ -72,6 +85,14 @@
   function resolveSettingsHref(): string {
     return dev ? `http://localhost:${homeNavItem.devPort}${settingsPath}` : settingsPath;
   }
+
+  function reloadToUpdate(): void {
+    swController?.reload();
+  }
+
+  onDestroy(() => {
+    swController?.dispose();
+  });
 </script>
 
 <svelte:head>
@@ -172,6 +193,23 @@
     </div>
   </div>
 </div>
+
+{#if updateReady}
+  <div
+    role="status"
+    aria-live="polite"
+    class="fixed inset-x-0 bottom-[max(1rem,env(safe-area-inset-bottom))] z-50 mx-auto flex w-[calc(100%-2rem)] max-w-sm items-center gap-3 rounded-2xl border border-warm-border bg-warm-bg-dark-muted px-4 py-3 text-warm-text-on-dark shadow-lg"
+  >
+    <span class="flex-1 text-sm">A new version is available.</span>
+    <button
+      type="button"
+      onclick={reloadToUpdate}
+      class="rounded-lg bg-warm-accent px-3 py-1 text-sm font-medium text-warm-bg transition-opacity hover:opacity-90"
+    >
+      Reload
+    </button>
+  </div>
+{/if}
 
 {#if base}
   <span class="base-path" aria-hidden="true">{base}</span>

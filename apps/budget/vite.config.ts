@@ -40,7 +40,7 @@ const config = defineConfig(({ command }) => ({
     }),
     VitePWA({
       injectRegister: false,
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       base: BUDGET_BASE_URL,
       outDir: '.output/public',
       scope: BUDGET_BASE_URL,

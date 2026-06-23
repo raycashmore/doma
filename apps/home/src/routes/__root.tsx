@@ -2,7 +2,7 @@ import { HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-r
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
 import { TanStackDevtools } from '@tanstack/react-devtools';
 
-import { AppFrame } from '@repo/shell';
+import { AppFrame, PwaUpdater } from '@repo/shell';
 import appCss from '../styles.css?url';
 import { AuthGate } from '@/integrations/auth/AuthGate';
 
@@ -12,11 +12,6 @@ const CLERK_KEY = (import.meta as any).env.VITE_CLERK_PUBLISHABLE_KEY;
 const IS_PROD = Boolean((import.meta as any).env.PROD);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const IS_DEV = Boolean((import.meta as any).env.DEV);
-const SERVICE_WORKER_SCRIPT = `if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js', { scope: '/' });
-  });
-}`;
 
 export const Route = createRootRoute({
   head: () => ({
@@ -69,7 +64,7 @@ function RootDocument() {
             ]}
           />
         </AuthGate>
-        {IS_PROD ? <script dangerouslySetInnerHTML={{ __html: SERVICE_WORKER_SCRIPT }} /> : null}
+        <PwaUpdater swUrl="/sw.js" scope="/" enabled={IS_PROD} silent />
         <Scripts />
       </body>
     </html>
