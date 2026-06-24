@@ -228,24 +228,42 @@ export function createDeterministicMorningBriefing({
   };
 }
 
-export function createMorningBriefingFallback({ events }: { events: MorningBriefingEvent[] }) {
+export function createMorningBriefingFallback({
+  events,
+  timeZone,
+  members
+}: {
+  events: MorningBriefingEvent[];
+  timeZone: string;
+  members: ScheduleDisplayMember[];
+}) {
   const dailyRequirements = events.filter((event) => event.kind === 'dailyRequirements');
-  const routineItems = requirementRoutineItems(dailyRequirements);
+  const morning = buildPersonLines(dailyRequirements.filter((event) => isMorningEvent(event, timeZone)));
+  const afternoon = buildPersonLines(dailyRequirements.filter((event) => !isMorningEvent(event, timeZone)));
   const briefing: MorningBriefing = {
     ...emptyBriefing(fallbackMorningBriefingHeadline(dailyRequirements.length)),
-    routineItems
+    morning,
+    afternoon
   };
-  const message = formatMorningBriefing(briefing);
+  const message = formatMorningBriefing(briefing, members);
 
   return {
     briefing,
     message,
-    sourceIds: routineItems.flatMap((item) => item.sourceIds)
+    sourceIds: [...morning, ...afternoon].flatMap((line) => line.sourceIds)
   };
 }
 
-export function formatMorningBriefingFallback({ events }: { events: MorningBriefingEvent[] }) {
-  const { message, sourceIds } = createMorningBriefingFallback({ events });
+export function formatMorningBriefingFallback({
+  events,
+  timeZone,
+  members
+}: {
+  events: MorningBriefingEvent[];
+  timeZone: string;
+  members: ScheduleDisplayMember[];
+}) {
+  const { message, sourceIds } = createMorningBriefingFallback({ events, timeZone, members });
   return {
     message,
     sourceIds

@@ -291,14 +291,18 @@ describe('collectMorningBriefingEvents', () => {
 });
 
 describe('formatMorningBriefingFallback', () => {
-  it('includes daily requirements events only', () => {
+  it('includes daily requirements events only, grouped into time blocks', () => {
     expect(
       formatMorningBriefingFallback({
+        timeZone,
+        members,
         events: [
           event({
             googleEventId: 'requirements-1',
             calendarId: 'requirements-calendar',
             kind: 'dailyRequirements',
+            allDay: true,
+            who: ['childA'],
             title: 'Sports uniform',
             description: 'Bring sports bag'
           }),
@@ -306,13 +310,15 @@ describe('formatMorningBriefingFallback', () => {
         ]
       })
     ).toEqual({
-      message: "Today:\nToday's requirements\n\nPack / bring\n- Bring sports bag",
+      message: "Today:\nToday's requirements\n\nThis morning:\n- Child A: Bring sports bag",
       sourceIds: ['requirements-calendar:requirements-1:1781218800000']
     });
   });
 
   it('uses deterministic empty fallback text when no daily requirements exist', () => {
-    expect(formatMorningBriefingFallback({ events: [event({ googleEventId: 'ordinary-1' })] })).toEqual({
+    expect(
+      formatMorningBriefingFallback({ timeZone, members, events: [event({ googleEventId: 'ordinary-1' })] })
+    ).toEqual({
       message: 'Today:\nNo daily requirements found.',
       sourceIds: []
     });
