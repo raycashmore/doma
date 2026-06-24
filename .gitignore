@@ -45,6 +45,7 @@ yarn-error.log*
 # Local only
 /data
 /docs/superpowers/
+/.superpowers/
 design/*.local/
 packages/convex/scripts/*.xlsx
 packages/convex/scripts/archive/
