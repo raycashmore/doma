@@ -140,16 +140,47 @@ function sanitizeBriefingText(text: string) {
     .trim();
 }
 
+function isMorningEvent(event: MorningBriefingEvent, timeZone: string) {
+  if (event.allDay) return true;
+  const hour = Number(
+    new Intl.DateTimeFormat('en-AU', { timeZone, hour: '2-digit', hourCycle: 'h23' }).format(new Date(event.start))
+  );
+  return hour < 12;
+}
+
+function eventDetail(event: MorningBriefingEvent) {
+  return event.description?.trim() || event.title.trim();
+}
+
+export function buildPersonLines(events: MorningBriefingEvent[]): BriefingLine[] {
+  const groups = new Map<string, BriefingLine>();
+  for (const event of events) {
+    const key = event.who.join('|');
+    const sourceId = sourceIdForEvent(event);
+    const detail = eventDetail(event);
+    const existing = groups.get(key);
+    if (existing) {
+      existing.text = `${existing.text}; ${detail}`;
+      existing.sourceIds.push(sourceId);
+    } else {
+      groups.set(key, { text: detail, who: event.who, sourceIds: [sourceId] });
+    }
+  }
+  return [...groups.values()];
+}
+
 export function createDeterministicMorningBriefing({
   localDate,
   timeZone,
   events,
-  calendarConfigs
+  calendarConfigs,
+  members
 }: {
   localDate: string;
   timeZone: string;
   calendarConfigs: CalendarConfig[];
   events: MorningBriefingEvent[];
+  members: ScheduleDisplayMember[];
 }): DeterministicMorningBriefing {
   if (!calendarConfigs.some((calendar) => calendar.kind === 'dailyRequirements')) {
     const briefing = emptyBriefing(
@@ -161,7 +192,7 @@ export function createDeterministicMorningBriefing({
       generationStatus: 'setupProblem',
       sourceIds: [],
       briefing,
-      message: formatMorningBriefing(briefing)
+      message: formatMorningBriefing(briefing, members)
     };
   }
 
@@ -169,18 +200,20 @@ export function createDeterministicMorningBriefing({
   const dailyRequirements = localEvents.filter((event) => event.kind === 'dailyRequirements');
 
   if (dailyRequirements.length > 0) {
-    const routineItems = requirementRoutineItems(dailyRequirements);
+    const morning = buildPersonLines(dailyRequirements.filter((event) => isMorningEvent(event, timeZone)));
+    const afternoon = buildPersonLines(dailyRequirements.filter((event) => !isMorningEvent(event, timeZone)));
     const briefing: MorningBriefing = {
       ...emptyBriefing("Today's requirements"),
-      routineItems
+      morning,
+      afternoon
     };
     return {
       briefingKind: 'morning',
       localDate,
       generationStatus: 'deterministic',
-      sourceIds: routineItems.flatMap((item) => item.sourceIds),
+      sourceIds: [...morning, ...afternoon].flatMap((line) => line.sourceIds),
       briefing,
-      message: formatMorningBriefing(briefing)
+      message: formatMorningBriefing(briefing, members)
     };
   }
 
@@ -191,36 +224,8 @@ export function createDeterministicMorningBriefing({
     generationStatus: 'deterministic',
     sourceIds: [],
     briefing,
-    message: formatMorningBriefing(briefing)
+    message: formatMorningBriefing(briefing, members)
   };
-}
-
-function requirementText(event: MorningBriefingEvent) {
-  const detail = event.description?.trim() || event.title.trim();
-  return `${event.who.join(', ')}: ${detail}`;
-}
-
-function requirementTags(event: MorningBriefingEvent): BriefingItem['tags'] {
-  const detail = (event.description?.trim() || event.title.trim()).toLowerCase();
-
-  if (/\b(wear|uniform|clothes|shoes)\b/.test(detail)) return ['wear'];
-  if (/\b(remember|homework|prepare|prep|check)\b/.test(detail)) return ['remember'];
-  if (/\b(leave early|leave earlier|early)\b/.test(detail)) return ['leaveEarlier'];
-  if (/\b(drop|pickup|pick up|handoff|collect)\b/.test(detail)) return ['coordinate'];
-
-  return ['bring'];
-}
-
-export function requirementRoutineItems(events: MorningBriefingEvent[]) {
-  return events.map((requirement): BriefingItem => {
-    const sourceId = sourceIdForEvent(requirement);
-    return {
-      text: requirementText(requirement),
-      kind: 'routine',
-      tags: requirementTags(requirement),
-      sourceIds: [sourceId]
-    };
-  });
 }
 
 export function createMorningBriefingFallback({ events }: { events: MorningBriefingEvent[] }) {

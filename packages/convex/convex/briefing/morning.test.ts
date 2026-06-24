@@ -124,13 +124,14 @@ This morning:
 });
 
 describe('createDeterministicMorningBriefing', () => {
-  it('treats missing daily requirements calendar config as a setup problem', () => {
+  it('treats a missing daily requirements calendar as a setup problem', () => {
     expect(
       createDeterministicMorningBriefing({
         localDate,
         timeZone,
-        calendarConfigs: [{ calendarId: 'calendar-a', who: 'memberA' }],
-        events: []
+        calendarConfigs: [{ calendarId: 'calendar-a', who: 'childA' }],
+        events: [],
+        members
       })
     ).toEqual({
       briefingKind: 'morning',
@@ -140,98 +141,122 @@ describe('createDeterministicMorningBriefing', () => {
       briefing: {
         shouldSend: true,
         headline: "Daily requirements calendar is not configured yet, so I can't check day-specific requirements.",
-        routineItems: [],
-        importantItems: [],
-        timingNotes: [],
-        uncertaintyNotes: [],
+        morning: [],
+        afternoon: [],
+        watchouts: [],
         sourceIdsIgnored: []
       },
       message: "Today:\nDaily requirements calendar is not configured yet, so I can't check day-specific requirements."
     });
   });
 
-  it('creates deterministic routine items with source traceability from daily requirements', () => {
-    expect(
-      createDeterministicMorningBriefing({
-        localDate,
-        timeZone,
-        calendarConfigs: [{ calendarId: 'requirements-calendar', who: 'shared', kind: 'dailyRequirements' }],
-        events: [
-          event({
-            googleEventId: 'requirements-1',
-            calendarId: 'requirements-calendar',
-            kind: 'dailyRequirements',
-            title: 'Sports uniform',
-            description: 'Bring sports bag'
-          })
-        ]
-      })
-    ).toMatchObject({
-      briefingKind: 'morning',
+  it('assigns requirements to morning or afternoon by event start time and groups per person', () => {
+    const result = createDeterministicMorningBriefing({
       localDate,
+      timeZone,
+      calendarConfigs: [{ calendarId: 'requirements-calendar', who: 'shared', kind: 'dailyRequirements' }],
+      events: [
+        // 8am Sydney -> morning
+        event({
+          googleEventId: 'morning-req',
+          calendarId: 'requirements-calendar',
+          kind: 'dailyRequirements',
+          start: Date.parse('2026-06-11T22:00:00.000Z'),
+          end: Date.parse('2026-06-11T22:30:00.000Z'),
+          who: ['childA'],
+          description: 'Wear sport clothes'
+        }),
+        // 4pm Sydney -> afternoon
+        event({
+          googleEventId: 'afternoon-req',
+          calendarId: 'requirements-calendar',
+          kind: 'dailyRequirements',
+          start: Date.parse('2026-06-12T06:00:00.000Z'),
+          end: Date.parse('2026-06-12T06:30:00.000Z'),
+          who: ['childA'],
+          description: 'Bring water bottle for dancing'
+        })
+      ],
+      members
+    });
+
+    expect(result).toMatchObject({
       generationStatus: 'deterministic',
-      sourceIds: ['requirements-calendar:requirements-1:1781218800000'],
       briefing: {
         headline: "Today's requirements",
-        routineItems: [
+        morning: [
           {
-            text: 'memberA: Bring sports bag',
-            kind: 'routine',
-            tags: ['bring'],
-            sourceIds: ['requirements-calendar:requirements-1:1781218800000']
+            text: 'Wear sport clothes',
+            who: ['childA'],
+            sourceIds: ['requirements-calendar:morning-req:1781215200000']
           }
         ],
-        sourceIdsIgnored: []
-      },
-      message: "Today:\nToday's requirements\n\nPack / bring\n- Bring sports bag"
-    });
-  });
-
-  it('tags deterministic daily requirements by obvious action words', () => {
-    expect(
-      createDeterministicMorningBriefing({
-        localDate,
-        timeZone,
-        calendarConfigs: [{ calendarId: 'requirements-calendar', who: 'shared', kind: 'dailyRequirements' }],
-        events: [
-          event({
-            googleEventId: 'requirements-1',
-            calendarId: 'requirements-calendar',
-            kind: 'dailyRequirements',
-            description: 'Wear sport clothes'
-          }),
-          event({
-            googleEventId: 'requirements-2',
-            calendarId: 'requirements-calendar',
-            kind: 'dailyRequirements',
-            description: 'Remember homework'
-          }),
-          event({
-            googleEventId: 'requirements-3',
-            calendarId: 'requirements-calendar',
-            kind: 'dailyRequirements',
-            description: 'Bring water bottle'
-          })
+        afternoon: [
+          {
+            text: 'Bring water bottle for dancing',
+            who: ['childA'],
+            sourceIds: ['requirements-calendar:afternoon-req:1781244000000']
+          }
         ]
-      }).message
-    ).toBe(`Today:
+      }
+    });
+    expect(result.message).toBe(`Today:
 Today's requirements
 
-Before leaving
-- Wear sport clothes
-- Remember homework
+This morning:
+- Child A: Wear sport clothes
 
-Pack / bring
-- Bring water bottle`);
+This afternoon:
+- Child A: Bring water bottle for dancing`);
   });
 
-  it('returns deterministic weekday quiet output when no actionable items exist', () => {
+  it('treats all-day requirements as morning and combines a person\'s items', () => {
+    const result = createDeterministicMorningBriefing({
+      localDate,
+      timeZone,
+      calendarConfigs: [{ calendarId: 'requirements-calendar', who: 'shared', kind: 'dailyRequirements' }],
+      events: [
+        event({
+          googleEventId: 'all-day-1',
+          calendarId: 'requirements-calendar',
+          kind: 'dailyRequirements',
+          allDay: true,
+          who: ['childA'],
+          description: 'Wear sport clothes'
+        }),
+        event({
+          googleEventId: 'all-day-2',
+          calendarId: 'requirements-calendar',
+          kind: 'dailyRequirements',
+          allDay: true,
+          who: ['childA'],
+          description: 'Bring homework'
+        })
+      ],
+      members
+    });
+
+    expect(result.briefing.morning).toEqual([
+      {
+        text: 'Wear sport clothes; Bring homework',
+        who: ['childA'],
+        sourceIds: [
+          'requirements-calendar:all-day-1:1781218800000',
+          'requirements-calendar:all-day-2:1781218800000'
+        ]
+      }
+    ]);
+    expect(result.briefing.afternoon).toEqual([]);
+  });
+
+  it('returns deterministic quiet output when no requirements exist', () => {
     expect(
       createDeterministicMorningBriefing({
         localDate,
         timeZone,
         calendarConfigs: [{ calendarId: 'requirements-calendar', who: 'shared', kind: 'dailyRequirements' }],
-        events: []
+        events: [],
+        members
       }).message
     ).toBe('Today:\nNormal day. No special requirements found.');
   });
