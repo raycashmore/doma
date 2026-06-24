@@ -67,12 +67,8 @@ describe('createAiMorningBriefing', () => {
       return {
         shouldSend: true,
         headline: 'Sports kit and an afternoon handoff.',
-        morning: [
-          { text: 'Bring sports bag', who: ['childA'], sourceIds: [requirement?.sourceId ?? 'missing'] }
-        ],
-        afternoon: [
-          { text: 'drop off and pick up', who: ['adultA'], sourceIds: [handoff?.sourceId ?? 'missing'] }
-        ],
+        morning: [{ text: 'Bring sports bag', who: ['childA'], sourceIds: [requirement?.sourceId ?? 'missing'] }],
+        afternoon: [{ text: 'drop off and pick up', who: ['adultA'], sourceIds: [handoff?.sourceId ?? 'missing'] }],
         watchouts: [],
         sourceIdsIgnored: []
       };
@@ -109,9 +105,7 @@ This afternoon:
       return {
         shouldSend: true,
         headline: 'Sports kit and a clash to watch.',
-        morning: [
-          { text: 'Bring sports bag', who: ['childA'], sourceIds: [requirement?.sourceId ?? 'missing'] }
-        ],
+        morning: [{ text: 'Bring sports bag', who: ['childA'], sourceIds: [requirement?.sourceId ?? 'missing'] }],
         afternoon: [],
         watchouts: [
           { text: 'Two pickups clash at pickup time', who: ['adultA'], sourceIds: [handoff?.sourceId ?? 'missing'] }
@@ -293,32 +287,33 @@ describe('morningBriefingSystemPrompt', () => {
 
 describe('createOpenAiMorningBriefingProvider', () => {
   it('requests a strict structured morning briefing and parses the JSON response', async () => {
-    const fetchImpl = vi.fn(async () =>
-      new Response(
-        JSON.stringify({
-          choices: [
-            {
-              message: {
-                content: JSON.stringify({
-                  shouldSend: true,
-                  headline: 'Test',
-                  morning: [],
-                  afternoon: [],
-                  watchouts: [],
-                  sourceIdsIgnored: []
-                })
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            choices: [
+              {
+                message: {
+                  content: JSON.stringify({
+                    shouldSend: true,
+                    headline: 'Test',
+                    morning: [],
+                    afternoon: [],
+                    watchouts: [],
+                    sourceIdsIgnored: []
+                  })
+                }
               }
-            }
-          ]
-        })
-      )
+            ]
+          })
+        )
     );
     const provider = createOpenAiMorningBriefingProvider({ apiKey: 'key', model: 'gpt-test', fetchImpl });
 
     const result = await provider({ localDate, timeZone, sources: [] });
 
     expect(result).toMatchObject({ shouldSend: true, headline: 'Test' });
-    const body = JSON.parse(((fetchImpl.mock.calls[0] as unknown as [unknown, RequestInit])[1]).body as string);
+    const body = JSON.parse((fetchImpl.mock.calls[0] as unknown as [unknown, RequestInit])[1].body as string);
     expect(body.response_format.json_schema.schema).toEqual(morningBriefingOutputJsonSchema);
   });
 });

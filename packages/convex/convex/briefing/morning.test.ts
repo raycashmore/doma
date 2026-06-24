@@ -210,7 +210,7 @@ This afternoon:
 - Child A: Bring water bottle for dancing`);
   });
 
-  it('treats all-day requirements as morning and combines a person\'s items', () => {
+  it("treats all-day requirements as morning and combines a person's items", () => {
     const result = createDeterministicMorningBriefing({
       localDate,
       timeZone,
@@ -240,10 +240,7 @@ This afternoon:
       {
         text: 'Wear sport clothes; Bring homework',
         who: ['childA'],
-        sourceIds: [
-          'requirements-calendar:all-day-1:1781218800000',
-          'requirements-calendar:all-day-2:1781218800000'
-        ]
+        sourceIds: ['requirements-calendar:all-day-1:1781218800000', 'requirements-calendar:all-day-2:1781218800000']
       }
     ]);
     expect(result.briefing.afternoon).toEqual([]);

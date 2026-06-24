@@ -42,13 +42,17 @@ type AiBriefingParseFailure =
   | { reason: 'invalid_top_level_fields' }
   | { reason: 'invalid_source_ids_ignored_shape' }
   | { reason: 'invalid_lines_array'; section: BriefingSection }
-  | { reason: 'invalid_line_shape' | 'invalid_line_who' | 'invalid_line_source_ids'; section: BriefingSection; lineIndex: number };
+  | {
+      reason: 'invalid_line_shape' | 'invalid_line_who' | 'invalid_line_source_ids';
+      section: BriefingSection;
+      lineIndex: number;
+    };
 
 export const morningBriefingSystemPrompt = [
   'You write a short household morning briefing — a readiness summary, not a calendar dump.',
   'Group the day into two time blocks: morning and afternoon.',
   'Assign each obligation to the block when the underlying activity happens, even if it is prepared earlier (kit for an afternoon class is an afternoon item).',
-  'Within each block, produce one line per responsible person, combining that person\'s obligations into one natural sentence.',
+  "Within each block, produce one line per responsible person, combining that person's obligations into one natural sentence.",
   'Set "who" to the exact supplied member ids the line is for. Do not put the person\'s name inside "text"; only describe the obligation.',
   'Only include people who have something in that block. Do not emit lines for idle people and never write "normal day".',
   'Daily requirements sources are authoritative. Ordinary schedule sources are timing and coordination context.',
@@ -212,10 +216,7 @@ function openAiMessageContent(body: unknown) {
 }
 
 function isEmptyBriefing(briefing: MorningBriefing) {
-  return (
-    !briefing.shouldSend ||
-    [...briefing.morning, ...briefing.afternoon, ...briefing.watchouts].length === 0
-  );
+  return !briefing.shouldSend || [...briefing.morning, ...briefing.afternoon, ...briefing.watchouts].length === 0;
 }
 
 function isWeekday(localDate: string, timeZone: string) {
