@@ -23,6 +23,11 @@ function event(overrides: Partial<ScheduleEventRow> = {}): ScheduleEventRow {
   };
 }
 
+const members = [
+  { id: 'childA', label: 'Child A', initials: 'CA' },
+  { id: 'adultA', label: 'Adult A', initials: 'AA' }
+];
+
 describe('createMorningBriefing', () => {
   it('uses deterministic generation when no AI provider is configured', async () => {
     await expect(
@@ -31,11 +36,12 @@ describe('createMorningBriefing', () => {
         timeZone,
         calendarConfigs: [{ calendarId: 'requirements-calendar', who: 'shared', kind: 'dailyRequirements' }],
         events: [event()],
-        provider: null
+        provider: null,
+        members
       })
     ).resolves.toMatchObject({
       generationStatus: 'deterministic',
-      message: "Today:\nToday's requirements\n\nPack / bring\n- Bring sports bag"
+      message: "Today:\nToday's requirements\n\nThis morning:\n- someone: Bring sports bag"
     });
   });
 
@@ -43,17 +49,15 @@ describe('createMorningBriefing', () => {
     const provider = vi.fn(async () => ({
       shouldSend: true,
       headline: 'One thing to prep',
-      routineItems: [
+      morning: [
         {
-          text: 'memberA needs sports gear.',
-          kind: 'routine',
-          tags: ['bring'],
+          text: 'Needs sports gear.',
+          who: ['childA'],
           sourceIds: ['requirements-calendar:event-1:1781218800000']
         }
       ],
-      importantItems: [],
-      timingNotes: [],
-      uncertaintyNotes: [],
+      afternoon: [],
+      watchouts: [],
       sourceIdsIgnored: []
     }));
 
@@ -63,11 +67,12 @@ describe('createMorningBriefing', () => {
         timeZone,
         calendarConfigs: [{ calendarId: 'requirements-calendar', who: 'shared', kind: 'dailyRequirements' }],
         events: [event()],
-        provider
+        provider,
+        members
       })
     ).resolves.toMatchObject({
       generationStatus: 'ai',
-      message: 'Today:\nOne thing to prep\n\nPack / bring\n- someone needs sports gear.'
+      message: 'Today:\nOne thing to prep\n\nThis morning:\n- Child A: Needs sports gear.'
     });
     expect(provider).toHaveBeenCalledOnce();
   });

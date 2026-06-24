@@ -11,7 +11,7 @@ import {
   type MutationCtx,
   query
 } from '../_generated/server';
-import { parseScheduleCalendars } from '../schedule/config';
+import { displayMembersFromConfig, parseScheduleCalendars, parseScheduleMembers } from '../schedule/config';
 import type { ScheduleEventRow } from '../schedule/mapping';
 import { createAiMorningBriefing, createOpenAiMorningBriefingProvider, type MorningBriefingAiProvider } from './ai';
 import { botMorningBriefingFromStoreResult } from './botBriefing';
@@ -115,13 +115,15 @@ export async function createMorningBriefing({
   timeZone,
   calendarConfigs,
   events,
-  provider
+  provider,
+  members
 }: {
   localDate: string;
   timeZone: string;
   calendarConfigs: ReturnType<typeof parseScheduleCalendars>;
   events: ScheduleEventRow[];
   provider: MorningBriefingAiProvider | null;
+  members: ReturnType<typeof displayMembersFromConfig>;
 }) {
   return provider
     ? await createAiMorningBriefing({
@@ -129,13 +131,15 @@ export async function createMorningBriefing({
         timeZone,
         calendarConfigs,
         events,
-        provider
+        provider,
+        members
       })
     : createDeterministicMorningBriefing({
         localDate,
         timeZone,
         calendarConfigs,
-        events
+        events,
+        members
       });
 }
 
@@ -170,13 +174,15 @@ export const generateAndStoreMorningBriefing = internalAction({
   handler: async (ctx, { localDate, timeZone, generatedAt }) => {
     const resolvedTimeZone = timeZone ?? process.env.SCHEDULE_TZ ?? 'Australia/Sydney';
     const calendarConfigs = parseScheduleCalendars();
+    const members = displayMembersFromConfig(parseScheduleMembers());
     const events = await ctx.runQuery(generationRefs.morningBriefingEvents);
     const briefing = await createMorningBriefing({
       localDate,
       timeZone: resolvedTimeZone,
       calendarConfigs,
       events,
-      provider: morningBriefingProviderFromEnv()
+      provider: morningBriefingProviderFromEnv(),
+      members
     });
 
     return await ctx.runMutation(generationRefs.storeGeneratedMorningBriefing, {
@@ -271,5 +277,16 @@ export const recordBriefingDeliveryForBot = mutation({
 
     const id = await ctx.db.insert('briefingDeliveryAttempts', attempt);
     return { inserted: true as const, id };
+  }
+});
+
+// One-off: the stored briefing shape changed (time blocks). Old rows fail the new
+// validator, so clear them once after deploying the new schema.
+export const clearAllBriefings = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const rows = await ctx.db.query('briefings').collect();
+    await Promise.all(rows.map((row) => ctx.db.delete(row._id)));
+    return { deleted: rows.length };
   }
 });

@@ -1,22 +1,21 @@
+import type { ScheduleDisplayMember } from '../schedule/config';
 import type { CalendarConfig, ScheduleEventRow } from '../schedule/mapping';
 import { zonedDateStartMs } from '../schedule/week';
 
 export type BriefingKind = 'morning';
 
-export type BriefingItem = {
+export type BriefingLine = {
   text: string;
-  kind: 'routine' | 'important' | 'timing' | 'uncertain';
-  tags: ('wear' | 'bring' | 'prepare' | 'remember' | 'coordinate' | 'leaveEarlier')[];
+  who: string[];
   sourceIds: string[];
 };
 
 export type MorningBriefing = {
   shouldSend: boolean;
   headline: string;
-  routineItems: BriefingItem[];
-  importantItems: BriefingItem[];
-  timingNotes: BriefingItem[];
-  uncertaintyNotes: BriefingItem[];
+  morning: BriefingLine[];
+  afternoon: BriefingLine[];
+  watchouts: BriefingLine[];
   sourceIdsIgnored: string[];
 };
 
@@ -71,10 +70,9 @@ function emptyBriefing(headline: string): MorningBriefing {
   return {
     shouldSend: true,
     headline,
-    routineItems: [],
-    importantItems: [],
-    timingNotes: [],
-    uncertaintyNotes: [],
+    morning: [],
+    afternoon: [],
+    watchouts: [],
     sourceIdsIgnored: []
   };
 }
@@ -83,46 +81,43 @@ export function fallbackMorningBriefingHeadline(dailyRequirementCount: number) {
   return dailyRequirementCount > 0 ? "Today's requirements" : 'No daily requirements found.';
 }
 
-export function formatMorningBriefing(briefing: MorningBriefing) {
+export function formatMorningBriefing(briefing: MorningBriefing, members: ScheduleDisplayMember[]) {
   if (!briefing.shouldSend) return '';
 
   const lines = ['Today:', sanitizeBriefingText(briefing.headline).replace(/^Today:\s*/i, '')];
-  const groupedRoutineItems = new Set<BriefingItem>();
-  const beforeLeaving = briefing.routineItems.filter((item) =>
-    hasAnyTag(item, ['wear', 'remember', 'prepare', 'leaveEarlier'])
-  );
-  beforeLeaving.forEach((item) => groupedRoutineItems.add(item));
 
-  const packBring = briefing.routineItems.filter((item) => {
-    if (groupedRoutineItems.has(item) || !hasAnyTag(item, ['bring'])) return false;
-    groupedRoutineItems.add(item);
-    return true;
-  });
-
-  const coordinatedRoutineItems = briefing.routineItems.filter((item) => {
-    if (groupedRoutineItems.has(item) || !hasAnyTag(item, ['coordinate'])) return false;
-    groupedRoutineItems.add(item);
-    return true;
-  });
-  const ungroupedRoutineItems = briefing.routineItems.filter((item) => {
-    if (groupedRoutineItems.has(item)) return false;
-    groupedRoutineItems.add(item);
-    return true;
-  });
-
-  appendSection(lines, 'Watchouts', briefing.importantItems);
-  appendSection(lines, 'Before leaving', [...beforeLeaving, ...ungroupedRoutineItems]);
-  appendSection(lines, 'Pack / bring', packBring);
-  appendSection(lines, 'Logistics', [...coordinatedRoutineItems, ...briefing.timingNotes]);
-  appendSection(lines, 'Unclear', briefing.uncertaintyNotes);
+  appendBlock(lines, 'This morning:', briefing.morning, members);
+  appendBlock(lines, 'This afternoon:', briefing.afternoon, members);
+  appendWatchouts(lines, briefing.watchouts);
 
   return lines.join('\n');
 }
 
-function appendSection(lines: string[], heading: string, items: BriefingItem[]) {
-  if (items.length === 0) return;
+function appendBlock(lines: string[], heading: string, blockLines: BriefingLine[], members: ScheduleDisplayMember[]) {
+  if (blockLines.length === 0) return;
 
-  lines.push('', heading, ...items.map((item) => `- ${sanitizeBriefingText(item.text)}`));
+  const order = new Map(members.map((member, index) => [member.id, index]));
+  const labels = new Map(members.map((member) => [member.id, member.label]));
+  const sorted = [...blockLines].sort((a, b) => lineOrder(a, order) - lineOrder(b, order));
+
+  lines.push('', heading, ...sorted.map((line) => renderPersonLine(line, labels)));
+}
+
+function lineOrder(line: BriefingLine, order: Map<string, number>) {
+  const indices = line.who.map((id) => order.get(id) ?? Number.POSITIVE_INFINITY);
+  return indices.length > 0 ? Math.min(...indices) : Number.POSITIVE_INFINITY;
+}
+
+function renderPersonLine(line: BriefingLine, labels: Map<string, string>) {
+  const who = sanitizeBriefingText(line.who.map((id) => labels.get(id) ?? id).join(', '));
+  const text = sanitizeBriefingText(line.text);
+  return who ? `- ${who}: ${text}` : `- ${text}`;
+}
+
+function appendWatchouts(lines: string[], watchouts: BriefingLine[]) {
+  if (watchouts.length === 0) return;
+
+  lines.push('', 'Watchouts', ...watchouts.map((line) => `- ${sanitizeBriefingText(line.text)}`));
 }
 
 function sanitizeBriefingText(text: string) {
@@ -138,20 +133,47 @@ function sanitizeBriefingText(text: string) {
     .trim();
 }
 
-function hasAnyTag(item: BriefingItem, tags: BriefingItem['tags']) {
-  return tags.some((tag) => item.tags.includes(tag));
+function isMorningEvent(event: MorningBriefingEvent, timeZone: string) {
+  if (event.allDay) return true;
+  const hour = Number(
+    new Intl.DateTimeFormat('en-AU', { timeZone, hour: '2-digit', hourCycle: 'h23' }).format(new Date(event.start))
+  );
+  return hour < 12;
+}
+
+function eventDetail(event: MorningBriefingEvent) {
+  return event.description?.trim() || event.title.trim();
+}
+
+export function buildPersonLines(events: MorningBriefingEvent[]): BriefingLine[] {
+  const groups = new Map<string, BriefingLine>();
+  for (const event of events) {
+    const key = event.who.join('|');
+    const sourceId = sourceIdForEvent(event);
+    const detail = eventDetail(event);
+    const existing = groups.get(key);
+    if (existing) {
+      existing.text = `${existing.text}; ${detail}`;
+      existing.sourceIds.push(sourceId);
+    } else {
+      groups.set(key, { text: detail, who: [...event.who], sourceIds: [sourceId] });
+    }
+  }
+  return [...groups.values()];
 }
 
 export function createDeterministicMorningBriefing({
   localDate,
   timeZone,
   events,
-  calendarConfigs
+  calendarConfigs,
+  members
 }: {
   localDate: string;
   timeZone: string;
   calendarConfigs: CalendarConfig[];
   events: MorningBriefingEvent[];
+  members: ScheduleDisplayMember[];
 }): DeterministicMorningBriefing {
   if (!calendarConfigs.some((calendar) => calendar.kind === 'dailyRequirements')) {
     const briefing = emptyBriefing(
@@ -163,7 +185,7 @@ export function createDeterministicMorningBriefing({
       generationStatus: 'setupProblem',
       sourceIds: [],
       briefing,
-      message: formatMorningBriefing(briefing)
+      message: formatMorningBriefing(briefing, members)
     };
   }
 
@@ -171,18 +193,20 @@ export function createDeterministicMorningBriefing({
   const dailyRequirements = localEvents.filter((event) => event.kind === 'dailyRequirements');
 
   if (dailyRequirements.length > 0) {
-    const routineItems = requirementRoutineItems(dailyRequirements);
+    const morning = buildPersonLines(dailyRequirements.filter((event) => isMorningEvent(event, timeZone)));
+    const afternoon = buildPersonLines(dailyRequirements.filter((event) => !isMorningEvent(event, timeZone)));
     const briefing: MorningBriefing = {
       ...emptyBriefing("Today's requirements"),
-      routineItems
+      morning,
+      afternoon
     };
     return {
       briefingKind: 'morning',
       localDate,
       generationStatus: 'deterministic',
-      sourceIds: routineItems.flatMap((item) => item.sourceIds),
+      sourceIds: [...morning, ...afternoon].flatMap((line) => line.sourceIds),
       briefing,
-      message: formatMorningBriefing(briefing)
+      message: formatMorningBriefing(briefing, members)
     };
   }
 
@@ -193,56 +217,46 @@ export function createDeterministicMorningBriefing({
     generationStatus: 'deterministic',
     sourceIds: [],
     briefing,
-    message: formatMorningBriefing(briefing)
+    message: formatMorningBriefing(briefing, members)
   };
 }
 
-function requirementText(event: MorningBriefingEvent) {
-  const detail = event.description?.trim() || event.title.trim();
-  return `${event.who.join(', ')}: ${detail}`;
-}
-
-function requirementTags(event: MorningBriefingEvent): BriefingItem['tags'] {
-  const detail = (event.description?.trim() || event.title.trim()).toLowerCase();
-
-  if (/\b(wear|uniform|clothes|shoes)\b/.test(detail)) return ['wear'];
-  if (/\b(remember|homework|prepare|prep|check)\b/.test(detail)) return ['remember'];
-  if (/\b(leave early|leave earlier|early)\b/.test(detail)) return ['leaveEarlier'];
-  if (/\b(drop|pickup|pick up|handoff|collect)\b/.test(detail)) return ['coordinate'];
-
-  return ['bring'];
-}
-
-export function requirementRoutineItems(events: MorningBriefingEvent[]) {
-  return events.map((requirement): BriefingItem => {
-    const sourceId = sourceIdForEvent(requirement);
-    return {
-      text: requirementText(requirement),
-      kind: 'routine',
-      tags: requirementTags(requirement),
-      sourceIds: [sourceId]
-    };
-  });
-}
-
-export function createMorningBriefingFallback({ events }: { events: MorningBriefingEvent[] }) {
+export function createMorningBriefingFallback({
+  events,
+  timeZone,
+  members
+}: {
+  events: MorningBriefingEvent[];
+  timeZone: string;
+  members: ScheduleDisplayMember[];
+}) {
   const dailyRequirements = events.filter((event) => event.kind === 'dailyRequirements');
-  const routineItems = requirementRoutineItems(dailyRequirements);
+  const morning = buildPersonLines(dailyRequirements.filter((event) => isMorningEvent(event, timeZone)));
+  const afternoon = buildPersonLines(dailyRequirements.filter((event) => !isMorningEvent(event, timeZone)));
   const briefing: MorningBriefing = {
     ...emptyBriefing(fallbackMorningBriefingHeadline(dailyRequirements.length)),
-    routineItems
+    morning,
+    afternoon
   };
-  const message = formatMorningBriefing(briefing);
+  const message = formatMorningBriefing(briefing, members);
 
   return {
     briefing,
     message,
-    sourceIds: routineItems.flatMap((item) => item.sourceIds)
+    sourceIds: [...morning, ...afternoon].flatMap((line) => line.sourceIds)
   };
 }
 
-export function formatMorningBriefingFallback({ events }: { events: MorningBriefingEvent[] }) {
-  const { message, sourceIds } = createMorningBriefingFallback({ events });
+export function formatMorningBriefingFallback({
+  events,
+  timeZone,
+  members
+}: {
+  events: MorningBriefingEvent[];
+  timeZone: string;
+  members: ScheduleDisplayMember[];
+}) {
+  const { message, sourceIds } = createMorningBriefingFallback({ events, timeZone, members });
   return {
     message,
     sourceIds

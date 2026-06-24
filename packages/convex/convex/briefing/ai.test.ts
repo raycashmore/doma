@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import type { ScheduleDisplayMember } from '../schedule/config';
 import {
   createAiMorningBriefing,
   createOpenAiMorningBriefingProvider,
@@ -12,6 +13,13 @@ import type { MorningBriefingEvent } from './morning';
 const timeZone = 'Australia/Sydney';
 const localDate = '2026-06-12';
 
+const members: ScheduleDisplayMember[] = [
+  { id: 'childA', label: 'Child A', initials: 'CA' },
+  { id: 'adultA', label: 'Adult A', initials: 'AA' }
+];
+
+const requirementsCalendar = { calendarId: 'requirements-calendar', who: 'shared', kind: 'dailyRequirements' } as const;
+
 function event(overrides: Partial<MorningBriefingEvent> = {}): MorningBriefingEvent {
   return {
     googleEventId: 'event-1',
@@ -20,535 +28,292 @@ function event(overrides: Partial<MorningBriefingEvent> = {}): MorningBriefingEv
     end: Date.parse('2026-06-12T00:00:00.000Z'),
     allDay: false,
     title: 'School pickup',
-    who: ['memberA'],
+    who: ['childA'],
     recurring: false,
     htmlLink: 'https://calendar.example/events/event-1',
     ...overrides
   };
 }
 
+function requirementEvent(): MorningBriefingEvent {
+  return event({
+    googleEventId: 'requirements-1',
+    calendarId: 'requirements-calendar',
+    kind: 'dailyRequirements',
+    allDay: true,
+    who: ['childA'],
+    title: 'Sports uniform',
+    description: 'Bring sports bag'
+  });
+}
+
+function ordinaryEvent(): MorningBriefingEvent {
+  return event({
+    googleEventId: 'ordinary-1',
+    calendarId: 'calendar-a',
+    start: Date.parse('2026-06-12T06:00:00.000Z'),
+    end: Date.parse('2026-06-12T08:00:00.000Z'),
+    who: ['adultA'],
+    title: 'Activity handoff',
+    description: 'drop off and pick up'
+  });
+}
+
 describe('createAiMorningBriefing', () => {
   it('uses a valid structured AI response and preserves source traceability', async () => {
     const provider: MorningBriefingAiProvider = async ({ sources }) => {
       const requirement = sources.find((source) => source.kind === 'dailyRequirements');
-      const ordinaryEvent = sources.find((source) => source.title === 'Activity handoff');
-      expect(requirement).toMatchObject({ description: 'Bring sports bag' });
-      expect(ordinaryEvent).toMatchObject({ description: 'adultA drops off; adultB picks up' });
+      const handoff = sources.find((source) => source.title === 'Activity handoff');
       return {
         shouldSend: true,
-        headline: 'One handoff to confirm',
-        routineItems: [],
-        importantItems: [
-          {
-            text: 'memberA handoff: adultA drops off; adultB picks up.',
-            kind: 'important',
-            tags: ['coordinate'],
-            sourceIds: [ordinaryEvent?.sourceId ?? 'missing-source']
-          }
-        ],
-        timingNotes: [],
-        uncertaintyNotes: [],
-        sourceIdsIgnored: [requirement?.sourceId ?? 'missing-source']
+        headline: 'Sports kit and an afternoon handoff.',
+        morning: [{ text: 'Bring sports bag', who: ['childA'], sourceIds: [requirement?.sourceId ?? 'missing'] }],
+        afternoon: [{ text: 'drop off and pick up', who: ['adultA'], sourceIds: [handoff?.sourceId ?? 'missing'] }],
+        watchouts: [],
+        sourceIdsIgnored: []
       };
     };
 
-    await expect(
-      createAiMorningBriefing({
-        localDate,
-        timeZone,
-        calendarConfigs: [{ calendarId: 'requirements-calendar', who: 'shared', kind: 'dailyRequirements' }],
-        events: [
-          event({
-            googleEventId: 'requirements-1',
-            calendarId: 'requirements-calendar',
-            kind: 'dailyRequirements',
-            title: 'Sports uniform',
-            description: 'Bring sports bag'
-          }),
-          event({
-            googleEventId: 'ordinary-1',
-            calendarId: 'calendar-a',
-            title: 'Activity handoff',
-            description: 'adultA drops off; adultB picks up'
-          })
-        ],
-        provider
-      })
-    ).resolves.toMatchObject({
-      briefingKind: 'morning',
+    const result = await createAiMorningBriefing({
       localDate,
-      generationStatus: 'ai',
-      sourceIds: ['calendar-a:ordinary-1:1781218800000'],
-      briefing: {
-        headline: 'One handoff to confirm',
-        importantItems: [
-          {
-            text: 'memberA handoff: adultA drops off; adultB picks up.',
-            kind: 'important',
-            tags: ['coordinate'],
-            sourceIds: ['calendar-a:ordinary-1:1781218800000']
-          }
-        ],
-        sourceIdsIgnored: ['requirements-calendar:requirements-1:1781218800000']
-      },
-      message: 'Today:\nOne handoff to confirm\n\nWatchouts\n- handoff: adultA drops off; adultB picks up.'
-    });
-  });
-
-  it('treats missing daily requirements calendar config as a setup problem before calling AI', async () => {
-    let providerCalled = false;
-
-    await expect(
-      createAiMorningBriefing({
-        localDate,
-        timeZone,
-        calendarConfigs: [{ calendarId: 'calendar-a', who: 'memberA' }],
-        events: [],
-        provider: async () => {
-          providerCalled = true;
-          return {
-            shouldSend: true,
-            headline: 'Normal day.',
-            routineItems: [],
-            importantItems: [],
-            timingNotes: [],
-            uncertaintyNotes: [],
-            sourceIdsIgnored: []
-          };
-        }
-      })
-    ).resolves.toMatchObject({
-      generationStatus: 'setupProblem',
-      message: "Today:\nDaily requirements calendar is not configured yet, so I can't check day-specific requirements."
-    });
-    expect(providerCalled).toBe(false);
-  });
-
-  it('falls back to a neutral requirements summary when the AI response has an invalid item shape', async () => {
-    await expect(
-      createAiMorningBriefing({
-        localDate,
-        timeZone,
-        calendarConfigs: [{ calendarId: 'requirements-calendar', who: 'shared', kind: 'dailyRequirements' }],
-        events: [
-          event({
-            googleEventId: 'requirements-1',
-            calendarId: 'requirements-calendar',
-            kind: 'dailyRequirements',
-            title: 'Sports uniform',
-            description: 'Bring sports bag'
-          })
-        ],
-        provider: async ({ sources }) => ({
-          shouldSend: true,
-          headline: 'One thing to prep',
-          routineItems: [
-            {
-              text: 'memberA needs sports gear.',
-              kind: 'important',
-              tags: ['bring'],
-              sourceIds: [sources[0]?.sourceId ?? 'missing-source']
-            }
-          ],
-          importantItems: [],
-          timingNotes: [],
-          uncertaintyNotes: [],
-          sourceIdsIgnored: []
-        })
-      })
-    ).resolves.toMatchObject({
-      generationStatus: 'fallback',
-      briefing: {
-        headline: "Today's requirements",
-        routineItems: [
-          {
-            text: 'memberA: Bring sports bag',
-            kind: 'routine',
-            tags: ['bring'],
-            sourceIds: ['requirements-calendar:requirements-1:1781218800000']
-          }
-        ]
-      },
-      sourceIds: ['requirements-calendar:requirements-1:1781218800000'],
-      message: "Today:\nToday's requirements\n\nPack / bring\n- Bring sports bag"
-    });
-  });
-
-  it('logs and falls back to a neutral requirements summary when the AI provider fails', async () => {
-    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-    await expect(
-      createAiMorningBriefing({
-        localDate,
-        timeZone,
-        calendarConfigs: [{ calendarId: 'requirements-calendar', who: 'shared', kind: 'dailyRequirements' }],
-        events: [
-          event({
-            googleEventId: 'requirements-1',
-            calendarId: 'requirements-calendar',
-            kind: 'dailyRequirements',
-            title: 'Sports uniform',
-            description: 'Bring sports bag'
-          })
-        ],
-        provider: async () => {
-          throw new Error('provider unavailable');
-        }
-      })
-    ).resolves.toMatchObject({
-      generationStatus: 'fallback',
-      briefing: {
-        headline: "Today's requirements",
-        routineItems: [
-          {
-            text: 'memberA: Bring sports bag',
-            kind: 'routine',
-            tags: ['bring'],
-            sourceIds: ['requirements-calendar:requirements-1:1781218800000']
-          }
-        ]
-      },
-      sourceIds: ['requirements-calendar:requirements-1:1781218800000'],
-      message: "Today:\nToday's requirements\n\nPack / bring\n- Bring sports bag"
+      timeZone,
+      calendarConfigs: [requirementsCalendar],
+      events: [requirementEvent(), ordinaryEvent()],
+      provider,
+      members
     });
 
-    expect(errorSpy).toHaveBeenCalledWith(
-      '[briefing.ai] Falling back after morning briefing AI provider failure',
-      expect.objectContaining({
-        localDate,
-        timeZone,
-        sourceCount: 1,
-        requirementSourceCount: 1,
-        scheduleSourceCount: 0,
-        error: expect.objectContaining({
-          message: 'provider unavailable'
-        })
-      })
-    );
+    expect(result.generationStatus).toBe('ai');
+    expect(result.message).toBe(`Today:
+Sports kit and an afternoon handoff.
 
-    errorSpy.mockRestore();
+This morning:
+- Child A: Bring sports bag
+
+This afternoon:
+- Adult A: drop off and pick up`);
+    expect(result.sourceIds).toEqual([
+      'requirements-calendar:requirements-1:1781218800000',
+      'calendar-a:ordinary-1:1781244000000'
+    ]);
   });
 
-  it('logs why it falls back when AI source references are not valid known source IDs', async () => {
-    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-    await expect(
-      createAiMorningBriefing({
-        localDate,
-        timeZone,
-        calendarConfigs: [{ calendarId: 'requirements-calendar', who: 'shared', kind: 'dailyRequirements' }],
-        events: [
-          event({
-            googleEventId: 'requirements-1',
-            calendarId: 'requirements-calendar',
-            kind: 'dailyRequirements',
-            title: 'Sports uniform',
-            description: 'Bring sports bag'
-          })
+  it('renders watchouts under a Watchouts header and excludes them from morning/afternoon blocks', async () => {
+    const provider: MorningBriefingAiProvider = async ({ sources }) => {
+      const requirement = sources.find((source) => source.kind === 'dailyRequirements');
+      const handoff = sources.find((source) => source.title === 'Activity handoff');
+      return {
+        shouldSend: true,
+        headline: 'Sports kit and a clash to watch.',
+        morning: [{ text: 'Bring sports bag', who: ['childA'], sourceIds: [requirement?.sourceId ?? 'missing'] }],
+        afternoon: [],
+        watchouts: [
+          { text: 'Two pickups clash at pickup time', who: ['adultA'], sourceIds: [handoff?.sourceId ?? 'missing'] }
         ],
-        provider: async () => ({
-          shouldSend: true,
-          headline: 'One thing to prep',
-          routineItems: [
-            {
-              text: 'memberA needs sports gear.',
-              kind: 'routine',
-              tags: ['bring'],
-              sourceIds: ['requirements-calendar:requirements-1:1781218800000', 123]
-            }
-          ],
-          importantItems: [],
-          timingNotes: [],
-          uncertaintyNotes: [],
-          sourceIdsIgnored: []
-        })
-      })
-    ).resolves.toMatchObject({
-      generationStatus: 'fallback',
-      message: "Today:\nToday's requirements\n\nPack / bring\n- Bring sports bag"
-    });
-
-    expect(errorSpy).toHaveBeenCalledWith(
-      '[briefing.ai] Falling back after invalid morning briefing AI response',
-      expect.objectContaining({
-        parseFailure: {
-          reason: 'invalid_item_source_ids',
-          section: 'routineItems',
-          itemIndex: 0
-        }
-      })
-    );
-
-    errorSpy.mockRestore();
-  });
-
-  it('keeps a valid AI briefing when only sourceIdsIgnored contains an unknown source ID', async () => {
-    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-    await expect(
-      createAiMorningBriefing({
-        localDate,
-        timeZone,
-        calendarConfigs: [{ calendarId: 'requirements-calendar', who: 'shared', kind: 'dailyRequirements' }],
-        events: [
-          event({
-            googleEventId: 'requirements-1',
-            calendarId: 'requirements-calendar',
-            kind: 'dailyRequirements',
-            title: 'Sports uniform',
-            description: 'Bring sports bag'
-          }),
-          event({
-            googleEventId: 'ordinary-1',
-            calendarId: 'calendar-a',
-            title: 'Activity handoff',
-            description: 'adultA drops off; adultB picks up'
-          })
-        ],
-        provider: async () => ({
-          shouldSend: true,
-          headline: 'One thing to prep',
-          routineItems: [
-            {
-              text: 'memberA needs sports gear.',
-              kind: 'routine',
-              tags: ['bring'],
-              sourceIds: ['requirements-calendar:requirements-1:1781218800000']
-            }
-          ],
-          importantItems: [
-            {
-              text: 'Confirm the activity handoff.',
-              kind: 'important',
-              tags: ['coordinate'],
-              sourceIds: ['calendar-a:ordinary-1:1781218800000']
-            }
-          ],
-          timingNotes: [],
-          uncertaintyNotes: [],
-          sourceIdsIgnored: ['made-up-source-id']
-        })
-      })
-    ).resolves.toMatchObject({
-      generationStatus: 'ai',
-      briefing: {
         sourceIdsIgnored: []
-      },
-      sourceIds: ['requirements-calendar:requirements-1:1781218800000', 'calendar-a:ordinary-1:1781218800000'],
-      message: [
-        'Today:',
-        'One thing to prep',
-        '',
-        'Watchouts',
-        '- Confirm the activity handoff.',
-        '',
-        'Pack / bring',
-        '- someone needs sports gear.'
-      ].join('\n')
+      };
+    };
+
+    const result = await createAiMorningBriefing({
+      localDate,
+      timeZone,
+      calendarConfigs: [requirementsCalendar],
+      events: [requirementEvent(), ordinaryEvent()],
+      provider,
+      members
     });
 
-    expect(errorSpy).not.toHaveBeenCalled();
+    expect(result.generationStatus).toBe('ai');
+    expect(result.message).toContain('Watchouts');
+    expect(result.message).toContain('Two pickups clash at pickup time');
+    // The watchout must NOT appear as a block line under This morning: or This afternoon:
+    expect(result.message).not.toMatch(/This morning:[^\n]*\n(?:- [^\n]*\n)*- [^:]*Two pickups/);
+    expect(result.message).not.toMatch(/This afternoon:[^\n]*\n(?:- [^\n]*\n)*- [^:]*Two pickups/);
+    expect(result.message).toBe(`Today:
+Sports kit and a clash to watch.
 
-    errorSpy.mockRestore();
+This morning:
+- Child A: Bring sports bag
+
+Watchouts
+- Two pickups clash at pickup time`);
   });
 
-  it('keeps grounded AI items when another item only references unknown source IDs', async () => {
-    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-    await expect(
-      createAiMorningBriefing({
-        localDate,
-        timeZone,
-        calendarConfigs: [{ calendarId: 'requirements-calendar', who: 'shared', kind: 'dailyRequirements' }],
-        events: [
-          event({
-            googleEventId: 'requirements-1',
-            calendarId: 'requirements-calendar',
-            kind: 'dailyRequirements',
-            title: 'Sports uniform',
-            description: 'Bring sports bag'
-          }),
-          event({
-            googleEventId: 'ordinary-1',
-            calendarId: 'calendar-a',
-            title: 'Activity handoff',
-            description: 'adultA drops off; adultB picks up'
-          })
-        ],
-        provider: async () => ({
-          shouldSend: true,
-          headline: 'One thing to prep',
-          routineItems: [
-            {
-              text: 'memberA needs sports gear.',
-              kind: 'routine',
-              tags: ['bring'],
-              sourceIds: ['requirements-calendar:requirements-1:1781218800000']
-            }
-          ],
-          importantItems: [
-            {
-              text: 'Confirm the activity handoff.',
-              kind: 'important',
-              tags: ['coordinate'],
-              sourceIds: ['made-up-source-id']
-            }
-          ],
-          timingNotes: [],
-          uncertaintyNotes: [],
-          sourceIdsIgnored: ['calendar-a:ordinary-1:1781218800000']
-        })
-      })
-    ).resolves.toMatchObject({
-      generationStatus: 'ai',
-      briefing: {
-        importantItems: [],
-        sourceIdsIgnored: ['calendar-a:ordinary-1:1781218800000']
-      },
-      sourceIds: ['requirements-calendar:requirements-1:1781218800000'],
-      message: ['Today:', 'One thing to prep', '', 'Pack / bring', '- someone needs sports gear.'].join('\n')
+  it('treats a missing daily requirements calendar as a setup problem before calling AI', async () => {
+    const provider = vi.fn();
+    const result = await createAiMorningBriefing({
+      localDate,
+      timeZone,
+      calendarConfigs: [{ calendarId: 'calendar-a', who: 'adultA' }],
+      events: [ordinaryEvent()],
+      provider: provider as unknown as MorningBriefingAiProvider,
+      members
     });
 
-    expect(errorSpy).not.toHaveBeenCalled();
+    expect(provider).not.toHaveBeenCalled();
+    expect(result.generationStatus).toBe('setupProblem');
+  });
 
-    errorSpy.mockRestore();
+  it('falls back to a neutral requirements summary when an item shape is invalid', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const provider: MorningBriefingAiProvider = async () => ({
+      shouldSend: true,
+      headline: 'Broken',
+      morning: [{ text: 42, who: ['childA'], sourceIds: [] }],
+      afternoon: [],
+      watchouts: [],
+      sourceIdsIgnored: []
+    });
+
+    const result = await createAiMorningBriefing({
+      localDate,
+      timeZone,
+      calendarConfigs: [requirementsCalendar],
+      events: [requirementEvent()],
+      provider,
+      members
+    });
+
+    expect(result.generationStatus).toBe('fallback');
+    expect(result.message).toContain('This morning:');
+    expect(consoleError).toHaveBeenCalledWith(expect.stringContaining('[briefing.ai]'), expect.anything());
+    consoleError.mockRestore();
+  });
+
+  it('logs and falls back when the AI provider throws', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const provider: MorningBriefingAiProvider = async () => {
+      throw new Error('boom');
+    };
+
+    const result = await createAiMorningBriefing({
+      localDate,
+      timeZone,
+      calendarConfigs: [requirementsCalendar],
+      events: [requirementEvent()],
+      provider,
+      members
+    });
+
+    expect(result.generationStatus).toBe('fallback');
+    expect(consoleError).toHaveBeenCalledWith(expect.stringContaining('[briefing.ai]'), expect.anything());
+    consoleError.mockRestore();
+  });
+
+  it('drops a line whose sourceIds are all unknown but keeps grounded lines', async () => {
+    const provider: MorningBriefingAiProvider = async ({ sources }) => {
+      const requirement = sources.find((source) => source.kind === 'dailyRequirements');
+      return {
+        shouldSend: true,
+        headline: 'One grounded line.',
+        morning: [
+          { text: 'Bring sports bag', who: ['childA'], sourceIds: [requirement?.sourceId ?? 'missing'] },
+          { text: 'Invented obligation', who: ['childA'], sourceIds: ['not-a-real-source'] }
+        ],
+        afternoon: [],
+        watchouts: [],
+        sourceIdsIgnored: []
+      };
+    };
+
+    const result = await createAiMorningBriefing({
+      localDate,
+      timeZone,
+      calendarConfigs: [requirementsCalendar],
+      events: [requirementEvent()],
+      provider,
+      members
+    });
+
+    expect(result.generationStatus).toBe('ai');
+    expect(result.briefing.morning).toHaveLength(1);
+    expect(result.briefing.morning[0]?.text).toBe('Bring sports bag');
   });
 
   it('falls back to deterministic quiet output when AI suppresses an empty weekday', async () => {
-    await expect(
-      createAiMorningBriefing({
-        localDate,
-        timeZone,
-        calendarConfigs: [{ calendarId: 'requirements-calendar', who: 'shared', kind: 'dailyRequirements' }],
-        events: [],
-        provider: async () => ({
-          shouldSend: false,
-          headline: '',
-          routineItems: [],
-          importantItems: [],
-          timingNotes: [],
-          uncertaintyNotes: [],
-          sourceIdsIgnored: []
-        })
-      })
-    ).resolves.toMatchObject({
-      generationStatus: 'deterministic',
-      sourceIds: [],
-      briefing: {
-        shouldSend: true,
-        headline: 'Normal day. No special requirements found.'
-      },
-      message: 'Today:\nNormal day. No special requirements found.'
+    const provider: MorningBriefingAiProvider = async () => ({
+      shouldSend: false,
+      headline: 'Nothing today.',
+      morning: [],
+      afternoon: [],
+      watchouts: [],
+      sourceIdsIgnored: []
     });
+
+    const result = await createAiMorningBriefing({
+      localDate, // 2026-06-12 is a Friday
+      timeZone,
+      calendarConfigs: [requirementsCalendar],
+      events: [],
+      provider,
+      members
+    });
+
+    expect(result.generationStatus).toBe('deterministic');
+    expect(result.message).toBe('Today:\nNormal day. No special requirements found.');
   });
 
   it('allows AI to suppress an empty weekend briefing', async () => {
-    await expect(
-      createAiMorningBriefing({
-        localDate: '2026-06-13',
-        timeZone,
-        calendarConfigs: [{ calendarId: 'requirements-calendar', who: 'shared', kind: 'dailyRequirements' }],
-        events: [],
-        provider: async () => ({
-          shouldSend: false,
-          headline: '',
-          routineItems: [],
-          importantItems: [],
-          timingNotes: [],
-          uncertaintyNotes: [],
-          sourceIdsIgnored: []
-        })
-      })
-    ).resolves.toMatchObject({
-      generationStatus: 'ai',
-      sourceIds: [],
-      briefing: {
-        shouldSend: false,
-        headline: ''
-      },
-      message: ''
+    const provider: MorningBriefingAiProvider = async () => ({
+      shouldSend: false,
+      headline: 'Weekend, nothing on.',
+      morning: [],
+      afternoon: [],
+      watchouts: [],
+      sourceIdsIgnored: []
     });
+
+    const result = await createAiMorningBriefing({
+      localDate: '2026-06-13', // Saturday
+      timeZone,
+      calendarConfigs: [requirementsCalendar],
+      events: [],
+      provider,
+      members
+    });
+
+    expect(result.generationStatus).toBe('ai');
+    expect(result.message).toBe('');
   });
 });
 
 describe('morningBriefingSystemPrompt', () => {
-  it('instructs the model to compress noise into readiness groups', () => {
-    expect(morningBriefingSystemPrompt).toContain('Group the day by household readiness');
-    expect(morningBriefingSystemPrompt).toContain('merge duplicate obligations');
-    expect(morningBriefingSystemPrompt).toContain('Convert events into responsibilities');
-    expect(morningBriefingSystemPrompt).toContain('Use importantItems only for watchouts');
-    expect(morningBriefingSystemPrompt).toContain('Use timingNotes only for logistics');
+  it('instructs the model to group by time of day and person', () => {
+    expect(morningBriefingSystemPrompt).toContain('morning');
+    expect(morningBriefingSystemPrompt).toContain('afternoon');
+    expect(morningBriefingSystemPrompt).toContain('watchout');
   });
 });
 
 describe('createOpenAiMorningBriefingProvider', () => {
   it('requests a strict structured morning briefing and parses the JSON response', async () => {
-    const requests: unknown[] = [];
-    const fetchImpl: typeof fetch = async (_url, init) => {
-      requests.push(JSON.parse(String(init?.body)));
-      return new Response(
-        JSON.stringify({
-          choices: [
-            {
-              message: {
-                content: JSON.stringify({
-                  shouldSend: true,
-                  headline: 'One thing to prep',
-                  routineItems: [],
-                  importantItems: [],
-                  timingNotes: [],
-                  uncertaintyNotes: [],
-                  sourceIdsIgnored: []
-                })
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            choices: [
+              {
+                message: {
+                  content: JSON.stringify({
+                    shouldSend: true,
+                    headline: 'Test',
+                    morning: [],
+                    afternoon: [],
+                    watchouts: [],
+                    sourceIdsIgnored: []
+                  })
+                }
               }
-            }
-          ]
-        }),
-        { status: 200 }
-      );
-    };
+            ]
+          })
+        )
+    );
+    const provider = createOpenAiMorningBriefingProvider({ apiKey: 'key', model: 'gpt-test', fetchImpl });
 
-    const provider = createOpenAiMorningBriefingProvider({
-      apiKey: 'test-key',
-      model: 'test-model',
-      fetchImpl
-    });
+    const result = await provider({ localDate, timeZone, sources: [] });
 
-    await expect(
-      provider({
-        localDate,
-        timeZone,
-        sources: [
-          {
-            sourceId: 'requirements-calendar:requirements-1:1781218800000',
-            calendarId: 'requirements-calendar',
-            kind: 'dailyRequirements',
-            title: 'Sports uniform',
-            description: 'Bring sports bag',
-            start: Date.parse('2026-06-11T23:00:00.000Z'),
-            end: Date.parse('2026-06-12T00:00:00.000Z'),
-            allDay: false,
-            who: ['memberA'],
-            recurring: false
-          }
-        ]
-      })
-    ).resolves.toMatchObject({
-      shouldSend: true,
-      headline: 'One thing to prep'
-    });
-    expect(requests).toMatchObject([
-      {
-        model: 'test-model',
-        response_format: {
-          type: 'json_schema',
-          json_schema: {
-            name: 'morning_briefing',
-            strict: true,
-            schema: morningBriefingOutputJsonSchema
-          }
-        }
-      }
-    ]);
+    expect(result).toMatchObject({ shouldSend: true, headline: 'Test' });
+    const body = JSON.parse((fetchImpl.mock.calls[0] as unknown as [unknown, RequestInit])[1].body as string);
+    expect(body.response_format.json_schema.schema).toEqual(morningBriefingOutputJsonSchema);
   });
 });

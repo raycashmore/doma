@@ -1,7 +1,8 @@
+import type { ScheduleDisplayMember } from '../schedule/config';
 import type { CalendarConfig } from '../schedule/mapping';
 import { serializeError } from './errors';
 import {
-  type BriefingItem,
+  type BriefingLine,
   collectMorningBriefingEvents,
   createDeterministicMorningBriefing,
   createMorningBriefingFallback,
@@ -34,55 +35,45 @@ export type MorningBriefingAiInput = {
 
 export type MorningBriefingAiProvider = (input: MorningBriefingAiInput) => Promise<unknown>;
 
+type BriefingSection = 'morning' | 'afternoon' | 'watchouts';
+
 type AiBriefingParseFailure =
   | { reason: 'not_object' }
   | { reason: 'invalid_top_level_fields' }
   | { reason: 'invalid_source_ids_ignored_shape' }
+  | { reason: 'invalid_lines_array'; section: BriefingSection }
   | {
-      reason: 'invalid_items_array';
-      section: keyof Pick<MorningBriefing, 'routineItems' | 'importantItems' | 'timingNotes' | 'uncertaintyNotes'>;
-    }
-  | {
-      reason: 'invalid_item_shape' | 'invalid_item_source_ids' | 'invalid_item_tags';
-      section: keyof Pick<MorningBriefing, 'routineItems' | 'importantItems' | 'timingNotes' | 'uncertaintyNotes'>;
-      itemIndex: number;
+      reason: 'invalid_line_shape' | 'invalid_line_who' | 'invalid_line_source_ids';
+      section: BriefingSection;
+      lineIndex: number;
     };
 
 export const morningBriefingSystemPrompt = [
-  'You write a short household morning briefing.',
-  'Group the day by household readiness, not raw calendar order.',
-  'Select only things that affect readiness: wear, bring, prepare, remember, coordinate, or leave earlier.',
+  'You write a short household morning briefing — a readiness summary, not a calendar dump.',
+  'Group the day into two time blocks: morning and afternoon.',
+  'Assign each obligation to the block when the underlying activity happens, even if it is prepared earlier (kit for an afternoon class is an afternoon item).',
+  "Within each block, produce one line per responsible person, combining that person's obligations into one natural sentence.",
+  'Set "who" to the exact supplied member ids the line is for. Do not put the person\'s name inside "text"; only describe the obligation.',
+  'Only include people who have something in that block. Do not emit lines for idle people and never write "normal day".',
   'Daily requirements sources are authoritative. Ordinary schedule sources are timing and coordination context.',
-  'merge duplicate obligations into one concise item when the same action applies to multiple people.',
-  'Convert events into responsibilities: who needs to do what, by when, or for whom.',
-  'Use importantItems only for watchouts: handoffs, split responsibilities, unusual timing, forgotten-item risk, or tonight-only chores.',
-  'Use routineItems for before-leaving and pack-or-bring actions. Use tags to decide the rendered section.',
-  'Use timingNotes only for logistics that help the household coordinate.',
-  'Use uncertaintyNotes only when a requirement is inferred or needs checking.',
+  'Put an obligation in "watchouts" instead of a block line ONLY when it is a genuine issue: a schedule clash, unusual or off-pattern timing, or a high-stakes forgotten-item risk (passport, medication, signed form — not everyday water bottles).',
+  'An obligation is either a block line or a watchout, never both. Keep run-of-the-mill handoffs and pickups as ordinary block lines.',
   'Keep low-priority ordinary events out unless they change readiness or coordination.',
   'Use generic, concise wording from the supplied sources and do not invent private details.',
+  'Set shouldSend to false only when there is genuinely nothing worth sending.',
   'Return only the requested structured object. Use the supplied sourceId values exactly.'
 ].join('\n');
 
 export const morningBriefingOutputJsonSchema = {
   type: 'object',
   additionalProperties: false,
-  required: [
-    'shouldSend',
-    'headline',
-    'routineItems',
-    'importantItems',
-    'timingNotes',
-    'uncertaintyNotes',
-    'sourceIdsIgnored'
-  ],
+  required: ['shouldSend', 'headline', 'morning', 'afternoon', 'watchouts', 'sourceIdsIgnored'],
   properties: {
     shouldSend: { type: 'boolean' },
     headline: { type: 'string' },
-    routineItems: { type: 'array', items: briefingItemJsonSchema('routine') },
-    importantItems: { type: 'array', items: briefingItemJsonSchema('important') },
-    timingNotes: { type: 'array', items: briefingItemJsonSchema('timing') },
-    uncertaintyNotes: { type: 'array', items: briefingItemJsonSchema('uncertain') },
+    morning: { type: 'array', items: briefingLineJsonSchema() },
+    afternoon: { type: 'array', items: briefingLineJsonSchema() },
+    watchouts: { type: 'array', items: briefingLineJsonSchema() },
     sourceIdsIgnored: { type: 'array', items: { type: 'string' } }
   }
 } as const;
@@ -134,16 +125,18 @@ export async function createAiMorningBriefing({
   timeZone,
   calendarConfigs,
   events,
-  provider
+  provider,
+  members
 }: {
   localDate: string;
   timeZone: string;
   calendarConfigs: CalendarConfig[];
   events: MorningBriefingEvent[];
   provider: MorningBriefingAiProvider;
+  members: ScheduleDisplayMember[];
 }): Promise<DeterministicMorningBriefing> {
   if (!calendarConfigs.some((calendar) => calendar.kind === 'dailyRequirements')) {
-    return createDeterministicMorningBriefing({ localDate, timeZone, calendarConfigs, events });
+    return createDeterministicMorningBriefing({ localDate, timeZone, calendarConfigs, events, members });
   }
 
   const localEvents = collectMorningBriefingEvents({ events, localDate, timeZone });
@@ -178,7 +171,7 @@ export async function createAiMorningBriefing({
     briefing = null;
   }
   if (!briefing) {
-    const fallback = createMorningBriefingFallback({ events: localEvents });
+    const fallback = createMorningBriefingFallback({ events: localEvents, timeZone, members });
     return {
       briefingKind: 'morning',
       localDate,
@@ -189,7 +182,7 @@ export async function createAiMorningBriefing({
     };
   }
   if (isEmptyBriefing(briefing) && isWeekday(localDate, timeZone)) {
-    return createDeterministicMorningBriefing({ localDate, timeZone, calendarConfigs, events });
+    return createDeterministicMorningBriefing({ localDate, timeZone, calendarConfigs, events, members });
   }
 
   return {
@@ -197,26 +190,19 @@ export async function createAiMorningBriefing({
     localDate,
     generationStatus: 'ai',
     briefing,
-    message: formatMorningBriefing(briefing),
+    message: formatMorningBriefing(briefing, members),
     sourceIds: sourceIdsUsedBy(briefing)
   };
 }
 
-function briefingItemJsonSchema(kind: MorningBriefing['routineItems'][number]['kind']) {
+function briefingLineJsonSchema() {
   return {
     type: 'object',
     additionalProperties: false,
-    required: ['text', 'kind', 'tags', 'sourceIds'],
+    required: ['text', 'who', 'sourceIds'],
     properties: {
       text: { type: 'string' },
-      kind: { type: 'string', enum: [kind] },
-      tags: {
-        type: 'array',
-        items: {
-          type: 'string',
-          enum: ['wear', 'bring', 'prepare', 'remember', 'coordinate', 'leaveEarlier']
-        }
-      },
+      who: { type: 'array', items: { type: 'string' } },
       sourceIds: { type: 'array', items: { type: 'string' } }
     }
   } as const;
@@ -230,11 +216,7 @@ function openAiMessageContent(body: unknown) {
 }
 
 function isEmptyBriefing(briefing: MorningBriefing) {
-  return (
-    !briefing.shouldSend ||
-    [...briefing.routineItems, ...briefing.importantItems, ...briefing.timingNotes, ...briefing.uncertaintyNotes]
-      .length === 0
-  );
+  return !briefing.shouldSend || [...briefing.morning, ...briefing.afternoon, ...briefing.watchouts].length === 0;
 }
 
 function isWeekday(localDate: string, timeZone: string) {
@@ -270,70 +252,52 @@ function parseAiBriefing(
     return { briefing: null, failure: { reason: 'invalid_top_level_fields' } };
   }
 
-  const sourceIdsIgnored = parseIgnoredSourceIds(value.sourceIdsIgnored, knownSourceIds);
+  const sourceIdsIgnored = parseSourceIds(value.sourceIdsIgnored, knownSourceIds);
   if (!sourceIdsIgnored) {
     return { briefing: null, failure: { reason: 'invalid_source_ids_ignored_shape' } };
   }
 
-  const routineItems = parseItems(value.routineItems, 'routineItems', 'routine', knownSourceIds);
-  if (!routineItems.items) return { briefing: null, failure: routineItems.failure };
+  const morning = parseLines(value.morning, 'morning', knownSourceIds);
+  if (!morning.lines) return { briefing: null, failure: morning.failure };
 
-  const importantItems = parseItems(value.importantItems, 'importantItems', 'important', knownSourceIds);
-  if (!importantItems.items) return { briefing: null, failure: importantItems.failure };
+  const afternoon = parseLines(value.afternoon, 'afternoon', knownSourceIds);
+  if (!afternoon.lines) return { briefing: null, failure: afternoon.failure };
 
-  const timingNotes = parseItems(value.timingNotes, 'timingNotes', 'timing', knownSourceIds);
-  if (!timingNotes.items) return { briefing: null, failure: timingNotes.failure };
-
-  const uncertaintyNotes = parseItems(value.uncertaintyNotes, 'uncertaintyNotes', 'uncertain', knownSourceIds);
-  if (!uncertaintyNotes.items) return { briefing: null, failure: uncertaintyNotes.failure };
+  const watchouts = parseLines(value.watchouts, 'watchouts', knownSourceIds);
+  if (!watchouts.lines) return { briefing: null, failure: watchouts.failure };
 
   return {
     briefing: {
       shouldSend: value.shouldSend,
       headline: value.headline,
-      routineItems: routineItems.items,
-      importantItems: importantItems.items,
-      timingNotes: timingNotes.items,
-      uncertaintyNotes: uncertaintyNotes.items,
+      morning: morning.lines,
+      afternoon: afternoon.lines,
+      watchouts: watchouts.lines,
       sourceIdsIgnored
     }
   };
 }
 
-function parseItems(
-  value: unknown,
-  section: keyof Pick<MorningBriefing, 'routineItems' | 'importantItems' | 'timingNotes' | 'uncertaintyNotes'>,
-  kind: MorningBriefing['routineItems'][number]['kind'],
-  knownSourceIds: Set<string>
-) {
+function parseLines(value: unknown, section: BriefingSection, knownSourceIds: Set<string>) {
   if (!Array.isArray(value)) {
-    return { items: null, failure: { reason: 'invalid_items_array', section } satisfies AiBriefingParseFailure };
+    return { lines: null, failure: { reason: 'invalid_lines_array', section } satisfies AiBriefingParseFailure };
   }
-  const items = value.map((item, itemIndex) => {
-    if (!isRecord(item) || typeof item.text !== 'string' || item.kind !== kind || !Array.isArray(item.tags)) {
-      return { item: null, failure: { reason: 'invalid_item_shape', section, itemIndex } };
+  const parsed = value.map((line, lineIndex) => {
+    if (!isRecord(line) || typeof line.text !== 'string') {
+      return { line: null, failure: { reason: 'invalid_line_shape', section, lineIndex } };
     }
-    const sourceIds = parseSourceIds(item.sourceIds, knownSourceIds);
-    if (!sourceIds) return { item: null, failure: { reason: 'invalid_item_source_ids', section, itemIndex } };
-    if (sourceIds.length === 0) return { item: null, failure: null };
-    if (!item.tags.every(isBriefingTag)) {
-      return { item: null, failure: { reason: 'invalid_item_tags', section, itemIndex } };
+    if (!Array.isArray(line.who) || !line.who.every((id): id is string => typeof id === 'string')) {
+      return { line: null, failure: { reason: 'invalid_line_who', section, lineIndex } };
     }
-    return {
-      item: {
-        text: item.text,
-        kind,
-        tags: item.tags,
-        sourceIds
-      }
-    };
+    const sourceIds = parseSourceIds(line.sourceIds, knownSourceIds);
+    if (!sourceIds) return { line: null, failure: { reason: 'invalid_line_source_ids', section, lineIndex } };
+    if (sourceIds.length === 0) return { line: null, failure: null };
+    return { line: { text: line.text, who: line.who, sourceIds } };
   });
-  const invalidItem = items.find((item) => item.failure);
-  return invalidItem
-    ? { items: null, failure: invalidItem.failure as AiBriefingParseFailure }
-    : {
-        items: items.map((item) => item.item).filter((item): item is BriefingItem => item !== null)
-      };
+  const invalid = parsed.find((entry) => entry.failure);
+  return invalid
+    ? { lines: null, failure: invalid.failure as AiBriefingParseFailure }
+    : { lines: parsed.map((entry) => entry.line).filter((line): line is BriefingLine => line !== null) };
 }
 
 function parseSourceIds(value: unknown, knownSourceIds: Set<string>) {
@@ -342,34 +306,12 @@ function parseSourceIds(value: unknown, knownSourceIds: Set<string>) {
   return value.filter((sourceId) => knownSourceIds.has(sourceId));
 }
 
-function parseIgnoredSourceIds(value: unknown, knownSourceIds: Set<string>) {
-  if (!Array.isArray(value)) return null;
-  if (!value.every((sourceId): sourceId is string => typeof sourceId === 'string')) return null;
-  return value.filter((sourceId) => knownSourceIds.has(sourceId));
-}
-
 function sourceIdsUsedBy(briefing: MorningBriefing) {
-  return [
-    ...briefing.routineItems,
-    ...briefing.importantItems,
-    ...briefing.timingNotes,
-    ...briefing.uncertaintyNotes
-  ].flatMap((item) => item.sourceIds);
+  return [...briefing.morning, ...briefing.afternoon, ...briefing.watchouts].flatMap((line) => line.sourceIds);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
-}
-
-function isBriefingTag(value: unknown): value is MorningBriefing['routineItems'][number]['tags'][number] {
-  return (
-    value === 'wear' ||
-    value === 'bring' ||
-    value === 'prepare' ||
-    value === 'remember' ||
-    value === 'coordinate' ||
-    value === 'leaveEarlier'
-  );
 }
 
 function summarizeSources(sources: MorningBriefingAiSource[]) {
@@ -391,10 +333,9 @@ function describeAiResponseShape(value: unknown) {
     keys: Object.keys(value).sort(),
     shouldSendType: typeof value.shouldSend,
     headlineType: typeof value.headline,
-    routineItemsCount: Array.isArray(value.routineItems) ? value.routineItems.length : null,
-    importantItemsCount: Array.isArray(value.importantItems) ? value.importantItems.length : null,
-    timingNotesCount: Array.isArray(value.timingNotes) ? value.timingNotes.length : null,
-    uncertaintyNotesCount: Array.isArray(value.uncertaintyNotes) ? value.uncertaintyNotes.length : null,
+    morningCount: Array.isArray(value.morning) ? value.morning.length : null,
+    afternoonCount: Array.isArray(value.afternoon) ? value.afternoon.length : null,
+    watchoutsCount: Array.isArray(value.watchouts) ? value.watchouts.length : null,
     sourceIdsIgnoredCount: Array.isArray(value.sourceIdsIgnored) ? value.sourceIdsIgnored.length : null
   };
 }
