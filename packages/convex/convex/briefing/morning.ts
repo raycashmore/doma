@@ -4,13 +4,6 @@ import { zonedDateStartMs } from '../schedule/week';
 
 export type BriefingKind = 'morning';
 
-export type BriefingItem = {
-  text: string;
-  kind: 'routine' | 'important' | 'timing' | 'uncertain';
-  tags: ('wear' | 'bring' | 'prepare' | 'remember' | 'coordinate' | 'leaveEarlier')[];
-  sourceIds: string[];
-};
-
 export type BriefingLine = {
   text: string;
   who: string[];
