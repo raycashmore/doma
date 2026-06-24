@@ -1,4 +1,5 @@
 import type { CalendarConfig, ScheduleEventRow } from '../schedule/mapping';
+import type { ScheduleDisplayMember } from '../schedule/config';
 import { zonedDateStartMs } from '../schedule/week';
 
 export type BriefingKind = 'morning';
@@ -10,13 +11,18 @@ export type BriefingItem = {
   sourceIds: string[];
 };
 
+export type BriefingLine = {
+  text: string;
+  who: string[];
+  sourceIds: string[];
+};
+
 export type MorningBriefing = {
   shouldSend: boolean;
   headline: string;
-  routineItems: BriefingItem[];
-  importantItems: BriefingItem[];
-  timingNotes: BriefingItem[];
-  uncertaintyNotes: BriefingItem[];
+  morning: BriefingLine[];
+  afternoon: BriefingLine[];
+  watchouts: BriefingLine[];
   sourceIdsIgnored: string[];
 };
 
@@ -71,10 +77,9 @@ function emptyBriefing(headline: string): MorningBriefing {
   return {
     shouldSend: true,
     headline,
-    routineItems: [],
-    importantItems: [],
-    timingNotes: [],
-    uncertaintyNotes: [],
+    morning: [],
+    afternoon: [],
+    watchouts: [],
     sourceIdsIgnored: []
   };
 }
@@ -83,46 +88,43 @@ export function fallbackMorningBriefingHeadline(dailyRequirementCount: number) {
   return dailyRequirementCount > 0 ? "Today's requirements" : 'No daily requirements found.';
 }
 
-export function formatMorningBriefing(briefing: MorningBriefing) {
+export function formatMorningBriefing(briefing: MorningBriefing, members: ScheduleDisplayMember[]) {
   if (!briefing.shouldSend) return '';
 
   const lines = ['Today:', sanitizeBriefingText(briefing.headline).replace(/^Today:\s*/i, '')];
-  const groupedRoutineItems = new Set<BriefingItem>();
-  const beforeLeaving = briefing.routineItems.filter((item) =>
-    hasAnyTag(item, ['wear', 'remember', 'prepare', 'leaveEarlier'])
-  );
-  beforeLeaving.forEach((item) => groupedRoutineItems.add(item));
 
-  const packBring = briefing.routineItems.filter((item) => {
-    if (groupedRoutineItems.has(item) || !hasAnyTag(item, ['bring'])) return false;
-    groupedRoutineItems.add(item);
-    return true;
-  });
-
-  const coordinatedRoutineItems = briefing.routineItems.filter((item) => {
-    if (groupedRoutineItems.has(item) || !hasAnyTag(item, ['coordinate'])) return false;
-    groupedRoutineItems.add(item);
-    return true;
-  });
-  const ungroupedRoutineItems = briefing.routineItems.filter((item) => {
-    if (groupedRoutineItems.has(item)) return false;
-    groupedRoutineItems.add(item);
-    return true;
-  });
-
-  appendSection(lines, 'Watchouts', briefing.importantItems);
-  appendSection(lines, 'Before leaving', [...beforeLeaving, ...ungroupedRoutineItems]);
-  appendSection(lines, 'Pack / bring', packBring);
-  appendSection(lines, 'Logistics', [...coordinatedRoutineItems, ...briefing.timingNotes]);
-  appendSection(lines, 'Unclear', briefing.uncertaintyNotes);
+  appendBlock(lines, 'This morning:', briefing.morning, members);
+  appendBlock(lines, 'This afternoon:', briefing.afternoon, members);
+  appendWatchouts(lines, briefing.watchouts);
 
   return lines.join('\n');
 }
 
-function appendSection(lines: string[], heading: string, items: BriefingItem[]) {
-  if (items.length === 0) return;
+function appendBlock(lines: string[], heading: string, blockLines: BriefingLine[], members: ScheduleDisplayMember[]) {
+  if (blockLines.length === 0) return;
 
-  lines.push('', heading, ...items.map((item) => `- ${sanitizeBriefingText(item.text)}`));
+  const order = new Map(members.map((member, index) => [member.id, index]));
+  const labels = new Map(members.map((member) => [member.id, member.label]));
+  const sorted = [...blockLines].sort((a, b) => lineOrder(a, order) - lineOrder(b, order));
+
+  lines.push('', heading, ...sorted.map((line) => renderPersonLine(line, labels)));
+}
+
+function lineOrder(line: BriefingLine, order: Map<string, number>) {
+  const indices = line.who.map((id) => order.get(id) ?? Number.POSITIVE_INFINITY);
+  return indices.length > 0 ? Math.min(...indices) : Number.POSITIVE_INFINITY;
+}
+
+function renderPersonLine(line: BriefingLine, labels: Map<string, string>) {
+  const who = sanitizeBriefingText(line.who.map((id) => labels.get(id) ?? id).join(', '));
+  const text = sanitizeBriefingText(line.text);
+  return who ? `- ${who}: ${text}` : `- ${text}`;
+}
+
+function appendWatchouts(lines: string[], watchouts: BriefingLine[]) {
+  if (watchouts.length === 0) return;
+
+  lines.push('', 'Watchouts', ...watchouts.map((line) => `- ${sanitizeBriefingText(line.text)}`));
 }
 
 function sanitizeBriefingText(text: string) {
@@ -136,10 +138,6 @@ function sanitizeBriefingText(text: string) {
     .replace(/\s+([,.;:])/g, '$1')
     .replace(/\s{2,}/g, ' ')
     .trim();
-}
-
-function hasAnyTag(item: BriefingItem, tags: BriefingItem['tags']) {
-  return tags.some((tag) => item.tags.includes(tag));
 }
 
 export function createDeterministicMorningBriefing({

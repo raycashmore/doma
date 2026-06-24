@@ -8,6 +8,7 @@ import {
   type MorningBriefingEvent,
   morningBriefingKey
 } from './morning';
+import type { ScheduleDisplayMember } from '../schedule/config';
 
 const timeZone = 'Australia/Sydney';
 const localDate = '2026-06-12';
@@ -27,124 +28,97 @@ function event(overrides: Partial<MorningBriefingEvent> = {}): MorningBriefingEv
   };
 }
 
+const members: ScheduleDisplayMember[] = [
+  { id: 'childA', label: 'Child A', initials: 'CA' },
+  { id: 'childB', label: 'Child B', initials: 'CB' },
+  { id: 'adultA', label: 'Adult A', initials: 'AA' }
+];
+
 describe('formatMorningBriefing', () => {
-  it('preserves readiness groups instead of flattening every item', () => {
+  it('groups lines by time block then by member config order', () => {
     expect(
-      formatMorningBriefing({
-        shouldSend: true,
-        headline: 'Busy coordination day: school items, activity packing, and evening chores.',
-        importantItems: [
-          {
-            text: 'memberA handoff: adultA drops off at 4pm; adultB picks up at 7pm.',
-            kind: 'important',
-            tags: ['coordinate'],
-            sourceIds: ['calendar-a:event-important:1']
-          }
-        ],
-        routineItems: [
-          {
-            text: 'memberA: wear sport clothes.',
-            kind: 'routine',
-            tags: ['wear'],
-            sourceIds: ['requirements-calendar:event-wear:1']
-          },
-          {
-            text: 'memberA and memberB: bring homework.',
-            kind: 'routine',
-            tags: ['remember', 'bring'],
-            sourceIds: ['requirements-calendar:event-homework:1']
-          },
-          {
-            text: 'memberA: water bottle and snack.',
-            kind: 'routine',
-            tags: ['bring'],
-            sourceIds: ['requirements-calendar:event-pack:1']
-          },
-          {
-            text: 'adultA handles activity drop-off and pickup.',
-            kind: 'routine',
-            tags: ['coordinate'],
-            sourceIds: ['calendar-a:event-coordinate:1']
-          }
-        ],
-        timingNotes: [],
-        uncertaintyNotes: [
-          {
-            text: 'Check whether rehearsal needs special shoes.',
-            kind: 'uncertain',
-            tags: [],
-            sourceIds: ['calendar-a:event-uncertain:1']
-          }
-        ],
-        sourceIdsIgnored: []
-      })
+      formatMorningBriefing(
+        {
+          shouldSend: true,
+          headline: 'homework, sport clothes, and dance drop-offs/pick-ups.',
+          morning: [{ text: 'wear sport clothes', who: ['childA'], sourceIds: ['req:wear:1'] }],
+          afternoon: [
+            { text: 'pick up Child A at 7pm', who: ['adultA'], sourceIds: ['cal:pickup:1'] },
+            { text: 'bring water bottle and snack for dancing', who: ['childA'], sourceIds: ['req:pack:1'] }
+          ],
+          watchouts: [],
+          sourceIdsIgnored: []
+        },
+        members
+      )
     ).toBe(`Today:
-Busy coordination day: school items, activity packing, and evening chores.
+homework, sport clothes, and dance drop-offs/pick-ups.
 
-Watchouts
-- handoff: adultA drops off at 4pm; adultB picks up at 7pm.
+This morning:
+- Child A: wear sport clothes
 
-Before leaving
-- wear sport clothes.
-- bring homework.
-
-Pack / bring
-- water bottle and snack.
-
-Logistics
-- adultA handles activity drop-off and pickup.
-
-Unclear
-- Check whether rehearsal needs special shoes.`);
+This afternoon:
+- Child A: bring water bottle and snack for dancing
+- Adult A: pick up Child A at 7pm`);
   });
 
-  it('returns an empty message when AI suppresses the briefing', () => {
+  it('renders watchouts without a person prefix and omits empty blocks', () => {
     expect(
-      formatMorningBriefing({
-        shouldSend: false,
-        headline: 'No briefing needed.',
-        routineItems: [],
-        importantItems: [],
-        timingNotes: [],
-        uncertaintyNotes: [],
-        sourceIdsIgnored: []
-      })
+      formatMorningBriefing(
+        {
+          shouldSend: true,
+          headline: 'One clash to watch.',
+          morning: [],
+          afternoon: [{ text: 'drop off Child A at 4pm', who: ['adultA'], sourceIds: ['cal:drop:1'] }],
+          watchouts: [{ text: 'Two pickups clash at 7pm', who: [], sourceIds: ['cal:clash:1'] }],
+          sourceIdsIgnored: []
+        },
+        members
+      )
+    ).toBe(`Today:
+One clash to watch.
+
+This afternoon:
+- Adult A: drop off Child A at 4pm
+
+Watchouts
+- Two pickups clash at 7pm`);
+  });
+
+  it('returns an empty message when the briefing is suppressed', () => {
+    expect(
+      formatMorningBriefing(
+        {
+          shouldSend: false,
+          headline: 'No briefing needed.',
+          morning: [],
+          afternoon: [],
+          watchouts: [],
+          sourceIdsIgnored: []
+        },
+        members
+      )
     ).toBe('');
   });
 
-  it('renders an untagged routine item exactly once', () => {
-    const message = formatMorningBriefing({
-      shouldSend: true,
-      headline: 'Routine details need review.',
-      routineItems: [
-        {
-          text: 'memberA: confirm classroom note.',
-          kind: 'routine',
-          tags: [],
-          sourceIds: ['requirements-calendar:event-untagged:1']
-        },
-        {
-          text: 'memberA: pack lunch box.',
-          kind: 'routine',
-          tags: ['bring'],
-          sourceIds: ['requirements-calendar:event-bring:1']
-        }
-      ],
-      importantItems: [],
-      timingNotes: [],
-      uncertaintyNotes: [],
-      sourceIdsIgnored: []
-    });
+  it('falls back to the raw id and scrubs leaked member tokens', () => {
+    const message = formatMorningBriefing(
+      {
+        shouldSend: true,
+        headline: 'Routine day.',
+        morning: [{ text: 'memberA: confirm classroom note', who: ['unknownX'], sourceIds: ['req:note:1'] }],
+        afternoon: [],
+        watchouts: [],
+        sourceIdsIgnored: []
+      },
+      members
+    );
 
     expect(message).toBe(`Today:
-Routine details need review.
+Routine day.
 
-Before leaving
-- confirm classroom note.
-
-Pack / bring
-- pack lunch box.`);
-    expect(message.match(/confirm classroom note\./g)).toHaveLength(1);
+This morning:
+- unknownX: confirm classroom note`);
     expect(message).not.toContain('memberA');
   });
 });
