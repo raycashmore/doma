@@ -251,7 +251,7 @@ function parseAiBriefing(
     return { briefing: null, failure: { reason: 'invalid_top_level_fields' } };
   }
 
-  const sourceIdsIgnored = parseIgnoredSourceIds(value.sourceIdsIgnored, knownSourceIds);
+  const sourceIdsIgnored = parseSourceIds(value.sourceIdsIgnored, knownSourceIds);
   if (!sourceIdsIgnored) {
     return { briefing: null, failure: { reason: 'invalid_source_ids_ignored_shape' } };
   }
@@ -300,12 +300,6 @@ function parseLines(value: unknown, section: BriefingSection, knownSourceIds: Se
 }
 
 function parseSourceIds(value: unknown, knownSourceIds: Set<string>) {
-  if (!Array.isArray(value)) return null;
-  if (!value.every((sourceId): sourceId is string => typeof sourceId === 'string')) return null;
-  return value.filter((sourceId) => knownSourceIds.has(sourceId));
-}
-
-function parseIgnoredSourceIds(value: unknown, knownSourceIds: Set<string>) {
   if (!Array.isArray(value)) return null;
   if (!value.every((sourceId): sourceId is string => typeof sourceId === 'string')) return null;
   return value.filter((sourceId) => knownSourceIds.has(sourceId));

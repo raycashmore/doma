@@ -156,7 +156,7 @@ export function buildPersonLines(events: MorningBriefingEvent[]): BriefingLine[]
       existing.text = `${existing.text}; ${detail}`;
       existing.sourceIds.push(sourceId);
     } else {
-      groups.set(key, { text: detail, who: event.who, sourceIds: [sourceId] });
+      groups.set(key, { text: detail, who: [...event.who], sourceIds: [sourceId] });
     }
   }
   return [...groups.values()];

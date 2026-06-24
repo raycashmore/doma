@@ -102,6 +102,49 @@ This afternoon:
     ]);
   });
 
+  it('renders watchouts under a Watchouts header and excludes them from morning/afternoon blocks', async () => {
+    const provider: MorningBriefingAiProvider = async ({ sources }) => {
+      const requirement = sources.find((source) => source.kind === 'dailyRequirements');
+      const handoff = sources.find((source) => source.title === 'Activity handoff');
+      return {
+        shouldSend: true,
+        headline: 'Sports kit and a clash to watch.',
+        morning: [
+          { text: 'Bring sports bag', who: ['childA'], sourceIds: [requirement?.sourceId ?? 'missing'] }
+        ],
+        afternoon: [],
+        watchouts: [
+          { text: 'Two pickups clash at pickup time', who: ['adultA'], sourceIds: [handoff?.sourceId ?? 'missing'] }
+        ],
+        sourceIdsIgnored: []
+      };
+    };
+
+    const result = await createAiMorningBriefing({
+      localDate,
+      timeZone,
+      calendarConfigs: [requirementsCalendar],
+      events: [requirementEvent(), ordinaryEvent()],
+      provider,
+      members
+    });
+
+    expect(result.generationStatus).toBe('ai');
+    expect(result.message).toContain('Watchouts');
+    expect(result.message).toContain('Two pickups clash at pickup time');
+    // The watchout must NOT appear as a block line under This morning: or This afternoon:
+    expect(result.message).not.toMatch(/This morning:[^\n]*\n(?:- [^\n]*\n)*- [^:]*Two pickups/);
+    expect(result.message).not.toMatch(/This afternoon:[^\n]*\n(?:- [^\n]*\n)*- [^:]*Two pickups/);
+    expect(result.message).toBe(`Today:
+Sports kit and a clash to watch.
+
+This morning:
+- Child A: Bring sports bag
+
+Watchouts
+- Two pickups clash at pickup time`);
+  });
+
   it('treats a missing daily requirements calendar as a setup problem before calling AI', async () => {
     const provider = vi.fn();
     const result = await createAiMorningBriefing({
@@ -139,6 +182,7 @@ This afternoon:
 
     expect(result.generationStatus).toBe('fallback');
     expect(result.message).toContain('This morning:');
+    expect(consoleError).toHaveBeenCalledWith(expect.stringContaining('[briefing.ai]'), expect.anything());
     consoleError.mockRestore();
   });
 
@@ -158,6 +202,7 @@ This afternoon:
     });
 
     expect(result.generationStatus).toBe('fallback');
+    expect(consoleError).toHaveBeenCalledWith(expect.stringContaining('[briefing.ai]'), expect.anything());
     consoleError.mockRestore();
   });
 

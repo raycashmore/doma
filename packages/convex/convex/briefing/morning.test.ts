@@ -315,6 +315,32 @@ describe('formatMorningBriefingFallback', () => {
     });
   });
 
+  it('places a post-noon daily-requirement under This afternoon:', () => {
+    const afternoonStart = Date.parse('2026-06-12T06:00:00.000Z'); // 4pm Australia/Sydney
+    expect(
+      formatMorningBriefingFallback({
+        timeZone,
+        members,
+        events: [
+          event({
+            googleEventId: 'afternoon-pm-1',
+            calendarId: 'requirements-calendar',
+            kind: 'dailyRequirements',
+            start: afternoonStart,
+            end: afternoonStart + 30 * 60 * 1000,
+            allDay: false,
+            who: ['childA'],
+            title: 'Afternoon activity',
+            description: 'Bring water bottle for afternoon activity'
+          })
+        ]
+      })
+    ).toEqual({
+      message: "Today:\nToday's requirements\n\nThis afternoon:\n- Child A: Bring water bottle for afternoon activity",
+      sourceIds: [`requirements-calendar:afternoon-pm-1:${afternoonStart}`]
+    });
+  });
+
   it('uses deterministic empty fallback text when no daily requirements exist', () => {
     expect(
       formatMorningBriefingFallback({ timeZone, members, events: [event({ googleEventId: 'ordinary-1' })] })
