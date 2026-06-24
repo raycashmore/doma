@@ -3,29 +3,18 @@ import { v } from 'convex/values';
 
 export const briefingKindValidator = v.literal('morning');
 
-export const briefingItemValidator = v.object({
+export const briefingLineValidator = v.object({
   text: v.string(),
-  kind: v.union(v.literal('routine'), v.literal('important'), v.literal('timing'), v.literal('uncertain')),
-  tags: v.array(
-    v.union(
-      v.literal('wear'),
-      v.literal('bring'),
-      v.literal('prepare'),
-      v.literal('remember'),
-      v.literal('coordinate'),
-      v.literal('leaveEarlier')
-    )
-  ),
+  who: v.array(v.string()),
   sourceIds: v.array(v.string())
 });
 
 export const morningBriefingValidator = v.object({
   shouldSend: v.boolean(),
   headline: v.string(),
-  routineItems: v.array(briefingItemValidator),
-  importantItems: v.array(briefingItemValidator),
-  timingNotes: v.array(briefingItemValidator),
-  uncertaintyNotes: v.array(briefingItemValidator),
+  morning: v.array(briefingLineValidator),
+  afternoon: v.array(briefingLineValidator),
+  watchouts: v.array(briefingLineValidator),
   sourceIdsIgnored: v.array(v.string())
 });
 

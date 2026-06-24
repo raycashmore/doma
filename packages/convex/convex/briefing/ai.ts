@@ -1,5 +1,5 @@
-import type { CalendarConfig } from '../schedule/mapping';
 import type { ScheduleDisplayMember } from '../schedule/config';
+import type { CalendarConfig } from '../schedule/mapping';
 import { serializeError } from './errors';
 import {
   type BriefingLine,

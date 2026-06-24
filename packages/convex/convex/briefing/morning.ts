@@ -1,5 +1,5 @@
-import type { CalendarConfig, ScheduleEventRow } from '../schedule/mapping';
 import type { ScheduleDisplayMember } from '../schedule/config';
+import type { CalendarConfig, ScheduleEventRow } from '../schedule/mapping';
 import { zonedDateStartMs } from '../schedule/week';
 
 export type BriefingKind = 'morning';

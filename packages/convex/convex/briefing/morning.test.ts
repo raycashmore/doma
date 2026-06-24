@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import type { ScheduleDisplayMember } from '../schedule/config';
 import {
   collectMorningBriefingEvents,
   createDeterministicMorningBriefing,
@@ -8,7 +9,6 @@ import {
   type MorningBriefingEvent,
   morningBriefingKey
 } from './morning';
-import type { ScheduleDisplayMember } from '../schedule/config';
 
 const timeZone = 'Australia/Sydney';
 const localDate = '2026-06-12';

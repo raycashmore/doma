@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import type { ScheduleDisplayMember } from '../schedule/config';
 import {
   createAiMorningBriefing,
   createOpenAiMorningBriefingProvider,
@@ -8,7 +9,6 @@ import {
   morningBriefingSystemPrompt
 } from './ai';
 import type { MorningBriefingEvent } from './morning';
-import type { ScheduleDisplayMember } from '../schedule/config';
 
 const timeZone = 'Australia/Sydney';
 const localDate = '2026-06-12';
@@ -273,7 +273,7 @@ describe('createOpenAiMorningBriefingProvider', () => {
     const result = await provider({ localDate, timeZone, sources: [] });
 
     expect(result).toMatchObject({ shouldSend: true, headline: 'Test' });
-    const body = JSON.parse((fetchImpl.mock.calls[0]?.[1] as RequestInit).body as string);
+    const body = JSON.parse(((fetchImpl.mock.calls[0] as unknown as [unknown, RequestInit])[1]).body as string);
     expect(body.response_format.json_schema.schema).toEqual(morningBriefingOutputJsonSchema);
   });
 });
