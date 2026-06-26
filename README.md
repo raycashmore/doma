@@ -47,11 +47,13 @@ Doma is not just an app that uses AI features. It is also developed with an
 AI-first workflow built around a task board, repo-specific skills, and agent
 review loops.
 
-Work usually starts in a Notion board, where ideas,
-bugs, and product work move through statuses such as `needs-triage`,
-`ready-for-agent`, and `ready-for-human`. From there, agents work inside the
-repo with the project's own rules for privacy, testing, documentation, and git
-workflow.
+Work usually starts in Linear, in the `Doma` project on the `Ray` team, where
+ideas, bugs, PRDs, and product work move through Linear states such as
+`Backlog`, `Todo`, `In Progress`, and `Done`. Triage still uses explicit labels
+such as `needs-triage`, `ready-for-agent`, and `ready-for-human`, so agents can
+pick up work with the same vocabulary across planning and implementation. From
+there, agents work inside the repo with the project's own rules for privacy,
+testing, documentation, and git workflow.
 
 The development process is deliberately structured. Design-heavy work is often
 shaped with skills such as `superpowers`, `brainstorming`, or `grill-me` to

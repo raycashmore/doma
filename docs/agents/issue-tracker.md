@@ -1,24 +1,31 @@
-# Issue Tracker: Notion
+# Issue Tracker: Linear
 
-Issues and PRDs for this repo live in Ray's Notion workspace in the `Doma Task Tracker` database.
+Issues and PRDs for this repo live in Linear in the `Doma` project on the `Ray` team.
 
 ## Conventions
 
-- Create a new issue by adding a new page to the `Doma Task Tracker` database.
-- Read and update issues directly in the Notion database.
-- The issue status vocabulary for skill-driven triage is:
+- Create a new issue in Linear on the `Ray` team and attach it to the `Doma` project.
+- Read and update issues directly in Linear.
+- Preserve source context in the issue description or links when migrating from another tracker.
+- Use Linear's workflow states for delivery state:
+  - `Backlog` for unsorted or future work
+  - `Todo` for ready work
+  - `In Progress` for active work
+  - `Done` for completed work
+  - `Canceled` for work that should not be actioned
+- The triage labels for skill-driven workflows are:
   - `needs-triage`
   - `needs-info`
   - `ready-for-agent`
   - `ready-for-human`
   - `wontfix`
 
-These statuses are used by the engineering skills as the canonical triage workflow for this repo.
+These labels are used by the engineering skills as the canonical triage vocabulary for this repo.
 
 ## When a skill says "publish to the issue tracker"
 
-Create a new page in the `Doma Task Tracker` Notion database.
+Create a Linear issue in the `Doma` project on the `Ray` team.
 
 ## When a skill says "fetch the relevant ticket"
 
-Open the referenced page in the `Doma Task Tracker` Notion database and read its properties and content.
+Open the referenced Linear issue and read its title, description, labels, state, comments, and linked documents.
