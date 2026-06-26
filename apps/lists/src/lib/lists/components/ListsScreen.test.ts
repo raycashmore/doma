@@ -101,9 +101,9 @@ async function renderScreen(selectedPublicId: string | null = 'weekly-shop') {
   return target;
 }
 
-async function provideLiveData() {
+async function provideLiveData(publicId = 'weekly-shop') {
   queryResults[0]?.set({ data: previewVisibleLists, isLoading: false });
-  queryResults[1]?.set({ data: previewItemsByListPublicId['weekly-shop'], isLoading: false });
+  queryResults[1]?.set({ data: previewItemsByListPublicId[publicId], isLoading: false });
   await tick();
 }
 
@@ -133,8 +133,8 @@ describe('ListsScreen mobile details', () => {
 
 describe('ListsScreen list actions', () => {
   it('uses a full-card hit target for list navigation', async () => {
-    const target = await renderScreen();
-    await provideLiveData();
+    const target = await renderScreen('home-reset');
+    await provideLiveData('home-reset');
 
     const listButton = target.querySelector<HTMLButtonElement>('button[aria-label="Open Home reset list"]');
 
@@ -144,8 +144,8 @@ describe('ListsScreen list actions', () => {
   });
 
   it('opens rename from the list actions menu', async () => {
-    const target = await renderScreen();
-    await provideLiveData();
+    const target = await renderScreen('home-reset');
+    await provideLiveData('home-reset');
 
     target.querySelector<HTMLButtonElement>('button[aria-label="List actions for Home reset"]')?.click();
     await tick();
@@ -163,8 +163,8 @@ describe('ListsScreen list actions', () => {
   });
 
   it('raises the open menu above nearby list cards and closes from the click-away layer', async () => {
-    const target = await renderScreen();
-    await provideLiveData();
+    const target = await renderScreen('home-reset');
+    await provideLiveData('home-reset');
 
     target.querySelector<HTMLButtonElement>('button[aria-label="List actions for Home reset"]')?.click();
     await tick();
@@ -224,12 +224,25 @@ describe('ListsScreen item header', () => {
 });
 
 describe('ListsScreen mobile switcher', () => {
+  it('opens on the selected shared list tab', async () => {
+    const target = await renderScreen();
+    await provideLiveData();
+
+    const switcherButton = Array.from(target.querySelectorAll<HTMLButtonElement>('button')).find(
+      (button) => button.textContent?.includes('Weekly shop') && button.querySelector('[title="Shared list"]')
+    );
+    switcherButton?.click();
+    await tick();
+
+    expect(target.textContent).toContain('Birthday dinner');
+  });
+
   it('marks shared lists with an icon in the selector and switcher list', async () => {
     const target = await renderScreen();
     await provideLiveData();
 
-    const switcherButton = Array.from(target.querySelectorAll<HTMLButtonElement>('button')).find((button) =>
-      button.textContent?.includes('Weekly shop')
+    const switcherButton = Array.from(target.querySelectorAll<HTMLButtonElement>('button')).find(
+      (button) => button.textContent?.includes('Weekly shop') && button.querySelector('[title="Shared list"]')
     );
     expect(switcherButton?.querySelector('[title="Shared list"]')).not.toBeNull();
 

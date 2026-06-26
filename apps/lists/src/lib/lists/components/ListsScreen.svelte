@@ -694,9 +694,11 @@
   });
 
   $effect(() => {
-    const listPublicId = selectedRow?.publicId ?? null;
+    const row = selectedRow;
+    const listPublicId = row?.publicId ?? null;
     if (listPublicId === previousListPublicId) return;
     previousListPublicId = listPublicId;
+    if (row) listFilter = row.visibility;
     selectedItemId = null;
     showMobileDetails = false;
     rightPanel = 'closed';

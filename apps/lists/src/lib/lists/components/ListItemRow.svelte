@@ -45,12 +45,12 @@
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <span
       use:dragHandle
-      class="flex h-7 w-6 shrink-0 cursor-grab items-center justify-center text-warm-text-tertiary active:cursor-grabbing"
+      class="flex h-7 w-6 shrink-0 cursor-grab items-center justify-center text-warm-text-secondary active:cursor-grabbing"
       aria-label={`Drag to reorder ${item.title}`}
       onclick={(e) => e.stopPropagation()}
       onkeydown={(e) => e.stopPropagation()}
     >
-      <ListIcon name="grip" size={16} />
+      <ListIcon name="grip" size={18} />
     </span>
   {/if}
 
