@@ -51,6 +51,7 @@
   let pastePreviewError = $state<string | null>(null);
   let pasteDialog = $state<HTMLDialogElement>();
   let listDialog = $state<HTMLDialogElement>();
+  let createNameInput = $state<HTMLInputElement>();
   const pastePreviewItemCount = $derived(
     pastePreview ? pastePreview.filter((entry) => entry.kind === 'item').length : 0
   );
@@ -358,6 +359,10 @@
 
   $effect(() => syncDialog(pasteDialog, pastePreview !== null));
   $effect(() => syncDialog(listDialog, listDialogOpen));
+  $effect(() => {
+    if (!showCreateDialog) return;
+    queueMicrotask(() => createNameInput?.focus());
+  });
 
   function resetListDialog() {
     showCreateDialog = false;
@@ -943,6 +948,11 @@
               class="flex min-w-0 items-center gap-2 rounded-full bg-warm-bg-dark px-5 py-2.5 text-base font-semibold text-warm-text-on-dark"
               onclick={() => (showListSwitcher = true)}
             >
+              {#if selectedRow.visibility === 'shared'}
+                <span class="shrink-0" title="Shared list">
+                  <ListIcon name="users" size={16} />
+                </span>
+              {/if}
               <span class="truncate">{selectedRow?.name ?? 'Lists'}</span>
               <ListIcon name="chevron-down" size={16} />
             </button>
@@ -997,9 +1007,9 @@
           <div
             class={`grid gap-4 md:min-h-0 md:flex-1 md:grid-rows-[minmax(0,1fr)] ${rightPanel !== 'closed' ? 'min-[900px]:grid-cols-[minmax(0,1fr)_300px]' : ''}`}
           >
-            <div class="flex flex-col gap-4 md:min-h-0">
+            <div class="flex min-w-0 flex-col gap-4 md:min-h-0">
               <form
-                class="flex items-center gap-3 rounded-2xl border border-warm-border bg-warm-bg px-3 py-3 md:px-4"
+                class="flex min-w-0 items-center gap-3 rounded-2xl border border-warm-border bg-warm-bg px-3 py-3 md:px-4"
                 onsubmit={(event) => {
                   event.preventDefault();
                   void handleCreateItem();
@@ -1009,7 +1019,7 @@
                 <input
                   bind:value={itemDraft}
                   onpaste={handleItemPaste}
-                  class="flex-1 bg-transparent text-sm text-warm-text-primary outline-none placeholder:text-warm-text-tertiary"
+                  class="min-w-0 flex-1 bg-transparent text-sm text-warm-text-primary outline-none placeholder:text-warm-text-tertiary"
                   placeholder="Add an item or paste a list..."
                 />
                 <button
@@ -1021,18 +1031,19 @@
                 </button>
               </form>
               <section
-                class="rounded-[24px] border border-warm-border bg-warm-bg py-2 md:flex md:min-h-0 md:flex-1 md:flex-col"
+                class="min-w-0 rounded-[24px] border border-warm-border bg-warm-bg py-2 md:flex md:min-h-0 md:flex-1 md:flex-col"
               >
                 <div class="flex items-center justify-between gap-3 px-2">
-                  <div>
-                    <h3 class="pl-2 text-sm font-bold text-warm-text-primary">Items</h3>
-                  </div>
-                  <div class="flex items-center gap-2">
+                  <div class="flex min-w-0 items-center gap-2 pl-2">
+                    <h3 class="text-sm font-bold text-warm-text-primary">Items</h3>
                     <span
-                      class="rounded-full bg-warm-section-mortgage px-3 py-1 text-[11px] font-semibold text-warm-text-secondary"
+                      class="rounded-full bg-warm-section-mortgage px-2.5 py-0.5 text-[11px] font-semibold text-warm-text-secondary"
+                      aria-label={`${activeItems.length} active items`}
                     >
                       {activeItems.length}
                     </span>
+                  </div>
+                  <div class="flex items-center gap-2">
                     <button
                       type="button"
                       class="flex h-8 w-8 items-center justify-center rounded-full text-warm-text-tertiary hover:text-warm-accent disabled:opacity-40"
@@ -1049,13 +1060,13 @@
                 <div class="md:min-h-0 md:flex-1 md:overflow-y-auto">
                   {#if activeDndItems.length}
                     <ul
-                      class="mt-3 flex flex-col divide-y divide-warm-border/60"
+                      class="mt-3 flex min-w-0 flex-col divide-y divide-warm-border/60"
                       use:dragHandleZone={{ items: activeDndItems, flipDurationMs: 160, dropTargetStyle: {} }}
                       onconsider={handleActiveConsider}
                       onfinalize={handleActiveFinalize}
                     >
                       {#each activeDndItems as entry (entry.id)}
-                        <li>
+                        <li class="min-w-0">
                           <ListItemRow
                             item={entry.item}
                             valueSummary={summarizeItemValues(entry.item)}
@@ -1073,9 +1084,9 @@
                   {/if}
 
                   {#if completedItems.length}
-                    <ul class="mt-1 flex flex-col divide-y divide-warm-border/60">
+                    <ul class="mt-1 flex min-w-0 flex-col divide-y divide-warm-border/60">
                       {#each completedItems as item (item._id)}
-                        <li>
+                        <li class="min-w-0">
                           <ListItemRow
                             {item}
                             valueSummary={summarizeItemValues(item)}
@@ -1178,11 +1189,18 @@
                 void navigateToList(list);
               }}
             >
-              <p
-                class={`truncate text-sm ${list.selected ? 'font-bold text-warm-text-primary' : 'font-semibold text-warm-text-secondary'}`}
-              >
-                {list.name}
-              </p>
+              <div class="flex min-w-0 items-center gap-2">
+                {#if list.visibility === 'shared'}
+                  <span class="shrink-0 text-warm-accent" title="Shared list">
+                    <ListIcon name="users" size={14} />
+                  </span>
+                {/if}
+                <p
+                  class={`min-w-0 truncate text-sm ${list.selected ? 'font-bold text-warm-text-primary' : 'font-semibold text-warm-text-secondary'}`}
+                >
+                  {list.name}
+                </p>
+              </div>
               <p class="mt-0.5 text-[11px] text-warm-text-secondary">{list.description}</p>
             </button>
           {/each}
@@ -1319,9 +1337,10 @@
             </div>
 
             <input
+              bind:this={createNameInput}
               bind:value={createName}
               class="rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-text-primary outline-none ring-0"
-              placeholder="Weekly shop"
+              placeholder="New list name"
             />
 
             <div class="mt-2 flex gap-2">

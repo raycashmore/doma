@@ -422,6 +422,8 @@ type ConvexSeed = {
   getSelectedPublicId: () => string | null;
 };
 
+type PendingCompletion = { action: 'complete' | 'uncomplete'; at: number };
+
 /**
  * Live adapter: a thin pass-through over the Convex queries and mutations. Reads
  * come back through the `useQuery` subscriptions; each command is one mutation
@@ -432,6 +434,7 @@ export class ConvexListStore implements ListStore {
   #lists;
   #items;
   #defaultListQuery;
+  #pendingCompletions = $state<Record<string, PendingCompletion>>({});
   #setDefaultListMutation = useMutation(api.lists.bot.setDefaultList);
   #createList = useMutation(api.lists.mutations.createList);
   #renameList = useMutation(api.lists.mutations.renameList);
@@ -482,7 +485,7 @@ export class ConvexListStore implements ListStore {
     return this.#lists.error ?? null;
   }
   get selected(): VisibleListItemsResult | null {
-    return this.#items.data ?? null;
+    return this.#applyPendingCompletions(this.#items.data ?? null);
   }
   get selectedLoading(): boolean {
     return this.#items.isLoading;
@@ -524,10 +527,28 @@ export class ConvexListStore implements ListStore {
     await this.#deleteListItem({ itemId: input.itemId as never });
   }
   async completeItem(input: { itemId: string }): Promise<void> {
-    await this.#completeListItem({ itemId: input.itemId as never });
+    this.#pendingCompletions = {
+      ...this.#pendingCompletions,
+      [input.itemId]: { action: 'complete', at: Date.now() }
+    };
+    try {
+      await this.#completeListItem({ itemId: input.itemId as never });
+    } catch (error) {
+      this.#removePendingCompletion(input.itemId);
+      throw error;
+    }
   }
   async uncompleteItem(input: { itemId: string }): Promise<void> {
-    await this.#uncompleteListItem({ itemId: input.itemId as never });
+    this.#pendingCompletions = {
+      ...this.#pendingCompletions,
+      [input.itemId]: { action: 'uncomplete', at: Date.now() }
+    };
+    try {
+      await this.#uncompleteListItem({ itemId: input.itemId as never });
+    } catch (error) {
+      this.#removePendingCompletion(input.itemId);
+      throw error;
+    }
   }
   async reorderItem(input: { itemId: string; targetIndex: number }): Promise<void> {
     await this.#reorderListItem({ itemId: input.itemId as never, targetIndex: input.targetIndex });
@@ -573,6 +594,39 @@ export class ConvexListStore implements ListStore {
       itemId: input.itemId as never,
       propertyId: input.propertyId as never
     });
+  }
+
+  #removePendingCompletion(itemId: string) {
+    const next = { ...this.#pendingCompletions };
+    delete next[itemId];
+    this.#pendingCompletions = next;
+  }
+
+  #applyPendingCompletions(current: VisibleListItemsResult | null): VisibleListItemsResult | null {
+    if (!current || !Object.keys(this.#pendingCompletions).length) return current;
+
+    let activeItems = current.activeItems;
+    let completedItems = current.completedItems;
+
+    for (const [itemId, pending] of Object.entries(this.#pendingCompletions)) {
+      if (pending.action === 'complete') {
+        const item = activeItems.find((entry) => entry._id === itemId);
+        if (!item) continue;
+        activeItems = activeItems.filter((entry) => entry._id !== itemId);
+        completedItems = [markCompleted(item, pending.at), ...completedItems.filter((entry) => entry._id !== itemId)];
+      } else {
+        const item = completedItems.find((entry) => entry._id === itemId);
+        if (!item) continue;
+        completedItems = completedItems.filter((entry) => entry._id !== itemId);
+        activeItems = [
+          ...activeItems.filter((entry) => entry._id !== itemId),
+          markActive(item, activeItems, pending.at)
+        ];
+      }
+    }
+
+    if (activeItems === current.activeItems && completedItems === current.completedItems) return current;
+    return { ...current, activeItems, completedItems };
   }
 }
 

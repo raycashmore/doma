@@ -186,6 +186,66 @@ describe('ListsScreen list actions', () => {
   });
 });
 
+describe('ListsScreen item header', () => {
+  it('places the active item count with the Items label', async () => {
+    const target = await renderScreen();
+    await provideLiveData();
+
+    const count = target.querySelector('[aria-label="3 active items"]');
+
+    expect(count).not.toBeNull();
+    expect(count?.previousElementSibling?.textContent).toBe('Items');
+    expect(target.querySelector('button[aria-label="Clear completed items"]')?.previousElementSibling).toBeNull();
+  });
+
+  it('moves a completed item immediately while the live query catches up', async () => {
+    const target = await renderScreen();
+    await provideLiveData();
+
+    target.querySelector<HTMLButtonElement>('button[aria-label="Mark Milk complete"]')?.click();
+    await tick();
+
+    expect(target.querySelector('[aria-label="2 active items"]')).not.toBeNull();
+    expect(target.querySelector('button[aria-label="Mark Milk complete"]')).toBeNull();
+    expect(target.querySelector('button[aria-label="Mark Milk active"]')).not.toBeNull();
+  });
+
+  it('reopens a completed item immediately while the live query catches up', async () => {
+    const target = await renderScreen();
+    await provideLiveData();
+
+    target.querySelector<HTMLButtonElement>('button[aria-label="Mark Apples active"]')?.click();
+    await tick();
+
+    expect(target.querySelector('[aria-label="4 active items"]')).not.toBeNull();
+    expect(target.querySelector('button[aria-label="Mark Apples active"]')).toBeNull();
+    expect(target.querySelector('button[aria-label="Mark Apples complete"]')).not.toBeNull();
+  });
+});
+
+describe('ListsScreen mobile switcher', () => {
+  it('marks shared lists with an icon in the selector and switcher list', async () => {
+    const target = await renderScreen();
+    await provideLiveData();
+
+    const switcherButton = Array.from(target.querySelectorAll<HTMLButtonElement>('button')).find((button) =>
+      button.textContent?.includes('Weekly shop')
+    );
+    expect(switcherButton?.querySelector('[title="Shared list"]')).not.toBeNull();
+
+    switcherButton?.click();
+    await tick();
+
+    const sharedTab = Array.from(target.querySelectorAll<HTMLButtonElement>('button')).find(
+      (button) => button.textContent?.trim() === 'Shared'
+    );
+    sharedTab?.click();
+    await tick();
+
+    expect(target.querySelector('[title="Shared list"]')).not.toBeNull();
+  });
+});
+
 describe('ListsScreen offline fallback', () => {
   it('leaves fallback mode as soon as a live query responds', async () => {
     vi.useFakeTimers();
@@ -233,5 +293,8 @@ describe('ListsScreen empty state', () => {
     await tick();
 
     expect(target.querySelector('#list-dialog-title')?.textContent).toBe('New list');
+    const nameInput = target.querySelector<HTMLInputElement>('input[placeholder="New list name"]');
+    expect(nameInput).not.toBeNull();
+    expect(document.activeElement).toBe(nameInput);
   });
 });
