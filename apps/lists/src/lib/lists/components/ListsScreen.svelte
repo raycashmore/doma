@@ -971,17 +971,6 @@
               >
                 <ListIcon name="settings" size={18} />
               </button>
-              <button
-                type="button"
-                class="flex h-9 w-9 items-center justify-center rounded-full bg-warm-bg-dark text-warm-text-on-dark"
-                aria-label="New list"
-                onclick={() => {
-                  showCreateDialog = true;
-                  createVisibility = listFilter;
-                }}
-              >
-                <ListIcon name="plus" size={18} />
-              </button>
             </div>
           </div>
           <div class="hidden items-center justify-between min-[900px]:flex">
