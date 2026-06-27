@@ -10,6 +10,8 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mjs,cjs,json,css,svelte,md,yaml,yml}\"",
     "check-types": "turbo run check-types",
     "test": "turbo run test",
+    "evals": "node --experimental-strip-types evals/demo.ts",
+    "evals:test": "node --experimental-strip-types --test evals/**/*.test.ts",
     "bot": "pnpm --filter api-bot dev",
     "bot:test": "pnpm --filter api-bot test",
     "convex": "pnpm --filter @repo/convex dev",
