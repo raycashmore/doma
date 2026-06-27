@@ -21,6 +21,9 @@ export type MorningBriefingAiSource = {
   title: string;
   start: number;
   end: number;
+  localStart: string;
+  localEnd: string;
+  localTimeBlock: 'morning' | 'afternoon';
   allDay: boolean;
   who: string[];
   recurring: boolean;
@@ -55,7 +58,7 @@ export const morningBriefingSystemPrompt = [
   'Write a specific, useful, one-line headline in a lightly characterful household-assistant voice.',
   'Avoid generic headlines such as "Morning and afternoon readiness", "Today has a few things", or "Today\'s requirements".',
   'Group the day into two time blocks: morning and afternoon.',
-  'Assign obligations by the underlying activity local start time; pre-noon activities belong in morning.',
+  'Use each source localTimeBlock when assigning obligations; pre-noon localStart values belong in morning.',
   'Assign each obligation to the block when the underlying activity happens, even if it is prepared earlier (kit for an afternoon class is an afternoon item).',
   "Within each block, produce one line per responsible person, combining that person's obligations into one natural sentence.",
   'Set "who" to the exact supplied member ids the line is for. Do not put the person\'s name inside "text"; only describe the obligation.',
@@ -151,7 +154,7 @@ export async function createAiMorningBriefing({
   const input = {
     localDate,
     timeZone,
-    sources: localEvents.map(toAiSource),
+    sources: localEvents.map((event) => toAiSource(event, timeZone)),
     ...(weather ? { weather } : {})
   };
   const sourceSummary = summarizeSources(input.sources);
@@ -235,7 +238,7 @@ function isWeekday(localDate: string, timeZone: string) {
   return weekday !== 'Sat' && weekday !== 'Sun';
 }
 
-function toAiSource(event: MorningBriefingEvent): MorningBriefingAiSource {
+function toAiSource(event: MorningBriefingEvent, timeZone: string): MorningBriefingAiSource {
   const source: MorningBriefingAiSource = {
     sourceId: sourceIdForEvent(event),
     calendarId: event.calendarId,
@@ -243,6 +246,9 @@ function toAiSource(event: MorningBriefingEvent): MorningBriefingAiSource {
     title: event.title,
     start: event.start,
     end: event.end,
+    localStart: localDateTime(event.start, timeZone),
+    localEnd: localDateTime(event.end, timeZone),
+    localTimeBlock: localTimeBlock(event.start, timeZone),
     allDay: event.allDay,
     who: event.who,
     recurring: event.recurring
@@ -250,6 +256,27 @@ function toAiSource(event: MorningBriefingEvent): MorningBriefingAiSource {
   if (event.location) source.location = event.location;
   if (event.description) source.description = event.description;
   return source;
+}
+
+function localDateTime(ms: number, timeZone: string) {
+  const parts = new Intl.DateTimeFormat('en-AU', {
+    timeZone,
+    hourCycle: 'h23',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).formatToParts(new Date(ms));
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((value) => value.type === type)?.value ?? '';
+  return `${part('year')}-${part('month')}-${part('day')} ${part('hour')}:${part('minute')}`;
+}
+
+function localTimeBlock(ms: number, timeZone: string): MorningBriefingAiSource['localTimeBlock'] {
+  const hour = Number(
+    new Intl.DateTimeFormat('en-AU', { timeZone, hour: '2-digit', hourCycle: 'h23' }).format(new Date(ms))
+  );
+  return hour < 12 ? 'morning' : 'afternoon';
 }
 
 function parseAiBriefing(
