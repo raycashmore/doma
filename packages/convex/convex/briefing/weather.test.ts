@@ -79,6 +79,77 @@ describe('loadMorningBriefingWeatherContext', () => {
     ).resolves.toBeNull();
   });
 
+  it('summarizes hot and high-UV readiness without calling it ordinary', async () => {
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            hourly: {
+              time: ['2026-06-12T07:00', '2026-06-12T09:00', '2026-06-12T13:00', '2026-06-12T15:00'],
+              temperature_2m: [24, 28, 32, 33],
+              apparent_temperature: [24, 28, 34, 35],
+              precipitation_probability: [0, 0, 5, 5],
+              wind_gusts_10m: [10, 12, 15, 18],
+              uv_index: [2, 5, 8, 7]
+            }
+          })
+        )
+    );
+
+    const context = await loadMorningBriefingWeatherContext({
+      localDate,
+      timeZone,
+      latitude: -33.86,
+      longitude: 151.2,
+      fetchImpl
+    });
+
+    expect(context?.summary).toBe('Hot afternoon, high UV afternoon.');
+    expect(context?.afternoon.readiness).toEqual(['heat plan', 'sun protection']);
+  });
+
+  it('skips isolated null hourly values instead of dropping the whole forecast', async () => {
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            hourly: {
+              time: ['2026-06-12T07:00', '2026-06-12T09:00', '2026-06-12T13:00', '2026-06-12T15:00'],
+              temperature_2m: [9, 11, 15, 14],
+              apparent_temperature: [6, 8, 13, 12],
+              precipitation_probability: [null, 20, 75, null],
+              wind_gusts_10m: [12, null, 34, 42],
+              uv_index: [null, 2, null, 3]
+            }
+          })
+        )
+    );
+
+    const context = await loadMorningBriefingWeatherContext({
+      localDate,
+      timeZone,
+      latitude: -33.86,
+      longitude: 151.2,
+      fetchImpl
+    });
+
+    expect(context).toMatchObject({
+      summary: 'Cold morning, wet and windy afternoon.',
+      morning: {
+        rainChancePercent: 20,
+        maxWindGustKph: 12,
+        maxUvIndex: 2,
+        readiness: ['warm layer']
+      },
+      afternoon: {
+        rainChancePercent: 75,
+        maxWindGustKph: 42,
+        maxUvIndex: 3,
+        readiness: ['rain layer', 'wind-aware pickup']
+      }
+    });
+  });
+
   it('returns null when the forecast request fails', async () => {
     const fetchImpl = vi.fn(async () => {
       throw new Error('network unavailable');

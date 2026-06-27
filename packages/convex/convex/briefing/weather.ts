@@ -23,12 +23,14 @@ type LoadMorningBriefingWeatherContextArgs = {
 
 type OpenMeteoHourly = {
   time: string[];
-  temperature_2m: number[];
-  apparent_temperature: number[];
-  precipitation_probability: number[];
-  wind_gusts_10m: number[];
-  uv_index: number[];
+  temperature_2m: WeatherValue[];
+  apparent_temperature: WeatherValue[];
+  precipitation_probability: WeatherValue[];
+  wind_gusts_10m: WeatherValue[];
+  uv_index: WeatherValue[];
 };
+
+type WeatherValue = number | null;
 
 const hourlyFields = [
   'temperature_2m',
@@ -101,11 +103,11 @@ function parseHourly(body: unknown): OpenMeteoHourly | null {
 
   const hourly = body.hourly;
   const time = stringArray(hourly.time);
-  const temperature = numberArray(hourly.temperature_2m);
-  const apparentTemperature = numberArray(hourly.apparent_temperature);
-  const precipitationProbability = numberArray(hourly.precipitation_probability);
-  const windGusts = numberArray(hourly.wind_gusts_10m);
-  const uvIndex = numberArray(hourly.uv_index);
+  const temperature = weatherValueArray(hourly.temperature_2m);
+  const apparentTemperature = weatherValueArray(hourly.apparent_temperature);
+  const precipitationProbability = weatherValueArray(hourly.precipitation_probability);
+  const windGusts = weatherValueArray(hourly.wind_gusts_10m);
+  const uvIndex = weatherValueArray(hourly.uv_index);
   if (!time || !temperature || !apparentTemperature || !precipitationProbability || !windGusts || !uvIndex) {
     return null;
   }
@@ -144,9 +146,11 @@ function summarizeBlock(
 
   const temperature = valuesAt(hourly.temperature_2m, indices);
   const apparentTemperature = valuesAt(hourly.apparent_temperature, indices);
-  const rainChance = max(valuesAt(hourly.precipitation_probability, indices));
-  const windGust = max(valuesAt(hourly.wind_gusts_10m, indices));
-  const uvIndex = max(valuesAt(hourly.uv_index, indices));
+  if (temperature.length === 0 || apparentTemperature.length === 0) return null;
+
+  const rainChance = maxOrZero(valuesAt(hourly.precipitation_probability, indices));
+  const windGust = maxOrZero(valuesAt(hourly.wind_gusts_10m, indices));
+  const uvIndex = maxOrZero(valuesAt(hourly.uv_index, indices));
   const block = {
     temperatureC: range(temperature),
     apparentTemperatureC: range(apparentTemperature),
@@ -197,6 +201,15 @@ function summarizeDay(morning: WeatherReadinessBlock, afternoon: WeatherReadines
   const parts: string[] = [];
   if (morning.readiness.includes('warm layer')) parts.push('Cold morning');
   if (morning.readiness.includes('rain layer')) parts.push('wet morning');
+  if (morning.readiness.includes('wind-aware pickup')) parts.push('windy morning');
+  if (morning.readiness.includes('heat plan')) parts.push('Hot morning');
+  if (morning.readiness.includes('sun protection')) parts.push('high UV morning');
+  summarizeAfternoon(afternoon, parts);
+  if (parts.length === 0) return 'Weather looks ordinary for readiness.';
+  return `${parts.join(', ')}.`;
+}
+
+function summarizeAfternoon(afternoon: WeatherReadinessBlock, parts: string[]) {
   if (afternoon.readiness.includes('rain layer') && afternoon.readiness.includes('wind-aware pickup')) {
     parts.push('wet and windy afternoon');
   } else if (afternoon.readiness.includes('rain layer')) {
@@ -204,12 +217,15 @@ function summarizeDay(morning: WeatherReadinessBlock, afternoon: WeatherReadines
   } else if (afternoon.readiness.includes('wind-aware pickup')) {
     parts.push('windy afternoon');
   }
-  if (parts.length === 0) return 'Weather looks ordinary for readiness.';
-  return `${parts.join(', ')}.`;
+  if (afternoon.readiness.includes('heat plan')) parts.push('Hot afternoon');
+  if (afternoon.readiness.includes('sun protection')) parts.push('high UV afternoon');
 }
 
-function valuesAt(values: number[], indices: number[]) {
-  return indices.map((index) => values[index] ?? 0);
+function valuesAt(values: WeatherValue[], indices: number[]) {
+  return indices.flatMap((index) => {
+    const value = values[index];
+    return typeof value === 'number' ? [value] : [];
+  });
 }
 
 function range(values: number[]) {
@@ -224,12 +240,17 @@ function max(values: number[]) {
   return Math.max(...values);
 }
 
+function maxOrZero(values: number[]) {
+  return values.length > 0 ? max(values) : 0;
+}
+
 function stringArray(value: unknown) {
   return Array.isArray(value) && value.every((item) => typeof item === 'string') ? value : null;
 }
 
-function numberArray(value: unknown) {
-  return Array.isArray(value) && value.every((item) => typeof item === 'number' && Number.isFinite(item))
+function weatherValueArray(value: unknown) {
+  return Array.isArray(value) &&
+    value.every((item) => item === null || (typeof item === 'number' && Number.isFinite(item)))
     ? value
     : null;
 }
