@@ -24,6 +24,10 @@ Use `pnpm` (`packageManager`: `pnpm@9.0.0`).
 
 Issues and PRDs for this repo live in Linear in the `Doma` project on the `Ray` team. See `docs/agents/issue-tracker.md`.
 
+### Planning workflow
+
+For new product work, prefer the `/ray-next-feature` workflow: inspect Linear first, then create or update Linear PRDs and implementation issues before coding. Do not commit `docs/superpowers/` specs for this repo; they are local planning scratch and are redundant once work is represented in Linear.
+
 ### Triage labels
 
 This repo uses the five canonical triage labels in Linear: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, and `wontfix`. See `docs/agents/triage-labels.md`.

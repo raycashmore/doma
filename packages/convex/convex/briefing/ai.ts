@@ -12,6 +12,7 @@ import {
   type MorningBriefingEvent,
   sourceIdForEvent
 } from './morning';
+import type { MorningBriefingWeatherContext } from './weather';
 
 export type MorningBriefingAiSource = {
   sourceId: string;
@@ -31,6 +32,7 @@ export type MorningBriefingAiInput = {
   localDate: string;
   timeZone: string;
   sources: MorningBriefingAiSource[];
+  weather?: MorningBriefingWeatherContext;
 };
 
 export type MorningBriefingAiProvider = (input: MorningBriefingAiInput) => Promise<unknown>;
@@ -50,7 +52,10 @@ type AiBriefingParseFailure =
 
 export const morningBriefingSystemPrompt = [
   'You write a short household morning briefing — a readiness summary, not a calendar dump.',
+  'Write a specific, useful, one-line headline in a lightly characterful household-assistant voice.',
+  'Avoid generic headlines such as "Morning and afternoon readiness", "Today has a few things", or "Today\'s requirements".',
   'Group the day into two time blocks: morning and afternoon.',
+  'Assign obligations by the underlying activity local start time; pre-noon activities belong in morning.',
   'Assign each obligation to the block when the underlying activity happens, even if it is prepared earlier (kit for an afternoon class is an afternoon item).',
   "Within each block, produce one line per responsible person, combining that person's obligations into one natural sentence.",
   'Set "who" to the exact supplied member ids the line is for. Do not put the person\'s name inside "text"; only describe the obligation.',
@@ -59,6 +64,7 @@ export const morningBriefingSystemPrompt = [
   'Put an obligation in "watchouts" instead of a block line ONLY when it is a genuine issue: a schedule clash, unusual or off-pattern timing, or a high-stakes forgotten-item risk (passport, medication, signed form — not everyday water bottles).',
   'An obligation is either a block line or a watchout, never both. Keep run-of-the-mill handoffs and pickups as ordinary block lines.',
   'Keep low-priority ordinary events out unless they change readiness or coordination.',
+  'Use supplied weather only when it changes readiness. Never invent weather, locations, or private details beyond supplied weather and schedule sources.',
   'Use generic, concise wording from the supplied sources and do not invent private details.',
   'Set shouldSend to false only when there is genuinely nothing worth sending.',
   'Return only the requested structured object. Use the supplied sourceId values exactly.'
@@ -126,7 +132,8 @@ export async function createAiMorningBriefing({
   calendarConfigs,
   events,
   provider,
-  members
+  members,
+  weather
 }: {
   localDate: string;
   timeZone: string;
@@ -134,6 +141,7 @@ export async function createAiMorningBriefing({
   events: MorningBriefingEvent[];
   provider: MorningBriefingAiProvider;
   members: ScheduleDisplayMember[];
+  weather?: MorningBriefingWeatherContext;
 }): Promise<DeterministicMorningBriefing> {
   if (!calendarConfigs.some((calendar) => calendar.kind === 'dailyRequirements')) {
     return createDeterministicMorningBriefing({ localDate, timeZone, calendarConfigs, events, members });
@@ -143,7 +151,8 @@ export async function createAiMorningBriefing({
   const input = {
     localDate,
     timeZone,
-    sources: localEvents.map(toAiSource)
+    sources: localEvents.map(toAiSource),
+    ...(weather ? { weather } : {})
   };
   const sourceSummary = summarizeSources(input.sources);
   let briefing: MorningBriefing | null;

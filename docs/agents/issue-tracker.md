@@ -26,6 +26,8 @@ These labels are used by the engineering skills as the canonical triage vocabula
 
 Create a Linear issue in the `Doma` project on the `Ray` team.
 
+For new product work, use `/ray-next-feature` as the preferred discovery and planning workflow. Planning artifacts should be represented as Linear PRDs/issues, not committed `docs/superpowers/` specs. `docs/superpowers/` is ignored local scratch for this repo.
+
 ## When a skill says "fetch the relevant ticket"
 
 Open the referenced Linear issue and read its title, description, labels, state, comments, and linked documents.

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { ScheduleEventRow } from '../schedule/mapping';
 import { createMorningBriefing } from './generation';
+import type { MorningBriefingWeatherContext } from './weather';
 
 const localDate = '2026-06-12';
 const timeZone = 'Australia/Sydney';
@@ -27,6 +28,26 @@ const members = [
   { id: 'childA', label: 'Child A', initials: 'CA' },
   { id: 'adultA', label: 'Adult A', initials: 'AA' }
 ];
+
+const weather: MorningBriefingWeatherContext = {
+  summary: 'Cold morning.',
+  morning: {
+    temperatureC: { min: 8, max: 11 },
+    apparentTemperatureC: { min: 6, max: 9 },
+    rainChancePercent: 20,
+    maxWindGustKph: 18,
+    maxUvIndex: 2,
+    readiness: ['warm layer']
+  },
+  afternoon: {
+    temperatureC: { min: 13, max: 15 },
+    apparentTemperatureC: { min: 12, max: 13 },
+    rainChancePercent: 40,
+    maxWindGustKph: 24,
+    maxUvIndex: 4,
+    readiness: []
+  }
+};
 
 describe('createMorningBriefing', () => {
   it('uses deterministic generation when no AI provider is configured', async () => {
@@ -75,5 +96,34 @@ describe('createMorningBriefing', () => {
       message: 'Today:\nOne thing to prep\n\nThis morning:\n- Child A: Needs sports gear.'
     });
     expect(provider).toHaveBeenCalledOnce();
+  });
+
+  it('passes weather context through to AI generation', async () => {
+    const provider = vi.fn(async () => ({
+      shouldSend: true,
+      headline: 'Cold start for the sports bag day.',
+      morning: [
+        {
+          text: 'Needs sports gear.',
+          who: ['childA'],
+          sourceIds: ['requirements-calendar:event-1:1781218800000']
+        }
+      ],
+      afternoon: [],
+      watchouts: [],
+      sourceIdsIgnored: []
+    }));
+
+    await createMorningBriefing({
+      localDate,
+      timeZone,
+      calendarConfigs: [{ calendarId: 'requirements-calendar', who: 'shared', kind: 'dailyRequirements' }],
+      events: [event()],
+      provider,
+      members,
+      weather
+    });
+
+    expect(provider).toHaveBeenCalledWith(expect.objectContaining({ weather }));
   });
 });

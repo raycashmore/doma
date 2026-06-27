@@ -4,11 +4,13 @@ import type { ScheduleDisplayMember } from '../schedule/config';
 import {
   createAiMorningBriefing,
   createOpenAiMorningBriefingProvider,
+  type MorningBriefingAiInput,
   type MorningBriefingAiProvider,
   morningBriefingOutputJsonSchema,
   morningBriefingSystemPrompt
 } from './ai';
 import type { MorningBriefingEvent } from './morning';
+import type { MorningBriefingWeatherContext } from './weather';
 
 const timeZone = 'Australia/Sydney';
 const localDate = '2026-06-12';
@@ -19,6 +21,26 @@ const members: ScheduleDisplayMember[] = [
 ];
 
 const requirementsCalendar = { calendarId: 'requirements-calendar', who: 'shared', kind: 'dailyRequirements' } as const;
+
+const weather: MorningBriefingWeatherContext = {
+  summary: 'Cold morning, wet afternoon.',
+  morning: {
+    temperatureC: { min: 8, max: 11 },
+    apparentTemperatureC: { min: 6, max: 9 },
+    rainChancePercent: 20,
+    maxWindGustKph: 18,
+    maxUvIndex: 2,
+    readiness: ['warm layer']
+  },
+  afternoon: {
+    temperatureC: { min: 13, max: 15 },
+    apparentTemperatureC: { min: 12, max: 13 },
+    rainChancePercent: 70,
+    maxWindGustKph: 30,
+    maxUvIndex: 4,
+    readiness: ['rain layer']
+  }
+};
 
 function event(overrides: Partial<MorningBriefingEvent> = {}): MorningBriefingEvent {
   return {
@@ -60,6 +82,36 @@ function ordinaryEvent(): MorningBriefingEvent {
 }
 
 describe('createAiMorningBriefing', () => {
+  it('passes optional weather context to the AI provider', async () => {
+    const provider: MorningBriefingAiProvider = vi.fn(async (input: MorningBriefingAiInput) => {
+      const requirement = input.sources.find((source) => source.kind === 'dailyRequirements');
+      return {
+        shouldSend: true,
+        headline: 'Cold start for the sports bag day.',
+        morning: [{ text: 'Bring sports bag', who: ['childA'], sourceIds: [requirement?.sourceId ?? 'missing'] }],
+        afternoon: [],
+        watchouts: [],
+        sourceIdsIgnored: []
+      };
+    });
+
+    await createAiMorningBriefing({
+      localDate,
+      timeZone,
+      calendarConfigs: [requirementsCalendar],
+      events: [requirementEvent()],
+      provider,
+      members,
+      weather
+    });
+
+    expect(provider).toHaveBeenCalledWith(
+      expect.objectContaining({
+        weather
+      })
+    );
+  });
+
   it('uses a valid structured AI response and preserves source traceability', async () => {
     const provider: MorningBriefingAiProvider = async ({ sources }) => {
       const requirement = sources.find((source) => source.kind === 'dailyRequirements');
@@ -282,6 +334,13 @@ describe('morningBriefingSystemPrompt', () => {
     expect(morningBriefingSystemPrompt).toContain('morning');
     expect(morningBriefingSystemPrompt).toContain('afternoon');
     expect(morningBriefingSystemPrompt).toContain('watchout');
+  });
+
+  it('instructs the model to write grounded non-generic headlines', () => {
+    expect(morningBriefingSystemPrompt).toContain('Avoid generic headlines');
+    expect(morningBriefingSystemPrompt).toContain('Morning and afternoon readiness');
+    expect(morningBriefingSystemPrompt).toContain('pre-noon');
+    expect(morningBriefingSystemPrompt).toContain('supplied weather');
   });
 });
 
