@@ -57,7 +57,7 @@ function event(overrides: Partial<MorningBriefingEvent> = {}): MorningBriefingEv
   };
 }
 
-function requirementEvent(): MorningBriefingEvent {
+function requirementEvent(overrides: Partial<MorningBriefingEvent> = {}): MorningBriefingEvent {
   return event({
     googleEventId: 'requirements-1',
     calendarId: 'requirements-calendar',
@@ -65,7 +65,8 @@ function requirementEvent(): MorningBriefingEvent {
     allDay: true,
     who: ['childA'],
     title: 'Sports uniform',
-    description: 'Bring sports bag'
+    description: 'Bring sports bag',
+    ...overrides
   });
 }
 
@@ -110,6 +111,46 @@ describe('createAiMorningBriefing', () => {
         weather
       })
     );
+  });
+
+  it('passes local time and block guidance for pre-noon sources', async () => {
+    const provider: MorningBriefingAiProvider = vi.fn(async (input: MorningBriefingAiInput) => {
+      const requirement = input.sources.find((source) => source.kind === 'dailyRequirements');
+      return {
+        shouldSend: true,
+        headline: 'Early performance morning.',
+        morning: [
+          { text: 'Performance starts early.', who: ['childA'], sourceIds: [requirement?.sourceId ?? 'missing'] }
+        ],
+        afternoon: [],
+        watchouts: [],
+        sourceIdsIgnored: []
+      };
+    });
+
+    await createAiMorningBriefing({
+      localDate,
+      timeZone,
+      calendarConfigs: [requirementsCalendar],
+      events: [
+        requirementEvent({
+          start: Date.parse('2026-06-11T21:45:00.000Z'),
+          end: Date.parse('2026-06-11T22:30:00.000Z'),
+          allDay: false,
+          title: 'Performance',
+          description: 'Performance starts early.'
+        })
+      ],
+      provider,
+      members
+    });
+
+    expect(provider).toHaveBeenCalledOnce();
+    expect(vi.mocked(provider).mock.calls[0]?.[0].sources[0]).toMatchObject({
+      localStart: '2026-06-12 07:45',
+      localEnd: '2026-06-12 08:30',
+      localTimeBlock: 'morning'
+    });
   });
 
   it('uses a valid structured AI response and preserves source traceability', async () => {
