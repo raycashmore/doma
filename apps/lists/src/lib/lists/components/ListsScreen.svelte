@@ -1151,7 +1151,7 @@
           <h2 class="!mb-0 text-base font-semibold text-warm-text-primary">My Lists</h2>
           <button
             type="button"
-            class="flex h-8 w-8 items-center justify-center rounded-full text-warm-text-secondary"
+            class="flex h-9 w-9 items-center justify-center rounded-full bg-warm-bg-dark text-warm-text-on-dark"
             aria-label="Close list switcher"
             onclick={() => (showListSwitcher = false)}
           >
