@@ -41,7 +41,7 @@ export type MorningBriefingDeliveryAttemptRecorder = (attempt: {
   providerErrorCode?: string;
 }) => Promise<{ claimed?: boolean } | unknown>;
 
-const retryWindowStart = { hour: 7, minute: 30 };
+const retryWindowStart = { hour: 7, minute: 0 };
 const retryWindowEnd = { hour: 8, minute: 30 };
 const staleScheduleDataMs = 12 * 60 * 60_000;
 
