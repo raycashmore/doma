@@ -17,6 +17,7 @@ import { createAiMorningBriefing, createOpenAiMorningBriefingProvider, type Morn
 import { botMorningBriefingFromStoreResult } from './botBriefing';
 import { createDeterministicMorningBriefing, type DeterministicMorningBriefing, morningBriefingKey } from './morning';
 import { briefingGenerationStatusValidator, briefingKindValidator, morningBriefingValidator } from './schema';
+import { loadMorningBriefingWeatherContext, type MorningBriefingWeatherContext } from './weather';
 
 type StoreGeneratedMorningBriefingArgs = {
   briefingKind: 'morning';
@@ -110,13 +111,43 @@ function morningBriefingProviderFromEnv(): MorningBriefingAiProvider | null {
   return createOpenAiMorningBriefingProvider({ apiKey, model });
 }
 
+async function morningBriefingWeatherFromEnv({
+  localDate,
+  timeZone
+}: {
+  localDate: string;
+  timeZone: string;
+}): Promise<MorningBriefingWeatherContext | undefined> {
+  const latitude = coordinateFromEnv(process.env.MORNING_BRIEFING_LATITUDE);
+  const longitude = coordinateFromEnv(process.env.MORNING_BRIEFING_LONGITUDE);
+  if (latitude === null && longitude === null) return undefined;
+  if (latitude === null || longitude === null) {
+    console.warn('[briefing.weather] Skipping morning briefing weather because coordinates are incomplete or invalid');
+    return undefined;
+  }
+
+  const weather = await loadMorningBriefingWeatherContext({ localDate, timeZone, latitude, longitude });
+  if (!weather) {
+    console.warn('[briefing.weather] Skipping morning briefing weather because forecast context could not be loaded');
+    return undefined;
+  }
+  return weather;
+}
+
+function coordinateFromEnv(value: string | undefined) {
+  if (!value) return null;
+  const coordinate = Number(value);
+  return Number.isFinite(coordinate) ? coordinate : null;
+}
+
 export async function createMorningBriefing({
   localDate,
   timeZone,
   calendarConfigs,
   events,
   provider,
-  members
+  members,
+  weather
 }: {
   localDate: string;
   timeZone: string;
@@ -124,6 +155,7 @@ export async function createMorningBriefing({
   events: ScheduleEventRow[];
   provider: MorningBriefingAiProvider | null;
   members: ReturnType<typeof displayMembersFromConfig>;
+  weather?: MorningBriefingWeatherContext;
 }) {
   return provider
     ? await createAiMorningBriefing({
@@ -132,7 +164,8 @@ export async function createMorningBriefing({
         calendarConfigs,
         events,
         provider,
-        members
+        members,
+        weather
       })
     : createDeterministicMorningBriefing({
         localDate,
@@ -176,13 +209,18 @@ export const generateAndStoreMorningBriefing = internalAction({
     const calendarConfigs = parseScheduleCalendars();
     const members = displayMembersFromConfig(parseScheduleMembers());
     const events = await ctx.runQuery(generationRefs.morningBriefingEvents);
+    const provider = morningBriefingProviderFromEnv();
+    const canUseAiBriefing = provider && calendarConfigs.some((calendar) => calendar.kind === 'dailyRequirements');
     const briefing = await createMorningBriefing({
       localDate,
       timeZone: resolvedTimeZone,
       calendarConfigs,
       events,
-      provider: morningBriefingProviderFromEnv(),
-      members
+      provider,
+      members,
+      weather: canUseAiBriefing
+        ? await morningBriefingWeatherFromEnv({ localDate, timeZone: resolvedTimeZone })
+        : undefined
     });
 
     return await ctx.runMutation(generationRefs.storeGeneratedMorningBriefing, {

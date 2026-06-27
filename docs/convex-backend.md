@@ -96,15 +96,12 @@ timing context. It records delivery attempts per recipient so scheduled
 delivery and `/briefing` replay stay idempotent.
 
 Morning briefing messages render as compact readiness summaries, not raw event
-feeds. Busy days lead with the shape of the day, then include these sections
-when relevant:
-
-- `Watchouts` for handoffs, unusual timing, split responsibilities, forgotten
-  item risk, or tonight-only chores.
-- `Before leaving` for wear, remember, preparation, and leave-earlier actions.
-- `Pack / bring` for items that need to leave the house.
-- `Logistics` for coordination details from ordinary schedule events.
-- `Unclear` for inferred requirements that need checking.
+feeds. Busy days lead with the shape of the day, then include morning,
+afternoon, and watchout sections when relevant. AI-generated briefings can use
+optional Open-Meteo weather context to make the headline or block lines more
+practical, such as noting a cold start or wet pickup. Weather decorates a
+briefing that schedule requirements already justify; it does not trigger a
+quiet-day notification by itself.
 
 Docs and tests must use generic member, calendar, and event labels. Generated
 briefing text can contain private household schedule details, so do not copy it
