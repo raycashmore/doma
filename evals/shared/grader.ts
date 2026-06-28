@@ -29,9 +29,7 @@ export async function runEvalCases<TInput, TExpect, TOutput, TMetadata = Record<
   const results: EvalResult[] = [];
   for (const testCase of cases) {
     const output = await execute(testCase);
-    const failures = (
-      await Promise.all(graders.map((grader) => grader({ testCase, output })))
-    ).flat();
+    const failures = (await Promise.all(graders.map((grader) => grader({ testCase, output })))).flat();
     results.push({
       caseId: testCase.id,
       status: failures.length === 0 ? 'pass' : 'fail',

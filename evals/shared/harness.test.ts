@@ -86,7 +86,9 @@ describe('renderScorecard', () => {
       }
     ]);
 
-    assert.equal(renderScorecard('Intent router evals', summary), `Intent router evals
+    assert.equal(
+      renderScorecard('Intent router evals', summary),
+      `Intent router evals
 Cases: 3
 Passed: 1
 Failed: 2
@@ -99,6 +101,7 @@ Failures by category:
 
 Failing cases:
 - case-fail-a
-- case-fail-b`);
+- case-fail-b`
+    );
   });
 });
