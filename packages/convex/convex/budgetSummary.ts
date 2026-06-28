@@ -17,6 +17,7 @@ export type BudgetPageSummary = {
   savingsRate: SummaryMetric;
   netGain: SummaryMetric;
   periodLabel: string;
+  comparisonLabel: string;
 };
 
 const MS_PER_MONTH = 30 * 86_400_000;
@@ -28,7 +29,13 @@ function windowMs(period: SummaryPeriod): number | null {
 }
 
 function labelFor(period: SummaryPeriod): string {
-  return period === 'ALL' ? 'All time' : `${period.replace('M', '')} mo`;
+  return period === 'ALL' ? 'All time' : `Trailing ${period.replace('M', '')} months`;
+}
+
+function comparisonLabelFor(row: BudgetRow | null): string {
+  if (row === null) return 'vs prior month';
+  const month = new Intl.DateTimeFormat('en-AU', { month: 'short', timeZone: 'UTC' }).format(new Date(row.date));
+  return `vs ${month}`;
 }
 
 function avg(values: number[]): number {
@@ -78,7 +85,8 @@ export function summarizeBudgetForPeriod(
       avgIncome: empty,
       savingsRate: empty,
       netGain: empty,
-      periodLabel: labelFor(period)
+      periodLabel: labelFor(period),
+      comparisonLabel: comparisonLabelFor(null)
     };
   }
 
@@ -105,6 +113,7 @@ export function summarizeBudgetForPeriod(
     avgIncome: metric(cur.avgIncome, currentMonth.avgIncome, priorMonth?.avgIncome ?? null),
     savingsRate: metric(cur.savingsRate, currentMonth.savingsRate, priorMonth?.savingsRate ?? null),
     netGain: metric(cur.netGain, currentMonth.netGain, priorMonth?.netGain ?? null),
-    periodLabel: labelFor(period)
+    periodLabel: labelFor(period),
+    comparisonLabel: comparisonLabelFor(comparisonRows.length === 2 ? comparisonRows[0]! : null)
   };
 }

@@ -75,9 +75,18 @@ describe('summarizeBudgetForPeriod', () => {
   });
 
   it('periodLabel reflects window choice', () => {
-    expect(summarizeBudgetForPeriod([], [], '12M', 0).periodLabel).toBe('12 mo');
-    expect(summarizeBudgetForPeriod([], [], '6M', 0).periodLabel).toBe('6 mo');
-    expect(summarizeBudgetForPeriod([], [], '3M', 0).periodLabel).toBe('3 mo');
+    expect(summarizeBudgetForPeriod([], [], '12M', 0).periodLabel).toBe('Trailing 12 months');
+    expect(summarizeBudgetForPeriod([], [], '6M', 0).periodLabel).toBe('Trailing 6 months');
+    expect(summarizeBudgetForPeriod([], [], '3M', 0).periodLabel).toBe('Trailing 3 months');
     expect(summarizeBudgetForPeriod([], [], 'ALL', 0).periodLabel).toBe('All time');
+  });
+
+  it('comparisonLabel names the prior comparison month', () => {
+    const rows = [
+      row(Date.UTC(2026, 4, 31), 100_000, 0, 0, 30_000, 0, 0, 0, 0),
+      row(Date.UTC(2026, 5, 30), 200_000, 0, 0, 40_000, 0, 0, 0, 0)
+    ];
+
+    expect(summarizeBudgetForPeriod(rows, [], '12M', Date.UTC(2026, 5, 30)).comparisonLabel).toBe('vs May');
   });
 });
