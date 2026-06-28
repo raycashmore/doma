@@ -10,6 +10,8 @@ pnpm build         # Build all apps
 pnpm lint          # Lint all apps
 pnpm check-types   # TypeScript type checking
 pnpm test          # Run tests across packages that define them
+pnpm evals         # Run the local eval harness demo
+pnpm evals:test    # Run the local eval harness tests
 pnpm format        # Format with Prettier
 pnpm format:check  # Check formatting without writing (used in CI)
 pnpm bot           # Start the bot gateway on :3002
