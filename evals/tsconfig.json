@@ -1,0 +1,13 @@
+{
+  "extends": "../packages/typescript-config/base.json",
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "lib": ["ESNext"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "noEmit": true,
+    "target": "ESNext",
+    "types": ["node"]
+  },
+  "include": ["**/*.ts"]
+}
