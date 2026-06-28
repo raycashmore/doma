@@ -9,6 +9,7 @@ export type KpiCardProps = {
   deltaPct: number | null;
   kind: 'money' | 'rate';
   periodLabel: string;
+  comparisonLabel: string;
 };
 
 function formatValue(value: number, kind: 'money' | 'rate'): string {
@@ -28,15 +29,14 @@ function formatDelta(delta: number | null, deltaPct: number | null, kind: 'money
   return `${delta >= 0 ? '+' : ''}${deltaPct.toFixed(1)}%`;
 }
 
-export function KpiCard({ label, value, delta, deltaPct, kind, periodLabel }: KpiCardProps) {
+export function KpiCard({ label, value, delta, deltaPct, kind, periodLabel, comparisonLabel }: KpiCardProps) {
   const deltaLabel = formatDelta(delta, deltaPct, kind);
   const positive = (delta ?? 0) >= 0;
 
   return (
     <div className="rounded-2xl border border-warm-border bg-warm-bg-card-soft px-5 py-4">
-      <div className="text-[11px] uppercase tracking-[0.06em] font-semibold text-warm-text-secondary">
-        {label} ({periodLabel})
-      </div>
+      <div className="text-[11px] uppercase tracking-[0.06em] font-semibold text-warm-text-secondary">{label}</div>
+      <div className="mt-1 text-[10px] leading-none font-medium text-warm-text-tertiary">{periodLabel}</div>
       <div className="mt-2 text-[24px] leading-none font-warm-display text-warm-text-primary">
         {formatValue(value, kind)}
       </div>
@@ -48,10 +48,10 @@ export function KpiCard({ label, value, delta, deltaPct, kind, periodLabel }: Kp
         >
           {positive ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
           <span>{deltaLabel}</span>
-          <span className="text-warm-text-tertiary font-normal">vs prior month</span>
+          <span className="text-warm-text-tertiary font-normal">{comparisonLabel}</span>
         </div>
       ) : (
-        <div className="mt-2 text-[11px] text-warm-text-tertiary">vs prior month</div>
+        <div className="mt-2 text-[11px] text-warm-text-tertiary">{comparisonLabel}</div>
       )}
     </div>
   );

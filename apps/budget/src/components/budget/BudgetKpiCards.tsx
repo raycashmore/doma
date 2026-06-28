@@ -27,6 +27,7 @@ export function BudgetKpiCards({ summary }: Props) {
         deltaPct={summary.avgSpend.deltaPct}
         kind="money"
         periodLabel={summary.periodLabel}
+        comparisonLabel={summary.comparisonLabel}
       />
       <KpiCard
         label="Avg income"
@@ -35,6 +36,7 @@ export function BudgetKpiCards({ summary }: Props) {
         deltaPct={summary.avgIncome.deltaPct}
         kind="money"
         periodLabel={summary.periodLabel}
+        comparisonLabel={summary.comparisonLabel}
       />
       <KpiCard
         label="Savings rate"
@@ -43,14 +45,16 @@ export function BudgetKpiCards({ summary }: Props) {
         deltaPct={summary.savingsRate.deltaPct}
         kind="rate"
         periodLabel={summary.periodLabel}
+        comparisonLabel={summary.comparisonLabel}
       />
       <KpiCard
-        label="Monthly Net Gain"
+        label="Avg gain"
         value={summary.netGain.value}
         delta={summary.netGain.delta}
         deltaPct={summary.netGain.deltaPct}
         kind="money"
         periodLabel={summary.periodLabel}
+        comparisonLabel={summary.comparisonLabel}
       />
     </div>
   );
