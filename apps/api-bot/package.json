@@ -14,8 +14,10 @@
     "@clerk/backend": "^2.0.0",
     "@hono/node-server": "^1.14.0",
     "@upstash/redis": "^1.35.0",
+    "convex": "^1.27.3",
     "dotenv-cli": "^11.0.0",
     "hono": "^4.10.0",
+    "svix": "^1.76.1",
     "tsx": "^4.21.0",
     "zod": "^4.3.5"
   },

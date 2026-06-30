@@ -8,6 +8,9 @@ import { createHttpCapability } from './dispatch/httpCapability.js';
 import type { RouteClassifier } from './dispatch/router.js';
 import type { CapabilityHandler } from './dispatch/types.js';
 import { jsonOk } from './http/json.js';
+import { createConvexForwardedEmailCapture } from './inbound-email/convexCapture.js';
+import type { CaptureForwardedEmail } from './inbound-email/routes.js';
+import { createInboundEmailRoutes } from './inbound-email/routes.js';
 import { classifyIntent } from './intent/classifier.js';
 import { createOpenAiIntentClassifierProvider } from './intent/openAiClassifier.js';
 import { defaultIntentDescriptors } from './intent/registry.js';
@@ -23,6 +26,7 @@ export type CreateAppOptions = {
   capabilities?: Record<string, CapabilityHandler>;
   classify?: RouteClassifier;
   sendTelegramMessage?: TelegramMessageSender;
+  captureForwardedEmail?: CaptureForwardedEmail;
 };
 
 let runtimeApp: BotApp | undefined;
@@ -73,11 +77,21 @@ function createRuntimeClassifier(config: BotConfig): RouteClassifier | undefined
   return (messageText: string) => classifyIntent({ messageText, descriptors: defaultIntentDescriptors, provider });
 }
 
+function createRuntimeForwardedEmailCapture(config: BotConfig): CaptureForwardedEmail {
+  let captureForwardedEmail: CaptureForwardedEmail | undefined;
+
+  return (email) => {
+    captureForwardedEmail ??= createConvexForwardedEmailCapture(config);
+    return captureForwardedEmail(email);
+  };
+}
+
 export function createApp(options: CreateAppOptions = {}) {
   const config = options.config ?? getConfig();
   const storage = options.storage ?? createRuntimeStorage(config);
   const capabilities = options.capabilities ?? createRuntimeCapabilities(config);
   const classify = options.classify ?? createRuntimeClassifier(config);
+  const captureForwardedEmail = options.captureForwardedEmail ?? createRuntimeForwardedEmailCapture(config);
   const sendTelegram =
     options.sendTelegramMessage ??
     (({ chatId, text }: { chatId: string; text: string }) =>
@@ -90,6 +104,15 @@ export function createApp(options: CreateAppOptions = {}) {
 
   app.get('/health', (c) => jsonOk(c, { ok: true }));
   app.route('/linking', createLinkingRoutes({ config, storage }));
+  app.route(
+    '/inbound-email',
+    createInboundEmailRoutes({
+      resendWebhookSecret: config.resendWebhookSecret,
+      resendApiKey: config.resendApiKey,
+      allowedForwardingSenders: config.forwardedEmailAllowedSenders,
+      captureForwardedEmail
+    })
+  );
   app.route(
     '/notifications',
     createNotificationRoutes({
