@@ -26,6 +26,7 @@ describe('parseConfig', () => {
       scheduleCapabilityTimeoutMs: 15_000,
       listsCapabilityUrl: undefined,
       listsCapabilityTimeoutMs: 15_000,
+      forwardedEmailAllowedSenders: [],
       openAiApiKey: undefined,
       intentRouterAiModel: undefined,
       intentRouterAiTimeoutMs: 10_000,
@@ -63,6 +64,15 @@ describe('parseConfig', () => {
         LISTS_CAPABILITY_URL: 'https://lists.example.com/api/bot/lists'
       }).listsCapabilityUrl
     ).toBe('https://lists.example.com/api/bot/lists');
+  });
+
+  it('accepts optional forwarded email allowed senders', () => {
+    expect(
+      parseConfig({
+        ...validEnv,
+        FORWARDED_EMAIL_ALLOWED_SENDERS: ' ray@example.com, member@example.com '
+      }).forwardedEmailAllowedSenders
+    ).toEqual(['ray@example.com', 'member@example.com']);
   });
 
   it('accepts an optional positive lists capability timeout', () => {

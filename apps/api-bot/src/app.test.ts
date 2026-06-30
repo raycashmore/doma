@@ -17,6 +17,7 @@ const testConfig: BotConfig = {
   scheduleCapabilityUrl: undefined,
   scheduleCapabilityTimeoutMs: 15_000,
   listsCapabilityTimeoutMs: 15_000,
+  forwardedEmailAllowedSenders: ['ray@example.com'],
   intentRouterAiTimeoutMs: 10_000,
   pairingEnabled: true,
   telegramBotToken: 'telegram-bot-token',
@@ -35,7 +36,8 @@ describe('api-bot app', () => {
   it('returns health status', async () => {
     const app = createApp({
       config: testConfig,
-      storage: createMemoryStorage()
+      storage: createMemoryStorage(),
+      captureForwardedEmail: async () => ({ status: 'created', capturedEmailId: 'captured_email_123' })
     });
 
     const response = await app.request('/health');
@@ -190,6 +192,41 @@ describe('api-bot app', () => {
 
     expect(response.status).toBe(401);
     await expect(response.json()).resolves.toEqual({ error: 'unauthorized' });
+  });
+
+  it('mounts inbound email routes', async () => {
+    const captureForwardedEmail = vi.fn(async () => ({
+      status: 'created' as const,
+      capturedEmailId: 'captured_email_123'
+    }));
+    const app = createApp({
+      config: testConfig,
+      storage: createMemoryStorage(),
+      captureForwardedEmail
+    });
+
+    const response = await app.request('/inbound-email/resend', {
+      method: 'POST',
+      headers: {
+        authorization: 'Bearer service-token',
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        emailId: 'resend-email-123',
+        from: 'Ray <ray@example.com>',
+        to: ['triage@example.com'],
+        subject: 'Library bag tomorrow',
+        text: 'Please bring a library bag tomorrow.',
+        createdAt: '2026-06-30T08:15:00.000Z'
+      })
+    });
+
+    expect(response.status).toBe(202);
+    await expect(response.json()).resolves.toEqual({
+      ok: true,
+      status: 'created',
+      capturedEmailId: 'captured_email_123'
+    });
   });
 
   it('does not mount the old schedule reminder cron route', async () => {
