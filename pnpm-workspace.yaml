@@ -1,6 +1,7 @@
 packages:
   - 'apps/*'
   - 'packages/*'
+verifyDepsBeforeRun: false
 allowBuilds:
   '@clerk/shared': true
   '@google/genai': true

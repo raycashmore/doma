@@ -10,6 +10,7 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mjs,cjs,json,css,svelte,md,yaml,yml}\"",
     "check-types": "turbo run check-types",
     "test": "turbo run test",
+    "ci:checks": "scripts/ci-checks.sh",
     "ci:local": "scripts/ci-local.sh",
     "evals": "node --experimental-strip-types evals/demo.ts",
     "evals:test": "node --experimental-strip-types --test evals/**/*.test.ts",

@@ -22,8 +22,4 @@ fi
 export CI="${CI:-true}"
 
 pnpm install --frozen-lockfile
-pnpm format:check
-pnpm lint
-pnpm check-types
-pnpm test
-pnpm build
+pnpm ci:checks

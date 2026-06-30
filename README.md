@@ -163,6 +163,9 @@ Common workspace checks:
 pnpm ci:local
 ```
 
+CI uses the same checks via `pnpm ci:checks`, which forces Turbo tasks so local
+cache hits cannot hide a clean-run failure.
+
 Or run individual checks:
 
 ```bash
