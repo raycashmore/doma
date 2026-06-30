@@ -101,7 +101,7 @@ Watchouts
     ).toBe('');
   });
 
-  it('falls back to the raw id and scrubs leaked member tokens', () => {
+  it('falls back to the raw id and removes leaked member-token prefixes', () => {
     const message = formatMorningBriefing(
       {
         shouldSend: true,
@@ -119,6 +119,68 @@ Routine day.
 
 This morning:
 - unknownX: confirm classroom note`);
+    expect(message).not.toContain('memberA');
+    expect(message).not.toContain('someone');
+  });
+
+  it('does not rewrite internal member tokens to someone', () => {
+    const message = formatMorningBriefing(
+      {
+        shouldSend: true,
+        headline: 'memberA logistics are still being checked.',
+        morning: [],
+        afternoon: [],
+        watchouts: [{ text: 'memberB timing needs a second look.', who: [], sourceIds: ['cal:watch:1'] }],
+        sourceIdsIgnored: []
+      },
+      members
+    );
+
+    expect(message).toBe(`Today:
+memberA logistics are still being checked.
+
+Watchouts
+- memberB timing needs a second look.`);
+    expect(message).not.toContain('someone');
+  });
+
+  it('removes leaked internal member tokens from person-prefixed briefing text', () => {
+    const message = formatMorningBriefing(
+      {
+        shouldSend: true,
+        headline: 'A school-and-sport day.',
+        morning: [
+          {
+            text: 'School runs and memberA start at 9:00; warm layers help.',
+            who: ['childA', 'childB'],
+            sourceIds: ['cal:school:1']
+          }
+        ],
+        afternoon: [
+          {
+            text: 'memberA has swimming at 5:00; pack goggles, swimmers, and towel.',
+            who: ['childA'],
+            sourceIds: ['cal:swim:1']
+          }
+        ],
+        watchouts: [],
+        sourceIdsIgnored: []
+      },
+      [
+        ...members,
+        { id: 'childB', label: 'Child B', initials: 'CB' }
+      ]
+    );
+
+    expect(message).toBe(`Today:
+A school-and-sport day.
+
+This morning:
+- Child A, Child B: School runs start at 9:00; warm layers help.
+
+This afternoon:
+- Child A: Swimming at 5:00; pack goggles, swimmers, and towel.`);
+    expect(message).not.toContain('someone');
     expect(message).not.toContain('memberA');
   });
 });

@@ -62,7 +62,7 @@ describe('createMorningBriefing', () => {
       })
     ).resolves.toMatchObject({
       generationStatus: 'deterministic',
-      message: "Today:\nToday's requirements\n\nThis morning:\n- someone: Bring sports bag"
+      message: "Today:\nToday's requirements\n\nThis morning:\n- memberA: Bring sports bag"
     });
   });
 

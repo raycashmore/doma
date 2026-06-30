@@ -84,7 +84,7 @@ export function fallbackMorningBriefingHeadline(dailyRequirementCount: number) {
 export function formatMorningBriefing(briefing: MorningBriefing, members: ScheduleDisplayMember[]) {
   if (!briefing.shouldSend) return '';
 
-  const lines = ['Today:', sanitizeBriefingText(briefing.headline).replace(/^Today:\s*/i, '')];
+  const lines = ['Today:', normalizeBriefingText(briefing.headline).replace(/^Today:\s*/i, '')];
 
   appendBlock(lines, 'This morning:', briefing.morning, members);
   appendBlock(lines, 'This afternoon:', briefing.afternoon, members);
@@ -109,28 +109,39 @@ function lineOrder(line: BriefingLine, order: Map<string, number>) {
 }
 
 function renderPersonLine(line: BriefingLine, labels: Map<string, string>) {
-  const who = sanitizeBriefingText(line.who.map((id) => labels.get(id) ?? id).join(', '));
-  const text = sanitizeBriefingText(line.text);
+  const who = normalizeBriefingText(line.who.map((id) => labels.get(id) ?? id).join(', '));
+  const text = normalizePersonPrefixedBriefingText(line.text);
   return who ? `- ${who}: ${text}` : `- ${text}`;
 }
 
 function appendWatchouts(lines: string[], watchouts: BriefingLine[]) {
   if (watchouts.length === 0) return;
 
-  lines.push('', 'Watchouts', ...watchouts.map((line) => `- ${sanitizeBriefingText(line.text)}`));
+  lines.push('', 'Watchouts', ...watchouts.map((line) => `- ${normalizeBriefingText(line.text)}`));
 }
 
-function sanitizeBriefingText(text: string) {
+function normalizeBriefingText(text: string) {
   return text
-    .replace(/\bfor member[A-Z]\b/g, '')
-    .replace(/\bmember[A-Z]\s+handoff\b/gi, 'handoff')
-    .replace(/\bmember[A-Z]\s+and\s+member[A-Z]:\s*/g, '')
-    .replace(/\bmember[A-Z]:\s*/g, '')
-    .replace(/\bmember[A-Z]\s+and\s+member[A-Z]\b/g, 'the children')
-    .replace(/\bmember[A-Z]\b/g, 'someone')
     .replace(/\s+([,.;:])/g, '$1')
     .replace(/\s{2,}/g, ' ')
     .trim();
+}
+
+function normalizePersonPrefixedBriefingText(text: string) {
+  return normalizeBriefingText(
+    text
+      .replace(/\bfor member[A-Z]\b/gi, '')
+      .replace(/^\s*member[A-Z]\s+handoff\b/gi, 'Handoff')
+      .replace(/^\s*member[A-Z]\s+and\s+member[A-Z]:\s*/i, '')
+      .replace(/^\s*member[A-Z]:\s*/i, '')
+      .replace(/^\s*member[A-Z]\s+has\s+([a-z])/i, (_, first: string) => first.toUpperCase())
+      .replace(/^\s*member[A-Z]\s+has\s+/i, '')
+      .replace(/^\s*member[A-Z]\s+and\s+member[A-Z]\s+have\s+([a-z])/i, (_, first: string) =>
+        first.toUpperCase()
+      )
+      .replace(/^\s*member[A-Z]\s+and\s+member[A-Z]\s+have\s+/i, '')
+      .replace(/\s+and\s+member[A-Z]\s+/gi, ' ')
+  );
 }
 
 function isMorningEvent(event: MorningBriefingEvent, timeZone: string) {
