@@ -415,7 +415,7 @@ to a deterministic newline split.
 Morning briefing delivery runs from Convex cron, not Vercel Cron. This keeps
 the Bot gateway deployable on Vercel Hobby, where frequent cron schedules are
 rejected. Convex checks the delivery cycle every 10 minutes, only sends during
-the local morning retry window `07:30 <= time < 08:30`, forces a schedule sync
+the local morning retry window `07:35 <= time < 08:30`, forces a schedule sync
 before generation when possible, falls back to cached schedule data when needed,
 calls the Bot gateway's provider-neutral `/notifications/send` endpoint, and
 records the briefing delivery attempt in Convex per recipient.
@@ -437,7 +437,7 @@ briefings:
 
 Morning briefing operations:
 
-- A scheduled delivery outside `07:30 <= time < 08:30` in
+- A scheduled delivery outside `07:35 <= time < 08:30` in
   `MORNING_BRIEFING_TZ` no-ops.
 - If no `MORNING_BRIEFING_RECIPIENT_USER_IDS` are configured, the scheduled run
   no-ops. `/briefing` can still be used on demand by a linked Telegram user.

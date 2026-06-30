@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { type BotMorningBriefing, runMorningBriefingDeliveryCycle } from './delivery';
 
 const timeZone = 'Australia/Sydney';
-const dueAtMs = Date.parse('2026-06-12T21:00:00.000Z'); // 7:00am 2026-06-13 in Sydney
+const dueAtMs = Date.parse('2026-06-12T21:35:00.000Z'); // 7:35am 2026-06-13 in Sydney
 const briefing: BotMorningBriefing = {
   briefingKey: 'morning:2026-06-13',
   localDate: '2026-06-13',
@@ -22,7 +22,7 @@ describe('runMorningBriefingDeliveryCycle', () => {
 
     await expect(
       runMorningBriefingDeliveryCycle({
-        nowMs: Date.parse('2026-06-12T20:59:00.000Z'), // 6:59am in Sydney
+        nowMs: Date.parse('2026-06-12T21:34:00.000Z'), // 7:34am in Sydney
         timeZone,
         recipientUserIds: ['user_123'],
         attempts: [],

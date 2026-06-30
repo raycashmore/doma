@@ -154,6 +154,11 @@ Watchouts
             text: 'School runs and memberA start at 9:00; warm layers help.',
             who: ['childA', 'childB'],
             sourceIds: ['cal:school:1']
+          },
+          {
+            text: 'School day and memberC; a warm layer will help with the cold morning.',
+            who: ['childA', 'childB'],
+            sourceIds: ['cal:school:2']
           }
         ],
         afternoon: [
@@ -166,10 +171,7 @@ Watchouts
         watchouts: [],
         sourceIdsIgnored: []
       },
-      [
-        ...members,
-        { id: 'childB', label: 'Child B', initials: 'CB' }
-      ]
+      [...members, { id: 'childB', label: 'Child B', initials: 'CB' }]
     );
 
     expect(message).toBe(`Today:
@@ -177,11 +179,13 @@ A school-and-sport day.
 
 This morning:
 - Child A, Child B: School runs start at 9:00; warm layers help.
+- Child A, Child B: School day; a warm layer will help with the cold morning.
 
 This afternoon:
 - Child A: Swimming at 5:00; pack goggles, swimmers, and towel.`);
     expect(message).not.toContain('someone');
     expect(message).not.toContain('memberA');
+    expect(message).not.toContain('memberC');
   });
 });
 

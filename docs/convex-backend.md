@@ -108,7 +108,7 @@ briefing text can contain private household schedule details, so do not copy it
 into committed fixtures.
 
 Scheduled delivery runs from Convex cron during the local
-`07:30 <= time < 08:30` retry window. The runner forces schedule sync before
+`07:35 <= time < 08:30` retry window. The runner forces schedule sync before
 generation when possible, reuses an existing stored briefing for retries, sends
 through the bot gateway's provider-neutral `/notifications/send` endpoint, and
 marks suppressed or empty briefings as skipped instead of sending an empty

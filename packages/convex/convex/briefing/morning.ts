@@ -136,11 +136,9 @@ function normalizePersonPrefixedBriefingText(text: string) {
       .replace(/^\s*member[A-Z]:\s*/i, '')
       .replace(/^\s*member[A-Z]\s+has\s+([a-z])/i, (_, first: string) => first.toUpperCase())
       .replace(/^\s*member[A-Z]\s+has\s+/i, '')
-      .replace(/^\s*member[A-Z]\s+and\s+member[A-Z]\s+have\s+([a-z])/i, (_, first: string) =>
-        first.toUpperCase()
-      )
+      .replace(/^\s*member[A-Z]\s+and\s+member[A-Z]\s+have\s+([a-z])/i, (_, first: string) => first.toUpperCase())
       .replace(/^\s*member[A-Z]\s+and\s+member[A-Z]\s+have\s+/i, '')
-      .replace(/\s+and\s+member[A-Z]\s+/gi, ' ')
+      .replace(/\s+and\s+member[A-Z]\b/gi, '')
   );
 }
 
