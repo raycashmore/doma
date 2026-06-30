@@ -473,14 +473,19 @@ Morning briefing operations:
   generation. Afternoon delivery refreshes the configured forecast context, but
   only appends relevant afternoon readiness notes when the afternoon message
   already has briefing content.
-- Scheduled briefing notifications are sent to Telegram with HTML parse mode
-  after escaping message text. The keywords `swimming`, `dancing`, `library`,
-  `homework`, and `sport` are bolded in scheduled briefing delivery.
+- Stored briefings are plain text. AI output that leaks internal member ids,
+  uses unknown member ownership, includes markup delimiters, or includes escaped
+  HTML entities is rejected and replaced with the deterministic schedule
+  summary.
+- Scheduled briefing notifications are sent to Telegram with HTML parse mode.
+  Delivery escapes the stored plain text, then bolds the keywords `swimming`,
+  `dancing`, `library`, `homework`, and `sport`.
 - If schedule sync fails but cached schedule data exists, Doma can still send
   the briefing. When the cache is older than 12 hours, it appends:
   `Note: schedule data may be stale because the latest calendar sync failed.`
-- If AI generation fails, Doma stores and sends a deterministic fallback rather
-  than retrying generation for the same local date.
+- If AI generation fails or returns invalid output, Doma stores and sends a
+  deterministic fallback rather than retrying generation for the same local
+  date.
 - If no daily requirements calendar is configured, the briefing is a setup
   problem, not a quiet day. Configure at least one calendar with
   `"kind":"dailyRequirements"` in `SCHEDULE_CALENDARS`.

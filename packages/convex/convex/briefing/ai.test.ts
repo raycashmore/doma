@@ -273,6 +273,307 @@ Watchouts
     consoleError.mockRestore();
   });
 
+  it('falls back when AI prose leaks internal member ids', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const provider: MorningBriefingAiProvider = async ({ sources }) => {
+      const requirement = sources.find((source) => source.kind === 'dailyRequirements');
+      return {
+        shouldSend: true,
+        headline: 'School-and-library day.',
+        morning: [
+          {
+            text: 'memberC needs the library bag',
+            who: ['childA'],
+            sourceIds: [requirement?.sourceId ?? 'missing']
+          }
+        ],
+        afternoon: [],
+        watchouts: [],
+        sourceIdsIgnored: []
+      };
+    };
+
+    const result = await createAiMorningBriefing({
+      localDate,
+      timeZone,
+      calendarConfigs: [requirementsCalendar],
+      events: [requirementEvent()],
+      provider,
+      members
+    });
+
+    expect(result.generationStatus).toBe('fallback');
+    expect(result.message).toContain('Bring sports bag');
+    expect(result.message).not.toContain('memberC');
+    expect(consoleError).toHaveBeenCalledWith(expect.stringContaining('[briefing.ai]'), expect.anything());
+    consoleError.mockRestore();
+  });
+
+  it('falls back when AI prose leaks internal member ids with casing variants', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const provider: MorningBriefingAiProvider = vi
+      .fn()
+      .mockResolvedValueOnce({
+        shouldSend: true,
+        headline: 'School-and-library day.',
+        morning: [
+          {
+            text: 'MemberC needs the library bag',
+            who: ['childA'],
+            sourceIds: ['requirements-calendar:requirements-1:1781218800000']
+          }
+        ],
+        afternoon: [],
+        watchouts: [],
+        sourceIdsIgnored: []
+      })
+      .mockResolvedValueOnce({
+        shouldSend: true,
+        headline: 'School-and-library day.',
+        morning: [
+          {
+            text: 'memberc needs the library bag',
+            who: ['childA'],
+            sourceIds: ['requirements-calendar:requirements-1:1781218800000']
+          }
+        ],
+        afternoon: [],
+        watchouts: [],
+        sourceIdsIgnored: []
+      });
+
+    const firstResult = await createAiMorningBriefing({
+      localDate,
+      timeZone,
+      calendarConfigs: [requirementsCalendar],
+      events: [requirementEvent()],
+      provider,
+      members
+    });
+    const secondResult = await createAiMorningBriefing({
+      localDate,
+      timeZone,
+      calendarConfigs: [requirementsCalendar],
+      events: [requirementEvent()],
+      provider,
+      members
+    });
+
+    expect(firstResult.generationStatus).toBe('fallback');
+    expect(secondResult.generationStatus).toBe('fallback');
+    expect(firstResult.message).not.toContain('MemberC');
+    expect(secondResult.message).not.toContain('memberc');
+    consoleError.mockRestore();
+  });
+
+  it('falls back when AI prose leaks configured member ids with punctuation', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const provider: MorningBriefingAiProvider = async ({ sources }) => {
+      const requirement = sources.find((source) => source.kind === 'dailyRequirements');
+      return {
+        shouldSend: true,
+        headline: 'School-and-library day.',
+        morning: [
+          {
+            text: 'child-a needs the library bag',
+            who: ['child-a'],
+            sourceIds: [requirement?.sourceId ?? 'missing']
+          }
+        ],
+        afternoon: [],
+        watchouts: [],
+        sourceIdsIgnored: []
+      };
+    };
+
+    const result = await createAiMorningBriefing({
+      localDate,
+      timeZone,
+      calendarConfigs: [requirementsCalendar],
+      events: [requirementEvent({ who: ['child-a'] })],
+      provider,
+      members: [{ id: 'child-a', label: 'Child A', initials: 'CA' }]
+    });
+
+    expect(result.generationStatus).toBe('fallback');
+    expect(result.message).not.toContain('child-a');
+    expect(consoleError).toHaveBeenCalledWith(expect.stringContaining('[briefing.ai]'), expect.anything());
+    consoleError.mockRestore();
+  });
+
+  it('falls back when AI line ownership uses unknown member ids', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const provider: MorningBriefingAiProvider = async ({ sources }) => {
+      const requirement = sources.find((source) => source.kind === 'dailyRequirements');
+      return {
+        shouldSend: true,
+        headline: 'School-and-library day.',
+        morning: [
+          {
+            text: 'Needs the library bag',
+            who: ['memberC'],
+            sourceIds: [requirement?.sourceId ?? 'missing']
+          }
+        ],
+        afternoon: [],
+        watchouts: [],
+        sourceIdsIgnored: []
+      };
+    };
+
+    const result = await createAiMorningBriefing({
+      localDate,
+      timeZone,
+      calendarConfigs: [requirementsCalendar],
+      events: [requirementEvent()],
+      provider,
+      members
+    });
+
+    expect(result.generationStatus).toBe('fallback');
+    expect(result.message).not.toContain('memberC');
+    expect(consoleError).toHaveBeenCalledWith(expect.stringContaining('[briefing.ai]'), expect.anything());
+    consoleError.mockRestore();
+  });
+
+  it('falls back when AI prose contains markup or escaped HTML entities', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const provider: MorningBriefingAiProvider = async ({ sources }) => {
+      const requirement = sources.find((source) => source.kind === 'dailyRequirements');
+      return {
+        shouldSend: true,
+        headline: 'Library &amp; sock day.',
+        morning: [
+          {
+            text: 'Bring the <b>library</b> bag and Crazy Hair &amp; Sock Day gear.',
+            who: ['childA'],
+            sourceIds: [requirement?.sourceId ?? 'missing']
+          }
+        ],
+        afternoon: [],
+        watchouts: [],
+        sourceIdsIgnored: []
+      };
+    };
+
+    const result = await createAiMorningBriefing({
+      localDate,
+      timeZone,
+      calendarConfigs: [requirementsCalendar],
+      events: [requirementEvent()],
+      provider,
+      members
+    });
+
+    expect(result.generationStatus).toBe('fallback');
+    expect(result.message).toContain('Bring sports bag');
+    expect(result.message).not.toContain('<b>');
+    expect(result.message).not.toContain('&amp;');
+    expect(consoleError).toHaveBeenCalledWith(expect.stringContaining('[briefing.ai]'), expect.anything());
+    consoleError.mockRestore();
+  });
+
+  it('falls back when AI prose contains broad named HTML entities', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const provider: MorningBriefingAiProvider = async ({ sources }) => {
+      const requirement = sources.find((source) => source.kind === 'dailyRequirements');
+      return {
+        shouldSend: true,
+        headline: 'Library day.',
+        morning: [
+          {
+            text: 'Bring library bag &rsquo; note.',
+            who: ['childA'],
+            sourceIds: [requirement?.sourceId ?? 'missing']
+          }
+        ],
+        afternoon: [],
+        watchouts: [],
+        sourceIdsIgnored: []
+      };
+    };
+
+    const result = await createAiMorningBriefing({
+      localDate,
+      timeZone,
+      calendarConfigs: [requirementsCalendar],
+      events: [requirementEvent()],
+      provider,
+      members
+    });
+
+    expect(result.generationStatus).toBe('fallback');
+    expect(result.message).not.toContain('&rsquo;');
+    expect(consoleError).toHaveBeenCalledWith(expect.stringContaining('[briefing.ai]'), expect.anything());
+    consoleError.mockRestore();
+  });
+
+  it('accepts plain text that uses a raw ampersand', async () => {
+    const provider: MorningBriefingAiProvider = async ({ sources }) => {
+      const requirement = sources.find((source) => source.kind === 'dailyRequirements');
+      return {
+        shouldSend: true,
+        headline: 'Hair & sock day.',
+        morning: [
+          {
+            text: 'Bring library bag and hair & sock day items.',
+            who: ['childA'],
+            sourceIds: [requirement?.sourceId ?? 'missing']
+          }
+        ],
+        afternoon: [],
+        watchouts: [],
+        sourceIdsIgnored: []
+      };
+    };
+
+    const result = await createAiMorningBriefing({
+      localDate,
+      timeZone,
+      calendarConfigs: [requirementsCalendar],
+      events: [requirementEvent()],
+      provider,
+      members
+    });
+
+    expect(result.generationStatus).toBe('ai');
+    expect(result.message).toContain('Hair & sock day.');
+    expect(result.message).toContain('hair & sock day items');
+  });
+
+  it('accepts ordinary words that start with member', async () => {
+    const provider: MorningBriefingAiProvider = async ({ sources }) => {
+      const requirement = sources.find((source) => source.kind === 'dailyRequirements');
+      return {
+        shouldSend: true,
+        headline: 'Household members have one school note.',
+        morning: [
+          {
+            text: 'Family members should bring the note.',
+            who: ['childA'],
+            sourceIds: [requirement?.sourceId ?? 'missing']
+          }
+        ],
+        afternoon: [],
+        watchouts: [],
+        sourceIdsIgnored: []
+      };
+    };
+
+    const result = await createAiMorningBriefing({
+      localDate,
+      timeZone,
+      calendarConfigs: [requirementsCalendar],
+      events: [requirementEvent()],
+      provider,
+      members
+    });
+
+    expect(result.generationStatus).toBe('ai');
+    expect(result.message).toContain('Household members');
+    expect(result.message).toContain('Family members');
+  });
+
   it('logs and falls back when the AI provider throws', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
     const provider: MorningBriefingAiProvider = async () => {
@@ -382,6 +683,12 @@ describe('morningBriefingSystemPrompt', () => {
     expect(morningBriefingSystemPrompt).toContain('Morning and afternoon readiness');
     expect(morningBriefingSystemPrompt).toContain('pre-noon');
     expect(morningBriefingSystemPrompt).toContain('supplied weather');
+  });
+
+  it('instructs the model to keep generated prose plain text', () => {
+    expect(morningBriefingSystemPrompt).toContain('plain text');
+    expect(morningBriefingSystemPrompt).toContain('Do not include HTML');
+    expect(morningBriefingSystemPrompt).toContain('Do not write member ids inside prose');
   });
 });
 

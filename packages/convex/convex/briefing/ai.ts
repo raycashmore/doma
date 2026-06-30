@@ -46,9 +46,10 @@ type AiBriefingParseFailure =
   | { reason: 'not_object' }
   | { reason: 'invalid_top_level_fields' }
   | { reason: 'invalid_source_ids_ignored_shape' }
+  | { reason: 'invalid_headline_text' }
   | { reason: 'invalid_lines_array'; section: BriefingSection }
   | {
-      reason: 'invalid_line_shape' | 'invalid_line_who' | 'invalid_line_source_ids';
+      reason: 'invalid_line_shape' | 'invalid_line_text' | 'invalid_line_who' | 'invalid_line_source_ids';
       section: BriefingSection;
       lineIndex: number;
     };
@@ -62,6 +63,7 @@ export const morningBriefingSystemPrompt = [
   'Assign each obligation to the block when the underlying activity happens, even if it is prepared earlier (kit for an afternoon class is an afternoon item).',
   "Within each block, produce one line per responsible person, combining that person's obligations into one natural sentence.",
   'Set "who" to the exact supplied member ids the line is for. Do not put the person\'s name inside "text"; only describe the obligation.',
+  'Write headline and line text as plain text. Do not include HTML, escaped HTML entities, or markup. Do not write member ids inside prose.',
   'Only include people who have something in that block. Do not emit lines for idle people and never write "normal day".',
   'Daily requirements sources are authoritative. Ordinary schedule sources are timing and coordination context.',
   'Put an obligation in "watchouts" instead of a block line ONLY when it is a genuine issue: a schedule clash, unusual or off-pattern timing, or a high-stakes forgotten-item risk (passport, medication, signed form — not everyday water bottles).',
@@ -161,7 +163,11 @@ export async function createAiMorningBriefing({
   let briefing: MorningBriefing | null;
   try {
     const aiResponse = await provider(input);
-    const parseResult = parseAiBriefing(aiResponse, new Set(input.sources.map((source) => source.sourceId)));
+    const parseResult = parseAiBriefing(
+      aiResponse,
+      new Set(input.sources.map((source) => source.sourceId)),
+      new Set(members.map((member) => member.id))
+    );
     briefing = parseResult.briefing;
 
     if (!briefing) {
@@ -281,11 +287,15 @@ function localTimeBlock(ms: number, timeZone: string): MorningBriefingAiSource['
 
 function parseAiBriefing(
   value: unknown,
-  knownSourceIds: Set<string>
+  knownSourceIds: Set<string>,
+  knownMemberIds: Set<string>
 ): { briefing: MorningBriefing | null; failure?: AiBriefingParseFailure } {
   if (!isRecord(value)) return { briefing: null, failure: { reason: 'not_object' } };
   if (typeof value.shouldSend !== 'boolean' || typeof value.headline !== 'string') {
     return { briefing: null, failure: { reason: 'invalid_top_level_fields' } };
+  }
+  if (!isPlainBriefingText(value.headline, knownMemberIds)) {
+    return { briefing: null, failure: { reason: 'invalid_headline_text' } };
   }
 
   const sourceIdsIgnored = parseSourceIds(value.sourceIdsIgnored, knownSourceIds);
@@ -293,13 +303,13 @@ function parseAiBriefing(
     return { briefing: null, failure: { reason: 'invalid_source_ids_ignored_shape' } };
   }
 
-  const morning = parseLines(value.morning, 'morning', knownSourceIds);
+  const morning = parseLines(value.morning, 'morning', knownSourceIds, knownMemberIds);
   if (!morning.lines) return { briefing: null, failure: morning.failure };
 
-  const afternoon = parseLines(value.afternoon, 'afternoon', knownSourceIds);
+  const afternoon = parseLines(value.afternoon, 'afternoon', knownSourceIds, knownMemberIds);
   if (!afternoon.lines) return { briefing: null, failure: afternoon.failure };
 
-  const watchouts = parseLines(value.watchouts, 'watchouts', knownSourceIds);
+  const watchouts = parseLines(value.watchouts, 'watchouts', knownSourceIds, knownMemberIds);
   if (!watchouts.lines) return { briefing: null, failure: watchouts.failure };
 
   return {
@@ -314,7 +324,12 @@ function parseAiBriefing(
   };
 }
 
-function parseLines(value: unknown, section: BriefingSection, knownSourceIds: Set<string>) {
+function parseLines(
+  value: unknown,
+  section: BriefingSection,
+  knownSourceIds: Set<string>,
+  knownMemberIds: Set<string>
+) {
   if (!Array.isArray(value)) {
     return { lines: null, failure: { reason: 'invalid_lines_array', section } satisfies AiBriefingParseFailure };
   }
@@ -322,7 +337,13 @@ function parseLines(value: unknown, section: BriefingSection, knownSourceIds: Se
     if (!isRecord(line) || typeof line.text !== 'string') {
       return { line: null, failure: { reason: 'invalid_line_shape', section, lineIndex } };
     }
-    if (!Array.isArray(line.who) || !line.who.every((id): id is string => typeof id === 'string')) {
+    if (!isPlainBriefingText(line.text, knownMemberIds)) {
+      return { line: null, failure: { reason: 'invalid_line_text', section, lineIndex } };
+    }
+    if (
+      !Array.isArray(line.who) ||
+      !line.who.every((id): id is string => typeof id === 'string' && knownMemberIds.has(id))
+    ) {
       return { line: null, failure: { reason: 'invalid_line_who', section, lineIndex } };
     }
     const sourceIds = parseSourceIds(line.sourceIds, knownSourceIds);
@@ -340,6 +361,137 @@ function parseSourceIds(value: unknown, knownSourceIds: Set<string>) {
   if (!Array.isArray(value)) return null;
   if (!value.every((sourceId): sourceId is string => typeof sourceId === 'string')) return null;
   return value.filter((sourceId) => knownSourceIds.has(sourceId));
+}
+
+function isPlainBriefingText(text: string, knownMemberIds: Set<string>) {
+  return (
+    !containsMarkupDelimiter(text) &&
+    !containsHtmlEntity(text) &&
+    !containsConfiguredMemberToken(text, knownMemberIds) &&
+    !containsInternalMemberToken(text)
+  );
+}
+
+function containsMarkupDelimiter(text: string) {
+  return text.includes('<') || text.includes('>');
+}
+
+function containsHtmlEntity(text: string) {
+  let searchFrom = 0;
+  while (searchFrom < text.length) {
+    const ampersandIndex = text.indexOf('&', searchFrom);
+    if (ampersandIndex === -1) return false;
+    const semicolonIndex = text.indexOf(';', ampersandIndex + 1);
+    if (semicolonIndex === -1) return false;
+    const entity = text.slice(ampersandIndex + 1, semicolonIndex).toLowerCase();
+    if (isNumericHtmlEntity(entity) || isNamedHtmlEntityShape(entity)) return true;
+    searchFrom = ampersandIndex + 1;
+  }
+  return false;
+}
+
+function isNumericHtmlEntity(entity: string) {
+  if (!entity.startsWith('#')) return false;
+  const digits = entity.startsWith('#x') ? entity.slice(2) : entity.slice(1);
+  if (!digits) return false;
+  return everyCharacter(digits, entity.startsWith('#x') ? isAsciiHexDigit : isAsciiDigit);
+}
+
+function isNamedHtmlEntityShape(entity: string) {
+  if (!isAsciiLetter(entity[0] ?? '')) return false;
+  return everyCharacter(entity, isAsciiLetterOrDigit);
+}
+
+function containsConfiguredMemberToken(text: string, knownMemberIds: Set<string>) {
+  for (const memberId of knownMemberIds) {
+    if (memberId && containsStandaloneLiteral(text, memberId)) return true;
+  }
+  return false;
+}
+
+function containsInternalMemberToken(text: string) {
+  for (const token of plainTextTokens(text)) {
+    if (isInternalMemberToken(token)) return true;
+  }
+  return false;
+}
+
+function containsStandaloneLiteral(text: string, literal: string) {
+  const lowerText = text.toLowerCase();
+  const lowerLiteral = literal.toLowerCase();
+  let searchFrom = 0;
+  while (searchFrom < lowerText.length) {
+    const index = lowerText.indexOf(lowerLiteral, searchFrom);
+    if (index === -1) return false;
+    const before = index > 0 ? lowerText[index - 1] : undefined;
+    const after = lowerText[index + lowerLiteral.length];
+    if (!isTextTokenCharacter(before) && !isTextTokenCharacter(after)) return true;
+    searchFrom = index + 1;
+  }
+  return false;
+}
+
+function isInternalMemberToken(token: string) {
+  const normalized = token.toLowerCase();
+  if (!normalized.startsWith('member')) return false;
+  const suffix = normalized.slice('member'.length);
+  return suffix.length === 1 && suffix !== 's' && isAsciiLetter(suffix);
+}
+
+function plainTextTokens(text: string) {
+  const tokens: string[] = [];
+  let current = '';
+  for (const character of text) {
+    if (isTokenCharacter(character)) {
+      current += character;
+    } else if (current) {
+      tokens.push(current);
+      current = '';
+    }
+  }
+  if (current) tokens.push(current);
+  return tokens;
+}
+
+function isTokenCharacter(character: string) {
+  return isAsciiLetterOrDigit(character);
+}
+
+function isTextTokenCharacter(character: string | undefined) {
+  return character !== undefined && isAsciiLetterOrDigit(character);
+}
+
+function everyCharacter(value: string, predicate: (character: string) => boolean) {
+  for (const character of value) {
+    if (!predicate(character)) return false;
+  }
+  return true;
+}
+
+function isAsciiLetterOrDigit(character: string) {
+  return isAsciiLetter(character) || isAsciiDigit(character);
+}
+
+function isAsciiLetter(character: string) {
+  const codePoint = character.codePointAt(0);
+  if (codePoint === undefined) return false;
+  return (codePoint >= 65 && codePoint <= 90) || (codePoint >= 97 && codePoint <= 122);
+}
+
+function isAsciiDigit(character: string) {
+  const codePoint = character.codePointAt(0);
+  if (codePoint === undefined) return false;
+  return codePoint >= 48 && codePoint <= 57;
+}
+
+function isAsciiHexDigit(character: string) {
+  const codePoint = character.codePointAt(0);
+  if (codePoint === undefined) return false;
+  return (
+    (codePoint >= 48 && codePoint <= 57) ||
+    (codePoint >= 65 && codePoint <= 70) ||
+    (codePoint >= 97 && codePoint <= 102)
+  );
 }
 
 function sourceIdsUsedBy(briefing: MorningBriefing) {

@@ -107,6 +107,13 @@ readiness notes when the afternoon message already has briefing content. Weather
 decorates a briefing that schedule requirements already justify; it does not
 trigger a quiet-day notification by itself.
 
+Stored briefing text is plain text. The AI parser rejects responses that leak
+internal member ids, use unknown member ownership, include markup delimiters, or
+include escaped HTML entities. Invalid AI output falls back to the deterministic
+schedule summary for that local date. Channel-specific formatting belongs at
+delivery time; Telegram delivery escapes the plain text and then applies its
+small keyword bolding rule.
+
 Docs and tests must use generic member, calendar, and event labels. Generated
 briefing text can contain private household schedule details, so do not copy it
 into committed fixtures.

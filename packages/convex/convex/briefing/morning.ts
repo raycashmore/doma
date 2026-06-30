@@ -203,21 +203,7 @@ function stripKnownPersonPrefix(text: string, personLabels: string[]) {
 }
 
 function normalizePersonPrefixedBriefingText(text: string, personLabels: string[] = []) {
-  return normalizeBriefingText(
-    stripKnownPersonPrefix(
-      text
-        .replace(/\bfor member[A-Z]\b/gi, '')
-        .replace(/^\s*member[A-Z]\s+handoff\b/gi, 'Handoff')
-        .replace(/^\s*member[A-Z]\s+and\s+member[A-Z]:\s*/i, '')
-        .replace(/^\s*member[A-Z]:\s*/i, '')
-        .replace(/^\s*member[A-Z]\s+has\s+([a-z])/i, (_, first: string) => first.toUpperCase())
-        .replace(/^\s*member[A-Z]\s+has\s+/i, '')
-        .replace(/^\s*member[A-Z]\s+and\s+member[A-Z]\s+have\s+([a-z])/i, (_, first: string) => first.toUpperCase())
-        .replace(/^\s*member[A-Z]\s+and\s+member[A-Z]\s+have\s+/i, '')
-        .replace(/\s+and\s+member[A-Z]\b/gi, ''),
-      personLabels
-    )
-  );
+  return normalizeBriefingText(stripKnownPersonPrefix(text, personLabels));
 }
 
 function isMorningEvent(event: MorningBriefingEvent, timeZone: string) {

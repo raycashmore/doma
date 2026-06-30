@@ -102,12 +102,12 @@ Watchouts
     ).toBe('');
   });
 
-  it('falls back to the raw id and removes leaked member-token prefixes', () => {
+  it('falls back to the raw id for unknown line ownership', () => {
     const message = formatMorningBriefing(
       {
         shouldSend: true,
         headline: 'Routine day.',
-        morning: [{ text: 'memberA: confirm classroom note', who: ['unknownX'], sourceIds: ['req:note:1'] }],
+        morning: [{ text: 'confirm classroom note', who: ['unknownX'], sourceIds: ['req:note:1'] }],
         afternoon: [],
         watchouts: [],
         sourceIdsIgnored: []
@@ -120,8 +120,6 @@ Routine day.
 
 This morning:
 - unknownX: confirm classroom note`);
-    expect(message).not.toContain('memberA');
-    expect(message).not.toContain('someone');
   });
 
   it('does not rewrite internal member tokens to someone', () => {
@@ -143,50 +141,6 @@ memberA logistics are still being checked.
 Watchouts
 - memberB timing needs a second look.`);
     expect(message).not.toContain('someone');
-  });
-
-  it('removes leaked internal member tokens from person-prefixed briefing text', () => {
-    const message = formatMorningBriefing(
-      {
-        shouldSend: true,
-        headline: 'A school-and-sport day.',
-        morning: [
-          {
-            text: 'School runs and memberA start at 9:00; warm layers help.',
-            who: ['childA', 'childB'],
-            sourceIds: ['cal:school:1']
-          },
-          {
-            text: 'School day and memberC; a warm layer will help with the cold morning.',
-            who: ['childA', 'childB'],
-            sourceIds: ['cal:school:2']
-          }
-        ],
-        afternoon: [
-          {
-            text: 'memberA has swimming at 5:00; pack goggles, swimmers, and towel.',
-            who: ['childA'],
-            sourceIds: ['cal:swim:1']
-          }
-        ],
-        watchouts: [],
-        sourceIdsIgnored: []
-      },
-      [...members, { id: 'childB', label: 'Child B', initials: 'CB' }]
-    );
-
-    expect(message).toBe(`Today:
-A school-and-sport day.
-
-This morning:
-- Child A, Child B: School runs start at 9:00; warm layers help.
-- Child A, Child B: School day; a warm layer will help with the cold morning.
-
-This afternoon:
-- Child A: Swimming at 5:00; pack goggles, swimmers, and towel.`);
-    expect(message).not.toContain('someone');
-    expect(message).not.toContain('memberA');
-    expect(message).not.toContain('memberC');
   });
 });
 
