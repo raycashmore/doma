@@ -20,6 +20,41 @@ function shouldSendFromGeneratedBriefingRow(row: Record<string, unknown>) {
   return null;
 }
 
+function isBriefingLine(value: unknown) {
+  return (
+    isRecord(value) &&
+    typeof value.text === 'string' &&
+    Array.isArray(value.who) &&
+    value.who.every((item) => typeof item === 'string') &&
+    Array.isArray(value.sourceIds) &&
+    value.sourceIds.every((item) => typeof item === 'string')
+  );
+}
+
+function isStructuredMorningBriefing(value: unknown): value is NonNullable<BotMorningBriefing['briefing']> {
+  return (
+    isRecord(value) &&
+    typeof value.shouldSend === 'boolean' &&
+    typeof value.headline === 'string' &&
+    Array.isArray(value.morning) &&
+    value.morning.every(isBriefingLine) &&
+    Array.isArray(value.afternoon) &&
+    value.afternoon.every(isBriefingLine) &&
+    Array.isArray(value.watchouts) &&
+    value.watchouts.every(isBriefingLine) &&
+    Array.isArray(value.sourceIdsIgnored) &&
+    value.sourceIdsIgnored.every((item) => typeof item === 'string')
+  );
+}
+
+function structuredMorningBriefingFromRow(value: unknown): BotMorningBriefing['briefing'] | undefined {
+  if (!isStructuredMorningBriefing(value)) {
+    return undefined;
+  }
+
+  return value;
+}
+
 export function botMorningBriefingFromStoreResult(value: unknown): BotMorningBriefing {
   if (!isRecord(value) || !('briefing' in value)) {
     throw invalidGeneratedBriefingResult('missing top-level briefing field');
@@ -44,11 +79,14 @@ export function botMorningBriefingFromStoreResult(value: unknown): BotMorningBri
     throw invalidGeneratedBriefingResult('briefing payload is missing required bot fields');
   }
 
+  const structuredBriefing = structuredMorningBriefingFromRow(row.briefing);
+
   return {
     briefingKey: row.briefingKey,
     localDate: row.localDate,
     generationStatus: row.generationStatus,
     shouldSend,
-    message: row.message
+    message: row.message,
+    ...(structuredBriefing ? { briefing: structuredBriefing } : {})
   };
 }

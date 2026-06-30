@@ -4,6 +4,7 @@ import type { ScheduleDisplayMember } from '../schedule/config';
 import {
   collectMorningBriefingEvents,
   createDeterministicMorningBriefing,
+  formatBriefingDeliveryMessage,
   formatMorningBriefing,
   formatMorningBriefingFallback,
   type MorningBriefingEvent,
@@ -186,6 +187,77 @@ This afternoon:
     expect(message).not.toContain('someone');
     expect(message).not.toContain('memberA');
     expect(message).not.toContain('memberC');
+  });
+});
+
+describe('formatBriefingDeliveryMessage', () => {
+  it('renders the morning delivery as the summary and morning details only', () => {
+    const message = formatBriefingDeliveryMessage(
+      {
+        shouldSend: true,
+        headline: 'Library bag and sport clothes.',
+        morning: [{ text: 'pack library bag', who: ['childA'], sourceIds: ['req:library:1'] }],
+        afternoon: [{ text: 'bring water bottle for dancing', who: ['childA'], sourceIds: ['req:dance:1'] }],
+        watchouts: [{ text: 'Homework folder is due back.', who: [], sourceIds: ['req:homework:1'] }],
+        sourceIdsIgnored: []
+      },
+      members,
+      { slot: 'morning' }
+    );
+
+    expect(message).toBe(`Library bag and sport clothes.
+
+This morning:
+- Child A: pack library bag
+
+Watchouts
+- Homework folder is due back.`);
+    expect(message).not.toContain('Today:');
+    expect(message).not.toContain('dancing');
+  });
+
+  it('renders afternoon details with relevant afternoon weather readiness', () => {
+    const message = formatBriefingDeliveryMessage(
+      {
+        shouldSend: true,
+        headline: 'Library bag and sport clothes.',
+        morning: [{ text: 'pack library bag', who: ['childA'], sourceIds: ['req:library:1'] }],
+        afternoon: [{ text: 'bring water bottle for dancing', who: ['childA'], sourceIds: ['req:dance:1'] }],
+        watchouts: [],
+        sourceIdsIgnored: []
+      },
+      members,
+      {
+        slot: 'afternoon',
+        weather: {
+          summary: 'Wet afternoon.',
+          morning: {
+            temperatureC: { min: 12, max: 18 },
+            apparentTemperatureC: { min: 12, max: 18 },
+            rainChancePercent: 10,
+            maxWindGustKph: 10,
+            maxUvIndex: 2,
+            readiness: []
+          },
+          afternoon: {
+            temperatureC: { min: 17, max: 21 },
+            apparentTemperatureC: { min: 16, max: 20 },
+            rainChancePercent: 80,
+            maxWindGustKph: 12,
+            maxUvIndex: 3,
+            readiness: ['rain layer']
+          }
+        }
+      }
+    );
+
+    expect(message).toBe(`This afternoon:
+- Child A: bring water bottle for dancing
+
+Weather:
+- Rain layer may help this afternoon.`);
+    expect(message).not.toContain('Library bag');
+    expect(message).not.toContain('pack library bag');
   });
 });
 

@@ -414,11 +414,12 @@ to a deterministic newline split.
 
 Morning briefing delivery runs from Convex cron, not Vercel Cron. This keeps
 the Bot gateway deployable on Vercel Hobby, where frequent cron schedules are
-rejected. Convex checks the delivery cycle every 10 minutes, only sends during
-the local morning retry window `07:35 <= time < 08:30`, forces a schedule sync
-before generation when possible, falls back to cached schedule data when needed,
-calls the Bot gateway's provider-neutral `/notifications/send` endpoint, and
-records the briefing delivery attempt in Convex per recipient.
+rejected. Convex checks the delivery cycle every 10 minutes, sends during the
+local morning retry window `07:35 <= time < 08:30` and afternoon retry window
+`14:30 <= time < 15:00`, forces a schedule sync before generation when possible,
+falls back to cached schedule data when needed, calls the Bot gateway's
+provider-neutral `/notifications/send` endpoint, and records the briefing
+delivery attempt in Convex per recipient and delivery slot.
 
 Set these Convex env vars on every Convex deployment that should send morning
 briefings:
@@ -438,12 +439,14 @@ briefings:
 Morning briefing operations:
 
 - A scheduled delivery outside `07:35 <= time < 08:30` in
+  `MORNING_BRIEFING_TZ` and outside `14:30 <= time < 15:00` in
   `MORNING_BRIEFING_TZ` no-ops.
 - If no `MORNING_BRIEFING_RECIPIENT_USER_IDS` are configured, the scheduled run
   no-ops. `/briefing` can still be used on demand by a linked Telegram user.
 - Convex generates one briefing per local date and reuses it for retries and
-  replay. A recipient with a sent or skipped delivery attempt is not processed
-  for the same briefing again.
+  replay. Morning and afternoon scheduled sends use separate delivery keys, so a
+  recipient with a sent or skipped morning attempt can still receive the
+  afternoon attempt for the same briefing.
 - If AI suppresses a quiet briefing or produces an empty message, scheduled
   delivery records the recipient as skipped instead of sending an empty
   notification.
@@ -451,7 +454,12 @@ Morning briefing operations:
   Open-Meteo forecast context to make an already-qualified briefing more
   practical. Weather does not cause quiet-day notifications by itself. Missing,
   invalid, or unavailable weather context falls back to schedule-only AI
-  generation.
+  generation. Afternoon delivery refreshes the configured forecast context, but
+  only appends relevant afternoon readiness notes when the afternoon message
+  already has briefing content.
+- Scheduled briefing notifications are sent to Telegram with HTML parse mode
+  after escaping message text. The keywords `swimming`, `dancing`, `library`,
+  `homework`, and `sport` are bolded in scheduled briefing delivery.
 - If schedule sync fails but cached schedule data exists, Doma can still send
   the briefing. When the cache is older than 12 hours, it appends:
   `Note: schedule data may be stale because the latest calendar sync failed.`

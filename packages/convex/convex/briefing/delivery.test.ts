@@ -1,18 +1,34 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { type BotMorningBriefing, runMorningBriefingDeliveryCycle } from './delivery';
+import type { ScheduleDisplayMember } from '../schedule/config';
+import { type BotMorningBriefing, formatBriefingTelegramHtml, runMorningBriefingDeliveryCycle } from './delivery';
 
 const timeZone = 'Australia/Sydney';
 const dueAtMs = Date.parse('2026-06-12T21:35:00.000Z'); // 7:35am 2026-06-13 in Sydney
+const members: ScheduleDisplayMember[] = [{ id: 'childA', label: 'Child A', initials: 'CA' }];
 const briefing: BotMorningBriefing = {
   briefingKey: 'morning:2026-06-13',
   localDate: '2026-06-13',
   generationStatus: 'ai',
   shouldSend: true,
-  message: 'Morning briefing\nPack / bring\n- memberA: Bring library bag.'
+  message: 'Today:\nLibrary bag and dancing pickup.',
+  briefing: {
+    shouldSend: true,
+    headline: 'Library bag and dancing pickup.',
+    morning: [{ text: 'Bring library bag.', who: ['childA'], sourceIds: ['req:library:1'] }],
+    afternoon: [{ text: 'Bring dancing shoes.', who: ['childA'], sourceIds: ['req:dance:1'] }],
+    watchouts: [],
+    sourceIdsIgnored: []
+  }
 };
 
 describe('runMorningBriefingDeliveryCycle', () => {
+  it('escapes Telegram HTML and bolds configured briefing keywords', () => {
+    expect(formatBriefingTelegramHtml('Swimming & library <homework> dancing.')).toBe(
+      '<b>Swimming</b> &amp; <b>library</b> &lt;<b>homework</b>&gt; <b>dancing</b>.'
+    );
+  });
+
   it('does not sync, generate, send, or record outside the local morning retry window', async () => {
     const syncSchedule = vi.fn();
     const loadBriefing = vi.fn();
@@ -24,6 +40,7 @@ describe('runMorningBriefingDeliveryCycle', () => {
       runMorningBriefingDeliveryCycle({
         nowMs: Date.parse('2026-06-12T21:34:00.000Z'), // 7:34am in Sydney
         timeZone,
+        members,
         recipientUserIds: ['user_123'],
         attempts: [],
         lastSyncedAt: dueAtMs,
@@ -51,7 +68,7 @@ describe('runMorningBriefingDeliveryCycle', () => {
     expect(recordDeliveryAttempt).not.toHaveBeenCalled();
   });
 
-  it('forces schedule sync, generates one briefing for the local day, and sends it to all recipients', async () => {
+  it('forces schedule sync, generates one briefing for the local day, and sends the morning slot to all recipients', async () => {
     const syncSchedule = vi.fn(async () => ({ ok: true as const, lastSyncedAt: dueAtMs }));
     const loadBriefing = vi.fn(async () => null);
     const generateBriefing = vi.fn(async () => briefing);
@@ -62,6 +79,7 @@ describe('runMorningBriefingDeliveryCycle', () => {
       runMorningBriefingDeliveryCycle({
         nowMs: dueAtMs,
         timeZone,
+        members,
         recipientUserIds: ['user_123', 'user_456'],
         attempts: [],
         lastSyncedAt: dueAtMs,
@@ -93,9 +111,15 @@ describe('runMorningBriefingDeliveryCycle', () => {
     expect(sendNotification).toHaveBeenCalledWith({
       recipientUserId: 'user_123',
       topic: 'briefing.morning',
-      message: briefing.message,
+      message: `<b>Library</b> bag and <b>dancing</b> pickup.
+
+This morning:
+- Child A: Bring <b>library</b> bag.`,
+      parseMode: 'HTML',
       metadata: {
         briefingKey: briefing.briefingKey,
+        deliveryKey: `${briefing.briefingKey}:morning`,
+        deliverySlot: 'morning',
         localDate: briefing.localDate,
         generationStatus: briefing.generationStatus
       }
@@ -103,21 +127,27 @@ describe('runMorningBriefingDeliveryCycle', () => {
     expect(sendNotification).toHaveBeenCalledWith({
       recipientUserId: 'user_456',
       topic: 'briefing.morning',
-      message: briefing.message,
+      message: `<b>Library</b> bag and <b>dancing</b> pickup.
+
+This morning:
+- Child A: Bring <b>library</b> bag.`,
+      parseMode: 'HTML',
       metadata: {
         briefingKey: briefing.briefingKey,
+        deliveryKey: `${briefing.briefingKey}:morning`,
+        deliverySlot: 'morning',
         localDate: briefing.localDate,
         generationStatus: briefing.generationStatus
       }
     });
     expect(recordDeliveryAttempt).toHaveBeenCalledWith({
-      briefingKey: briefing.briefingKey,
+      briefingKey: `${briefing.briefingKey}:morning`,
       recipientUserId: 'user_123',
       attemptedAt: dueAtMs,
       status: 'pending'
     });
     expect(recordDeliveryAttempt).toHaveBeenCalledWith({
-      briefingKey: briefing.briefingKey,
+      briefingKey: `${briefing.briefingKey}:morning`,
       recipientUserId: 'user_123',
       attemptedAt: dueAtMs,
       status: 'sent'
@@ -135,6 +165,7 @@ describe('runMorningBriefingDeliveryCycle', () => {
       runMorningBriefingDeliveryCycle({
         nowMs: dueAtMs,
         timeZone,
+        members,
         recipientUserIds: [],
         attempts: [],
         lastSyncedAt: dueAtMs,
@@ -173,10 +204,11 @@ describe('runMorningBriefingDeliveryCycle', () => {
       runMorningBriefingDeliveryCycle({
         nowMs: dueAtMs,
         timeZone,
+        members,
         recipientUserIds: ['user_done', 'user_retry'],
         attempts: [
-          { briefingKey: briefing.briefingKey, recipientUserId: 'user_done', status: 'sent' },
-          { briefingKey: briefing.briefingKey, recipientUserId: 'user_retry', status: 'failed' }
+          { briefingKey: `${briefing.briefingKey}:morning`, recipientUserId: 'user_done', status: 'sent' },
+          { briefingKey: `${briefing.briefingKey}:morning`, recipientUserId: 'user_retry', status: 'failed' }
         ],
         lastSyncedAt: dueAtMs,
         syncSchedule,
@@ -196,13 +228,50 @@ describe('runMorningBriefingDeliveryCycle', () => {
     expect(sendNotification).toHaveBeenCalledWith({
       recipientUserId: 'user_retry',
       topic: 'briefing.morning',
-      message: briefing.message,
+      message: `<b>Library</b> bag and <b>dancing</b> pickup.
+
+This morning:
+- Child A: Bring <b>library</b> bag.`,
+      parseMode: 'HTML',
       metadata: {
         briefingKey: briefing.briefingKey,
+        deliveryKey: `${briefing.briefingKey}:morning`,
+        deliverySlot: 'morning',
         localDate: briefing.localDate,
         generationStatus: briefing.generationStatus
       }
     });
+  });
+
+  it('treats legacy base-key attempts as completed for the morning slot only', async () => {
+    const syncSchedule = vi.fn(async () => ({ ok: true as const, lastSyncedAt: dueAtMs }));
+    const loadBriefing = vi.fn(async () => briefing);
+    const generateBriefing = vi.fn();
+    const sendNotification = vi.fn(async () => ({ status: 'sent' as const }));
+    const recordDeliveryAttempt = vi.fn(async () => ({ claimed: true as const }));
+
+    await expect(
+      runMorningBriefingDeliveryCycle({
+        nowMs: dueAtMs,
+        timeZone,
+        members,
+        recipientUserIds: ['user_done'],
+        attempts: [{ briefingKey: briefing.briefingKey, recipientUserId: 'user_done', status: 'sent' }],
+        lastSyncedAt: dueAtMs,
+        syncSchedule,
+        loadBriefing,
+        generateBriefing,
+        sendNotification,
+        recordDeliveryAttempt
+      })
+    ).resolves.toMatchObject({
+      processed: 0,
+      sent: 0,
+      generated: false
+    });
+
+    expect(sendNotification).not.toHaveBeenCalled();
+    expect(recordDeliveryAttempt).not.toHaveBeenCalled();
   });
 
   it('includes a small stale-data note when forced sync fails and cached schedule data is older than 12 hours', async () => {
@@ -217,6 +286,7 @@ describe('runMorningBriefingDeliveryCycle', () => {
       runMorningBriefingDeliveryCycle({
         nowMs: dueAtMs,
         timeZone,
+        members,
         recipientUserIds: ['user_123'],
         attempts: [],
         lastSyncedAt: staleLastSyncedAt,
@@ -237,9 +307,16 @@ describe('runMorningBriefingDeliveryCycle', () => {
     expect(sendNotification).toHaveBeenCalledWith({
       recipientUserId: 'user_123',
       topic: 'briefing.morning',
-      message: `${briefing.message}\nNote: schedule data may be stale because the latest calendar sync failed.`,
+      message: `<b>Library</b> bag and <b>dancing</b> pickup.
+
+This morning:
+- Child A: Bring <b>library</b> bag.
+Note: schedule data may be stale because the latest calendar sync failed.`,
+      parseMode: 'HTML',
       metadata: {
         briefingKey: briefing.briefingKey,
+        deliveryKey: `${briefing.briefingKey}:morning`,
+        deliverySlot: 'morning',
         localDate: briefing.localDate,
         generationStatus: briefing.generationStatus
       }
@@ -258,6 +335,7 @@ describe('runMorningBriefingDeliveryCycle', () => {
       runMorningBriefingDeliveryCycle({
         nowMs: dueAtMs,
         timeZone,
+        members,
         recipientUserIds: ['user_123'],
         attempts: [],
         lastSyncedAt: recentLastSyncedAt,
@@ -275,9 +353,15 @@ describe('runMorningBriefingDeliveryCycle', () => {
     expect(sendNotification).toHaveBeenCalledWith({
       recipientUserId: 'user_123',
       topic: 'briefing.morning',
-      message: briefing.message,
+      message: `<b>Library</b> bag and <b>dancing</b> pickup.
+
+This morning:
+- Child A: Bring <b>library</b> bag.`,
+      parseMode: 'HTML',
       metadata: {
         briefingKey: briefing.briefingKey,
+        deliveryKey: `${briefing.briefingKey}:morning`,
+        deliverySlot: 'morning',
         localDate: briefing.localDate,
         generationStatus: briefing.generationStatus
       }
@@ -295,6 +379,7 @@ describe('runMorningBriefingDeliveryCycle', () => {
       runMorningBriefingDeliveryCycle({
         nowMs: dueAtMs,
         timeZone,
+        members,
         recipientUserIds: ['user_123'],
         attempts: [],
         lastSyncedAt: dueAtMs,
@@ -331,6 +416,7 @@ describe('runMorningBriefingDeliveryCycle', () => {
       runMorningBriefingDeliveryCycle({
         nowMs: dueAtMs,
         timeZone,
+        members,
         recipientUserIds: ['user_123'],
         attempts: [],
         lastSyncedAt: dueAtMs,
@@ -349,16 +435,165 @@ describe('runMorningBriefingDeliveryCycle', () => {
 
     expect(sendNotification).not.toHaveBeenCalled();
     expect(recordDeliveryAttempt).toHaveBeenCalledWith({
-      briefingKey: suppressedBriefing.briefingKey,
+      briefingKey: `${suppressedBriefing.briefingKey}:morning`,
       recipientUserId: 'user_123',
       attemptedAt: dueAtMs,
       status: 'pending'
     });
     expect(recordDeliveryAttempt).toHaveBeenCalledWith({
-      briefingKey: suppressedBriefing.briefingKey,
+      briefingKey: `${suppressedBriefing.briefingKey}:morning`,
       recipientUserId: 'user_123',
       attemptedAt: dueAtMs,
       status: 'skipped'
+    });
+  });
+
+  it('skips the afternoon slot when weather is ready but the briefing has no afternoon content', async () => {
+    const afternoonDueAtMs = Date.parse('2026-06-13T04:30:00.000Z'); // 2:30pm in Sydney
+    const structuredBriefing = briefing.briefing;
+    if (!structuredBriefing) throw new Error('Test fixture should include structured briefing content');
+    const morningOnlyBriefing: BotMorningBriefing = {
+      ...briefing,
+      briefing: {
+        ...structuredBriefing,
+        afternoon: []
+      }
+    };
+    const syncSchedule = vi.fn(async () => ({ ok: true as const, lastSyncedAt: afternoonDueAtMs }));
+    const loadBriefing = vi.fn(async () => morningOnlyBriefing);
+    const generateBriefing = vi.fn();
+    const loadWeather = vi.fn(async () => ({
+      summary: 'Wet afternoon.',
+      morning: {
+        temperatureC: { min: 12, max: 18 },
+        apparentTemperatureC: { min: 12, max: 18 },
+        rainChancePercent: 10,
+        maxWindGustKph: 10,
+        maxUvIndex: 2,
+        readiness: []
+      },
+      afternoon: {
+        temperatureC: { min: 17, max: 21 },
+        apparentTemperatureC: { min: 16, max: 20 },
+        rainChancePercent: 80,
+        maxWindGustKph: 12,
+        maxUvIndex: 3,
+        readiness: ['rain layer']
+      }
+    }));
+    const sendNotification = vi.fn(async () => ({ status: 'sent' as const }));
+    const recordDeliveryAttempt = vi.fn(async () => ({ claimed: true as const }));
+
+    await expect(
+      runMorningBriefingDeliveryCycle({
+        nowMs: afternoonDueAtMs,
+        timeZone,
+        members,
+        recipientUserIds: ['user_123'],
+        attempts: [{ briefingKey: `${briefing.briefingKey}:morning`, recipientUserId: 'user_123', status: 'sent' }],
+        lastSyncedAt: afternoonDueAtMs,
+        syncSchedule,
+        loadBriefing,
+        generateBriefing,
+        loadWeather,
+        sendNotification,
+        recordDeliveryAttempt
+      })
+    ).resolves.toMatchObject({
+      processed: 1,
+      sent: 0,
+      skipped: 1,
+      failed: 0
+    });
+
+    expect(loadWeather).toHaveBeenCalledWith({ localDate: '2026-06-13', timeZone });
+    expect(sendNotification).not.toHaveBeenCalled();
+    expect(recordDeliveryAttempt).toHaveBeenCalledWith({
+      briefingKey: `${briefing.briefingKey}:afternoon`,
+      recipientUserId: 'user_123',
+      attemptedAt: afternoonDueAtMs,
+      status: 'pending'
+    });
+    expect(recordDeliveryAttempt).toHaveBeenCalledWith({
+      briefingKey: `${briefing.briefingKey}:afternoon`,
+      recipientUserId: 'user_123',
+      attemptedAt: afternoonDueAtMs,
+      status: 'skipped'
+    });
+  });
+
+  it('sends the afternoon slot at 2:30pm with refreshed afternoon weather', async () => {
+    const afternoonDueAtMs = Date.parse('2026-06-13T04:30:00.000Z'); // 2:30pm in Sydney
+    const syncSchedule = vi.fn(async () => ({ ok: true as const, lastSyncedAt: afternoonDueAtMs }));
+    const loadBriefing = vi.fn(async () => briefing);
+    const generateBriefing = vi.fn();
+    const loadWeather = vi.fn(async () => ({
+      summary: 'Wet afternoon.',
+      morning: {
+        temperatureC: { min: 12, max: 18 },
+        apparentTemperatureC: { min: 12, max: 18 },
+        rainChancePercent: 10,
+        maxWindGustKph: 10,
+        maxUvIndex: 2,
+        readiness: []
+      },
+      afternoon: {
+        temperatureC: { min: 17, max: 21 },
+        apparentTemperatureC: { min: 16, max: 20 },
+        rainChancePercent: 80,
+        maxWindGustKph: 12,
+        maxUvIndex: 3,
+        readiness: ['rain layer']
+      }
+    }));
+    const sendNotification = vi.fn(async () => ({ status: 'sent' as const }));
+    const recordDeliveryAttempt = vi.fn(async () => ({ claimed: true as const }));
+
+    await expect(
+      runMorningBriefingDeliveryCycle({
+        nowMs: afternoonDueAtMs,
+        timeZone,
+        members,
+        recipientUserIds: ['user_123'],
+        attempts: [{ briefingKey: `${briefing.briefingKey}:morning`, recipientUserId: 'user_123', status: 'sent' }],
+        lastSyncedAt: afternoonDueAtMs,
+        syncSchedule,
+        loadBriefing,
+        generateBriefing,
+        loadWeather,
+        sendNotification,
+        recordDeliveryAttempt
+      })
+    ).resolves.toMatchObject({
+      processed: 1,
+      sent: 1,
+      generated: false
+    });
+
+    expect(generateBriefing).not.toHaveBeenCalled();
+    expect(loadWeather).toHaveBeenCalledWith({ localDate: '2026-06-13', timeZone });
+    expect(sendNotification).toHaveBeenCalledWith({
+      recipientUserId: 'user_123',
+      topic: 'briefing.morning',
+      message: `This afternoon:
+- Child A: Bring <b>dancing</b> shoes.
+
+Weather:
+- Rain layer may help this afternoon.`,
+      parseMode: 'HTML',
+      metadata: {
+        briefingKey: briefing.briefingKey,
+        deliveryKey: `${briefing.briefingKey}:afternoon`,
+        deliverySlot: 'afternoon',
+        localDate: briefing.localDate,
+        generationStatus: briefing.generationStatus
+      }
+    });
+    expect(recordDeliveryAttempt).toHaveBeenCalledWith({
+      briefingKey: `${briefing.briefingKey}:afternoon`,
+      recipientUserId: 'user_123',
+      attemptedAt: afternoonDueAtMs,
+      status: 'pending'
     });
   });
 });

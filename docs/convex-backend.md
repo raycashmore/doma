@@ -97,23 +97,29 @@ delivery and `/briefing` replay stay idempotent.
 
 Morning briefing messages render as compact readiness summaries, not raw event
 feeds. Busy days lead with the shape of the day, then include morning,
-afternoon, and watchout sections when relevant. AI-generated briefings can use
-optional Open-Meteo weather context to make the headline or block lines more
-practical, such as noting a cold start or wet pickup. Weather decorates a
-briefing that schedule requirements already justify; it does not trigger a
-quiet-day notification by itself.
+afternoon, and watchout sections when relevant. Scheduled delivery splits that
+stored briefing into a morning notification with the summary and morning details
+only, and an afternoon notification with afternoon details. AI-generated
+briefings can use optional Open-Meteo weather context to make the headline or
+block lines more practical, such as noting a cold start or wet pickup. Afternoon
+delivery can refresh the same weather context and add relevant afternoon
+readiness notes when the afternoon message already has briefing content. Weather
+decorates a briefing that schedule requirements already justify; it does not
+trigger a quiet-day notification by itself.
 
 Docs and tests must use generic member, calendar, and event labels. Generated
 briefing text can contain private household schedule details, so do not copy it
 into committed fixtures.
 
 Scheduled delivery runs from Convex cron during the local
-`07:35 <= time < 08:30` retry window. The runner forces schedule sync before
-generation when possible, reuses an existing stored briefing for retries, sends
-through the bot gateway's provider-neutral `/notifications/send` endpoint, and
-marks suppressed or empty briefings as skipped instead of sending an empty
-notification. It adds a stale-data note when the latest sync failed and cached
-schedule data is older than 12 hours.
+`07:35 <= time < 08:30` morning retry window and the
+`14:30 <= time < 15:00` afternoon retry window. The runner forces schedule sync
+before generation when possible, reuses an existing stored briefing for retries,
+sends through the bot gateway's provider-neutral `/notifications/send` endpoint,
+and marks suppressed or empty delivery messages as skipped instead of sending an
+empty notification. Morning and afternoon attempts use separate delivery keys so
+one successful slot does not suppress the other. It adds a stale-data note when
+the latest sync failed and cached schedule data is older than 12 hours.
 
 Setup and operations live in [Deployment](deployment.md). Daily requirements
 calendar setup lives in

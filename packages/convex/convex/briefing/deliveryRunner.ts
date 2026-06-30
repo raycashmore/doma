@@ -2,6 +2,7 @@ import type { FunctionReference } from 'convex/server';
 
 import { internal } from '../_generated/api';
 import { internalAction } from '../_generated/server';
+import { displayMembersFromConfig, parseScheduleMembers } from '../schedule/config';
 import {
   createBotGatewayNotificationSender,
   parseBotGatewayOrigin,
@@ -10,6 +11,7 @@ import {
 import { botMorningBriefingFromStoreResult } from './botBriefing';
 import { type BotMorningBriefing, type BriefingDeliveryAttempt, runMorningBriefingDeliveryCycle } from './delivery';
 import { serializeError } from './errors';
+import { morningBriefingWeatherFromEnv } from './generation';
 
 type BriefingDeliveryAttemptRecord = {
   briefingKey: string;
@@ -102,6 +104,7 @@ export const runDueMorningBriefingDelivery = internalAction({
     const nowMs = Date.now();
     const timeZone = process.env.MORNING_BRIEFING_TZ ?? process.env.SCHEDULE_TZ ?? 'Australia/Sydney';
     const localDate = formatLocalDate(nowMs, timeZone);
+    const members = displayMembersFromConfig(parseScheduleMembers());
     const recipientUserIds = parseRecipientUserIds(process.env.MORNING_BRIEFING_RECIPIENT_USER_IDS);
     const inputs = await ctx.runQuery(deliveryStore.briefingDeliveryRunInputs, { localDate });
 
@@ -118,6 +121,7 @@ export const runDueMorningBriefingDelivery = internalAction({
       const result = await runMorningBriefingDeliveryCycle({
         nowMs,
         timeZone,
+        members,
         recipientUserIds,
         attempts: inputs.attempts,
         lastSyncedAt: inputs.lastSyncedAt,
@@ -165,6 +169,8 @@ export const runDueMorningBriefingDelivery = internalAction({
           botGatewayOrigin: parseBotGatewayOrigin(),
           serviceToken
         }),
+        loadWeather: ({ localDate: date, timeZone: tz }) =>
+          morningBriefingWeatherFromEnv({ localDate: date, timeZone: tz }),
         recordDeliveryAttempt: (attempt) => ctx.runMutation(deliveryStore.recordBriefingDeliveryAttempt, attempt)
       });
 

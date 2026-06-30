@@ -1,6 +1,7 @@
 export type TelegramMessageRequest = {
   chatId: string;
   text: string;
+  parseMode?: 'HTML';
 };
 
 export type SendTelegramMessageResult = { ok: true } | { ok: false; errorCode: string };
@@ -27,7 +28,8 @@ async function parseTelegramResponse(response: Response) {
 export async function sendTelegramMessage({
   botToken,
   chatId,
-  text
+  text,
+  parseMode
 }: SendTelegramMessageRequest): Promise<SendTelegramMessageResult> {
   let response: Response;
 
@@ -37,7 +39,8 @@ export async function sendTelegramMessage({
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         chat_id: chatId,
-        text
+        text,
+        ...(parseMode ? { parse_mode: parseMode } : {})
       })
     });
   } catch {
