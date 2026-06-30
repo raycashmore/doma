@@ -259,6 +259,36 @@ Weather:
     expect(message).not.toContain('Library bag');
     expect(message).not.toContain('pack library bag');
   });
+
+  it('removes repeated leading person names from delivery lines', () => {
+    const message = formatBriefingDeliveryMessage(
+      {
+        shouldSend: true,
+        headline: 'Dancing and swimming.',
+        morning: [],
+        afternoon: [
+          {
+            text: 'Child A has dancing at 4:00 with Adult A picking up Child A.',
+            who: ['childA'],
+            sourceIds: ['req:dance:1']
+          },
+          {
+            text: 'Child B has swimming at 5:00; bring goggles, swimmers, and a towel.',
+            who: ['childB'],
+            sourceIds: ['req:swim:1']
+          }
+        ],
+        watchouts: [],
+        sourceIdsIgnored: []
+      },
+      members,
+      { slot: 'afternoon' }
+    );
+
+    expect(message).toBe(`This afternoon:
+- Child A: Dancing at 4:00 with Adult A picking up Child A.
+- Child B: Swimming at 5:00; bring goggles, swimmers, and a towel.`);
+  });
 });
 
 describe('createDeterministicMorningBriefing', () => {

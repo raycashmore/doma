@@ -140,8 +140,9 @@ function lineOrder(line: BriefingLine, order: Map<string, number>) {
 }
 
 function renderPersonLine(line: BriefingLine, labels: Map<string, string>) {
-  const who = normalizeBriefingText(line.who.map((id) => labels.get(id) ?? id).join(', '));
-  const text = normalizePersonPrefixedBriefingText(line.text);
+  const personLabels = line.who.map((id) => labels.get(id) ?? id);
+  const who = normalizeBriefingText(personLabels.join(', '));
+  const text = normalizePersonPrefixedBriefingText(line.text, personLabels);
   return who ? `- ${who}: ${text}` : `- ${text}`;
 }
 
@@ -182,18 +183,40 @@ function normalizeBriefingText(text: string) {
     .trim();
 }
 
-function normalizePersonPrefixedBriefingText(text: string) {
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function stripKnownPersonPrefix(text: string, personLabels: string[]) {
+  let cleaned = text;
+  for (const label of personLabels) {
+    const escapedLabel = escapeRegExp(label);
+    cleaned = cleaned
+      .replace(new RegExp(`^\\s*${escapedLabel}\\s+(?:has|have)\\s+([a-z])`, 'i'), (_, first: string) =>
+        first.toUpperCase()
+      )
+      .replace(new RegExp(`^\\s*${escapedLabel}\\s+(?:has|have)\\s+`, 'i'), '')
+      .replace(new RegExp(`^\\s*${escapedLabel}:\\s*`, 'i'), '');
+  }
+
+  return cleaned;
+}
+
+function normalizePersonPrefixedBriefingText(text: string, personLabels: string[] = []) {
   return normalizeBriefingText(
-    text
-      .replace(/\bfor member[A-Z]\b/gi, '')
-      .replace(/^\s*member[A-Z]\s+handoff\b/gi, 'Handoff')
-      .replace(/^\s*member[A-Z]\s+and\s+member[A-Z]:\s*/i, '')
-      .replace(/^\s*member[A-Z]:\s*/i, '')
-      .replace(/^\s*member[A-Z]\s+has\s+([a-z])/i, (_, first: string) => first.toUpperCase())
-      .replace(/^\s*member[A-Z]\s+has\s+/i, '')
-      .replace(/^\s*member[A-Z]\s+and\s+member[A-Z]\s+have\s+([a-z])/i, (_, first: string) => first.toUpperCase())
-      .replace(/^\s*member[A-Z]\s+and\s+member[A-Z]\s+have\s+/i, '')
-      .replace(/\s+and\s+member[A-Z]\b/gi, '')
+    stripKnownPersonPrefix(
+      text
+        .replace(/\bfor member[A-Z]\b/gi, '')
+        .replace(/^\s*member[A-Z]\s+handoff\b/gi, 'Handoff')
+        .replace(/^\s*member[A-Z]\s+and\s+member[A-Z]:\s*/i, '')
+        .replace(/^\s*member[A-Z]:\s*/i, '')
+        .replace(/^\s*member[A-Z]\s+has\s+([a-z])/i, (_, first: string) => first.toUpperCase())
+        .replace(/^\s*member[A-Z]\s+has\s+/i, '')
+        .replace(/^\s*member[A-Z]\s+and\s+member[A-Z]\s+have\s+([a-z])/i, (_, first: string) => first.toUpperCase())
+        .replace(/^\s*member[A-Z]\s+and\s+member[A-Z]\s+have\s+/i, '')
+        .replace(/\s+and\s+member[A-Z]\b/gi, ''),
+      personLabels
+    )
   );
 }
 
