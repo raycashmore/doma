@@ -17,7 +17,9 @@ const testConfig: BotConfig = {
   scheduleCapabilityUrl: undefined,
   scheduleCapabilityTimeoutMs: 15_000,
   listsCapabilityTimeoutMs: 15_000,
-  forwardedEmailAllowedSenders: ['ray@example.com'],
+  forwardedEmailAllowedSenders: ['forwarder@example.com'],
+  resendApiKey: 'resend-api-key',
+  resendWebhookSecret: 'whsec_dGVzdC1vbmx5LXJlc2VuZC13ZWJob29rLXNlY3JldA==',
   intentRouterAiTimeoutMs: 10_000,
   pairingEnabled: true,
   telegramBotToken: 'telegram-bot-token',
@@ -38,6 +40,21 @@ describe('api-bot app', () => {
       config: testConfig,
       storage: createMemoryStorage(),
       captureForwardedEmail: async () => ({ status: 'created', capturedEmailId: 'captured_email_123' })
+    });
+
+    const response = await app.request('/health');
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ ok: true });
+  });
+
+  it('serves non-email routes without a Convex URL when forwarded email capture is unused', async () => {
+    const app = createApp({
+      config: {
+        ...testConfig,
+        convexUrl: undefined
+      },
+      storage: createMemoryStorage()
     });
 
     const response = await app.request('/health');
@@ -199,6 +216,13 @@ describe('api-bot app', () => {
       status: 'created' as const,
       capturedEmailId: 'captured_email_123'
     }));
+    const fetch = vi.fn(async () =>
+      Response.json({
+        text: 'Please bring a library bag tomorrow.',
+        html: '<p>Please bring a library bag tomorrow.</p>'
+      })
+    );
+    vi.stubGlobal('fetch', fetch);
     const app = createApp({
       config: testConfig,
       storage: createMemoryStorage(),
@@ -208,25 +232,25 @@ describe('api-bot app', () => {
     const response = await app.request('/inbound-email/resend', {
       method: 'POST',
       headers: {
-        authorization: 'Bearer service-token',
-        'content-type': 'application/json'
+        'content-type': 'application/json',
+        'svix-id': 'msg_123',
+        'svix-timestamp': '1782816900',
+        'svix-signature': 'v1,invalid'
       },
       body: JSON.stringify({
-        emailId: 'resend-email-123',
-        from: 'Ray <ray@example.com>',
-        to: ['triage@example.com'],
-        subject: 'Library bag tomorrow',
-        text: 'Please bring a library bag tomorrow.',
-        createdAt: '2026-06-30T08:15:00.000Z'
+        type: 'email.received',
+        data: {
+          email_id: 'resend-email-123',
+          from: 'Forwarder <forwarder@example.com>',
+          to: ['triage@example.com'],
+          subject: 'Library bag tomorrow',
+          created_at: '2026-06-30T08:15:00.000Z'
+        }
       })
     });
 
-    expect(response.status).toBe(202);
-    await expect(response.json()).resolves.toEqual({
-      ok: true,
-      status: 'created',
-      capturedEmailId: 'captured_email_123'
-    });
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toEqual({ error: 'invalid_signature' });
   });
 
   it('does not mount the old schedule reminder cron route', async () => {

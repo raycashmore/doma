@@ -41,6 +41,8 @@ const botConfigSchema = z.object({
   LISTS_CAPABILITY_URL: z.string().url().optional(),
   LISTS_CAPABILITY_TIMEOUT_MS: z.coerce.number().int().positive().default(15_000),
   FORWARDED_EMAIL_ALLOWED_SENDERS: z.string().default(''),
+  RESEND_API_KEY: z.string().min(1).optional(),
+  RESEND_WEBHOOK_SECRET: z.string().min(1).optional(),
   OPENAI_API_KEY: z.string().min(1).optional(),
   INTENT_ROUTER_AI_MODEL: z.string().min(1).optional(),
   INTENT_ROUTER_AI_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
@@ -66,6 +68,8 @@ export type BotConfig = {
   listsCapabilityUrl?: string;
   listsCapabilityTimeoutMs: number;
   forwardedEmailAllowedSenders: string[];
+  resendApiKey?: string;
+  resendWebhookSecret?: string;
   openAiApiKey?: string;
   intentRouterAiModel?: string;
   intentRouterAiTimeoutMs: number;
@@ -97,6 +101,8 @@ export function parseConfig(env: Record<string, unknown>): BotConfig {
     forwardedEmailAllowedSenders: result.data.FORWARDED_EMAIL_ALLOWED_SENDERS.split(',')
       .map((sender) => sender.trim().toLowerCase())
       .filter(Boolean),
+    resendApiKey: result.data.RESEND_API_KEY,
+    resendWebhookSecret: result.data.RESEND_WEBHOOK_SECRET,
     openAiApiKey: result.data.OPENAI_API_KEY,
     intentRouterAiModel: result.data.INTENT_ROUTER_AI_MODEL,
     intentRouterAiTimeoutMs: result.data.INTENT_ROUTER_AI_TIMEOUT_MS,

@@ -27,6 +27,8 @@ describe('parseConfig', () => {
       listsCapabilityUrl: undefined,
       listsCapabilityTimeoutMs: 15_000,
       forwardedEmailAllowedSenders: [],
+      resendApiKey: undefined,
+      resendWebhookSecret: undefined,
       openAiApiKey: undefined,
       intentRouterAiModel: undefined,
       intentRouterAiTimeoutMs: 10_000,
@@ -70,9 +72,20 @@ describe('parseConfig', () => {
     expect(
       parseConfig({
         ...validEnv,
-        FORWARDED_EMAIL_ALLOWED_SENDERS: ' ray@example.com, member@example.com '
+        FORWARDED_EMAIL_ALLOWED_SENDERS: ' forwarder@example.com, member@example.com '
       }).forwardedEmailAllowedSenders
-    ).toEqual(['ray@example.com', 'member@example.com']);
+    ).toEqual(['forwarder@example.com', 'member@example.com']);
+  });
+
+  it('accepts optional Resend webhook and API credentials', () => {
+    const config = parseConfig({
+      ...validEnv,
+      RESEND_API_KEY: 'resend-api-key',
+      RESEND_WEBHOOK_SECRET: 'resend-webhook-secret'
+    });
+
+    expect(config.resendApiKey).toBe('resend-api-key');
+    expect(config.resendWebhookSecret).toBe('resend-webhook-secret');
   });
 
   it('accepts an optional positive lists capability timeout', () => {

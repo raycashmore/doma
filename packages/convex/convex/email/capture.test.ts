@@ -48,8 +48,8 @@ const capturedEmail = {
   providerMessageId: 'resend-email-123',
   receivedAt: Date.parse('2026-06-30T08:15:00.000Z'),
   from: {
-    email: 'ray@example.com',
-    label: 'Ray'
+    email: 'forwarder@example.com',
+    label: 'Forwarder'
   },
   to: ['triage@example.com'],
   subject: 'Library bag tomorrow',
@@ -94,8 +94,8 @@ describe('captureForwardedEmailForBotHandler', () => {
     expect(tables.capturedEmails?.[0]).toMatchObject({
       provider: 'resend',
       providerMessageId: 'resend-email-123',
-      fromEmail: 'ray@example.com',
-      fromLabel: 'Ray',
+      fromEmail: 'forwarder@example.com',
+      fromLabel: 'Forwarder',
       toEmails: ['triage@example.com'],
       subject: 'Library bag tomorrow',
       textBody: 'Please bring a library bag tomorrow.',
@@ -126,7 +126,7 @@ describe('captureForwardedEmailForBotHandler', () => {
         ...capturedEmail,
         providerMessageId: 'resend-email-456',
         from: {
-          email: ' RAY@example.com '
+          email: ' FORWARDER@example.com '
         },
         subject: ' Library   bag tomorrow ',
         textBody: ' Please bring a library bag tomorrow. '

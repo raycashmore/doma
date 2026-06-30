@@ -77,12 +77,21 @@ function createRuntimeClassifier(config: BotConfig): RouteClassifier | undefined
   return (messageText: string) => classifyIntent({ messageText, descriptors: defaultIntentDescriptors, provider });
 }
 
+function createRuntimeForwardedEmailCapture(config: BotConfig): CaptureForwardedEmail {
+  let captureForwardedEmail: CaptureForwardedEmail | undefined;
+
+  return (email) => {
+    captureForwardedEmail ??= createConvexForwardedEmailCapture(config);
+    return captureForwardedEmail(email);
+  };
+}
+
 export function createApp(options: CreateAppOptions = {}) {
   const config = options.config ?? getConfig();
   const storage = options.storage ?? createRuntimeStorage(config);
   const capabilities = options.capabilities ?? createRuntimeCapabilities(config);
   const classify = options.classify ?? createRuntimeClassifier(config);
-  const captureForwardedEmail = options.captureForwardedEmail ?? createConvexForwardedEmailCapture(config);
+  const captureForwardedEmail = options.captureForwardedEmail ?? createRuntimeForwardedEmailCapture(config);
   const sendTelegram =
     options.sendTelegramMessage ??
     (({ chatId, text }: { chatId: string; text: string }) =>
@@ -98,7 +107,8 @@ export function createApp(options: CreateAppOptions = {}) {
   app.route(
     '/inbound-email',
     createInboundEmailRoutes({
-      serviceToken: config.botServiceToken,
+      resendWebhookSecret: config.resendWebhookSecret,
+      resendApiKey: config.resendApiKey,
       allowedForwardingSenders: config.forwardedEmailAllowedSenders,
       captureForwardedEmail
     })

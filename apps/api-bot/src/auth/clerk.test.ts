@@ -16,6 +16,8 @@ const config: BotConfig = {
   scheduleCapabilityTimeoutMs: 15_000,
   listsCapabilityTimeoutMs: 15_000,
   forwardedEmailAllowedSenders: [],
+  resendApiKey: undefined,
+  resendWebhookSecret: undefined,
   intentRouterAiTimeoutMs: 10_000,
   pairingEnabled: true,
   telegramBotToken: 'telegram-bot-token',
