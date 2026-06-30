@@ -9,7 +9,7 @@ export const briefingDeliveryRunInputs = internalQuery({
   },
   handler: async (ctx, { localDate }) => {
     const briefingKey = morningBriefingKey({ briefingKind: 'morning', localDate });
-    const [briefing, attempts, syncMeta] = await Promise.all([
+    const [briefing, legacyAttempts, morningAttempts, afternoonAttempts, syncMeta] = await Promise.all([
       ctx.db
         .query('briefings')
         .withIndex('by_briefing_key', (q) => q.eq('briefingKey', briefingKey))
@@ -17,6 +17,14 @@ export const briefingDeliveryRunInputs = internalQuery({
       ctx.db
         .query('briefingDeliveryAttempts')
         .withIndex('by_briefing_key', (q) => q.eq('briefingKey', briefingKey))
+        .collect(),
+      ctx.db
+        .query('briefingDeliveryAttempts')
+        .withIndex('by_briefing_key', (q) => q.eq('briefingKey', `${briefingKey}:morning`))
+        .collect(),
+      ctx.db
+        .query('briefingDeliveryAttempts')
+        .withIndex('by_briefing_key', (q) => q.eq('briefingKey', `${briefingKey}:afternoon`))
         .collect(),
       ctx.db
         .query('scheduleSyncMeta')
@@ -31,10 +39,11 @@ export const briefingDeliveryRunInputs = internalQuery({
             localDate: briefing.localDate,
             generationStatus: briefing.generationStatus,
             shouldSend: briefing.briefing.shouldSend,
-            message: briefing.message
+            message: briefing.message,
+            briefing: briefing.briefing
           }
         : null,
-      attempts,
+      attempts: [...legacyAttempts, ...morningAttempts, ...afternoonAttempts],
       lastSyncedAt: syncMeta?.lastSyncedAt ?? null
     };
   }

@@ -13,6 +13,7 @@ export type NotificationSendRequest = {
   recipientUserId: string;
   topic: string;
   message: string;
+  parseMode?: 'HTML';
   metadata?: Record<string, string>;
 };
 
@@ -31,6 +32,7 @@ const notificationSchema = z.object({
   recipientUserId: z.string().trim().min(1),
   topic: z.string().trim().min(1),
   message: z.string().trim().min(1).max(4000),
+  parseMode: z.literal('HTML').optional(),
   metadata: z.record(z.string(), z.string()).optional()
 });
 
@@ -42,9 +44,17 @@ async function parseNotificationBody(c: Context) {
   }
 }
 
-async function sendNotification(sendTelegramMessage: TelegramMessageSender, chatId: string, text: string) {
+async function sendNotification(
+  sendTelegramMessage: TelegramMessageSender,
+  notification: NotificationSendRequest,
+  chatId: string
+) {
   try {
-    return await sendTelegramMessage({ chatId, text });
+    return await sendTelegramMessage({
+      chatId,
+      text: notification.message,
+      ...(notification.parseMode ? { parseMode: notification.parseMode } : {})
+    });
   } catch {
     return { ok: false as const, errorCode: 'network_error' };
   }
@@ -80,7 +90,7 @@ export async function sendNotificationToLinkedTelegram({
     };
   }
 
-  const sendResult = await sendNotification(sendTelegramMessage, link.providerChatId, notification.message);
+  const sendResult = await sendNotification(sendTelegramMessage, notification, link.providerChatId);
   const status = sendResult.ok ? 'sent' : 'failed';
   const errorCode = sendResult.ok ? undefined : sendResult.errorCode;
 

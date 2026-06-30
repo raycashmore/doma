@@ -111,7 +111,7 @@ function morningBriefingProviderFromEnv(): MorningBriefingAiProvider | null {
   return createOpenAiMorningBriefingProvider({ apiKey, model });
 }
 
-async function morningBriefingWeatherFromEnv({
+export async function morningBriefingWeatherFromEnv({
   localDate,
   timeZone
 }: {
