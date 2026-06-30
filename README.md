@@ -143,7 +143,7 @@ history.
 
 ## Run it locally
 
-The repository uses `pnpm@9.0.0` and Node.js 18 or newer.
+The repository uses the `pnpm` version declared in `package.json` and Node.js 18 or newer. If your shell resolves a different pnpm version, run `corepack enable pnpm`.
 
 ```bash
 pnpm install
@@ -158,6 +158,12 @@ Each UI runs on its own port because Vercel rewrites are not active locally:
 - Lists: [localhost:3004](http://localhost:3004)
 
 Common workspace checks:
+
+```bash
+pnpm ci:local
+```
+
+Or run individual checks:
 
 ```bash
 pnpm format:check

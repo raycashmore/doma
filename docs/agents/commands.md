@@ -5,6 +5,7 @@ Run commands from the repository root unless a command includes `--filter`.
 ## Root Commands
 
 ```bash
+pnpm ci:local     # Run the local CI sequence with the package-manager version guard
 pnpm dev           # Start all apps with Turbo
 pnpm build         # Build all apps
 pnpm lint          # Lint all apps
@@ -22,6 +23,17 @@ pnpm seed:clear    # Clear seeded Convex data
 pnpm seed:url -- <convex-url>       # Seed a specific Convex deployment
 pnpm seed:url:clear -- <convex-url> # Clear seeded data from a specific Convex deployment
 ```
+
+## Package Manager
+
+Use the pnpm version declared in `package.json`. If `pnpm --version` does not
+match that declaration, run `corepack enable pnpm` before running repo commands.
+
+`pnpm ci:local` checks the pnpm version first, then runs the same install,
+format, lint, typecheck, test, and build sequence used by CI. In restricted
+agent sandboxes, `pnpm build` may need approval to run outside the sandbox
+because Next/Turbopack can spawn worker processes and bind internal ports during
+production builds.
 
 ## Convex Seeding
 

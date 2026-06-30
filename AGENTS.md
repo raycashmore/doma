@@ -2,7 +2,7 @@
 
 Personal finance dashboard built as a Turborepo monorepo with Vercel Multi-Zones, Convex, and Clerk.
 
-Use `pnpm` (`packageManager`: `pnpm@9.0.0`).
+Use `pnpm` via the version declared in `package.json` (`packageManager`).
 
 ## Essential Rules
 

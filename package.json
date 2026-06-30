@@ -10,6 +10,7 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mjs,cjs,json,css,svelte,md,yaml,yml}\"",
     "check-types": "turbo run check-types",
     "test": "turbo run test",
+    "ci:local": "scripts/ci-local.sh",
     "evals": "node --experimental-strip-types evals/demo.ts",
     "evals:test": "node --experimental-strip-types --test evals/**/*.test.ts",
     "bot": "pnpm --filter api-bot dev",
@@ -28,7 +29,7 @@
     "typescript": "5.9.2",
     "xlsx": "^0.18.5"
   },
-  "packageManager": "pnpm@9.0.0",
+  "packageManager": "pnpm@11.7.0",
   "engines": {
     "node": ">=18"
   }
