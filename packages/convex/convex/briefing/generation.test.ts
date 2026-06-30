@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import type { ScheduleEventRow } from '../schedule/mapping';
-import { createMorningBriefing } from './generation';
+import type { BotMorningBriefing } from './delivery';
+import { createMorningBriefing, renderMorningBriefingDeliveryPreview } from './generation';
 import type { MorningBriefingWeatherContext } from './weather';
 
 const localDate = '2026-06-12';
@@ -125,5 +126,88 @@ describe('createMorningBriefing', () => {
     });
 
     expect(provider).toHaveBeenCalledWith(expect.objectContaining({ weather }));
+  });
+});
+
+describe('renderMorningBriefingDeliveryPreview', () => {
+  const briefing = {
+    briefingKey: 'morning:2026-06-12',
+    localDate,
+    generationStatus: 'ai',
+    shouldSend: true,
+    message:
+      'Today:\nLibrary bag and dancing shoes.\n\nThis morning:\n- Child A: Pack library bag\n\nThis afternoon:\n- Child A: Bring dancing shoes',
+    briefing: {
+      shouldSend: true,
+      headline: 'Library bag and dancing shoes.',
+      morning: [{ text: 'Pack library bag', who: ['childA'], sourceIds: ['requirements-calendar:event-1'] }],
+      afternoon: [{ text: 'Bring dancing shoes', who: ['childA'], sourceIds: ['requirements-calendar:event-2'] }],
+      watchouts: [{ text: 'Homework folder is due back.', who: [], sourceIds: ['requirements-calendar:event-3'] }],
+      sourceIdsIgnored: []
+    }
+  } satisfies BotMorningBriefing;
+
+  it('renders the morning slot from the structured briefing', () => {
+    expect(renderMorningBriefingDeliveryPreview({ briefing, members, slot: 'morning' })).toMatchObject({
+      message: `Library bag and dancing shoes.
+
+This morning:
+- Child A: Pack library bag
+
+Watchouts
+- Homework folder is due back.`,
+      shouldSend: true
+    });
+  });
+
+  it('renders the afternoon slot with relevant weather readiness', () => {
+    expect(
+      renderMorningBriefingDeliveryPreview({
+        briefing,
+        members,
+        slot: 'afternoon',
+        weather: {
+          ...weather,
+          afternoon: {
+            ...weather.afternoon,
+            readiness: ['rain layer']
+          }
+        }
+      })
+    ).toMatchObject({
+      message: `This afternoon:
+- Child A: Bring dancing shoes
+
+Weather:
+- Rain layer may help this afternoon.`,
+      shouldSend: true
+    });
+  });
+
+  it('does not let afternoon weather create a preview by itself', () => {
+    expect(
+      renderMorningBriefingDeliveryPreview({
+        briefing: {
+          ...briefing,
+          briefing: {
+            ...briefing.briefing,
+            morning: [{ text: 'Pack library bag', who: ['childA'], sourceIds: ['requirements-calendar:event-1'] }],
+            afternoon: []
+          }
+        },
+        members,
+        slot: 'afternoon',
+        weather: {
+          ...weather,
+          afternoon: {
+            ...weather.afternoon,
+            readiness: ['rain layer']
+          }
+        }
+      })
+    ).toMatchObject({
+      message: '',
+      shouldSend: false
+    });
   });
 });

@@ -15,7 +15,14 @@ import { displayMembersFromConfig, parseScheduleCalendars, parseScheduleMembers 
 import type { ScheduleEventRow } from '../schedule/mapping';
 import { createAiMorningBriefing, createOpenAiMorningBriefingProvider, type MorningBriefingAiProvider } from './ai';
 import { botMorningBriefingFromStoreResult } from './botBriefing';
-import { createDeterministicMorningBriefing, type DeterministicMorningBriefing, morningBriefingKey } from './morning';
+import type { BotMorningBriefing } from './delivery';
+import {
+  type BriefingDeliverySlot,
+  createDeterministicMorningBriefing,
+  type DeterministicMorningBriefing,
+  formatBriefingDeliveryMessage,
+  morningBriefingKey
+} from './morning';
 import { briefingGenerationStatusValidator, briefingKindValidator, morningBriefingValidator } from './schema';
 import { loadMorningBriefingWeatherContext, type MorningBriefingWeatherContext } from './weather';
 
@@ -35,6 +42,19 @@ type GenerationRefs = {
     'internal',
     { localDate: string; timeZone?: string; generatedAt: number },
     unknown
+  >;
+  briefingDeliveryPreviewSource: FunctionReference<
+    'query',
+    'internal',
+    { localDate: string },
+    {
+      briefingKey: string;
+      localDate: string;
+      generationStatus: DeterministicMorningBriefing['generationStatus'];
+      shouldSend: boolean;
+      message: string;
+      briefing: DeterministicMorningBriefing['briefing'];
+    } | null
   >;
   morningBriefingEvents: FunctionReference<'query', 'internal', Record<string, never>, ScheduleEventRow[]>;
   storeGeneratedMorningBriefing: FunctionReference<'mutation', 'internal', StoreGeneratedMorningBriefingArgs, unknown>;
@@ -61,13 +81,15 @@ function toBotMorningBriefing(briefing: {
   generationStatus: DeterministicMorningBriefing['generationStatus'];
   shouldSend: boolean;
   message: string;
+  briefing?: DeterministicMorningBriefing['briefing'];
 }) {
   return {
     briefingKey: briefing.briefingKey,
     localDate: briefing.localDate,
     generationStatus: briefing.generationStatus,
     shouldSend: briefing.shouldSend,
-    message: briefing.message
+    message: briefing.message,
+    ...(briefing.briefing ? { briefing: briefing.briefing } : {})
   };
 }
 
@@ -176,10 +198,60 @@ export async function createMorningBriefing({
       });
 }
 
+export function renderMorningBriefingDeliveryPreview({
+  briefing,
+  members,
+  slot,
+  weather
+}: {
+  briefing: BotMorningBriefing;
+  members: ReturnType<typeof displayMembersFromConfig>;
+  slot: BriefingDeliverySlot;
+  weather?: MorningBriefingWeatherContext;
+}): BotMorningBriefing {
+  const message = briefing.briefing
+    ? formatBriefingDeliveryMessage(briefing.briefing, members, {
+        slot,
+        weather
+      })
+    : briefing.message;
+
+  return {
+    ...briefing,
+    message,
+    shouldSend: briefing.shouldSend && message.trim().length > 0
+  };
+}
+
 export const morningBriefingEvents = internalQuery({
   args: {},
   handler: async (ctx) => {
     return await ctx.db.query('scheduleEvents').withIndex('by_start').collect();
+  }
+});
+
+export const briefingDeliveryPreviewSource = internalQuery({
+  args: {
+    localDate: v.string()
+  },
+  handler: async (ctx, { localDate }) => {
+    const briefing = await ctx.db
+      .query('briefings')
+      .withIndex('by_briefing_key', (q) =>
+        q.eq('briefingKey', morningBriefingKey({ briefingKind: 'morning', localDate }))
+      )
+      .unique();
+
+    return briefing
+      ? toBotMorningBriefing({
+          briefingKey: briefing.briefingKey,
+          localDate: briefing.localDate,
+          generationStatus: briefing.generationStatus,
+          shouldSend: briefing.briefing.shouldSend,
+          message: briefing.message,
+          briefing: briefing.briefing
+        })
+      : null;
   }
 });
 
@@ -255,9 +327,42 @@ export const briefingForBot = query({
           localDate: briefing.localDate,
           generationStatus: briefing.generationStatus,
           shouldSend: briefing.briefing.shouldSend,
-          message: briefing.message
+          message: briefing.message,
+          briefing: briefing.briefing
         })
       : null;
+  }
+});
+
+export const renderMorningBriefingDeliveryPreviewForBot = action({
+  args: {
+    serviceToken: v.string(),
+    localDate: v.string(),
+    slot: v.union(v.literal('morning'), v.literal('afternoon')),
+    timeZone: v.optional(v.string()),
+    generatedAt: v.number()
+  },
+  handler: async (ctx, { serviceToken, localDate, slot, timeZone, generatedAt }) => {
+    assertAuthorizedServiceToken(serviceToken);
+
+    const resolvedTimeZone = timeZone ?? process.env.SCHEDULE_TZ ?? 'Australia/Sydney';
+    const members = displayMembersFromConfig(parseScheduleMembers());
+    const existingBriefing = await ctx.runQuery(generationRefs.briefingDeliveryPreviewSource, { localDate });
+    const briefing =
+      existingBriefing ??
+      botMorningBriefingFromStoreResult(
+        await ctx.runAction(generationRefs.generateAndStoreMorningBriefing, {
+          localDate,
+          timeZone: resolvedTimeZone,
+          generatedAt
+        })
+      );
+    const weather =
+      slot === 'afternoon' ? await morningBriefingWeatherFromEnv({ localDate, timeZone: resolvedTimeZone }) : undefined;
+
+    return {
+      briefing: renderMorningBriefingDeliveryPreview({ briefing, members, slot, weather })
+    };
   }
 });
 

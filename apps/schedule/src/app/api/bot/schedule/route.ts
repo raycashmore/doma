@@ -96,6 +96,17 @@ export async function POST(request: Request) {
         })
       );
     },
+    loadMorningBriefingDeliveryPreview: async ({ localDate, timeZone, generatedAt, slot }) => {
+      return generatedBriefingFromResult(
+        await client.action(api.briefing.generation.renderMorningBriefingDeliveryPreviewForBot, {
+          serviceToken,
+          localDate,
+          timeZone,
+          generatedAt,
+          slot
+        })
+      );
+    },
     markMorningBriefingDelivered: ({ briefingKey, recipientUserId, attemptedAt }) =>
       client.mutation(api.briefing.generation.recordBriefingDeliveryForBot, {
         serviceToken,

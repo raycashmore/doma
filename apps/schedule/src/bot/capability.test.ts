@@ -241,6 +241,151 @@ describe('handleScheduleCapabilityRequest', () => {
     });
   });
 
+  it('renders the morning delivery preview for /schedule briefing morning without recording delivery', async () => {
+    const loadMorningBriefingDeliveryPreview = vi.fn(async () => ({
+      briefingKey: 'morning:2026-06-06',
+      localDate: '2026-06-06',
+      message: 'Sport clothes today.\n\nThis morning:\n- Child A: Bring sport bag',
+      shouldSend: true,
+      generationStatus: 'deterministic' as const
+    }));
+    const markMorningBriefingDelivered = vi.fn(async () => undefined);
+
+    await expect(
+      handleScheduleCapabilityRequest(
+        {
+          userId: 'user_123',
+          command: 'schedule',
+          messageText: '/schedule briefing morning',
+          receivedAt: nowMs
+        },
+        {
+          nowMs,
+          timeZone: 'Australia/Sydney',
+          loadCurrentWeek: async () => ({ events: [] }),
+          loadMorningBriefingDeliveryPreview,
+          markMorningBriefingDelivered
+        }
+      )
+    ).resolves.toEqual({
+      kind: 'reply',
+      text: 'Sport clothes today.\n\nThis morning:\n- Child A: Bring sport bag'
+    });
+
+    expect(loadMorningBriefingDeliveryPreview).toHaveBeenCalledWith({
+      localDate: '2026-06-06',
+      timeZone: 'Australia/Sydney',
+      generatedAt: nowMs,
+      slot: 'morning'
+    });
+    expect(markMorningBriefingDelivered).not.toHaveBeenCalled();
+  });
+
+  it('renders the morning delivery preview for /briefing morning without recording delivery', async () => {
+    const loadMorningBriefingDeliveryPreview = vi.fn(async () => ({
+      briefingKey: 'morning:2026-06-06',
+      localDate: '2026-06-06',
+      message: 'Library bag today.\n\nThis morning:\n- Child A: Bring library bag',
+      shouldSend: true,
+      generationStatus: 'deterministic' as const
+    }));
+    const markMorningBriefingDelivered = vi.fn(async () => undefined);
+
+    await expect(
+      handleScheduleCapabilityRequest(
+        {
+          userId: 'user_123',
+          command: 'briefing',
+          messageText: '/briefing morning',
+          receivedAt: nowMs
+        },
+        {
+          nowMs,
+          timeZone: 'Australia/Sydney',
+          loadCurrentWeek: async () => ({ events: [] }),
+          loadMorningBriefingDeliveryPreview,
+          markMorningBriefingDelivered
+        }
+      )
+    ).resolves.toEqual({
+      kind: 'reply',
+      text: 'Library bag today.\n\nThis morning:\n- Child A: Bring library bag'
+    });
+
+    expect(loadMorningBriefingDeliveryPreview).toHaveBeenCalledWith({
+      localDate: '2026-06-06',
+      timeZone: 'Australia/Sydney',
+      generatedAt: nowMs,
+      slot: 'morning'
+    });
+    expect(markMorningBriefingDelivered).not.toHaveBeenCalled();
+  });
+
+  it('renders an empty-state reply for a quiet afternoon delivery preview', async () => {
+    await expect(
+      handleScheduleCapabilityRequest(
+        {
+          userId: 'user_123',
+          command: 'schedule',
+          messageText: '/schedule briefing afternoon',
+          receivedAt: nowMs
+        },
+        {
+          nowMs,
+          timeZone: 'Australia/Sydney',
+          loadCurrentWeek: async () => ({ events: [] }),
+          loadMorningBriefingDeliveryPreview: async () => ({
+            briefingKey: 'morning:2026-06-06',
+            localDate: '2026-06-06',
+            message: '',
+            shouldSend: false,
+            generationStatus: 'deterministic'
+          })
+        }
+      )
+    ).resolves.toEqual({
+      kind: 'reply',
+      text: 'Nothing to flag this afternoon.'
+    });
+  });
+
+  it('renders an empty-state reply for a quiet /briefing afternoon delivery preview', async () => {
+    const loadMorningBriefingDeliveryPreview = vi.fn(async () => ({
+      briefingKey: 'morning:2026-06-06',
+      localDate: '2026-06-06',
+      message: '',
+      shouldSend: false,
+      generationStatus: 'deterministic' as const
+    }));
+
+    await expect(
+      handleScheduleCapabilityRequest(
+        {
+          userId: 'user_123',
+          command: 'briefing',
+          messageText: '/briefing afternoon',
+          receivedAt: nowMs
+        },
+        {
+          nowMs,
+          timeZone: 'Australia/Sydney',
+          loadCurrentWeek: async () => ({ events: [] }),
+          loadMorningBriefingDeliveryPreview
+        }
+      )
+    ).resolves.toEqual({
+      kind: 'reply',
+      text: 'Nothing to flag this afternoon.'
+    });
+
+    expect(loadMorningBriefingDeliveryPreview).toHaveBeenCalledWith({
+      localDate: '2026-06-06',
+      timeZone: 'Australia/Sydney',
+      generatedAt: nowMs,
+      slot: 'afternoon'
+    });
+  });
+
   it('answers /schedule upcoming with loaded schedule data', async () => {
     await expect(
       handleScheduleCapabilityRequest(

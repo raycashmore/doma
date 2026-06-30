@@ -28,6 +28,8 @@ export type BotMorningBriefing = {
   generationStatus: 'ai' | 'deterministic' | 'fallback' | 'setupProblem';
 };
 
+export type BotBriefingDeliverySlot = 'morning' | 'afternoon';
+
 export type HandleScheduleCapabilityOptions = {
   nowMs?: number;
   timeZone?: string;
@@ -37,6 +39,12 @@ export type HandleScheduleCapabilityOptions = {
     localDate: string;
     timeZone: string;
     generatedAt: number;
+  }) => Promise<BotMorningBriefing>;
+  loadMorningBriefingDeliveryPreview?: (input: {
+    localDate: string;
+    timeZone: string;
+    generatedAt: number;
+    slot: BotBriefingDeliverySlot;
   }) => Promise<BotMorningBriefing>;
   markMorningBriefingDelivered?: (input: {
     briefingKey: string;
@@ -78,6 +86,15 @@ function isUpcomingAsk(text: string): boolean {
 function isBriefingAsk(text: string): boolean {
   const normalized = text.trim().toLowerCase();
   return /^\/briefing(?:@\w+)?(?:\s|$)/.test(normalized) || /^\/schedule(?:@\w+)?\s+briefing\b/.test(normalized);
+}
+
+function briefingDeliverySlotAsk(text: string): BotBriefingDeliverySlot | null {
+  const normalized = text.trim().toLowerCase();
+  const match =
+    /^\/briefing(?:@\w+)?\s+(morning|afternoon)\b/.exec(normalized) ??
+    /^\/schedule(?:@\w+)?\s+briefing\s+(morning|afternoon)\b/.exec(normalized);
+
+  return match ? (match[1] as BotBriefingDeliverySlot) : null;
 }
 
 function formatLocalDate(ms: number, timeZone: string) {
@@ -156,12 +173,48 @@ export async function handleScheduleCapabilityRequest(
     loadCurrentWeek,
     loadMorningBriefing,
     generateMorningBriefing,
+    loadMorningBriefingDeliveryPreview,
     markMorningBriefingDelivered,
     nowMs = Date.now(),
     timeZone = 'Australia/Sydney'
   }: HandleScheduleCapabilityOptions
 ): Promise<BotCapabilityResponse> {
   if (isBriefingAsk(request.messageText)) {
+    const deliverySlot = briefingDeliverySlotAsk(request.messageText);
+    if (deliverySlot) {
+      if (!loadMorningBriefingDeliveryPreview) {
+        return { kind: 'reply', text: MORNING_BRIEFING_FALLBACK_TEXT };
+      }
+
+      const localDate = formatLocalDate(nowMs, timeZone);
+      let briefing: BotMorningBriefing;
+
+      try {
+        briefing = await loadMorningBriefingDeliveryPreview({
+          localDate,
+          timeZone,
+          generatedAt: nowMs,
+          slot: deliverySlot
+        });
+      } catch (error) {
+        console.error('[schedule.bot] Morning briefing delivery preview failed', {
+          localDate,
+          timeZone,
+          deliverySlot,
+          error: errorDetails(error)
+        });
+        return { kind: 'reply', text: MORNING_BRIEFING_FALLBACK_TEXT };
+      }
+
+      return {
+        kind: 'reply',
+        text:
+          briefing.shouldSend && briefing.message.trim().length > 0
+            ? briefing.message
+            : `Nothing to flag this ${deliverySlot}.`
+      };
+    }
+
     if (!loadMorningBriefing || !generateMorningBriefing || !markMorningBriefingDelivered) {
       return { kind: 'reply', text: MORNING_BRIEFING_FALLBACK_TEXT };
     }

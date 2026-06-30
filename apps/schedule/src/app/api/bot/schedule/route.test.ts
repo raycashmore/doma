@@ -22,6 +22,7 @@ vi.mock('@repo/convex', () => ({
       generation: {
         briefingForBot: 'briefing.generation.briefingForBot',
         generateAndStoreMorningBriefingForBot: 'briefing.generation.generateAndStoreMorningBriefingForBot',
+        renderMorningBriefingDeliveryPreviewForBot: 'briefing.generation.renderMorningBriefingDeliveryPreviewForBot',
         recordBriefingDeliveryForBot: 'briefing.generation.recordBriefingDeliveryForBot'
       }
     }
@@ -226,5 +227,80 @@ describe('schedule bot route', () => {
       attemptedAt: Date.parse('2026-06-05T22:00:00.000Z'),
       status: 'sent'
     });
+  });
+
+  it('renders a delivery preview for /schedule briefing afternoon without recording delivery', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-05T22:00:00.000Z'));
+    convex.action.mockResolvedValue({
+      briefing: {
+        briefingKey: 'morning:2026-06-06',
+        localDate: '2026-06-06',
+        message: 'This afternoon:\n- Child A: Bring dancing shoes.',
+        shouldSend: true,
+        generationStatus: 'ai'
+      }
+    });
+
+    const response = await post(
+      capabilityRequest({
+        command: 'schedule',
+        messageText: '/schedule briefing afternoon',
+        receivedAt: Date.parse('2026-06-05T22:00:00.000Z'),
+        userId: 'user_123'
+      })
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      kind: 'reply',
+      text: 'This afternoon:\n- Child A: Bring dancing shoes.'
+    });
+    expect(convex.action).toHaveBeenCalledWith('briefing.generation.renderMorningBriefingDeliveryPreviewForBot', {
+      serviceToken: 'service-token',
+      localDate: '2026-06-06',
+      timeZone: 'Australia/Sydney',
+      generatedAt: Date.parse('2026-06-05T22:00:00.000Z'),
+      slot: 'afternoon'
+    });
+    expect(convex.query).not.toHaveBeenCalledWith('briefing.generation.briefingForBot', expect.anything());
+    expect(convex.mutation).not.toHaveBeenCalled();
+  });
+
+  it('renders a delivery preview for /briefing morning without recording delivery', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-05T22:00:00.000Z'));
+    convex.action.mockResolvedValue({
+      briefing: {
+        briefingKey: 'morning:2026-06-06',
+        localDate: '2026-06-06',
+        message: 'Sport clothes today.\n\nThis morning:\n- Child A: Bring sport bag.',
+        shouldSend: true,
+        generationStatus: 'ai'
+      }
+    });
+
+    const response = await post(
+      capabilityRequest({
+        command: 'briefing',
+        messageText: '/briefing morning',
+        receivedAt: Date.parse('2026-06-05T22:00:00.000Z'),
+        userId: 'user_123'
+      })
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      kind: 'reply',
+      text: 'Sport clothes today.\n\nThis morning:\n- Child A: Bring sport bag.'
+    });
+    expect(convex.action).toHaveBeenCalledWith('briefing.generation.renderMorningBriefingDeliveryPreviewForBot', {
+      serviceToken: 'service-token',
+      localDate: '2026-06-06',
+      timeZone: 'Australia/Sydney',
+      generatedAt: Date.parse('2026-06-05T22:00:00.000Z'),
+      slot: 'morning'
+    });
+    expect(convex.mutation).not.toHaveBeenCalled();
   });
 });

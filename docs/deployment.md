@@ -379,19 +379,23 @@ returns `pairing_disabled`.
 
 Do not commit real bot tokens, Telegram IDs, chat IDs, or private message payloads. Notification attempts store metadata only; keep it that way when adding new channels or capabilities.
 
-Schedule's bot capability route (`/schedule/api/bot/schedule` in production)
-and the Convex
-`schedule.queries.currentWeekForBot` query both validate `BOT_SERVICE_TOKEN`.
-Set the same value in the Bot gateway, Schedule app, and the target Convex
-deployment before enabling `SCHEDULE_CAPABILITY_URL`.
+Schedule's bot capability route (`/schedule/api/bot/schedule` in production),
+the Convex `schedule.queries.currentWeekForBot` query, and the
+`briefing.generation.*ForBot` functions validate `BOT_SERVICE_TOKEN`. Set the
+same value in the Bot gateway, Schedule app, and the target Convex deployment
+before enabling `SCHEDULE_CAPABILITY_URL`.
 
 The Schedule capability supports these Telegram commands:
 
-| Command              | Behavior                                                                       |
-| -------------------- | ------------------------------------------------------------------------------ |
-| `/briefing`          | Replays today's stored morning briefing, or generates and stores one on demand |
-| `/schedule briefing` | Alias for `/briefing`                                                          |
-| `/schedule upcoming` | Pull-based list of upcoming schedule events                                    |
+| Command                        | Behavior                                                                                         |
+| ------------------------------ | ------------------------------------------------------------------------------------------------ |
+| `/briefing`                    | Replays today's stored full-day briefing, or generates and stores one on demand                  |
+| `/schedule briefing`           | Alias for `/briefing`                                                                            |
+| `/briefing morning`            | Previews the scheduled morning delivery message without recording a scheduled delivery attempt   |
+| `/schedule briefing morning`   | Alias for `/briefing morning`                                                                    |
+| `/briefing afternoon`          | Previews the scheduled afternoon delivery message without recording a scheduled delivery attempt |
+| `/schedule briefing afternoon` | Alias for `/briefing afternoon`                                                                  |
+| `/schedule upcoming`           | Pull-based list of upcoming schedule events                                                      |
 
 Doma no longer sends proactive event-level schedule reminders.
 
