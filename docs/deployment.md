@@ -476,7 +476,9 @@ Morning briefing operations:
 - Stored briefings are plain text. AI output that leaks internal member ids,
   uses unknown member ownership, includes markup delimiters, or includes escaped
   HTML entities is rejected and replaced with the deterministic schedule
-  summary.
+  summary. Stored rows that no longer satisfy the plain-text contract are
+  ignored for replay and replaced on the next generation attempt; stored
+  structured lines must also reference known member ids.
 - Scheduled briefing notifications and delivery previews are sent to Telegram
   with HTML parse mode. Delivery escapes the stored plain text, then bolds the
   keywords `swimming`, `dancing`, `library`, `homework`, and `sport`.

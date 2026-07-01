@@ -218,6 +218,63 @@ function eventDetail(event: MorningBriefingEvent) {
   return event.description?.trim() || event.title.trim();
 }
 
+export function isPlainMorningBriefing(briefing: MorningBriefing) {
+  return (
+    isPlainBriefingText(briefing.headline) &&
+    briefing.morning.every(isPlainBriefingLine) &&
+    briefing.afternoon.every(isPlainBriefingLine) &&
+    briefing.watchouts.every(isPlainBriefingLine)
+  );
+}
+
+export function isValidMorningBriefingForMembers(briefing: MorningBriefing, members: ScheduleDisplayMember[]) {
+  const knownMemberIds = new Set(members.map((member) => member.id));
+  return (
+    isPlainMorningBriefing(briefing) &&
+    briefing.morning.every((line) => lineHasKnownOwners(line, knownMemberIds)) &&
+    briefing.afternoon.every((line) => lineHasKnownOwners(line, knownMemberIds)) &&
+    briefing.watchouts.every((line) => lineHasKnownOwners(line, knownMemberIds))
+  );
+}
+
+export function isPlainBriefingText(text: string) {
+  return !text.includes('<') && !text.includes('>') && !containsHtmlEntity(text);
+}
+
+function isPlainBriefingLine(line: BriefingLine) {
+  return isPlainBriefingText(line.text);
+}
+
+function lineHasKnownOwners(line: BriefingLine, knownMemberIds: Set<string>) {
+  return line.who.every((id) => knownMemberIds.has(id));
+}
+
+function containsHtmlEntity(text: string) {
+  let searchFrom = 0;
+  while (searchFrom < text.length) {
+    const ampersandIndex = text.indexOf('&', searchFrom);
+    if (ampersandIndex === -1) return false;
+    const semicolonIndex = text.indexOf(';', ampersandIndex + 1);
+    if (semicolonIndex === -1) return false;
+    const entity = text.slice(ampersandIndex + 1, semicolonIndex).toLowerCase();
+    if (isNumericHtmlEntity(entity) || isNamedHtmlEntityShape(entity)) return true;
+    searchFrom = ampersandIndex + 1;
+  }
+  return false;
+}
+
+function isNumericHtmlEntity(entity: string) {
+  if (!entity.startsWith('#')) return false;
+  const digits = entity.startsWith('#x') ? entity.slice(2) : entity.slice(1);
+  if (!digits) return false;
+  return everyCharacter(digits, entity.startsWith('#x') ? isAsciiHexDigit : isAsciiDigit);
+}
+
+function isNamedHtmlEntityShape(entity: string) {
+  if (!isAsciiLetter(entity[0])) return false;
+  return everyCharacter(entity, isAsciiLetterOrDigit);
+}
+
 export function buildPersonLines(events: MorningBriefingEvent[]): BriefingLine[] {
   const groups = new Map<string, BriefingLine>();
   for (const event of events) {
@@ -334,4 +391,31 @@ export function formatMorningBriefingFallback({
     message,
     sourceIds
   };
+}
+
+function everyCharacter(value: string, predicate: (character: string | undefined) => boolean) {
+  for (const character of value) {
+    if (!predicate(character)) return false;
+  }
+  return true;
+}
+
+function isAsciiLetter(character: string | undefined) {
+  return character !== undefined && ((character >= 'A' && character <= 'Z') || (character >= 'a' && character <= 'z'));
+}
+
+function isAsciiLetterOrDigit(character: string | undefined) {
+  return isAsciiLetter(character) || (character !== undefined && character >= '0' && character <= '9');
+}
+
+function isAsciiDigit(character: string | undefined) {
+  return character !== undefined && character >= '0' && character <= '9';
+}
+
+function isAsciiHexDigit(character: string | undefined) {
+  return (
+    isAsciiDigit(character) ||
+    (character !== undefined && character >= 'A' && character <= 'F') ||
+    (character !== undefined && character >= 'a' && character <= 'f')
+  );
 }

@@ -154,6 +154,44 @@ This morning:
     });
   });
 
+  it('does not send a generated briefing with invalid stored structured content', async () => {
+    const invalidBriefing: BotMorningBriefing = {
+      ...briefing,
+      briefing: {
+        shouldSend: true,
+        headline: 'Library day.',
+        morning: [{ text: 'Bring <b>library</b> bag.', who: ['childA'], sourceIds: ['req:library:1'] }],
+        afternoon: [],
+        watchouts: [],
+        sourceIdsIgnored: []
+      }
+    };
+    const syncSchedule = vi.fn(async () => ({ ok: true as const, lastSyncedAt: dueAtMs }));
+    const loadBriefing = vi.fn(async () => null);
+    const generateBriefing = vi.fn(async () => invalidBriefing);
+    const sendNotification = vi.fn(async () => ({ status: 'sent' as const }));
+    const recordDeliveryAttempt = vi.fn(async () => ({ claimed: true as const }));
+
+    await expect(
+      runMorningBriefingDeliveryCycle({
+        nowMs: dueAtMs,
+        timeZone,
+        members,
+        recipientUserIds: ['user_123'],
+        attempts: [],
+        lastSyncedAt: dueAtMs,
+        syncSchedule,
+        loadBriefing,
+        generateBriefing,
+        sendNotification,
+        recordDeliveryAttempt
+      })
+    ).rejects.toThrow('Morning briefing is not valid stored briefing content');
+
+    expect(sendNotification).not.toHaveBeenCalled();
+    expect(recordDeliveryAttempt).not.toHaveBeenCalled();
+  });
+
   it('does not sync or generate when no briefing recipients are configured', async () => {
     const syncSchedule = vi.fn();
     const loadBriefing = vi.fn();

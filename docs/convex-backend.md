@@ -110,9 +110,11 @@ trigger a quiet-day notification by itself.
 Stored briefing text is plain text. The AI parser rejects responses that leak
 internal member ids, use unknown member ownership, include markup delimiters, or
 include escaped HTML entities. Invalid AI output falls back to the deterministic
-schedule summary for that local date. Channel-specific formatting belongs at
-delivery time; Telegram delivery and delivery previews escape the plain text
-and then apply their small keyword bolding rule.
+schedule summary for that local date. Stored rows that no longer satisfy the
+plain-text and known-member ownership contract are ignored for replay and
+replaced on the next generation attempt. Channel-specific formatting belongs at
+delivery time; Telegram delivery and delivery previews escape the plain text and
+then apply their small keyword bolding rule.
 
 Docs and tests must use generic member, calendar, and event labels. Generated
 briefing text can contain private household schedule details, so do not copy it

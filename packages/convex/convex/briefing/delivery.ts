@@ -1,5 +1,11 @@
 import type { ScheduleDisplayMember } from '../schedule/config';
-import { type BriefingDeliverySlot, formatBriefingDeliveryMessage, type MorningBriefing } from './morning';
+import {
+  type BriefingDeliverySlot,
+  formatBriefingDeliveryMessage,
+  isPlainBriefingText,
+  isValidMorningBriefingForMembers,
+  type MorningBriefing
+} from './morning';
 import type { MorningBriefingWeatherContext } from './weather';
 
 export type BotMorningBriefing = {
@@ -155,6 +161,12 @@ function deliveryMessage({
   return message;
 }
 
+function isDeliverableBriefing(briefing: BotMorningBriefing, members: ScheduleDisplayMember[]) {
+  return briefing.briefing
+    ? isValidMorningBriefingForMembers(briefing.briefing, members)
+    : isPlainBriefingText(briefing.message);
+}
+
 export async function runMorningBriefingDeliveryCycle({
   nowMs,
   timeZone,
@@ -209,6 +221,9 @@ export async function runMorningBriefingDeliveryCycle({
       timeZone,
       generatedAt: nowMs
     }));
+  if (!isDeliverableBriefing(briefing, members)) {
+    throw new Error('Morning briefing is not valid stored briefing content');
+  }
   const counts = emptyCounts({ syncFailed, staleCache, generated });
   const key = deliveryKey(briefing.briefingKey, deliverySlot);
   const completedRecipients = completedRecipientIds(

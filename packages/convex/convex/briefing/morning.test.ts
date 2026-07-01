@@ -7,6 +7,9 @@ import {
   formatBriefingDeliveryMessage,
   formatMorningBriefing,
   formatMorningBriefingFallback,
+  isPlainBriefingText,
+  isPlainMorningBriefing,
+  isValidMorningBriefingForMembers,
   type MorningBriefingEvent,
   morningBriefingKey
 } from './morning';
@@ -214,6 +217,32 @@ Weather:
     expect(message).not.toContain('pack library bag');
   });
 
+  it('does not strip formatting-looking text from stored structured briefing text', () => {
+    const message = formatBriefingDeliveryMessage(
+      {
+        shouldSend: true,
+        headline: 'A tidy split today: <b>library</b> and Crazy Hair &amp; Sock Day.',
+        morning: [
+          {
+            text: 'School run needs <b>library</b> bag and Crazy Hair &amp; Sock Day.',
+            who: ['childA'],
+            sourceIds: ['req:library:1']
+          }
+        ],
+        afternoon: [],
+        watchouts: [],
+        sourceIdsIgnored: []
+      },
+      members,
+      { slot: 'morning' }
+    );
+
+    expect(message).toBe(`A tidy split today: <b>library</b> and Crazy Hair &amp; Sock Day.
+
+This morning:
+- Child A: School run needs <b>library</b> bag and Crazy Hair &amp; Sock Day.`);
+  });
+
   it('removes repeated leading person names from delivery lines', () => {
     const message = formatBriefingDeliveryMessage(
       {
@@ -270,6 +299,31 @@ describe('createDeterministicMorningBriefing', () => {
       },
       message: "Today:\nDaily requirements calendar is not configured yet, so I can't check day-specific requirements."
     });
+  });
+
+  it('does not strip formatting-looking text from deterministic source lines', () => {
+    const result = createDeterministicMorningBriefing({
+      localDate,
+      timeZone,
+      calendarConfigs: [{ calendarId: 'calendar-a', who: 'childA', kind: 'dailyRequirements' }],
+      events: [
+        event({
+          kind: 'dailyRequirements',
+          who: ['childA'],
+          description: 'School run needs <b>library</b> bag and Crazy Hair &amp; Sock Day.'
+        })
+      ],
+      members
+    });
+
+    expect(result.briefing.morning).toEqual([
+      {
+        text: 'School run needs <b>library</b> bag and Crazy Hair &amp; Sock Day.',
+        who: ['childA'],
+        sourceIds: ['calendar-a:event-1:1781218800000']
+      }
+    ]);
+    expect(result.message).toContain('School run needs <b>library</b> bag and Crazy Hair &amp; Sock Day.');
   });
 
   it('assigns requirements to morning or afternoon by event start time and groups per person', () => {
@@ -473,5 +527,53 @@ describe('formatMorningBriefingFallback', () => {
 describe('morningBriefingKey', () => {
   it('keys morning briefings by briefing kind and local date', () => {
     expect(morningBriefingKey({ briefingKind: 'morning', localDate })).toBe('morning:2026-06-12');
+  });
+});
+
+describe('plain briefing validation', () => {
+  it('accepts raw ampersands and rejects markup or escaped HTML entities', () => {
+    expect(isPlainBriefingText('Crazy Hair & Sock Day')).toBe(true);
+    expect(isPlainBriefingText('Bring <b>library</b> bag')).toBe(false);
+    expect(isPlainBriefingText('Crazy Hair &amp; Sock Day')).toBe(false);
+  });
+
+  it('requires every stored structured briefing field to be plain text', () => {
+    expect(
+      isPlainMorningBriefing({
+        shouldSend: true,
+        headline: 'Library & sock day.',
+        morning: [{ text: 'Bring library bag and Crazy Hair & Sock Day.', who: ['childA'], sourceIds: ['req:1'] }],
+        afternoon: [],
+        watchouts: [],
+        sourceIdsIgnored: []
+      })
+    ).toBe(true);
+
+    expect(
+      isPlainMorningBriefing({
+        shouldSend: true,
+        headline: 'Library & sock day.',
+        morning: [{ text: 'Bring <b>library</b> bag.', who: ['childA'], sourceIds: ['req:1'] }],
+        afternoon: [],
+        watchouts: [],
+        sourceIdsIgnored: []
+      })
+    ).toBe(false);
+  });
+
+  it('rejects stored structured briefing ownership with unknown member ids', () => {
+    expect(
+      isValidMorningBriefingForMembers(
+        {
+          shouldSend: true,
+          headline: 'Library day.',
+          morning: [{ text: 'Bring library bag.', who: ['memberC'], sourceIds: ['req:1'] }],
+          afternoon: [],
+          watchouts: [],
+          sourceIdsIgnored: []
+        },
+        members
+      )
+    ).toBe(false);
   });
 });

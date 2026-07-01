@@ -2,7 +2,11 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { ScheduleEventRow } from '../schedule/mapping';
 import type { BotMorningBriefing } from './delivery';
-import { createMorningBriefing, renderMorningBriefingDeliveryPreview } from './generation';
+import {
+  createMorningBriefing,
+  renderBotMorningBriefingForReplay,
+  renderMorningBriefingDeliveryPreview
+} from './generation';
 import type { MorningBriefingWeatherContext } from './weather';
 
 const localDate = '2026-06-12';
@@ -211,5 +215,80 @@ Weather:
       message: '',
       shouldSend: false
     });
+  });
+});
+
+describe('renderBotMorningBriefingForReplay', () => {
+  it('rebuilds replay text from clean structured content when stored message text is dirty', () => {
+    const briefing = {
+      briefingKey: 'morning:2026-06-12',
+      localDate,
+      generationStatus: 'ai',
+      shouldSend: true,
+      message:
+        'Today:\nA tidy split today: <b>library</b> and Crazy Hair &amp; Sock Day.\n\nThis morning:\n- Child A: School run needs <b>library</b> bag and Crazy Hair &amp; Sock Day.',
+      briefing: {
+        shouldSend: true,
+        headline: 'A tidy split today: library and Crazy Hair & Sock Day.',
+        morning: [
+          {
+            text: 'School run needs library bag and Crazy Hair & Sock Day.',
+            who: ['childA'],
+            sourceIds: ['requirements-calendar:event-1']
+          }
+        ],
+        afternoon: [],
+        watchouts: [],
+        sourceIdsIgnored: []
+      }
+    } satisfies BotMorningBriefing;
+
+    expect(renderBotMorningBriefingForReplay({ briefing, members })).toMatchObject({
+      message: `Today:
+A tidy split today: library and Crazy Hair & Sock Day.
+
+This morning:
+- Child A: School run needs library bag and Crazy Hair & Sock Day.`
+    });
+  });
+
+  it('rejects replay from dirty structured briefing content instead of stripping it', () => {
+    const briefing = {
+      briefingKey: 'morning:2026-06-12',
+      localDate,
+      generationStatus: 'ai',
+      shouldSend: true,
+      message: 'Today:\nA tidy split today.',
+      briefing: {
+        shouldSend: true,
+        headline: 'A tidy split today: <b>library</b> and Crazy Hair &amp; Sock Day.',
+        morning: [],
+        afternoon: [],
+        watchouts: [],
+        sourceIdsIgnored: []
+      }
+    } satisfies BotMorningBriefing;
+
+    expect(renderBotMorningBriefingForReplay({ briefing, members })).toBeNull();
+  });
+
+  it('rejects replay from clean text with unknown structured ownership', () => {
+    const briefing = {
+      briefingKey: 'morning:2026-06-12',
+      localDate,
+      generationStatus: 'ai',
+      shouldSend: true,
+      message: 'Today:\nLibrary day.\n\nThis morning:\n- memberC: Bring library bag.',
+      briefing: {
+        shouldSend: true,
+        headline: 'Library day.',
+        morning: [{ text: 'Bring library bag.', who: ['memberC'], sourceIds: ['requirements-calendar:event-1'] }],
+        afternoon: [],
+        watchouts: [],
+        sourceIdsIgnored: []
+      }
+    } satisfies BotMorningBriefing;
+
+    expect(renderBotMorningBriefingForReplay({ briefing, members })).toBeNull();
   });
 });

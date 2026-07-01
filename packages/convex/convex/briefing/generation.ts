@@ -22,6 +22,9 @@ import {
   createDeterministicMorningBriefing,
   type DeterministicMorningBriefing,
   formatBriefingDeliveryMessage,
+  formatMorningBriefing,
+  isPlainBriefingText,
+  isValidMorningBriefingForMembers,
   morningBriefingKey
 } from './morning';
 import { briefingGenerationStatusValidator, briefingKindValidator, morningBriefingValidator } from './schema';
@@ -98,6 +101,11 @@ async function storeGeneratedBriefing(
   ctx: { db: MutationCtx['db'] },
   { generatedAt, ...briefing }: DeterministicMorningBriefing & { generatedAt: number }
 ) {
+  const members = displayMembersFromConfig(parseScheduleMembers());
+  if (!isValidMorningBriefingForMembers(briefing.briefing, members)) {
+    throw new Error('Generated morning briefing is not valid stored briefing content');
+  }
+
   const briefingKey = morningBriefingKey({
     briefingKind: briefing.briefingKind,
     localDate: briefing.localDate
@@ -117,7 +125,14 @@ async function storeGeneratedBriefing(
     sourceIds: briefing.sourceIds
   };
 
-  if (existing) return { inserted: false as const, id: existing._id, briefing: existing };
+  if (existing) {
+    if (isValidMorningBriefingForMembers(existing.briefing, members)) {
+      return { inserted: false as const, id: existing._id, briefing: existing };
+    }
+
+    await ctx.db.patch(existing._id, row);
+    return { inserted: false as const, replacedInvalid: true as const, id: existing._id, briefing: row };
+  }
 
   const id = await ctx.db.insert('briefings', row);
   return { inserted: true as const, id, briefing: row };
@@ -226,6 +241,26 @@ export function renderMorningBriefingDeliveryPreview({
   };
 }
 
+export function renderBotMorningBriefingForReplay({
+  briefing,
+  members
+}: {
+  briefing: BotMorningBriefing;
+  members: ReturnType<typeof displayMembersFromConfig>;
+}): BotMorningBriefing | null {
+  if (briefing.briefing && !isValidMorningBriefingForMembers(briefing.briefing, members)) return null;
+  if (!briefing.briefing && !isPlainBriefingText(briefing.message)) return null;
+
+  const message = briefing.briefing ? formatMorningBriefing(briefing.briefing, members) : briefing.message;
+  const shouldSend = briefing.shouldSend && message.trim().length > 0;
+
+  return {
+    ...briefing,
+    message,
+    shouldSend
+  };
+}
+
 export const morningBriefingEvents = internalQuery({
   args: {},
   handler: async (ctx) => {
@@ -245,16 +280,17 @@ export const briefingDeliveryPreviewSource = internalQuery({
       )
       .unique();
 
-    return briefing
-      ? toBotMorningBriefing({
-          briefingKey: briefing.briefingKey,
-          localDate: briefing.localDate,
-          generationStatus: briefing.generationStatus,
-          shouldSend: briefing.briefing.shouldSend,
-          message: briefing.message,
-          briefing: briefing.briefing
-        })
-      : null;
+    const members = displayMembersFromConfig(parseScheduleMembers());
+    if (!briefing || !isValidMorningBriefingForMembers(briefing.briefing, members)) return null;
+
+    return toBotMorningBriefing({
+      briefingKey: briefing.briefingKey,
+      localDate: briefing.localDate,
+      generationStatus: briefing.generationStatus,
+      shouldSend: briefing.briefing.shouldSend,
+      message: briefing.message,
+      briefing: briefing.briefing
+    });
   }
 });
 
@@ -318,22 +354,26 @@ export const briefingForBot = query({
   },
   handler: async (ctx, { serviceToken, briefingKind, localDate }) => {
     assertAuthorizedServiceToken(serviceToken);
+    const members = displayMembersFromConfig(parseScheduleMembers());
 
     const briefing = await ctx.db
       .query('briefings')
       .withIndex('by_briefing_key', (q) => q.eq('briefingKey', morningBriefingKey({ briefingKind, localDate })))
       .unique();
 
-    return briefing
-      ? toBotMorningBriefing({
-          briefingKey: briefing.briefingKey,
-          localDate: briefing.localDate,
-          generationStatus: briefing.generationStatus,
-          shouldSend: briefing.briefing.shouldSend,
-          message: briefing.message,
-          briefing: briefing.briefing
-        })
-      : null;
+    if (!briefing) return null;
+
+    return renderBotMorningBriefingForReplay({
+      briefing: toBotMorningBriefing({
+        briefingKey: briefing.briefingKey,
+        localDate: briefing.localDate,
+        generationStatus: briefing.generationStatus,
+        shouldSend: briefing.briefing.shouldSend,
+        message: briefing.message,
+        briefing: briefing.briefing
+      }),
+      members
+    });
   }
 });
 
@@ -378,15 +418,21 @@ export const generateAndStoreMorningBriefingForBot = action({
   },
   handler: async (ctx, { serviceToken, localDate, timeZone, generatedAt }) => {
     assertAuthorizedServiceToken(serviceToken);
+    const members = displayMembersFromConfig(parseScheduleMembers());
 
     const result = await ctx.runAction(generationRefs.generateAndStoreMorningBriefing, {
       localDate,
       timeZone,
       generatedAt
     });
+    const briefing = renderBotMorningBriefingForReplay({
+      briefing: botMorningBriefingFromStoreResult(result),
+      members
+    });
+    if (!briefing) throw new Error('Generated morning briefing is not valid stored briefing content');
 
     return {
-      briefing: botMorningBriefingFromStoreResult(result)
+      briefing
     };
   }
 });

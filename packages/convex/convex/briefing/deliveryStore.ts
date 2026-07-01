@@ -1,7 +1,8 @@
 import { v } from 'convex/values';
 
 import { internalMutation, internalQuery } from '../_generated/server';
-import { morningBriefingKey } from './morning';
+import { displayMembersFromConfig, parseScheduleMembers } from '../schedule/config';
+import { isValidMorningBriefingForMembers, morningBriefingKey } from './morning';
 
 export const briefingDeliveryRunInputs = internalQuery({
   args: {
@@ -9,6 +10,7 @@ export const briefingDeliveryRunInputs = internalQuery({
   },
   handler: async (ctx, { localDate }) => {
     const briefingKey = morningBriefingKey({ briefingKind: 'morning', localDate });
+    const members = displayMembersFromConfig(parseScheduleMembers());
     const [briefing, legacyAttempts, morningAttempts, afternoonAttempts, syncMeta] = await Promise.all([
       ctx.db
         .query('briefings')
@@ -33,16 +35,17 @@ export const briefingDeliveryRunInputs = internalQuery({
     ]);
 
     return {
-      briefing: briefing
-        ? {
-            briefingKey: briefing.briefingKey,
-            localDate: briefing.localDate,
-            generationStatus: briefing.generationStatus,
-            shouldSend: briefing.briefing.shouldSend,
-            message: briefing.message,
-            briefing: briefing.briefing
-          }
-        : null,
+      briefing:
+        briefing && isValidMorningBriefingForMembers(briefing.briefing, members)
+          ? {
+              briefingKey: briefing.briefingKey,
+              localDate: briefing.localDate,
+              generationStatus: briefing.generationStatus,
+              shouldSend: briefing.briefing.shouldSend,
+              message: briefing.message,
+              briefing: briefing.briefing
+            }
+          : null,
       attempts: [...legacyAttempts, ...morningAttempts, ...afternoonAttempts],
       lastSyncedAt: syncMeta?.lastSyncedAt ?? null
     };
