@@ -367,6 +367,41 @@ describe('createTelegramWebhookRoutes', () => {
     });
   });
 
+  it('passes supported reply parse mode to Telegram', async () => {
+    const storage = createMemoryStorage();
+    await storage.upsertChannelLink({
+      clerkUserId: 'user_123',
+      provider: 'telegram',
+      providerUserId: '789',
+      providerChatId: '-100123',
+      status: 'active',
+      createdAt: 1,
+      updatedAt: 1,
+      displayLabel: 'household_user'
+    });
+    const schedule = vi.fn(async () => ({
+      kind: 'reply' as const,
+      text: '<b>Library</b> bag.',
+      parseMode: 'HTML' as const
+    }));
+    const sendTelegramMessage = vi.fn(async () => ({ ok: true as const }));
+    const routes = createTelegramWebhookRoutes({
+      config,
+      storage,
+      capabilities: { schedule },
+      sendTelegramMessage
+    });
+
+    const response = await routes.request(telegramRequest('/schedule briefing morning'));
+
+    expect(response.status).toBe(200);
+    expect(sendTelegramMessage).toHaveBeenCalledWith({
+      chatId: '-100123',
+      text: '<b>Library</b> bag.',
+      parseMode: 'HTML'
+    });
+  });
+
   it('routes free text through the injected classifier to the selected capability unchanged', async () => {
     const storage = createMemoryStorage();
     await storage.upsertChannelLink({

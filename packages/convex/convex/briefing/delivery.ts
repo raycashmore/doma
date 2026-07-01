@@ -8,6 +8,7 @@ export type BotMorningBriefing = {
   generationStatus: 'ai' | 'deterministic' | 'fallback' | 'setupProblem';
   shouldSend: boolean;
   message: string;
+  parseMode?: 'HTML';
   briefing?: MorningBriefing;
 };
 

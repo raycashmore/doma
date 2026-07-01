@@ -12,7 +12,7 @@ export type CapabilityRequest = {
   };
 };
 
-export type CapabilityResponse = { kind: 'reply'; text: string } | { kind: 'no_response' };
+export type CapabilityResponse = { kind: 'reply'; text: string; parseMode?: 'HTML' } | { kind: 'no_response' };
 
 export type CapabilityHandler = (request: CapabilityRequest) => Promise<CapabilityResponse>;
 
@@ -29,7 +29,11 @@ export function parseCapabilityResponse(value: unknown): CapabilityResponse | nu
   const response = value as Record<string, unknown>;
 
   if (response.kind === 'reply' && typeof response.text === 'string') {
-    return { kind: 'reply', text: response.text };
+    return {
+      kind: 'reply',
+      text: response.text,
+      ...(response.parseMode === 'HTML' ? { parseMode: response.parseMode } : {})
+    };
   }
 
   if (response.kind === 'no_response') {

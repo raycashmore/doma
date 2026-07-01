@@ -27,6 +27,7 @@ function isBotMorningBriefing(value: unknown): value is BotMorningBriefing {
     typeof briefing.localDate === 'string' &&
     typeof briefing.message === 'string' &&
     typeof briefing.shouldSend === 'boolean' &&
+    (briefing.parseMode === undefined || briefing.parseMode === 'HTML') &&
     (briefing.generationStatus === 'ai' ||
       briefing.generationStatus === 'deterministic' ||
       briefing.generationStatus === 'fallback' ||

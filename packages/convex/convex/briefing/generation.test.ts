@@ -149,13 +149,14 @@ describe('renderMorningBriefingDeliveryPreview', () => {
 
   it('renders the morning slot from the structured briefing', () => {
     expect(renderMorningBriefingDeliveryPreview({ briefing, members, slot: 'morning' })).toMatchObject({
-      message: `Library bag and dancing shoes.
+      message: `<b>Library</b> bag and <b>dancing</b> shoes.
 
 This morning:
-- Child A: Pack library bag
+- Child A: Pack <b>library</b> bag
 
 Watchouts
-- Homework folder is due back.`,
+- <b>Homework</b> folder is due back.`,
+      parseMode: 'HTML',
       shouldSend: true
     });
   });
@@ -176,10 +177,11 @@ Watchouts
       })
     ).toMatchObject({
       message: `This afternoon:
-- Child A: Bring dancing shoes
+- Child A: Bring <b>dancing</b> shoes
 
 Weather:
 - Rain layer may help this afternoon.`,
+      parseMode: 'HTML',
       shouldSend: true
     });
   });

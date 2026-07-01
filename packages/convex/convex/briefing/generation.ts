@@ -16,6 +16,7 @@ import type { ScheduleEventRow } from '../schedule/mapping';
 import { createAiMorningBriefing, createOpenAiMorningBriefingProvider, type MorningBriefingAiProvider } from './ai';
 import { botMorningBriefingFromStoreResult } from './botBriefing';
 import type { BotMorningBriefing } from './delivery';
+import { formatBriefingTelegramHtml } from './delivery';
 import {
   type BriefingDeliverySlot,
   createDeterministicMorningBriefing,
@@ -215,11 +216,13 @@ export function renderMorningBriefingDeliveryPreview({
         weather
       })
     : briefing.message;
+  const shouldSend = briefing.shouldSend && message.trim().length > 0;
 
   return {
     ...briefing,
-    message,
-    shouldSend: briefing.shouldSend && message.trim().length > 0
+    message: shouldSend ? formatBriefingTelegramHtml(message) : message,
+    ...(shouldSend ? { parseMode: 'HTML' as const } : {}),
+    shouldSend
   };
 }
 

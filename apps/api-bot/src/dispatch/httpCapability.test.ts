@@ -77,6 +77,25 @@ describe('createHttpCapability', () => {
     });
   });
 
+  it('preserves supported reply parse mode from an ok upstream response', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        jsonResponse({ kind: 'reply', text: '<b>Library</b> bag.', parseMode: 'HTML', internalToken: 'secret' })
+      )
+    );
+    const handler = createHttpCapability({
+      endpointUrl: 'https://capability.example.com/schedule',
+      serviceToken: 'service-token'
+    });
+
+    await expect(handler(request())).resolves.toEqual({
+      kind: 'reply',
+      text: '<b>Library</b> bag.',
+      parseMode: 'HTML'
+    });
+  });
+
   it('returns a sanitized no_response response from an ok upstream response', async () => {
     vi.stubGlobal(
       'fetch',

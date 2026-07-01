@@ -477,9 +477,9 @@ Morning briefing operations:
   uses unknown member ownership, includes markup delimiters, or includes escaped
   HTML entities is rejected and replaced with the deterministic schedule
   summary.
-- Scheduled briefing notifications are sent to Telegram with HTML parse mode.
-  Delivery escapes the stored plain text, then bolds the keywords `swimming`,
-  `dancing`, `library`, `homework`, and `sport`.
+- Scheduled briefing notifications and delivery previews are sent to Telegram
+  with HTML parse mode. Delivery escapes the stored plain text, then bolds the
+  keywords `swimming`, `dancing`, `library`, `homework`, and `sport`.
 - If schedule sync fails but cached schedule data exists, Doma can still send
   the briefing. When the cache is older than 12 hours, it appends:
   `Note: schedule data may be stale because the latest calendar sync failed.`
