@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import type { ScheduleDisplayMember } from '../schedule/config';
-import { type BotMorningBriefing, formatBriefingTelegramHtml, runMorningBriefingDeliveryCycle } from './delivery';
+import { type BotMorningBriefing, runMorningBriefingDeliveryCycle } from './delivery';
 
 const timeZone = 'Australia/Sydney';
 const dueAtMs = Date.parse('2026-06-12T21:35:00.000Z'); // 7:35am 2026-06-13 in Sydney
@@ -23,12 +23,6 @@ const briefing: BotMorningBriefing = {
 };
 
 describe('runMorningBriefingDeliveryCycle', () => {
-  it('escapes Telegram HTML and bolds configured briefing keywords', () => {
-    expect(formatBriefingTelegramHtml('Swimming & library <homework> dancing.')).toBe(
-      '<b>Swimming</b> &amp; <b>library</b> &lt;<b>homework</b>&gt; <b>dancing</b>.'
-    );
-  });
-
   it('does not sync, generate, send, or record outside the local morning retry window', async () => {
     const syncSchedule = vi.fn();
     const loadBriefing = vi.fn();
@@ -111,11 +105,10 @@ describe('runMorningBriefingDeliveryCycle', () => {
     expect(sendNotification).toHaveBeenCalledWith({
       recipientUserId: 'user_123',
       topic: 'briefing.morning',
-      message: `<b>Library</b> bag and <b>dancing</b> pickup.
+      message: `Library bag and dancing pickup.
 
 This morning:
-- Child A: Bring <b>library</b> bag.`,
-      parseMode: 'HTML',
+- Child A: Bring library bag.`,
       metadata: {
         briefingKey: briefing.briefingKey,
         deliveryKey: `${briefing.briefingKey}:morning`,
@@ -127,11 +120,10 @@ This morning:
     expect(sendNotification).toHaveBeenCalledWith({
       recipientUserId: 'user_456',
       topic: 'briefing.morning',
-      message: `<b>Library</b> bag and <b>dancing</b> pickup.
+      message: `Library bag and dancing pickup.
 
 This morning:
-- Child A: Bring <b>library</b> bag.`,
-      parseMode: 'HTML',
+- Child A: Bring library bag.`,
       metadata: {
         briefingKey: briefing.briefingKey,
         deliveryKey: `${briefing.briefingKey}:morning`,
@@ -266,11 +258,10 @@ This morning:
     expect(sendNotification).toHaveBeenCalledWith({
       recipientUserId: 'user_retry',
       topic: 'briefing.morning',
-      message: `<b>Library</b> bag and <b>dancing</b> pickup.
+      message: `Library bag and dancing pickup.
 
 This morning:
-- Child A: Bring <b>library</b> bag.`,
-      parseMode: 'HTML',
+- Child A: Bring library bag.`,
       metadata: {
         briefingKey: briefing.briefingKey,
         deliveryKey: `${briefing.briefingKey}:morning`,
@@ -345,12 +336,11 @@ This morning:
     expect(sendNotification).toHaveBeenCalledWith({
       recipientUserId: 'user_123',
       topic: 'briefing.morning',
-      message: `<b>Library</b> bag and <b>dancing</b> pickup.
+      message: `Library bag and dancing pickup.
 
 This morning:
-- Child A: Bring <b>library</b> bag.
+- Child A: Bring library bag.
 Note: schedule data may be stale because the latest calendar sync failed.`,
-      parseMode: 'HTML',
       metadata: {
         briefingKey: briefing.briefingKey,
         deliveryKey: `${briefing.briefingKey}:morning`,
@@ -391,11 +381,10 @@ Note: schedule data may be stale because the latest calendar sync failed.`,
     expect(sendNotification).toHaveBeenCalledWith({
       recipientUserId: 'user_123',
       topic: 'briefing.morning',
-      message: `<b>Library</b> bag and <b>dancing</b> pickup.
+      message: `Library bag and dancing pickup.
 
 This morning:
-- Child A: Bring <b>library</b> bag.`,
-      parseMode: 'HTML',
+- Child A: Bring library bag.`,
       metadata: {
         briefingKey: briefing.briefingKey,
         deliveryKey: `${briefing.briefingKey}:morning`,
@@ -614,11 +603,10 @@ This morning:
       recipientUserId: 'user_123',
       topic: 'briefing.morning',
       message: `This afternoon:
-- Child A: Bring <b>dancing</b> shoes.
+- Child A: Bring dancing shoes.
 
 Weather:
 - Rain layer may help this afternoon.`,
-      parseMode: 'HTML',
       metadata: {
         briefingKey: briefing.briefingKey,
         deliveryKey: `${briefing.briefingKey}:afternoon`,

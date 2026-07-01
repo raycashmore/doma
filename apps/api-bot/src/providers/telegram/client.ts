@@ -1,7 +1,6 @@
 export type TelegramMessageRequest = {
   chatId: string;
   text: string;
-  parseMode?: 'HTML';
 };
 
 export type SendTelegramMessageResult = { ok: true } | { ok: false; errorCode: string };
@@ -17,6 +16,22 @@ type TelegramSendMessageResponse = {
   error_code?: number;
 };
 
+type TelegramMessageEntity = {
+  type: 'bold';
+  offset: number;
+  length: number;
+};
+
+const boldKeywordPattern = /\b(swimming|dancing|library|homework|sport)\b/gi;
+
+function boldKeywordEntities(text: string): TelegramMessageEntity[] {
+  return [...text.matchAll(boldKeywordPattern)].map((match) => ({
+    type: 'bold',
+    offset: match.index ?? 0,
+    length: match[0].length
+  }));
+}
+
 async function parseTelegramResponse(response: Response) {
   try {
     return (await response.json()) as TelegramSendMessageResponse;
@@ -28,10 +43,10 @@ async function parseTelegramResponse(response: Response) {
 export async function sendTelegramMessage({
   botToken,
   chatId,
-  text,
-  parseMode
+  text
 }: SendTelegramMessageRequest): Promise<SendTelegramMessageResult> {
   let response: Response;
+  const entities = boldKeywordEntities(text);
 
   try {
     response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
@@ -40,7 +55,7 @@ export async function sendTelegramMessage({
       body: JSON.stringify({
         chat_id: chatId,
         text,
-        ...(parseMode ? { parse_mode: parseMode } : {})
+        ...(entities.length > 0 ? { entities } : {})
       })
     });
   } catch {

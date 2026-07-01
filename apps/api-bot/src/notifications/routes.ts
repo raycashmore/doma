@@ -13,7 +13,6 @@ export type NotificationSendRequest = {
   recipientUserId: string;
   topic: string;
   message: string;
-  parseMode?: 'HTML';
   metadata?: Record<string, string>;
 };
 
@@ -28,13 +27,14 @@ export type CreateNotificationRoutesOptions = {
   sendTelegramMessage: TelegramMessageSender;
 };
 
-const notificationSchema = z.object({
-  recipientUserId: z.string().trim().min(1),
-  topic: z.string().trim().min(1),
-  message: z.string().trim().min(1).max(4000),
-  parseMode: z.literal('HTML').optional(),
-  metadata: z.record(z.string(), z.string()).optional()
-});
+const notificationSchema = z
+  .object({
+    recipientUserId: z.string().trim().min(1),
+    topic: z.string().trim().min(1),
+    message: z.string().trim().min(1).max(4000),
+    metadata: z.record(z.string(), z.string()).optional()
+  })
+  .strict();
 
 async function parseNotificationBody(c: Context) {
   try {
@@ -52,8 +52,7 @@ async function sendNotification(
   try {
     return await sendTelegramMessage({
       chatId,
-      text: notification.message,
-      ...(notification.parseMode ? { parseMode: notification.parseMode } : {})
+      text: notification.message
     });
   } catch {
     return { ok: false as const, errorCode: 'network_error' };

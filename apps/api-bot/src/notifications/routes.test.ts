@@ -172,37 +172,7 @@ describe('createNotificationRoutes', () => {
     );
   });
 
-  it('forwards HTML parse mode for formatted Telegram notifications', async () => {
-    const storage = createStorage(linkedTelegramChannel);
-    const sendTelegramMessage = vi.fn(async () => ({ ok: true as const }));
-    const routes = createNotificationRoutes({
-      serviceToken: 'service-token',
-      storage,
-      sendTelegramMessage
-    });
-
-    const response = await routes.request(
-      sendRequest({
-        recipientUserId: 'user_123',
-        topic: 'briefing.morning',
-        message: '<b>Library</b> bag.',
-        parseMode: 'HTML'
-      })
-    );
-
-    expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({
-      status: 'sent',
-      provider: 'telegram'
-    });
-    expect(sendTelegramMessage).toHaveBeenCalledWith({
-      chatId: '-100123',
-      text: '<b>Library</b> bag.',
-      parseMode: 'HTML'
-    });
-  });
-
-  it('rejects unsupported parse modes', async () => {
+  it('rejects notification parse modes so provider formatting stays local to Telegram', async () => {
     const routes = createNotificationRoutes({
       serviceToken: 'service-token',
       storage: createStorage(linkedTelegramChannel),
@@ -213,8 +183,30 @@ describe('createNotificationRoutes', () => {
       sendRequest({
         recipientUserId: 'user_123',
         topic: 'briefing.morning',
-        message: '*Library* bag.',
-        parseMode: 'MarkdownV2'
+        message: 'Library bag.',
+        parseMode: 'HTML'
+      })
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: 'invalid_notification'
+    });
+  });
+
+  it('rejects notification entities so provider formatting stays local to Telegram', async () => {
+    const routes = createNotificationRoutes({
+      serviceToken: 'service-token',
+      storage: createStorage(linkedTelegramChannel),
+      sendTelegramMessage: vi.fn()
+    });
+
+    const response = await routes.request(
+      sendRequest({
+        recipientUserId: 'user_123',
+        topic: 'briefing.morning',
+        message: 'Library bag.',
+        entities: [{ type: 'bold', offset: 0, length: 7 }]
       })
     );
 

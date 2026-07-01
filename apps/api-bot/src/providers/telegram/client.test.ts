@@ -28,7 +28,7 @@ describe('sendTelegramMessage', () => {
     });
   });
 
-  it('passes Telegram parse mode when provided', async () => {
+  it('adds Telegram bold entities for configured briefing keywords without markup', async () => {
     const fetch = vi.fn(async () => new Response('{}', { status: 200 }));
     vi.stubGlobal('fetch', fetch);
 
@@ -36,8 +36,7 @@ describe('sendTelegramMessage', () => {
       sendTelegramMessage({
         botToken: 'telegram-bot-token',
         chatId: '-100123',
-        text: '<b>Library</b> bag.',
-        parseMode: 'HTML'
+        text: 'Library & <homework> dancing.'
       })
     ).resolves.toEqual({ ok: true });
 
@@ -46,8 +45,41 @@ describe('sendTelegramMessage', () => {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         chat_id: '-100123',
-        text: '<b>Library</b> bag.',
-        parse_mode: 'HTML'
+        text: 'Library & <homework> dancing.',
+        entities: [
+          { type: 'bold', offset: 0, length: 7 },
+          { type: 'bold', offset: 11, length: 8 },
+          { type: 'bold', offset: 21, length: 7 }
+        ]
+      })
+    });
+  });
+
+  it('adds Telegram bold entities for every configured keyword', async () => {
+    const fetch = vi.fn(async () => new Response('{}', { status: 200 }));
+    vi.stubGlobal('fetch', fetch);
+
+    await expect(
+      sendTelegramMessage({
+        botToken: 'telegram-bot-token',
+        chatId: '-100123',
+        text: 'Swimming dancing library homework sport.'
+      })
+    ).resolves.toEqual({ ok: true });
+
+    expect(fetch).toHaveBeenCalledWith('https://api.telegram.org/bottelegram-bot-token/sendMessage', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: '-100123',
+        text: 'Swimming dancing library homework sport.',
+        entities: [
+          { type: 'bold', offset: 0, length: 8 },
+          { type: 'bold', offset: 9, length: 7 },
+          { type: 'bold', offset: 17, length: 7 },
+          { type: 'bold', offset: 25, length: 8 },
+          { type: 'bold', offset: 34, length: 5 }
+        ]
       })
     });
   });

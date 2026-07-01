@@ -42,7 +42,6 @@ export type ScheduleReminderNotificationSender = (notification: {
   recipientUserId: string;
   topic: 'schedule.reminder' | 'briefing.morning';
   message: string;
-  parseMode?: 'HTML';
   metadata: Record<string, string>;
 }) => Promise<{ status: ScheduleReminderDeliveryStatus; errorCode?: string }>;
 

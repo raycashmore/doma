@@ -479,9 +479,9 @@ Morning briefing operations:
   summary. Stored rows that no longer satisfy the plain-text contract are
   ignored for replay and replaced on the next generation attempt; stored
   structured lines must also reference known member ids.
-- Scheduled briefing notifications and delivery previews are sent to Telegram
-  with HTML parse mode. Delivery escapes the stored plain text, then bolds the
-  keywords `swimming`, `dancing`, `library`, `homework`, and `sport`.
+- Scheduled briefing notifications and delivery previews stay plain text. The
+  Telegram provider applies bold display entities for the keywords `swimming`,
+  `dancing`, `library`, `homework`, and `sport` when sending the final message.
 - If schedule sync fails but cached schedule data exists, Doma can still send
   the briefing. When the cache is older than 12 hours, it appends:
   `Note: schedule data may be stale because the latest calendar sync failed.`

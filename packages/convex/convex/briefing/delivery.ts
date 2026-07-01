@@ -14,7 +14,6 @@ export type BotMorningBriefing = {
   generationStatus: 'ai' | 'deterministic' | 'fallback' | 'setupProblem';
   shouldSend: boolean;
   message: string;
-  parseMode?: 'HTML';
   briefing?: MorningBriefing;
 };
 
@@ -42,7 +41,6 @@ export type MorningBriefingNotificationSender = (notification: {
   recipientUserId: string;
   topic: 'briefing.morning';
   message: string;
-  parseMode?: 'HTML';
   metadata: Record<string, string>;
 }) => Promise<{ status: BriefingDeliveryStatus; errorCode?: string }>;
 
@@ -131,16 +129,6 @@ function completedRecipientIds(attempts: BriefingDeliveryAttempt[], briefingKey:
 
 function withStaleScheduleNote(message: string) {
   return `${message}\nNote: schedule data may be stale because the latest calendar sync failed.`;
-}
-
-const boldTelegramKeywordPattern = /\b(swimming|dancing|library|homework|sport)\b/gi;
-
-function escapeTelegramHtml(message: string) {
-  return message.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-export function formatBriefingTelegramHtml(message: string) {
-  return escapeTelegramHtml(message).replace(boldTelegramKeywordPattern, '<b>$1</b>');
 }
 
 function deliveryMessage({
@@ -267,8 +255,7 @@ export async function runMorningBriefingDeliveryCycle({
     const result = await sendNotification({
       recipientUserId,
       topic: 'briefing.morning',
-      message: formatBriefingTelegramHtml(message),
-      parseMode: 'HTML',
+      message,
       metadata: {
         briefingKey: briefing.briefingKey,
         deliveryKey: key,

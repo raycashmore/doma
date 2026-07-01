@@ -77,11 +77,11 @@ describe('createHttpCapability', () => {
     });
   });
 
-  it('preserves supported reply parse mode from an ok upstream response', async () => {
+  it('strips provider formatting fields from an ok upstream response', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(async () =>
-        jsonResponse({ kind: 'reply', text: '<b>Library</b> bag.', parseMode: 'HTML', internalToken: 'secret' })
+        jsonResponse({ kind: 'reply', text: 'Library bag.', parseMode: 'HTML', internalToken: 'secret' })
       )
     );
     const handler = createHttpCapability({
@@ -91,8 +91,7 @@ describe('createHttpCapability', () => {
 
     await expect(handler(request())).resolves.toEqual({
       kind: 'reply',
-      text: '<b>Library</b> bag.',
-      parseMode: 'HTML'
+      text: 'Library bag.'
     });
   });
 

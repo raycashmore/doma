@@ -285,8 +285,7 @@ describe('handleScheduleCapabilityRequest', () => {
     const loadMorningBriefingDeliveryPreview = vi.fn(async () => ({
       briefingKey: 'morning:2026-06-06',
       localDate: '2026-06-06',
-      message: '<b>Library</b> bag today.\n\nThis morning:\n- Child A: Bring <b>library</b> bag',
-      parseMode: 'HTML' as const,
+      message: 'Library bag today.\n\nThis morning:\n- Child A: Bring library bag',
       shouldSend: true,
       generationStatus: 'deterministic' as const
     }));
@@ -310,8 +309,7 @@ describe('handleScheduleCapabilityRequest', () => {
       )
     ).resolves.toEqual({
       kind: 'reply',
-      text: '<b>Library</b> bag today.\n\nThis morning:\n- Child A: Bring <b>library</b> bag',
-      parseMode: 'HTML'
+      text: 'Library bag today.\n\nThis morning:\n- Child A: Bring library bag'
     });
 
     expect(loadMorningBriefingDeliveryPreview).toHaveBeenCalledWith({

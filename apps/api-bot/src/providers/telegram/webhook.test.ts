@@ -367,7 +367,7 @@ describe('createTelegramWebhookRoutes', () => {
     });
   });
 
-  it('passes supported reply parse mode to Telegram', async () => {
+  it('sends capability replies to Telegram as plain text', async () => {
     const storage = createMemoryStorage();
     await storage.upsertChannelLink({
       clerkUserId: 'user_123',
@@ -381,8 +381,7 @@ describe('createTelegramWebhookRoutes', () => {
     });
     const schedule = vi.fn(async () => ({
       kind: 'reply' as const,
-      text: '<b>Library</b> bag.',
-      parseMode: 'HTML' as const
+      text: 'Library bag.'
     }));
     const sendTelegramMessage = vi.fn(async () => ({ ok: true as const }));
     const routes = createTelegramWebhookRoutes({
@@ -397,8 +396,7 @@ describe('createTelegramWebhookRoutes', () => {
     expect(response.status).toBe(200);
     expect(sendTelegramMessage).toHaveBeenCalledWith({
       chatId: '-100123',
-      text: '<b>Library</b> bag.',
-      parseMode: 'HTML'
+      text: 'Library bag.'
     });
   });
 

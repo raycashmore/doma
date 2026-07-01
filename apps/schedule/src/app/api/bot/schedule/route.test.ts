@@ -274,8 +274,7 @@ describe('schedule bot route', () => {
       briefing: {
         briefingKey: 'morning:2026-06-06',
         localDate: '2026-06-06',
-        message: '<b>Library</b> bag today.\n\nThis morning:\n- Child A: Bring <b>library</b> bag.',
-        parseMode: 'HTML',
+        message: 'Library bag today.\n\nThis morning:\n- Child A: Bring library bag.',
         shouldSend: true,
         generationStatus: 'ai'
       }
@@ -293,8 +292,7 @@ describe('schedule bot route', () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
       kind: 'reply',
-      text: '<b>Library</b> bag today.\n\nThis morning:\n- Child A: Bring <b>library</b> bag.',
-      parseMode: 'HTML'
+      text: 'Library bag today.\n\nThis morning:\n- Child A: Bring library bag.'
     });
     expect(convex.action).toHaveBeenCalledWith('briefing.generation.renderMorningBriefingDeliveryPreviewForBot', {
       serviceToken: 'service-token',

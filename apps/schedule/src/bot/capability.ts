@@ -5,7 +5,7 @@ export type BotCapabilityRequest = {
   receivedAt: number;
 };
 
-export type BotCapabilityResponse = { kind: 'reply'; text: string; parseMode?: 'HTML' } | { kind: 'no_response' };
+export type BotCapabilityResponse = { kind: 'reply'; text: string } | { kind: 'no_response' };
 
 export type BotScheduleEvent = {
   googleEventId: string;
@@ -24,7 +24,6 @@ export type BotMorningBriefing = {
   briefingKey: string;
   localDate: string;
   message: string;
-  parseMode?: 'HTML';
   shouldSend: boolean;
   generationStatus: 'ai' | 'deterministic' | 'fallback' | 'setupProblem';
 };
@@ -212,10 +211,7 @@ export async function handleScheduleCapabilityRequest(
         text:
           briefing.shouldSend && briefing.message.trim().length > 0
             ? briefing.message
-            : `Nothing to flag this ${deliverySlot}.`,
-        ...(briefing.shouldSend && briefing.message.trim().length > 0 && briefing.parseMode
-          ? { parseMode: briefing.parseMode }
-          : {})
+            : `Nothing to flag this ${deliverySlot}.`
       };
     }
 

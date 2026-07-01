@@ -48,7 +48,7 @@ export function createTelegramWebhookRoutes({
   const routes = new Hono();
   const dispatcher = createCommandDispatcher({ capabilities, classify });
 
-  async function sendReply(chatId: string, text: string, parseMode?: 'HTML') {
+  async function sendReply(chatId: string, text: string) {
     if (!sendTelegramMessage) {
       return;
     }
@@ -57,7 +57,7 @@ export function createTelegramWebhookRoutes({
 
     try {
       await Promise.race([
-        sendTelegramMessage({ chatId, text, ...(parseMode ? { parseMode } : {}) }),
+        sendTelegramMessage({ chatId, text }),
         new Promise((resolve) => {
           timeout = setTimeout(resolve, replyTimeoutMs);
         })
@@ -152,7 +152,7 @@ export function createTelegramWebhookRoutes({
     });
 
     if (dispatchResult.kind === 'reply') {
-      await sendReply(inbound.providerChatId, dispatchResult.text, dispatchResult.parseMode);
+      await sendReply(inbound.providerChatId, dispatchResult.text);
     }
 
     return jsonOk(c, { ok: true, dispatchResult });
