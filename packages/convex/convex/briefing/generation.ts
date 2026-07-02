@@ -37,13 +37,14 @@ type StoreGeneratedMorningBriefingArgs = {
   message: string;
   briefing: DeterministicMorningBriefing['briefing'];
   sourceIds: string[];
+  replaceExisting?: boolean;
 };
 
 type GenerationRefs = {
   generateAndStoreMorningBriefing: FunctionReference<
     'action',
     'internal',
-    { localDate: string; timeZone?: string; generatedAt: number },
+    { localDate: string; timeZone?: string; generatedAt: number; replaceExisting?: boolean },
     unknown
   >;
   briefingDeliveryPreviewSource: FunctionReference<
@@ -98,7 +99,14 @@ function toBotMorningBriefing(briefing: {
 
 async function storeGeneratedBriefing(
   ctx: { db: MutationCtx['db'] },
-  { generatedAt, ...briefing }: DeterministicMorningBriefing & { generatedAt: number }
+  {
+    generatedAt,
+    replaceExisting = false,
+    ...briefing
+  }: DeterministicMorningBriefing & {
+    generatedAt: number;
+    replaceExisting?: boolean;
+  }
 ) {
   const members = displayMembersFromConfig(parseScheduleMembers());
   if (!isValidMorningBriefingForMembers(briefing.briefing, members)) {
@@ -125,12 +133,17 @@ async function storeGeneratedBriefing(
   };
 
   if (existing) {
-    if (isValidMorningBriefingForMembers(existing.briefing, members)) {
+    if (!replaceExisting && isValidMorningBriefingForMembers(existing.briefing, members)) {
       return { inserted: false as const, id: existing._id, briefing: existing };
     }
 
     await ctx.db.patch(existing._id, row);
-    return { inserted: false as const, replacedInvalid: true as const, id: existing._id, briefing: row };
+    return {
+      inserted: false as const,
+      ...(replaceExisting ? { replacedExisting: true as const } : { replacedInvalid: true as const }),
+      id: existing._id,
+      briefing: row
+    };
   }
 
   const id = await ctx.db.insert('briefings', row);
@@ -300,7 +313,8 @@ export const storeGeneratedMorningBriefing = internalMutation({
     generatedAt: v.number(),
     message: v.string(),
     briefing: morningBriefingValidator,
-    sourceIds: v.array(v.string())
+    sourceIds: v.array(v.string()),
+    replaceExisting: v.optional(v.boolean())
   },
   handler: async (ctx, briefing) => {
     return await storeGeneratedBriefing(ctx, briefing);
@@ -311,9 +325,10 @@ export const generateAndStoreMorningBriefing = internalAction({
   args: {
     localDate: v.string(),
     timeZone: v.optional(v.string()),
-    generatedAt: v.number()
+    generatedAt: v.number(),
+    replaceExisting: v.optional(v.boolean())
   },
-  handler: async (ctx, { localDate, timeZone, generatedAt }) => {
+  handler: async (ctx, { localDate, timeZone, generatedAt, replaceExisting }) => {
     const resolvedTimeZone = timeZone ?? process.env.SCHEDULE_TZ ?? 'Australia/Sydney';
     const calendarConfigs = parseScheduleCalendars();
     const members = displayMembersFromConfig(parseScheduleMembers());
@@ -339,7 +354,8 @@ export const generateAndStoreMorningBriefing = internalAction({
       generatedAt,
       message: briefing.message,
       briefing: briefing.briefing,
-      sourceIds: briefing.sourceIds
+      sourceIds: briefing.sourceIds,
+      ...(replaceExisting ? { replaceExisting } : {})
     });
   }
 });

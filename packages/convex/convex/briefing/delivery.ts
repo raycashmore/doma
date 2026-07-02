@@ -4,7 +4,8 @@ import {
   formatBriefingDeliveryMessage,
   isPlainBriefingText,
   isValidMorningBriefingForMembers,
-  type MorningBriefing
+  type MorningBriefing,
+  morningBriefingKey
 } from './morning';
 import type { MorningBriefingWeatherContext } from './weather';
 
@@ -181,6 +182,7 @@ export async function runMorningBriefingDeliveryCycle({
     localDate: string;
     timeZone: string;
     generatedAt: number;
+    replaceExisting?: boolean;
   }) => Promise<BotMorningBriefing>;
   loadWeather?: (input: { localDate: string; timeZone: string }) => Promise<MorningBriefingWeatherContext | undefined>;
   sendNotification: MorningBriefingNotificationSender;
@@ -196,32 +198,41 @@ export async function runMorningBriefingDeliveryCycle({
   }
 
   const { localDate } = localParts(nowMs, timeZone);
+  const baseBriefingKey = morningBriefingKey({ briefingKind: 'morning', localDate });
+  const key = deliveryKey(baseBriefingKey, deliverySlot);
+  const completedRecipients = completedRecipientIds(
+    attempts,
+    key,
+    deliverySlot === 'morning' ? baseBriefingKey : undefined
+  );
+  const pendingRecipientUserIds = recipientUserIds.filter(
+    (recipientUserId) => !completedRecipients.has(recipientUserId)
+  );
+
+  if (pendingRecipientUserIds.length === 0) {
+    return emptyCounts();
+  }
+
   const syncResult = await syncSchedule();
   const syncFailed = !syncResult.ok;
   const effectiveLastSyncedAt = syncResult.lastSyncedAt ?? lastSyncedAt;
   const staleCache = syncFailed && (!effectiveLastSyncedAt || nowMs - effectiveLastSyncedAt > staleScheduleDataMs);
   const existingBriefing = await loadBriefing({ localDate });
-  const generated = !existingBriefing;
+  const refreshExistingBriefing = deliverySlot === 'afternoon' && !syncFailed;
+  const generated = !existingBriefing || refreshExistingBriefing;
   const briefing =
-    existingBriefing ??
-    (await generateBriefing({
-      localDate,
-      timeZone,
-      generatedAt: nowMs
-    }));
+    !refreshExistingBriefing && existingBriefing
+      ? existingBriefing
+      : await generateBriefing({
+          localDate,
+          timeZone,
+          generatedAt: nowMs,
+          ...(refreshExistingBriefing ? { replaceExisting: true } : {})
+        });
   if (!isDeliverableBriefing(briefing, members)) {
     throw new Error('Morning briefing is not valid stored briefing content');
   }
   const counts = emptyCounts({ syncFailed, staleCache, generated });
-  const key = deliveryKey(briefing.briefingKey, deliverySlot);
-  const completedRecipients = completedRecipientIds(
-    attempts,
-    key,
-    deliverySlot === 'morning' ? briefing.briefingKey : undefined
-  );
-  const pendingRecipientUserIds = recipientUserIds.filter(
-    (recipientUserId) => !completedRecipients.has(recipientUserId)
-  );
   const weather = deliverySlot === 'afternoon' && loadWeather ? await loadWeather({ localDate, timeZone }) : undefined;
   const baseMessage = deliveryMessage({ briefing, members, slot: deliverySlot, weather });
   const message = staleCache ? withStaleScheduleNote(baseMessage) : baseMessage;

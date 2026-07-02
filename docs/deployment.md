@@ -459,9 +459,11 @@ Morning briefing operations:
   `MORNING_BRIEFING_TZ` no-ops.
 - If no `MORNING_BRIEFING_RECIPIENT_USER_IDS` are configured, the scheduled run
   no-ops. `/briefing` can still be used on demand by a linked Telegram user.
-- Convex generates one briefing per local date and reuses it for retries and
-  replay. Morning and afternoon scheduled sends use separate delivery keys, so a
-  recipient with a sent or skipped morning attempt can still receive the
+- Convex generates one briefing per local date and reuses it for morning
+  retries and replay. After a successful 2:30pm schedule sync, the afternoon
+  scheduled send refreshes that stored briefing before rendering the afternoon
+  message. Morning and afternoon scheduled sends use separate delivery keys, so
+  a recipient with a sent or skipped morning attempt can still receive the
   afternoon attempt for the same briefing.
 - If AI suppresses a quiet briefing or produces an empty message, scheduled
   delivery records the recipient as skipped instead of sending an empty

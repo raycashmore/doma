@@ -44,7 +44,7 @@ type BriefingGenerationRefs = {
   generateAndStoreMorningBriefing: FunctionReference<
     'action',
     'internal',
-    { localDate: string; timeZone?: string; generatedAt: number },
+    { localDate: string; timeZone?: string; generatedAt: number; replaceExisting?: boolean },
     unknown
   >;
 };
@@ -138,12 +138,13 @@ export const runDueMorningBriefingDelivery = internalAction({
           }
         },
         loadBriefing: async () => inputs.briefing,
-        generateBriefing: async ({ localDate: date, timeZone: tz, generatedAt }) => {
+        generateBriefing: async ({ localDate: date, timeZone: tz, generatedAt, replaceExisting }) => {
           try {
             const generated = await ctx.runAction(generation.generateAndStoreMorningBriefing, {
               localDate: date,
               timeZone: tz,
-              generatedAt
+              generatedAt,
+              ...(replaceExisting ? { replaceExisting } : {})
             });
             const briefing = botMorningBriefingFromStoreResult(generated);
 
