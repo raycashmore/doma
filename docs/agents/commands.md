@@ -33,10 +33,12 @@ match that declaration, run `corepack enable pnpm` before running repo commands.
 `pnpm ci:local` checks the pnpm version first, installs with the frozen
 lockfile, then runs `pnpm ci:checks`. `pnpm ci:checks` is the same format, lint,
 typecheck, test, and build sequence used by CI, and it forces Turbo tasks so a
-warm local cache cannot hide missing dependencies or broken scripts. In
-restricted agent sandboxes, the build portion may need approval to run outside
-the sandbox because Next/Turbopack can spawn worker processes and bind internal
-ports during production builds.
+warm local cache cannot hide missing dependencies or broken scripts.
+
+Schedule intentionally builds with `next build --webpack`. Next 16 defaults
+production builds to Turbopack, which currently spawns/binds an internal worker
+endpoint that restricted agent sandboxes deny. Do not remove the webpack build
+flag unless sandboxed `pnpm ci:checks` has been verified with the replacement.
 
 ## Convex Seeding
 
