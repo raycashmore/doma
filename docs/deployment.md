@@ -361,6 +361,7 @@ Production checks:
 | `FORWARDED_EMAIL_ALLOWED_SENDERS` | Vercel Bot gateway, `.env.local`              | Comma-separated sender allowlist for Resend forwarded email capture                                      |
 | `RESEND_API_KEY`                  | Vercel Bot gateway, `.env.local`              | Resend API key used to fetch received email bodies after `email.received` webhooks                       |
 | `RESEND_WEBHOOK_SECRET`           | Vercel Bot gateway, Resend                    | Resend webhook signing secret used to verify `/inbound-email/resend` requests                            |
+| `FORWARDED_EMAIL_TRIAGE_AI_MODEL` | Convex, `.env.local`                          | OpenAI model used by Convex to triage captured forwarded emails into notices                             |
 | `SCHEDULE_CAPABILITY_URL`         | Vercel Bot gateway, `.env.local`              | Schedule API route for `/schedule`, for example `https://schedule.example.com/schedule/api/bot/schedule` |
 | `LISTS_CAPABILITY_URL`            | Vercel Bot gateway, `.env.local`              | Lists API route for free-text capture, for example `https://lists.example.com/lists/api/bot/lists`       |
 | `LISTS_CAPABILITY_TIMEOUT_MS`     | Vercel Bot gateway, `.env.local`              | Optional; per-request timeout for the lists capability (default 15000)                                   |
@@ -390,6 +391,13 @@ protection. The Bot gateway verifies `RESEND_WEBHOOK_SECRET`, checks
 `RESEND_API_KEY`, then writes to Convex. Set the same `BOT_SERVICE_TOKEN` in the
 Bot gateway and the target Convex deployment before enabling forwarded email
 capture.
+
+Forwarded email triage runs in Convex after capture through
+`email/triage:processNextPendingCapturedEmailForBot`. It requires
+`BOT_SERVICE_TOKEN`, `OPENAI_API_KEY`, and `FORWARDED_EMAIL_TRIAGE_AI_MODEL` in
+the target Convex deployment. The action processes the oldest pending captured
+email, stores either a current notice or a no-notice outcome, and records
+inspectable failure state without sending Telegram notifications.
 
 Schedule's bot capability route (`/schedule/api/bot/schedule` in production),
 the Convex `schedule.queries.currentWeekForBot` query, and the
