@@ -40,7 +40,8 @@ Store only raw inputs in the database. All computed values are calculated at rea
 
 - Financial tables store source finance data; schedule tables cache read-only
   Google Calendar data; briefing tables store generated morning briefings and
-  per-recipient delivery attempts.
+  per-recipient delivery attempts; email tables store forwarded email captures,
+  triage notices, and per-recipient notice delivery attempts.
 - **Date field:** All financial tables indexed by `date` (Unix timestamp in milliseconds) with a `by_date` index
 - **Crypto tables:** Use `by_platform` indexing in addition to date
 - **Derived field comments:** Schema marks derived fields with `// DERIVED: ...` comments
@@ -143,8 +144,10 @@ turns useful messages into current `emailNotices`, and records
 separate boundaries: triage creates a board-visible notice or no-notice outcome,
 while `email/deliveryRunner:deliverTelegramWorthyEmailNoticesForBot` sends only
 notices marked `telegramWorthy` through the Bot gateway's provider-neutral
-notification endpoint. Convex runs both due triage and notice delivery from
-cron every 10 minutes.
+notification endpoint. Convex runs due triage from cron every 12 hours and
+notice delivery from cron four times per day at fixed UTC times selected for
+Sydney daytime/evening delivery. The triage cron is interval-based, not pinned
+to fixed local wall-clock times.
 
 Forwarded email delivery uses `FORWARDED_EMAIL_NOTICE_RECIPIENT_USER_IDS`, not
 the morning briefing recipient configuration. Re-running delivery skips

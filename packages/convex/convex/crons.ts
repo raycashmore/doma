@@ -41,7 +41,26 @@ const emailTriage: EmailTriageRefs = (
 ).email.triage;
 
 crons.interval('morning briefing delivery', { minutes: 10 }, briefingDeliveryRunner.runDueMorningBriefingDelivery);
-crons.interval('forwarded email triage', { minutes: 10 }, emailTriage.runDueForwardedEmailTriage);
-crons.interval('forwarded email notice delivery', { minutes: 10 }, emailDeliveryRunner.runDueEmailNoticeDelivery);
+crons.interval('forwarded email triage', { hours: 12 }, emailTriage.runDueForwardedEmailTriage);
+crons.daily(
+  'forwarded email notice delivery morning',
+  { hourUTC: 21, minuteUTC: 0 },
+  emailDeliveryRunner.runDueEmailNoticeDelivery
+);
+crons.daily(
+  'forwarded email notice delivery midday',
+  { hourUTC: 1, minuteUTC: 0 },
+  emailDeliveryRunner.runDueEmailNoticeDelivery
+);
+crons.daily(
+  'forwarded email notice delivery afternoon',
+  { hourUTC: 5, minuteUTC: 0 },
+  emailDeliveryRunner.runDueEmailNoticeDelivery
+);
+crons.daily(
+  'forwarded email notice delivery evening',
+  { hourUTC: 9, minuteUTC: 0 },
+  emailDeliveryRunner.runDueEmailNoticeDelivery
+);
 
 export default crons;
