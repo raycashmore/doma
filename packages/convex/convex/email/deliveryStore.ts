@@ -1,6 +1,73 @@
 import { v } from 'convex/values';
 
 import { internalMutation, internalQuery } from '../_generated/server';
+import { type EmailNoticeDeliveryAttemptStatus, emailNoticeDeliveryPendingLeaseMs } from './delivery';
+
+type StoredEmailNoticeDeliveryAttempt<TId extends string = string> = {
+  _id: TId;
+  noticeId: string;
+  recipientUserId: string;
+  attemptedAt: number;
+  status: EmailNoticeDeliveryAttemptStatus;
+};
+
+type EmailNoticeDeliveryAttemptWrite = {
+  noticeId: string;
+  recipientUserId: string;
+  attemptedAt: number;
+  status: EmailNoticeDeliveryAttemptStatus;
+  providerErrorCode?: string;
+};
+
+type AttemptWriteDecision<TId extends string = string> =
+  | { operation: 'insert'; claimed: true }
+  | { operation: 'patch'; claimed: true; id: TId }
+  | { operation: 'skip'; claimed: false; id: TId };
+
+function isActivePendingAttempt<TId extends string>(attempt: StoredEmailNoticeDeliveryAttempt<TId>, nowMs: number) {
+  return attempt.status === 'pending' && nowMs - attempt.attemptedAt < emailNoticeDeliveryPendingLeaseMs;
+}
+
+export function selectEmailNoticeDeliveryAttemptWrite<TId extends string>({
+  existingAttempts,
+  attempt
+}: {
+  existingAttempts: StoredEmailNoticeDeliveryAttempt<TId>[];
+  attempt: EmailNoticeDeliveryAttemptWrite;
+}): AttemptWriteDecision<TId> {
+  const sentOrSkippedAttempt = existingAttempts.find(
+    (existingAttempt) => existingAttempt.status === 'sent' || existingAttempt.status === 'skipped'
+  );
+  const pendingAttempt = existingAttempts.find((existingAttempt) => existingAttempt.status === 'pending');
+
+  if (attempt.status === 'pending') {
+    const activePendingAttempt =
+      pendingAttempt && isActivePendingAttempt(pendingAttempt, attempt.attemptedAt) ? pendingAttempt : undefined;
+    const claimedAttempt = sentOrSkippedAttempt ?? activePendingAttempt;
+
+    if (claimedAttempt) {
+      return { operation: 'skip', claimed: false, id: claimedAttempt._id };
+    }
+
+    const retryableAttempt = pendingAttempt ?? existingAttempts[0];
+    if (retryableAttempt) {
+      return { operation: 'patch', claimed: true, id: retryableAttempt._id };
+    }
+
+    return { operation: 'insert', claimed: true };
+  }
+
+  if (sentOrSkippedAttempt) {
+    return { operation: 'skip', claimed: false, id: sentOrSkippedAttempt._id };
+  }
+
+  const retryableAttempt = pendingAttempt ?? existingAttempts[0];
+  if (retryableAttempt) {
+    return { operation: 'patch', claimed: true, id: retryableAttempt._id };
+  }
+
+  return { operation: 'insert', claimed: true };
+}
 
 export const emailNoticeDeliveryRunInputs = internalQuery({
   args: {},
@@ -12,16 +79,10 @@ export const emailNoticeDeliveryRunInputs = internalQuery({
     const activeNotices = notices
       .filter((notice) => notice.archivedAt === undefined)
       .sort((left, right) => left.createdAt - right.createdAt);
-    const attempts = (
-      await Promise.all(
-        activeNotices.map((notice) =>
-          ctx.db
-            .query('emailNoticeDeliveryAttempts')
-            .withIndex('by_notice_id', (q) => q.eq('noticeId', notice._id))
-            .collect()
-        )
-      )
-    ).flat();
+    const activeNoticeIds = new Set(activeNotices.map((notice) => notice._id));
+    const attempts = (await ctx.db.query('emailNoticeDeliveryAttempts').collect()).filter((attempt) =>
+      activeNoticeIds.has(attempt.noticeId)
+    );
 
     return {
       notices: activeNotices.map((notice) => ({
@@ -55,41 +116,18 @@ export const recordEmailNoticeDeliveryAttempt = internalMutation({
         q.eq('noticeId', attempt.noticeId).eq('recipientUserId', attempt.recipientUserId)
       )
       .collect();
-    const sentOrSkippedAttempt = existingAttempts.find(
-      (existingAttempt) => existingAttempt.status === 'sent' || existingAttempt.status === 'skipped'
-    );
-    const pendingAttempt = existingAttempts.find((existingAttempt) => existingAttempt.status === 'pending');
+    const decision = selectEmailNoticeDeliveryAttemptWrite({
+      existingAttempts,
+      attempt
+    });
 
-    if (attempt.status === 'pending') {
-      const claimedAttempt = sentOrSkippedAttempt ?? pendingAttempt;
-
-      if (claimedAttempt) {
-        return { claimed: false as const, inserted: false as const, id: claimedAttempt._id };
-      }
-
-      const retryableAttempt = existingAttempts[0];
-      if (retryableAttempt) {
-        await ctx.db.patch(retryableAttempt._id, attempt);
-        return { claimed: true as const, inserted: false as const, id: retryableAttempt._id };
-      }
-
-      const id = await ctx.db.insert('emailNoticeDeliveryAttempts', attempt);
-      return { claimed: true as const, inserted: true as const, id };
+    if (decision.operation === 'skip') {
+      return { claimed: false as const, inserted: false as const, id: decision.id };
     }
 
-    if (sentOrSkippedAttempt) {
-      return { claimed: false as const, inserted: false as const, id: sentOrSkippedAttempt._id };
-    }
-
-    if (pendingAttempt) {
-      await ctx.db.patch(pendingAttempt._id, attempt);
-      return { claimed: true as const, inserted: false as const, id: pendingAttempt._id };
-    }
-
-    const retryableAttempt = existingAttempts[0];
-    if (retryableAttempt) {
-      await ctx.db.patch(retryableAttempt._id, attempt);
-      return { claimed: true as const, inserted: false as const, id: retryableAttempt._id };
+    if (decision.operation === 'patch') {
+      await ctx.db.patch(decision.id, attempt);
+      return { claimed: true as const, inserted: false as const, id: decision.id };
     }
 
     const id = await ctx.db.insert('emailNoticeDeliveryAttempts', attempt);

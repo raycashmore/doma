@@ -143,13 +143,13 @@ turns useful messages into current `emailNotices`, and records
 separate boundaries: triage creates a board-visible notice or no-notice outcome,
 while `email/deliveryRunner:deliverTelegramWorthyEmailNoticesForBot` sends only
 notices marked `telegramWorthy` through the Bot gateway's provider-neutral
-notification endpoint. Convex also runs the same notice delivery cycle from
+notification endpoint. Convex runs both due triage and notice delivery from
 cron every 10 minutes.
 
 Forwarded email delivery uses `FORWARDED_EMAIL_NOTICE_RECIPIENT_USER_IDS`, not
 the morning briefing recipient configuration. Re-running delivery skips
-recipients with a sent or skipped attempt for the same notice, while failed
-attempts remain inspectable and can be retried by patching the same attempt row.
+recipients with a sent or skipped attempt for the same notice, while failed or
+stale pending attempts remain inspectable and retryable.
 
 ## Helper Functions (`helpers.ts`)
 

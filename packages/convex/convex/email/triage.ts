@@ -2,7 +2,7 @@ import type { FunctionReference } from 'convex/server';
 import { v } from 'convex/values';
 
 import { internal } from '../_generated/api';
-import { action, internalMutation, internalQuery, query } from '../_generated/server';
+import { action, internalAction, internalMutation, internalQuery, query } from '../_generated/server';
 
 type CapturedEmailRow = Record<string, unknown> & {
   _id: string;
@@ -98,8 +98,15 @@ type ExtractedFact = {
 type EmailNoticeCategory = 'school' | 'admin' | 'schedule' | 'finance' | 'other';
 type EmailNoticePriority = 'low' | 'medium' | 'high';
 type EmailTriageFailureReason = 'invalid_ai_output' | 'provider_failure' | 'setup_problem';
+type TerminalCapturedEmailProcessingState = 'noNotice' | 'noticeCreated' | 'failed';
 
 type TriageRefs = {
+  claimNextPendingCapturedEmail: FunctionReference<
+    'mutation',
+    'internal',
+    { claimedAt: number },
+    CapturedEmailRow | null
+  >;
   nextPendingCapturedEmail: FunctionReference<'query', 'internal', Record<string, never>, CapturedEmailRow | null>;
   processCapturedEmailTriageOutput: FunctionReference<
     'mutation',
@@ -117,6 +124,8 @@ type TriageRefs = {
 
 const categories = new Set<EmailNoticeCategory>(['school', 'admin', 'schedule', 'finance', 'other']);
 const priorities = new Set<EmailNoticePriority>(['low', 'medium', 'high']);
+const terminalProcessingStates = new Set<TerminalCapturedEmailProcessingState>(['noNotice', 'noticeCreated', 'failed']);
+const emailTriageProcessingLeaseMs = 15 * 60 * 1000;
 const triageRefs = (
   internal as unknown as {
     email: {
@@ -278,6 +287,14 @@ export async function processCapturedEmailForTriageHandler(
       })
     );
   } catch (error) {
+    const terminalState = await readTerminalCapturedEmailState(ctx, capturedEmailId);
+    if (terminalState) {
+      return {
+        status: terminalState,
+        capturedEmailId
+      };
+    }
+
     const reason = error instanceof EmailTriageParseError ? 'invalid_ai_output' : 'provider_failure';
     await ctx.db.patch(capturedEmailId, {
       processingState: 'failed',
@@ -290,6 +307,14 @@ export async function processCapturedEmailForTriageHandler(
       status: 'failed' as const,
       capturedEmailId,
       reason
+    };
+  }
+
+  const terminalState = await readTerminalCapturedEmailState(ctx, capturedEmailId);
+  if (terminalState) {
+    return {
+      status: terminalState,
+      capturedEmailId
     };
   }
 
@@ -330,6 +355,16 @@ export async function processCapturedEmailForTriageHandler(
     capturedEmailId,
     noticeId
   };
+}
+
+async function readTerminalCapturedEmailState(ctx: EmailTriageMutationCtx, capturedEmailId: string) {
+  const latestEmail = await ctx.db.get(capturedEmailId);
+  if (!latestEmail) throw new Error('Captured email not found');
+  return isTerminalCapturedEmailProcessingState(latestEmail.processingState) ? latestEmail.processingState : null;
+}
+
+function isTerminalCapturedEmailProcessingState(value: string): value is TerminalCapturedEmailProcessingState {
+  return terminalProcessingStates.has(value as TerminalCapturedEmailProcessingState);
 }
 
 export async function processNextPendingCapturedEmailHandler(
@@ -448,6 +483,37 @@ export const nextPendingCapturedEmail = internalQuery({
   }
 });
 
+export const claimNextPendingCapturedEmail = internalMutation({
+  args: {
+    claimedAt: v.number()
+  },
+  handler: async (ctx, { claimedAt }) => {
+    const pending = await ctx.db
+      .query('capturedEmails')
+      .withIndex('by_processing_state', (q) => q.eq('processingState', 'pending'))
+      .collect();
+    const staleProcessing = (
+      await ctx.db
+        .query('capturedEmails')
+        .withIndex('by_processing_state', (q) => q.eq('processingState', 'processing'))
+        .collect()
+    ).filter((email) => claimedAt - email.updatedAt >= emailTriageProcessingLeaseMs);
+    const next = [...pending, ...staleProcessing].toSorted((left, right) => left.capturedAt - right.capturedAt)[0];
+    if (!next) return null;
+
+    await ctx.db.patch(next._id, {
+      processingState: 'processing',
+      updatedAt: claimedAt
+    });
+
+    return {
+      ...next,
+      processingState: 'processing',
+      updatedAt: claimedAt
+    };
+  }
+});
+
 export const processCapturedEmailTriageOutput = internalMutation({
   args: {
     capturedEmailId: v.id('capturedEmails'),
@@ -470,6 +536,15 @@ export const recordCapturedEmailTriageFailure = internalMutation({
     reason: v.union(v.literal('invalid_ai_output'), v.literal('provider_failure'), v.literal('setup_problem'))
   },
   handler: async (ctx, { capturedEmailId, processedAt, reason }) => {
+    const email = await ctx.db.get(capturedEmailId);
+    if (!email) throw new Error('Captured email not found');
+    if (isTerminalCapturedEmailProcessingState(email.processingState)) {
+      return {
+        status: email.processingState,
+        capturedEmailId
+      };
+    }
+
     await ctx.db.patch(capturedEmailId, {
       processingState: 'failed',
       triageFailureReason: reason,
@@ -492,10 +567,12 @@ export const processNextPendingCapturedEmailForBot = action({
   handler: async (ctx, { serviceToken, processedAt }) => {
     assertAuthorizedServiceToken(serviceToken);
 
-    const capturedEmail = await ctx.runQuery(triageRefs.nextPendingCapturedEmail);
+    const resolvedProcessedAt = processedAt ?? Date.now();
+    const capturedEmail = await ctx.runMutation(triageRefs.claimNextPendingCapturedEmail, {
+      claimedAt: resolvedProcessedAt
+    });
     if (!capturedEmail) return { status: 'idle' as const };
 
-    const resolvedProcessedAt = processedAt ?? Date.now();
     const provider = emailTriageProviderFromEnv();
     if (!provider) {
       return await ctx.runMutation(triageRefs.recordCapturedEmailTriageFailure, {
@@ -526,6 +603,50 @@ export const processNextPendingCapturedEmailForBot = action({
     return await ctx.runMutation(triageRefs.processCapturedEmailTriageOutput, {
       capturedEmailId: capturedEmail._id,
       processedAt: resolvedProcessedAt,
+      triage
+    });
+  }
+});
+
+export const runDueForwardedEmailTriage = internalAction({
+  args: {},
+  handler: async (ctx) => {
+    const processedAt = Date.now();
+    const capturedEmail = await ctx.runMutation(triageRefs.claimNextPendingCapturedEmail, {
+      claimedAt: processedAt
+    });
+    if (!capturedEmail) return { status: 'idle' as const };
+
+    const provider = emailTriageProviderFromEnv();
+    if (!provider) {
+      return await ctx.runMutation(triageRefs.recordCapturedEmailTriageFailure, {
+        capturedEmailId: capturedEmail._id,
+        processedAt,
+        reason: 'setup_problem'
+      });
+    }
+
+    let triage: unknown;
+    try {
+      triage = await provider({
+        subject: capturedEmail.subject,
+        fromEmail: capturedEmail.fromEmail,
+        receivedAt: capturedEmail.receivedAt,
+        textBody: capturedEmail.textBody,
+        hasAttachments: capturedEmail.hasAttachments,
+        attachmentMetadata: capturedEmail.attachmentMetadata
+      });
+    } catch {
+      return await ctx.runMutation(triageRefs.recordCapturedEmailTriageFailure, {
+        capturedEmailId: capturedEmail._id,
+        processedAt,
+        reason: 'provider_failure'
+      });
+    }
+
+    return await ctx.runMutation(triageRefs.processCapturedEmailTriageOutput, {
+      capturedEmailId: capturedEmail._id,
+      processedAt,
       triage
     });
   }

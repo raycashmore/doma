@@ -393,12 +393,14 @@ protection. The Bot gateway verifies `RESEND_WEBHOOK_SECRET`, checks
 Bot gateway and the target Convex deployment before enabling forwarded email
 capture.
 
-Forwarded email triage runs in Convex after capture through
+Forwarded email triage runs in Convex cron every 10 minutes after capture, and
+can also be triggered manually through
 `email/triage:processNextPendingCapturedEmailForBot`. It requires
-`BOT_SERVICE_TOKEN`, `OPENAI_API_KEY`, and `FORWARDED_EMAIL_TRIAGE_AI_MODEL` in
-the target Convex deployment. The action processes the oldest pending captured
-email, stores either a current notice or a no-notice outcome, and records
-inspectable failure state. Telegram delivery is a separate explicit step.
+`OPENAI_API_KEY` and `FORWARDED_EMAIL_TRIAGE_AI_MODEL` in the target Convex
+deployment, plus `BOT_SERVICE_TOKEN` for the manual bot-triggered action. The
+triage action claims the oldest pending captured email, stores either a current
+notice or a no-notice outcome, and records inspectable failure state. Telegram
+delivery is a separate step.
 
 Forwarded email notice delivery runs in Convex through
 `email/deliveryRunner:deliverTelegramWorthyEmailNoticesForBot`. It requires
@@ -460,18 +462,17 @@ delivery attempt in Convex per recipient and delivery slot.
 Set these Convex env vars on every Convex deployment that should send morning
 briefings:
 
-| Variable                                    | Where it lives             | Notes                                                                                                                                                 |
-| ------------------------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `BOT_GATEWAY_ORIGIN`                        | Convex                     | Public Bot gateway origin, for example `https://bot.example.com`; no path or trailing slash                                                           |
-| `BOT_SERVICE_TOKEN`                         | Convex, Vercel Bot gateway | Bearer token Convex sends to `/notifications/send` and Schedule validates for bot capability                                                          |
-| `MORNING_BRIEFING_RECIPIENT_USER_IDS`       | Convex                     | Comma-separated Clerk user IDs that should receive scheduled morning briefings                                                                        |
-| `FORWARDED_EMAIL_NOTICE_RECIPIENT_USER_IDS` | Convex                     | Comma-separated Clerk user IDs that should receive Telegram-worthy forwarded email notices                                                            |
-| `MORNING_BRIEFING_TZ`                       | Convex                     | Optional; falls back to `SCHEDULE_TZ`, then `Australia/Sydney`                                                                                        |
-| `MORNING_BRIEFING_AI_MODEL`                 | Convex                     | Required with `OPENAI_API_KEY` for AI generation; otherwise generation uses deterministic text                                                        |
-| `MORNING_BRIEFING_LATITUDE`                 | Convex                     | Optional latitude for weather context in AI-generated morning briefings; configure with `MORNING_BRIEFING_LONGITUDE`                                  |
-| `MORNING_BRIEFING_LONGITUDE`                | Convex                     | Optional longitude for weather context in AI-generated morning briefings; configure with `MORNING_BRIEFING_LATITUDE`                                  |
-| `LIST_ITEMS_AI_MODEL`                       | Convex                     | Optional; with `OPENAI_API_KEY`, the model used to parse free-text Telegram captures into list items; otherwise a deterministic newline split is used |
-| `OPENAI_API_KEY`                            | Convex                     | Required with `MORNING_BRIEFING_AI_MODEL` (or `LIST_ITEMS_AI_MODEL`) for AI generation                                                                |
+| Variable                              | Where it lives             | Notes                                                                                                                                                 |
+| ------------------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `BOT_GATEWAY_ORIGIN`                  | Convex                     | Public Bot gateway origin, for example `https://bot.example.com`; no path or trailing slash                                                           |
+| `BOT_SERVICE_TOKEN`                   | Convex, Vercel Bot gateway | Bearer token Convex sends to `/notifications/send` and Schedule validates for bot capability                                                          |
+| `MORNING_BRIEFING_RECIPIENT_USER_IDS` | Convex                     | Comma-separated Clerk user IDs that should receive scheduled morning briefings                                                                        |
+| `MORNING_BRIEFING_TZ`                 | Convex                     | Optional; falls back to `SCHEDULE_TZ`, then `Australia/Sydney`                                                                                        |
+| `MORNING_BRIEFING_AI_MODEL`           | Convex                     | Required with `OPENAI_API_KEY` for AI generation; otherwise generation uses deterministic text                                                        |
+| `MORNING_BRIEFING_LATITUDE`           | Convex                     | Optional latitude for weather context in AI-generated morning briefings; configure with `MORNING_BRIEFING_LONGITUDE`                                  |
+| `MORNING_BRIEFING_LONGITUDE`          | Convex                     | Optional longitude for weather context in AI-generated morning briefings; configure with `MORNING_BRIEFING_LATITUDE`                                  |
+| `LIST_ITEMS_AI_MODEL`                 | Convex                     | Optional; with `OPENAI_API_KEY`, the model used to parse free-text Telegram captures into list items; otherwise a deterministic newline split is used |
+| `OPENAI_API_KEY`                      | Convex                     | Required with `MORNING_BRIEFING_AI_MODEL` (or `LIST_ITEMS_AI_MODEL`) for AI generation                                                                |
 
 Morning briefing operations:
 

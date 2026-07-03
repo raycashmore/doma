@@ -19,6 +19,7 @@ export type EmailNoticeDeliveryStatus = 'sent' | 'skipped' | 'failed';
 export type EmailNoticeDeliveryAttempt = {
   noticeId: string;
   recipientUserId: string;
+  attemptedAt?: number;
   status?: EmailNoticeDeliveryAttemptStatus;
 };
 
@@ -43,6 +44,8 @@ export type EmailNoticeDeliveryAttemptRecorder = (attempt: {
   status: EmailNoticeDeliveryAttemptStatus;
   providerErrorCode?: string;
 }) => Promise<{ claimed?: boolean } | unknown>;
+
+export const emailNoticeDeliveryPendingLeaseMs = 15 * 60 * 1000;
 
 function emptyCounts(): EmailNoticeDeliveryCounts {
   return {

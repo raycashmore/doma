@@ -236,6 +236,35 @@ describe('processCapturedEmailForTriageHandler', () => {
     });
   });
 
+  it('does not overwrite a terminal triage state after a competing runner finishes first', async () => {
+    const { ctx, tables } = createCtx({
+      capturedEmails: [capturedEmail]
+    });
+
+    const result = await processCapturedEmailForTriageHandler(ctx, {
+      capturedEmailId: 'capturedEmails_123',
+      processedAt: Date.parse('2026-07-03T08:20:00.000Z'),
+      provider: async () => {
+        Object.assign(tables.capturedEmails?.[0] ?? {}, {
+          processingState: 'noticeCreated',
+          processedAt: Date.parse('2026-07-03T08:19:00.000Z'),
+          updatedAt: Date.parse('2026-07-03T08:19:00.000Z')
+        });
+        throw new Error('late provider failure');
+      }
+    });
+
+    expect(result).toEqual({
+      status: 'noticeCreated',
+      capturedEmailId: 'capturedEmails_123'
+    });
+    expect(tables.capturedEmails?.[0]).toMatchObject({
+      processingState: 'noticeCreated',
+      processedAt: Date.parse('2026-07-03T08:19:00.000Z'),
+      updatedAt: Date.parse('2026-07-03T08:19:00.000Z')
+    });
+  });
+
   it('processes the oldest pending captured email asynchronously', async () => {
     const olderPending = {
       ...capturedEmail,
