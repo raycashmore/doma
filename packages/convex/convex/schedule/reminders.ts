@@ -40,7 +40,7 @@ export type ScheduleReminderCycleCounts = {
 
 export type ScheduleReminderNotificationSender = (notification: {
   recipientUserId: string;
-  topic: 'schedule.reminder' | 'briefing.morning';
+  topic: 'schedule.reminder' | 'briefing.morning' | 'email.notice';
   message: string;
   metadata: Record<string, string>;
 }) => Promise<{ status: ScheduleReminderDeliveryStatus; errorCode?: string }>;

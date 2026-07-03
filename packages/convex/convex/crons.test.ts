@@ -1,13 +1,17 @@
 import { describe, expect, it, vi } from 'vitest';
 
 const cronMocks = vi.hoisted(() => ({
+  daily: vi.fn(),
   interval: vi.fn(),
   morningBriefingDelivery: Symbol('morningBriefingDelivery'),
+  emailTriage: Symbol('emailTriage'),
+  emailNoticeDelivery: Symbol('emailNoticeDelivery'),
   scheduleReminderDelivery: Symbol('scheduleReminderDelivery')
 }));
 
 vi.mock('convex/server', () => ({
   cronJobs: () => ({
+    daily: cronMocks.daily,
     interval: cronMocks.interval
   })
 }));
@@ -19,6 +23,14 @@ vi.mock('./_generated/api', () => ({
         runDueMorningBriefingDelivery: cronMocks.morningBriefingDelivery
       }
     },
+    email: {
+      triage: {
+        runDueForwardedEmailTriage: cronMocks.emailTriage
+      },
+      deliveryRunner: {
+        runDueEmailNoticeDelivery: cronMocks.emailNoticeDelivery
+      }
+    },
     schedule: {
       reminderRunner: {
         runDueScheduleReminders: cronMocks.scheduleReminderDelivery
@@ -28,14 +40,36 @@ vi.mock('./_generated/api', () => ({
 }));
 
 describe('Convex cron registration', () => {
-  it('keeps morning briefing delivery as the only proactive schedule notification path', async () => {
+  it('registers proactive notification delivery without restoring event-level schedule reminders', async () => {
     await import('./crons');
 
-    expect(cronMocks.interval).toHaveBeenCalledOnce();
+    expect(cronMocks.interval).toHaveBeenCalledTimes(2);
+    expect(cronMocks.daily).toHaveBeenCalledTimes(4);
     expect(cronMocks.interval).toHaveBeenCalledWith(
       'morning briefing delivery',
       { minutes: 10 },
       cronMocks.morningBriefingDelivery
+    );
+    expect(cronMocks.interval).toHaveBeenCalledWith('forwarded email triage', { hours: 12 }, cronMocks.emailTriage);
+    expect(cronMocks.daily).toHaveBeenCalledWith(
+      'forwarded email notice delivery morning',
+      { hourUTC: 21, minuteUTC: 0 },
+      cronMocks.emailNoticeDelivery
+    );
+    expect(cronMocks.daily).toHaveBeenCalledWith(
+      'forwarded email notice delivery midday',
+      { hourUTC: 1, minuteUTC: 0 },
+      cronMocks.emailNoticeDelivery
+    );
+    expect(cronMocks.daily).toHaveBeenCalledWith(
+      'forwarded email notice delivery afternoon',
+      { hourUTC: 5, minuteUTC: 0 },
+      cronMocks.emailNoticeDelivery
+    );
+    expect(cronMocks.daily).toHaveBeenCalledWith(
+      'forwarded email notice delivery evening',
+      { hourUTC: 9, minuteUTC: 0 },
+      cronMocks.emailNoticeDelivery
     );
   });
 });
