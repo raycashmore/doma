@@ -135,6 +135,22 @@ Setup and operations live in [Deployment](deployment.md). Daily requirements
 calendar setup lives in
 [Schedule ingestion setup](schedule-ingestion-setup.md).
 
+## Forwarded email notices
+
+The `email/` module stores forwarded email source material in `capturedEmails`,
+turns useful messages into current `emailNotices`, and records
+`emailNoticeDeliveryAttempts` per notice and recipient. Triage and delivery are
+separate boundaries: triage creates a board-visible notice or no-notice outcome,
+while `email/deliveryRunner:deliverTelegramWorthyEmailNoticesForBot` sends only
+notices marked `telegramWorthy` through the Bot gateway's provider-neutral
+notification endpoint. Convex also runs the same notice delivery cycle from
+cron every 10 minutes.
+
+Forwarded email delivery uses `FORWARDED_EMAIL_NOTICE_RECIPIENT_USER_IDS`, not
+the morning briefing recipient configuration. Re-running delivery skips
+recipients with a sent or skipped attempt for the same notice, while failed
+attempts remain inspectable and can be retried by patching the same attempt row.
+
 ## Helper Functions (`helpers.ts`)
 
 Each table has corresponding helper functions that accept a `Doc<'tableName'>` and return derived values. The `computeTotals()` function aggregates across all tables for the grand total.

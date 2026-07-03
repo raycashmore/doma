@@ -8,6 +8,10 @@ type BriefingDeliveryRunnerRefs = {
   runDueMorningBriefingDelivery: FunctionReference<'action', 'internal', Record<string, never>, unknown>;
 };
 
+type EmailDeliveryRunnerRefs = {
+  runDueEmailNoticeDelivery: FunctionReference<'action', 'internal', Record<string, never>, unknown>;
+};
+
 const briefingDeliveryRunner: BriefingDeliveryRunnerRefs = (
   internal as unknown as {
     briefing: {
@@ -16,6 +20,15 @@ const briefingDeliveryRunner: BriefingDeliveryRunnerRefs = (
   }
 ).briefing.deliveryRunner;
 
+const emailDeliveryRunner: EmailDeliveryRunnerRefs = (
+  internal as unknown as {
+    email: {
+      deliveryRunner: EmailDeliveryRunnerRefs;
+    };
+  }
+).email.deliveryRunner;
+
 crons.interval('morning briefing delivery', { minutes: 10 }, briefingDeliveryRunner.runDueMorningBriefingDelivery);
+crons.interval('forwarded email notice delivery', { minutes: 10 }, emailDeliveryRunner.runDueEmailNoticeDelivery);
 
 export default crons;

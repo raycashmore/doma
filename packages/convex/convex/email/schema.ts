@@ -68,4 +68,17 @@ export const emailNoticesTable = defineTable({
   createdAt: v.number(),
   updatedAt: v.number(),
   archivedAt: v.optional(v.number())
-}).index('by_created_at', ['createdAt']);
+})
+  .index('by_created_at', ['createdAt'])
+  .index('by_telegram_worthy', ['telegramWorthy', 'createdAt']);
+
+export const emailNoticeDeliveryAttemptsTable = defineTable({
+  noticeId: v.id('emailNotices'),
+  recipientUserId: v.string(),
+  attemptedAt: v.number(),
+  status: v.union(v.literal('pending'), v.literal('sent'), v.literal('skipped'), v.literal('failed')),
+  providerErrorCode: v.optional(v.string())
+})
+  .index('by_notice_id', ['noticeId'])
+  .index('by_notice_recipient', ['noticeId', 'recipientUserId'])
+  .index('by_attempted_at', ['attemptedAt']);

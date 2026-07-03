@@ -10,7 +10,7 @@ import { defineSchema, defineTable } from 'convex/server';
 import { v } from 'convex/values';
 
 import { briefingDeliveryAttemptsTable, briefingsTable } from './briefing/schema';
-import { capturedEmailsTable, emailNoticesTable } from './email/schema';
+import { capturedEmailsTable, emailNoticeDeliveryAttemptsTable, emailNoticesTable } from './email/schema';
 import { scheduleEventsTable, scheduleReminderAttemptsTable, scheduleSyncMetaTable } from './schedule/schema';
 
 export default defineSchema({
@@ -177,6 +177,7 @@ export default defineSchema({
   // ============================================================
   capturedEmails: capturedEmailsTable,
   emailNotices: emailNoticesTable,
+  emailNoticeDeliveryAttempts: emailNoticeDeliveryAttemptsTable,
 
   // ============================================================
   // LISTS — Household list sharing and picker state

@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 const cronMocks = vi.hoisted(() => ({
   interval: vi.fn(),
   morningBriefingDelivery: Symbol('morningBriefingDelivery'),
+  emailNoticeDelivery: Symbol('emailNoticeDelivery'),
   scheduleReminderDelivery: Symbol('scheduleReminderDelivery')
 }));
 
@@ -19,6 +20,11 @@ vi.mock('./_generated/api', () => ({
         runDueMorningBriefingDelivery: cronMocks.morningBriefingDelivery
       }
     },
+    email: {
+      deliveryRunner: {
+        runDueEmailNoticeDelivery: cronMocks.emailNoticeDelivery
+      }
+    },
     schedule: {
       reminderRunner: {
         runDueScheduleReminders: cronMocks.scheduleReminderDelivery
@@ -28,14 +34,19 @@ vi.mock('./_generated/api', () => ({
 }));
 
 describe('Convex cron registration', () => {
-  it('keeps morning briefing delivery as the only proactive schedule notification path', async () => {
+  it('registers proactive notification delivery without restoring event-level schedule reminders', async () => {
     await import('./crons');
 
-    expect(cronMocks.interval).toHaveBeenCalledOnce();
+    expect(cronMocks.interval).toHaveBeenCalledTimes(2);
     expect(cronMocks.interval).toHaveBeenCalledWith(
       'morning briefing delivery',
       { minutes: 10 },
       cronMocks.morningBriefingDelivery
+    );
+    expect(cronMocks.interval).toHaveBeenCalledWith(
+      'forwarded email notice delivery',
+      { minutes: 10 },
+      cronMocks.emailNoticeDelivery
     );
   });
 });
