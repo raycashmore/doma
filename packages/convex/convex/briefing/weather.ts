@@ -1,6 +1,7 @@
 export type WeatherReadinessBlock = {
   temperatureC: { min: number; max: number };
   apparentTemperatureC: { min: number; max: number };
+  relativeHumidityPercent: { min: number; max: number } | null;
   rainChancePercent: number;
   maxWindGustKph: number;
   maxUvIndex: number;
@@ -25,6 +26,7 @@ type OpenMeteoHourly = {
   time: string[];
   temperature_2m: WeatherValue[];
   apparent_temperature: WeatherValue[];
+  relative_humidity_2m: WeatherValue[];
   precipitation_probability: WeatherValue[];
   wind_gusts_10m: WeatherValue[];
   uv_index: WeatherValue[];
@@ -35,10 +37,13 @@ type WeatherValue = number | null;
 const hourlyFields = [
   'temperature_2m',
   'apparent_temperature',
+  'relative_humidity_2m',
   'precipitation_probability',
   'wind_gusts_10m',
   'uv_index'
 ];
+
+const highHumidityPercent = 80;
 
 export async function loadMorningBriefingWeatherContext({
   localDate,
@@ -103,18 +108,28 @@ function parseHourly(body: unknown): OpenMeteoHourly | null {
 
   const hourly = body.hourly;
   const time = stringArray(hourly.time);
+  if (!time) return null;
+
   const temperature = weatherValueArray(hourly.temperature_2m);
   const apparentTemperature = weatherValueArray(hourly.apparent_temperature);
+  const relativeHumidity = optionalWeatherValueArray(hourly.relative_humidity_2m, time.length);
   const precipitationProbability = weatherValueArray(hourly.precipitation_probability);
   const windGusts = weatherValueArray(hourly.wind_gusts_10m);
   const uvIndex = weatherValueArray(hourly.uv_index);
-  if (!time || !temperature || !apparentTemperature || !precipitationProbability || !windGusts || !uvIndex) {
+  if (
+    !temperature ||
+    !apparentTemperature ||
+    !relativeHumidity ||
+    !precipitationProbability ||
+    !windGusts ||
+    !uvIndex
+  ) {
     return null;
   }
 
   const length = time.length;
   if (
-    [temperature, apparentTemperature, precipitationProbability, windGusts, uvIndex].some(
+    [temperature, apparentTemperature, relativeHumidity, precipitationProbability, windGusts, uvIndex].some(
       (values) => values.length !== length
     )
   ) {
@@ -125,6 +140,7 @@ function parseHourly(body: unknown): OpenMeteoHourly | null {
     time,
     temperature_2m: temperature,
     apparent_temperature: apparentTemperature,
+    relative_humidity_2m: relativeHumidity,
     precipitation_probability: precipitationProbability,
     wind_gusts_10m: windGusts,
     uv_index: uvIndex
@@ -148,18 +164,21 @@ function summarizeBlock(
   const apparentTemperature = valuesAt(hourly.apparent_temperature, indices);
   if (temperature.length === 0 || apparentTemperature.length === 0) return null;
 
+  const relativeHumidity = valuesAt(hourly.relative_humidity_2m, indices);
   const rainChance = maxOrZero(valuesAt(hourly.precipitation_probability, indices));
   const windGust = maxOrZero(valuesAt(hourly.wind_gusts_10m, indices));
   const uvIndex = maxOrZero(valuesAt(hourly.uv_index, indices));
   const block = {
     temperatureC: range(temperature),
     apparentTemperatureC: range(apparentTemperature),
+    relativeHumidityPercent: relativeHumidity.length > 0 ? range(relativeHumidity) : null,
     rainChancePercent: rainChance,
     maxWindGustKph: windGust,
     maxUvIndex: uvIndex,
     readiness: readinessHints({
       apparentTemperatureMin: min(apparentTemperature),
       temperatureMax: max(temperature),
+      relativeHumidityMax: relativeHumidity.length > 0 ? max(relativeHumidity) : 0,
       rainChance,
       windGust,
       uvIndex
@@ -178,12 +197,14 @@ function localHourFor(time: string, localDate: string) {
 function readinessHints({
   apparentTemperatureMin,
   temperatureMax,
+  relativeHumidityMax,
   rainChance,
   windGust,
   uvIndex
 }: {
   apparentTemperatureMin: number;
   temperatureMax: number;
+  relativeHumidityMax: number;
   rainChance: number;
   windGust: number;
   uvIndex: number;
@@ -194,6 +215,7 @@ function readinessHints({
   if (temperatureMax >= 30) hints.push('heat plan');
   if (windGust >= 40) hints.push('wind-aware pickup');
   if (uvIndex >= 6) hints.push('sun protection');
+  if (relativeHumidityMax >= highHumidityPercent) hints.push('allergy humidity');
   return hints;
 }
 
@@ -204,6 +226,7 @@ function summarizeDay(morning: WeatherReadinessBlock, afternoon: WeatherReadines
   if (morning.readiness.includes('wind-aware pickup')) parts.push('windy morning');
   if (morning.readiness.includes('heat plan')) parts.push('Hot morning');
   if (morning.readiness.includes('sun protection')) parts.push('high UV morning');
+  if (morning.readiness.includes('allergy humidity')) parts.push('High morning humidity for allergy control');
   summarizeAfternoon(afternoon, parts);
   if (parts.length === 0) return 'Weather looks ordinary for readiness.';
   return `${parts.join(', ')}.`;
@@ -219,6 +242,7 @@ function summarizeAfternoon(afternoon: WeatherReadinessBlock, parts: string[]) {
   }
   if (afternoon.readiness.includes('heat plan')) parts.push('Hot afternoon');
   if (afternoon.readiness.includes('sun protection')) parts.push('high UV afternoon');
+  if (afternoon.readiness.includes('allergy humidity')) parts.push('high afternoon humidity for allergy control');
 }
 
 function valuesAt(values: WeatherValue[], indices: number[]) {
@@ -253,6 +277,10 @@ function weatherValueArray(value: unknown) {
     value.every((item) => item === null || (typeof item === 'number' && Number.isFinite(item)))
     ? value
     : null;
+}
+
+function optionalWeatherValueArray(value: unknown, length: number) {
+  return value === undefined ? Array<WeatherValue>(length).fill(null) : weatherValueArray(value);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

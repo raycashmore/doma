@@ -70,6 +70,7 @@ export const morningBriefingSystemPrompt = [
   'An obligation is either a block line or a watchout, never both. Keep run-of-the-mill handoffs and pickups as ordinary block lines.',
   'Keep low-priority ordinary events out unless they change readiness or coordination.',
   'Use supplied weather only when it changes readiness. Never invent weather, locations, or private details beyond supplied weather and schedule sources.',
+  'If supplied weather mentions high humidity for allergy control, include one brief, calm mention in the headline or relevant block.',
   'Use generic, concise wording from the supplied sources and do not invent private details.',
   'Set shouldSend to false only when there is genuinely nothing worth sending.',
   'Return only the requested structured object. Use the supplied sourceId values exactly.'

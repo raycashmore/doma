@@ -15,6 +15,7 @@ describe('loadMorningBriefingWeatherContext', () => {
               time: ['2026-06-12T07:00', '2026-06-12T09:00', '2026-06-12T13:00', '2026-06-12T15:00'],
               temperature_2m: [9, 11, 15, 14],
               apparent_temperature: [6, 8, 13, 12],
+              relative_humidity_2m: [65, 67, 60, 62],
               precipitation_probability: [10, 20, 75, 80],
               wind_gusts_10m: [12, 18, 34, 42],
               uv_index: [0, 2, 5, 3]
@@ -36,6 +37,7 @@ describe('loadMorningBriefingWeatherContext', () => {
       morning: {
         temperatureC: { min: 9, max: 11 },
         apparentTemperatureC: { min: 6, max: 8 },
+        relativeHumidityPercent: { min: 65, max: 67 },
         rainChancePercent: 20,
         maxWindGustKph: 18,
         maxUvIndex: 2,
@@ -44,6 +46,7 @@ describe('loadMorningBriefingWeatherContext', () => {
       afternoon: {
         temperatureC: { min: 14, max: 15 },
         apparentTemperatureC: { min: 12, max: 13 },
+        relativeHumidityPercent: { min: 60, max: 62 },
         rainChancePercent: 80,
         maxWindGustKph: 42,
         maxUvIndex: 5,
@@ -61,7 +64,7 @@ describe('loadMorningBriefingWeatherContext', () => {
     expect(url.searchParams.get('end_date')).toBe(localDate);
     expect(url.searchParams.get('timezone')).toBe(timeZone);
     expect(url.searchParams.get('hourly')).toBe(
-      'temperature_2m,apparent_temperature,precipitation_probability,wind_gusts_10m,uv_index'
+      'temperature_2m,apparent_temperature,relative_humidity_2m,precipitation_probability,wind_gusts_10m,uv_index'
     );
   });
 
@@ -106,6 +109,39 @@ describe('loadMorningBriefingWeatherContext', () => {
 
     expect(context?.summary).toBe('Hot afternoon, high UV afternoon.');
     expect(context?.afternoon.readiness).toEqual(['heat plan', 'sun protection']);
+  });
+
+  it('mentions allergy-relevant humidity only when relative humidity is high', async () => {
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            hourly: {
+              time: ['2026-06-12T07:00', '2026-06-12T09:00', '2026-06-12T13:00', '2026-06-12T15:00'],
+              temperature_2m: [18, 20, 23, 24],
+              apparent_temperature: [18, 20, 23, 24],
+              relative_humidity_2m: [82, 84, 62, 60],
+              precipitation_probability: [0, 0, 0, 0],
+              wind_gusts_10m: [10, 12, 15, 18],
+              uv_index: [1, 3, 5, 4]
+            }
+          })
+        )
+    );
+
+    const context = await loadMorningBriefingWeatherContext({
+      localDate,
+      timeZone,
+      latitude: -33.86,
+      longitude: 151.2,
+      fetchImpl
+    });
+
+    expect(context?.summary).toBe('High morning humidity for allergy control.');
+    expect(context?.morning.relativeHumidityPercent).toEqual({ min: 82, max: 84 });
+    expect(context?.morning.readiness).toEqual(['allergy humidity']);
+    expect(context?.afternoon.relativeHumidityPercent).toEqual({ min: 60, max: 62 });
+    expect(context?.afternoon.readiness).toEqual([]);
   });
 
   it('skips isolated null hourly values instead of dropping the whole forecast', async () => {

@@ -39,6 +39,7 @@ const weather: MorningBriefingWeatherContext = {
   morning: {
     temperatureC: { min: 8, max: 11 },
     apparentTemperatureC: { min: 6, max: 9 },
+    relativeHumidityPercent: { min: 64, max: 68 },
     rainChancePercent: 20,
     maxWindGustKph: 18,
     maxUvIndex: 2,
@@ -47,6 +48,7 @@ const weather: MorningBriefingWeatherContext = {
   afternoon: {
     temperatureC: { min: 13, max: 15 },
     apparentTemperatureC: { min: 12, max: 13 },
+    relativeHumidityPercent: { min: 58, max: 62 },
     rainChancePercent: 40,
     maxWindGustKph: 24,
     maxUvIndex: 4,

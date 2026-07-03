@@ -171,6 +171,8 @@ function weatherReadinessText(hint: string) {
       return 'Plan for windy pickup conditions this afternoon.';
     case 'sun protection':
       return 'Sun protection may help this afternoon.';
+    case 'allergy humidity':
+      return 'High humidity may matter for allergy control this afternoon.';
     default:
       return `${normalizeBriefingText(hint)} may help this afternoon.`;
   }

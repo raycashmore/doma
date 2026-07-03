@@ -27,6 +27,7 @@ const weather: MorningBriefingWeatherContext = {
   morning: {
     temperatureC: { min: 8, max: 11 },
     apparentTemperatureC: { min: 6, max: 9 },
+    relativeHumidityPercent: { min: 64, max: 68 },
     rainChancePercent: 20,
     maxWindGustKph: 18,
     maxUvIndex: 2,
@@ -35,6 +36,7 @@ const weather: MorningBriefingWeatherContext = {
   afternoon: {
     temperatureC: { min: 13, max: 15 },
     apparentTemperatureC: { min: 12, max: 13 },
+    relativeHumidityPercent: { min: 58, max: 62 },
     rainChancePercent: 70,
     maxWindGustKph: 30,
     maxUvIndex: 4,
@@ -683,6 +685,7 @@ describe('morningBriefingSystemPrompt', () => {
     expect(morningBriefingSystemPrompt).toContain('Morning and afternoon readiness');
     expect(morningBriefingSystemPrompt).toContain('pre-noon');
     expect(morningBriefingSystemPrompt).toContain('supplied weather');
+    expect(morningBriefingSystemPrompt).toContain('high humidity for allergy control');
   });
 
   it('instructs the model to keep generated prose plain text', () => {

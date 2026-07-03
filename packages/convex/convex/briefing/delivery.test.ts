@@ -494,6 +494,7 @@ This morning:
       morning: {
         temperatureC: { min: 12, max: 18 },
         apparentTemperatureC: { min: 12, max: 18 },
+        relativeHumidityPercent: { min: 58, max: 62 },
         rainChancePercent: 10,
         maxWindGustKph: 10,
         maxUvIndex: 2,
@@ -502,6 +503,7 @@ This morning:
       afternoon: {
         temperatureC: { min: 17, max: 21 },
         apparentTemperatureC: { min: 16, max: 20 },
+        relativeHumidityPercent: { min: 70, max: 74 },
         rainChancePercent: 80,
         maxWindGustKph: 12,
         maxUvIndex: 3,
@@ -664,6 +666,7 @@ This morning:
       morning: {
         temperatureC: { min: 12, max: 18 },
         apparentTemperatureC: { min: 12, max: 18 },
+        relativeHumidityPercent: { min: 58, max: 62 },
         rainChancePercent: 10,
         maxWindGustKph: 10,
         maxUvIndex: 2,
@@ -672,6 +675,7 @@ This morning:
       afternoon: {
         temperatureC: { min: 17, max: 21 },
         apparentTemperatureC: { min: 16, max: 20 },
+        relativeHumidityPercent: { min: 70, max: 74 },
         rainChancePercent: 80,
         maxWindGustKph: 12,
         maxUvIndex: 3,
