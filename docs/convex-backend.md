@@ -43,7 +43,11 @@ Store only raw inputs in the database. All computed values are calculated at rea
   per-recipient delivery attempts; email tables store forwarded email captures,
   triage notices, and per-recipient notice delivery attempts; the
   `spendingInsights` table stores AI-written monthly spending insights keyed by
-  calendar month (`by_month_key`).
+  calendar month (`by_month_key`). The `insights/` module generates them via a
+  12-hour cron sweep: input assembly from budget and spend category rows
+  (`insights/assembly.ts`), an OpenAI-compatible provider with defensive
+  parsing (`insights/ai.ts`), and an idempotent runner that never stores a
+  second insight for a month (`insights/generation.ts`).
 - **Date field:** All financial tables indexed by `date` (Unix timestamp in milliseconds) with a `by_date` index
 - **Crypto tables:** Use `by_platform` indexing in addition to date
 - **Derived field comments:** Schema marks derived fields with `// DERIVED: ...` comments
