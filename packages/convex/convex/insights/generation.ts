@@ -3,12 +3,14 @@ import { v } from 'convex/values';
 
 import { internal } from '../_generated/api';
 import { internalAction, internalMutation, internalQuery } from '../_generated/server';
+import { monthKeyFromTimestamp } from '../spendingSummary';
 import { createOpenAiSpendingInsightProvider, parseSpendingInsight, type SpendingInsightAiProvider } from './ai';
 import {
   buildSpendingInsightAiInput,
   latestMonthKeyNeedingInsight,
   type SpendingInsightBreakdownRow,
-  type SpendingInsightBudgetRow
+  type SpendingInsightBudgetRow,
+  trailingSpendingInsightMonthKeys
 } from './assembly';
 
 export type SpendingInsightSweepSource = {
@@ -141,30 +143,38 @@ export const spendingInsightSweepSource = internalQuery({
   handler: async (ctx): Promise<SpendingInsightSweepSource | null> => {
     const breakdownRows = await ctx.db.query('spendCategoryBreakdown').collect();
     const insightRows = await ctx.db.query('spendingInsights').collect();
+    const budgetRows = await ctx.db.query('budget').collect();
     const targetMonthKey = latestMonthKeyNeedingInsight({
       breakdownMonthKeys: breakdownRows.map((row) => row.monthKey),
+      budgetMonthKeys: budgetRows.map((row) => monthKeyFromTimestamp(row.date)),
       insightMonthKeys: insightRows.map((row) => row.monthKey)
     });
     if (!targetMonthKey) return null;
 
-    const budgetRows = await ctx.db.query('budget').collect();
+    // Only the trailing window feeds the AI input; keep the payload bounded
+    // as history accumulates.
+    const windowMonthKeys = new Set(trailingSpendingInsightMonthKeys(targetMonthKey));
     return {
       targetMonthKey,
-      breakdownRows: breakdownRows.map((row) => ({
-        monthKey: row.monthKey,
-        category: row.category,
-        amount: row.amount
-      })),
-      budgetRows: budgetRows.map((row) => ({
-        date: row.date,
-        incomePrimary: row.incomePrimary,
-        incomeSecondary: row.incomeSecondary,
-        billContrib: row.billContrib,
-        credit1: row.credit1,
-        credit2: row.credit2,
-        credit3: row.credit3,
-        oneOffs: row.oneOffs
-      }))
+      breakdownRows: breakdownRows
+        .filter((row) => windowMonthKeys.has(row.monthKey))
+        .map((row) => ({
+          monthKey: row.monthKey,
+          category: row.category,
+          amount: row.amount
+        })),
+      budgetRows: budgetRows
+        .filter((row) => windowMonthKeys.has(monthKeyFromTimestamp(row.date)))
+        .map((row) => ({
+          date: row.date,
+          incomePrimary: row.incomePrimary,
+          incomeSecondary: row.incomeSecondary,
+          billContrib: row.billContrib,
+          credit1: row.credit1,
+          credit2: row.credit2,
+          credit3: row.credit3,
+          oneOffs: row.oneOffs
+        }))
     };
   }
 });

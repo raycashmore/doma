@@ -406,13 +406,20 @@ local wall-clock time.
 
 Monthly spending insight generation runs in Convex cron every 12 hours (also an
 interval, not a wall-clock time). Each sweep finds the latest calendar month
-that has `spendCategoryBreakdown` data but no stored `spendingInsights` row,
-assembles the trailing ~12 months of spend categories and budget-level totals,
-and asks the model for a headline, observations, and a next-month prediction.
-It requires `OPENAI_API_KEY` and `SPENDING_INSIGHT_AI_MODEL` in the target
-Convex deployment; when either is unset the sweep skips cleanly. Failures and
-malformed AI output store nothing, so the next sweep retries the same month.
-Deleting a `spendingInsights` row causes the next sweep to regenerate it.
+that has both `spendCategoryBreakdown` data and a `budget` row but no stored
+`spendingInsights` row, assembles the trailing ~12 months of spend categories
+and budget-level totals, and asks the model for a headline, observations, and a
+next-month prediction. It requires `OPENAI_API_KEY` and
+`SPENDING_INSIGHT_AI_MODEL` in the target Convex deployment; when either is
+unset the sweep skips cleanly. Failures and malformed AI output store nothing,
+so the next sweep retries the same month. Deleting a `spendingInsights` row
+causes a later sweep to regenerate it — each sweep fills the latest missing
+eligible month first, one month per sweep.
+
+Privacy: enabling this cron sends budget-level totals (income, one-offs, card
+spend), spend category labels, and category amounts for the trailing ~12
+months to the configured OpenAI-compatible provider. Account balances,
+mortgage, and investment data are never included.
 
 Forwarded email notice delivery runs in Convex through
 `email/deliveryRunner:deliverTelegramWorthyEmailNoticesForBot`. It requires

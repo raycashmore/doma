@@ -36,19 +36,26 @@ export type SpendingInsightAiInput = {
 
 const trailingMonthCount = 12;
 
+// A month is eligible once both its spend category breakdown and its budget
+// row exist; insights are immutable, so generating from breakdown data alone
+// could permanently store an under-informed insight.
 export function latestMonthKeyNeedingInsight({
   breakdownMonthKeys,
+  budgetMonthKeys,
   insightMonthKeys
 }: {
   breakdownMonthKeys: string[];
+  budgetMonthKeys: string[];
   insightMonthKeys: string[];
 }): string | null {
-  let latest: string | null = null;
+  const budgetMonths = new Set(budgetMonthKeys);
+  const insightMonths = new Set(insightMonthKeys);
+  let target: string | null = null;
   for (const monthKey of breakdownMonthKeys) {
-    if (!latest || monthKey > latest) latest = monthKey;
+    if (!budgetMonths.has(monthKey) || insightMonths.has(monthKey)) continue;
+    if (!target || monthKey > target) target = monthKey;
   }
-  if (!latest) return null;
-  return insightMonthKeys.includes(latest) ? null : latest;
+  return target;
 }
 
 export function buildSpendingInsightAiInput({
@@ -90,6 +97,10 @@ export function buildSpendingInsightAiInput({
   });
 
   return { targetMonthKey, months };
+}
+
+export function trailingSpendingInsightMonthKeys(targetMonthKey: string): string[] {
+  return trailingMonthKeys(targetMonthKey);
 }
 
 function trailingMonthKeys(targetMonthKey: string): string[] {

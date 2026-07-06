@@ -26,32 +26,67 @@ function budgetRow(dateIso: string, overrides: Partial<SpendingInsightBudgetRow>
 }
 
 describe('latestMonthKeyNeedingInsight', () => {
-  it('returns the latest breakdown month when no insight is stored for it', () => {
+  it('returns the latest month with breakdown and budget data when no insight is stored for it', () => {
     expect(
       latestMonthKeyNeedingInsight({
         breakdownMonthKeys: ['2026-04', '2026-05', '2026-06'],
+        budgetMonthKeys: ['2026-04', '2026-05', '2026-06'],
         insightMonthKeys: ['2026-04', '2026-05']
       })
     ).toBe('2026-06');
   });
 
-  it('returns null when the latest breakdown month already has an insight', () => {
+  it('returns null when every eligible month already has an insight', () => {
     expect(
       latestMonthKeyNeedingInsight({
         breakdownMonthKeys: ['2026-05', '2026-06'],
-        insightMonthKeys: ['2026-06']
+        budgetMonthKeys: ['2026-05', '2026-06'],
+        insightMonthKeys: ['2026-05', '2026-06']
       })
     ).toBeNull();
   });
 
   it('returns null when there is no breakdown data at all', () => {
-    expect(latestMonthKeyNeedingInsight({ breakdownMonthKeys: [], insightMonthKeys: [] })).toBeNull();
+    expect(
+      latestMonthKeyNeedingInsight({ breakdownMonthKeys: [], budgetMonthKeys: ['2026-06'], insightMonthKeys: [] })
+    ).toBeNull();
+  });
+
+  it('waits for the budget row: a breakdown-only month is not eligible', () => {
+    expect(
+      latestMonthKeyNeedingInsight({
+        breakdownMonthKeys: ['2026-05', '2026-06'],
+        budgetMonthKeys: ['2026-05'],
+        insightMonthKeys: []
+      })
+    ).toBe('2026-05');
+  });
+
+  it('returns null when no month has both breakdown and budget data', () => {
+    expect(
+      latestMonthKeyNeedingInsight({
+        breakdownMonthKeys: ['2026-06'],
+        budgetMonthKeys: ['2026-05'],
+        insightMonthKeys: []
+      })
+    ).toBeNull();
+  });
+
+  it('regenerates a deleted older insight even when newer months have insights', () => {
+    expect(
+      latestMonthKeyNeedingInsight({
+        breakdownMonthKeys: ['2026-04', '2026-05', '2026-06'],
+        budgetMonthKeys: ['2026-04', '2026-05', '2026-06'],
+        insightMonthKeys: ['2026-04', '2026-06']
+      })
+    ).toBe('2026-05');
   });
 
   it('compares month keys across year boundaries', () => {
     expect(
       latestMonthKeyNeedingInsight({
         breakdownMonthKeys: ['2025-12', '2026-01'],
+        budgetMonthKeys: ['2025-12', '2026-01'],
         insightMonthKeys: []
       })
     ).toBe('2026-01');
