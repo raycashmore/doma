@@ -11,6 +11,7 @@ import { v } from 'convex/values';
 
 import { briefingDeliveryAttemptsTable, briefingsTable } from './briefing/schema';
 import { capturedEmailsTable, emailNoticeDeliveryAttemptsTable, emailNoticesTable } from './email/schema';
+import { spendingInsightsTable } from './insights/schema';
 import { scheduleEventsTable, scheduleReminderAttemptsTable, scheduleSyncMetaTable } from './schedule/schema';
 
 export default defineSchema({
@@ -135,6 +136,11 @@ export default defineSchema({
     category: v.string(),
     amount: v.number()
   }).index('by_month', ['monthKey']),
+
+  // ============================================================
+  // SPENDING INSIGHTS — Monthly AI-written spending commentary
+  // ============================================================
+  spendingInsights: spendingInsightsTable,
 
   // ============================================================
   // CRYPTO — Deposit/withdrawal transactions

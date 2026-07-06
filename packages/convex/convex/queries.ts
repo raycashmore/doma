@@ -25,6 +25,7 @@ import {
   ukTotalAud,
   ukTotalGbp
 } from './helpers';
+import { pickLatestSpendingInsight } from './insights/latest';
 import { shapeMonthDetail } from './monthDetail';
 import { buildMonthlyBreakdown, buildMortgageByMonth, utcYearMonthKey } from './monthlyBreakdown';
 import { monthKeyFromTimestamp } from './spendingSummary';
@@ -419,6 +420,25 @@ export const getMonthlyDetail = query({
       : null;
 
     return shapeMonthDetail(budget, mortgage, mortgageConfig, priorBudget, priorMortgage, spendCategories);
+  }
+});
+
+// ============================================================
+// SPENDING INSIGHTS — Latest monthly spending insight for the panel
+// ============================================================
+export const getLatestSpendingInsight = query({
+  handler: async (ctx) => {
+    const rows = await ctx.db.query('spendingInsights').withIndex('by_month_key').collect();
+    const latest = pickLatestSpendingInsight(rows);
+    if (!latest) return null;
+
+    return {
+      monthKey: latest.monthKey,
+      headline: latest.headline,
+      observations: latest.observations,
+      prediction: latest.prediction,
+      generatedAt: latest.generatedAt
+    };
   }
 });
 

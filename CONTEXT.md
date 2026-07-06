@@ -36,6 +36,10 @@ _Avoid_: Display date, month date
 The month-and-year period used for source data that is not shifted into a budget display month. Spending summary category analytics use calendar month; day-of-month differences in that source do not create separate periods.
 _Avoid_: Exact source date, statement date
 
+**Monthly spending insight**:
+An AI-written commentary for a **calendar month**, produced once when that month's budget and **spend category breakdown** data is available and kept until the next month's insight exists. It contains a short headline, a few non-obvious pattern observations drawn from roughly twelve months of history, and one explicit prediction for the following month. A monthly spending insight is immutable; regenerating one means deleting it and letting generation run again.
+_Avoid_: Tip, recommendation feed, spending report
+
 **Morning briefing**:
 A once-per-morning household readiness summary focused on what needs attention before the day gets moving. It is distinct from event reminders because it highlights daily actions, risks, and context rather than notifying about each upcoming event.
 _Avoid_: Morning schedule briefing, schedule reminder, calendar notification, event alert
@@ -109,6 +113,14 @@ Domain expert: "Yes. The budget capture is shown under April, and the April spen
 Dev: "Should the card spend by category panel total add up the visible categories?"
 
 Domain expert: "No. Keep the panel total as the budget card spend subtotal. The category rows are context only."
+
+Dev: "The April data was corrected after its monthly spending insight was written. Should the insight update itself?"
+
+Domain expert: "No. Historical finance data is effectively immutable, so an insight is generated once. To rewrite one, delete it and let generation run again."
+
+Dev: "When browsing an old month, should the insights panel show that month's insight?"
+
+Domain expert: "No. The panel shows the latest monthly spending insight until the next one exists; older insights are retained but not surfaced."
 
 Dev: "Is the morning briefing just a schedule reminder?"
 

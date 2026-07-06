@@ -41,7 +41,9 @@ Store only raw inputs in the database. All computed values are calculated at rea
 - Financial tables store source finance data; schedule tables cache read-only
   Google Calendar data; briefing tables store generated morning briefings and
   per-recipient delivery attempts; email tables store forwarded email captures,
-  triage notices, and per-recipient notice delivery attempts.
+  triage notices, and per-recipient notice delivery attempts; the
+  `spendingInsights` table stores AI-written monthly spending insights keyed by
+  calendar month (`by_month_key`).
 - **Date field:** All financial tables indexed by `date` (Unix timestamp in milliseconds) with a `by_date` index
 - **Crypto tables:** Use `by_platform` indexing in addition to date
 - **Derived field comments:** Schema marks derived fields with `// DERIVED: ...` comments
