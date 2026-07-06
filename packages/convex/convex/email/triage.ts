@@ -126,7 +126,7 @@ const categories = new Set<EmailNoticeCategory>(['school', 'admin', 'schedule', 
 const priorities = new Set<EmailNoticePriority>(['low', 'medium', 'high']);
 const terminalProcessingStates = new Set<TerminalCapturedEmailProcessingState>(['noNotice', 'noticeCreated', 'failed']);
 const emailTriageProcessingLeaseMs = 15 * 60 * 1000;
-const triageRefs = (
+const triageRefs: TriageRefs = (
   internal as unknown as {
     email: {
       triage: TriageRefs;
@@ -381,7 +381,7 @@ export async function processNextPendingCapturedEmailHandler(
     .query('capturedEmails')
     .withIndex('by_processing_state', (q) => q.eq('processingState', 'pending'))
     .collect();
-  const next = pending.toSorted((left, right) => left.capturedAt - right.capturedAt)[0];
+  const next = [...pending].sort((left, right) => left.capturedAt - right.capturedAt)[0];
   if (!next) {
     return {
       status: 'idle' as const
@@ -479,7 +479,7 @@ export const nextPendingCapturedEmail = internalQuery({
       .query('capturedEmails')
       .withIndex('by_processing_state', (q) => q.eq('processingState', 'pending'))
       .collect();
-    return pending.toSorted((left, right) => left.capturedAt - right.capturedAt)[0] ?? null;
+    return [...pending].sort((left, right) => left.capturedAt - right.capturedAt)[0] ?? null;
   }
 });
 
@@ -498,7 +498,7 @@ export const claimNextPendingCapturedEmail = internalMutation({
         .withIndex('by_processing_state', (q) => q.eq('processingState', 'processing'))
         .collect()
     ).filter((email) => claimedAt - email.updatedAt >= emailTriageProcessingLeaseMs);
-    const next = [...pending, ...staleProcessing].toSorted((left, right) => left.capturedAt - right.capturedAt)[0];
+    const next = [...pending, ...staleProcessing].sort((left, right) => left.capturedAt - right.capturedAt)[0];
     if (!next) return null;
 
     await ctx.db.patch(next._id, {
