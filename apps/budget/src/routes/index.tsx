@@ -39,6 +39,7 @@ function BudgetPage() {
     limit: periodLimit
   });
   const detail = useQuery(api.queries.getMonthlyDetail, openMonth !== null ? { date: openMonth } : 'skip');
+  const insight = useQuery(api.queries.getLatestSpendingInsight);
   const adjacentMonths = useMemo(() => {
     if (!rows || openMonth === null) {
       return { previous: null, next: null };
@@ -67,7 +68,7 @@ function BudgetPage() {
           <BudgetBreakdownTable rows={rows} onRowClick={(date) => setOpenMonth(date)} />
         </div>
 
-        <InsightsPanel />
+        <InsightsPanel insight={insight} />
       </div>
 
       <MonthlyDetailOverlay
