@@ -2,6 +2,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 
 import { Hono } from 'hono';
 
+import { createConvexInsightsAnswer, createInsightsCapability } from './capabilities/insightsCapability.js';
 import type { BotConfig } from './config.js';
 import { getConfig } from './config.js';
 import { createHttpCapability } from './dispatch/httpCapability.js';
@@ -50,6 +51,16 @@ function createRuntimeCapabilities(config: BotConfig): Record<string, Capability
       endpointUrl: config.listsCapabilityUrl,
       serviceToken: config.botServiceToken,
       timeoutMs: config.listsCapabilityTimeoutMs
+    });
+  }
+
+  if (config.convexUrl) {
+    // Runs in-process: the LLM intent router classifies spending insight
+    // questions here, and the capability calls Convex directly for the
+    // grounded answer.
+    capabilities.insights = createInsightsCapability({
+      answerQuestion: createConvexInsightsAnswer(config),
+      timeoutMs: config.insightsCapabilityTimeoutMs
     });
   }
 
