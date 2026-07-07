@@ -26,6 +26,7 @@ describe('parseConfig', () => {
       scheduleCapabilityTimeoutMs: 15_000,
       listsCapabilityUrl: undefined,
       listsCapabilityTimeoutMs: 15_000,
+      insightsCapabilityTimeoutMs: 15_000,
       forwardedEmailAllowedSenders: [],
       resendApiKey: undefined,
       resendWebhookSecret: undefined,
@@ -90,6 +91,9 @@ describe('parseConfig', () => {
 
   it('accepts an optional positive lists capability timeout', () => {
     expect(parseConfig({ ...validEnv, LISTS_CAPABILITY_TIMEOUT_MS: '20000' }).listsCapabilityTimeoutMs).toBe(20_000);
+    expect(parseConfig({ ...validEnv, INSIGHTS_CAPABILITY_TIMEOUT_MS: '20000' }).insightsCapabilityTimeoutMs).toBe(
+      20_000
+    );
   });
 
   it('accepts an optional positive schedule capability timeout', () => {

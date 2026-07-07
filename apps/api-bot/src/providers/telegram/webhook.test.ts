@@ -14,6 +14,7 @@ const config: BotConfig = {
   convexUrl: 'https://convex.example.com',
   scheduleCapabilityTimeoutMs: 15_000,
   listsCapabilityTimeoutMs: 15_000,
+  insightsCapabilityTimeoutMs: 15_000,
   forwardedEmailAllowedSenders: [],
   resendApiKey: undefined,
   resendWebhookSecret: undefined,

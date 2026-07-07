@@ -59,7 +59,8 @@ function createRuntimeCapabilities(config: BotConfig): Record<string, Capability
     // questions here, and the capability calls Convex directly for the
     // grounded answer.
     capabilities.insights = createInsightsCapability({
-      answerQuestion: createConvexInsightsAnswer(config)
+      answerQuestion: createConvexInsightsAnswer(config),
+      timeoutMs: config.insightsCapabilityTimeoutMs
     });
   }
 

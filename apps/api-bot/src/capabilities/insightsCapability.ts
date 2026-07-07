@@ -16,21 +16,31 @@ export type AnswerSpendingInsightQuestion = (question: string) => Promise<Spendi
 export const NO_INSIGHT_REPLY =
   'There are no spending insights yet. The first one appears once a month of budget and card spend data is ready.';
 
+const DEFAULT_TIMEOUT_MS = 15_000;
+
 /**
  * The insights capability answers natural-language questions about the stored
  * monthly spending insights. It runs in-process (no HTTP endpoint) and calls a
  * Convex action that grounds the answer in the stored latest insight; the
- * injected `answerQuestion` keeps unit tests off the network.
+ * injected `answerQuestion` keeps unit tests off the network. Answering is
+ * bounded by `timeoutMs` because it runs inside the Telegram webhook handler.
  */
 export function createInsightsCapability({
-  answerQuestion
+  answerQuestion,
+  timeoutMs = DEFAULT_TIMEOUT_MS
 }: {
   answerQuestion: AnswerSpendingInsightQuestion;
+  timeoutMs?: number;
 }): CapabilityHandler {
   return async (request) => {
-    const result = await answerQuestion(request.messageText);
+    const result = await withTimeout(answerQuestion(request.messageText), timeoutMs);
 
-    if (result.status === 'answered' && typeof result.answer === 'string') {
+    if (result === 'timed_out') {
+      console.warn('[api-bot.capability] Insights answer timed out', { timeoutMs });
+      return CAPABILITY_FALLBACK_RESPONSE;
+    }
+
+    if (result.status === 'answered' && typeof result.answer === 'string' && result.answer.trim().length > 0) {
       return { kind: 'reply', text: result.answer };
     }
 
@@ -40,6 +50,19 @@ export function createInsightsCapability({
 
     return CAPABILITY_FALLBACK_RESPONSE;
   };
+}
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T | 'timed_out'> {
+  let timeout: NodeJS.Timeout | undefined;
+  const timedOut = new Promise<'timed_out'>((resolve) => {
+    timeout = setTimeout(() => resolve('timed_out'), timeoutMs);
+  });
+
+  try {
+    return await Promise.race([promise, timedOut]);
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 const answerSpendingInsightQuestionForBot = makeFunctionReference<

@@ -52,6 +52,37 @@ describe('createInsightsCapability', () => {
     });
   });
 
+  it('replies with the capability fallback when the answer takes longer than the timeout', async () => {
+    vi.useFakeTimers();
+    try {
+      const capability = createInsightsCapability({
+        answerQuestion: () => new Promise(() => {}),
+        timeoutMs: 1_000
+      });
+
+      const pending = capability(request('how is spending?'));
+      await vi.advanceTimersByTimeAsync(1_000);
+
+      await expect(pending).resolves.toEqual({
+        kind: 'reply',
+        text: 'I could not handle that just now.'
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('replies with the capability fallback when the answer text is empty', async () => {
+    const capability = createInsightsCapability({
+      answerQuestion: vi.fn(async () => ({ status: 'answered' as const, answer: '   ' }))
+    });
+
+    await expect(capability(request('how is spending?'))).resolves.toEqual({
+      kind: 'reply',
+      text: 'I could not handle that just now.'
+    });
+  });
+
   it('replies with the capability fallback on an unrecognised result shape', async () => {
     const capability = createInsightsCapability({
       answerQuestion: vi.fn(async () => ({ status: '???' }) as never)

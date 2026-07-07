@@ -40,6 +40,7 @@ const botConfigSchema = z.object({
   SCHEDULE_CAPABILITY_TIMEOUT_MS: z.coerce.number().int().positive().default(15_000),
   LISTS_CAPABILITY_URL: z.string().url().optional(),
   LISTS_CAPABILITY_TIMEOUT_MS: z.coerce.number().int().positive().default(15_000),
+  INSIGHTS_CAPABILITY_TIMEOUT_MS: z.coerce.number().int().positive().default(15_000),
   FORWARDED_EMAIL_ALLOWED_SENDERS: z.string().default(''),
   RESEND_API_KEY: z.string().min(1).optional(),
   RESEND_WEBHOOK_SECRET: z.string().min(1).optional(),
@@ -67,6 +68,7 @@ export type BotConfig = {
   scheduleCapabilityTimeoutMs: number;
   listsCapabilityUrl?: string;
   listsCapabilityTimeoutMs: number;
+  insightsCapabilityTimeoutMs: number;
   forwardedEmailAllowedSenders: string[];
   resendApiKey?: string;
   resendWebhookSecret?: string;
@@ -98,6 +100,7 @@ export function parseConfig(env: Record<string, unknown>): BotConfig {
     scheduleCapabilityTimeoutMs: result.data.SCHEDULE_CAPABILITY_TIMEOUT_MS,
     listsCapabilityUrl: result.data.LISTS_CAPABILITY_URL,
     listsCapabilityTimeoutMs: result.data.LISTS_CAPABILITY_TIMEOUT_MS,
+    insightsCapabilityTimeoutMs: result.data.INSIGHTS_CAPABILITY_TIMEOUT_MS,
     forwardedEmailAllowedSenders: result.data.FORWARDED_EMAIL_ALLOWED_SENDERS.split(',')
       .map((sender) => sender.trim().toLowerCase())
       .filter(Boolean),

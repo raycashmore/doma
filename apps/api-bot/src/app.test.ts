@@ -17,6 +17,7 @@ const testConfig: BotConfig = {
   scheduleCapabilityUrl: undefined,
   scheduleCapabilityTimeoutMs: 15_000,
   listsCapabilityTimeoutMs: 15_000,
+  insightsCapabilityTimeoutMs: 15_000,
   forwardedEmailAllowedSenders: ['forwarder@example.com'],
   resendApiKey: 'resend-api-key',
   resendWebhookSecret: 'whsec_dGVzdC1vbmx5LXJlc2VuZC13ZWJob29rLXNlY3JldA==',
