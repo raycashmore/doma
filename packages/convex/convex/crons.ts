@@ -20,6 +20,10 @@ type SpendingInsightGenerationRefs = {
   runDueSpendingInsightSweep: FunctionReference<'action', 'internal', Record<string, never>, unknown>;
 };
 
+type SpendingInsightDeliveryRunnerRefs = {
+  runDueSpendingInsightDelivery: FunctionReference<'action', 'internal', Record<string, never>, unknown>;
+};
+
 const briefingDeliveryRunner: BriefingDeliveryRunnerRefs = (
   internal as unknown as {
     briefing: {
@@ -52,9 +56,18 @@ const insightGeneration: SpendingInsightGenerationRefs = (
   }
 ).insights.generation;
 
+const insightDeliveryRunner: SpendingInsightDeliveryRunnerRefs = (
+  internal as unknown as {
+    insights: {
+      deliveryRunner: SpendingInsightDeliveryRunnerRefs;
+    };
+  }
+).insights.deliveryRunner;
+
 crons.interval('morning briefing delivery', { minutes: 10 }, briefingDeliveryRunner.runDueMorningBriefingDelivery);
 crons.interval('forwarded email triage', { hours: 12 }, emailTriage.runDueForwardedEmailTriage);
 crons.interval('monthly spending insight sweep', { hours: 12 }, insightGeneration.runDueSpendingInsightSweep);
+crons.interval('monthly spending insight delivery', { hours: 1 }, insightDeliveryRunner.runDueSpendingInsightDelivery);
 crons.daily(
   'forwarded email notice delivery morning',
   { hourUTC: 21, minuteUTC: 0 },

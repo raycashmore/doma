@@ -421,6 +421,19 @@ spend), spend category labels, and category amounts for the trailing ~12
 months to the configured OpenAI-compatible provider. Account balances,
 mortgage, and investment data are never included.
 
+Monthly spending insight delivery runs in Convex cron every hour (an interval,
+not a wall-clock time) through `insights/deliveryRunner:runDueSpendingInsightDelivery`.
+It requires `BOT_SERVICE_TOKEN` and `BOT_GATEWAY_ORIGIN` in the target Convex
+deployment; when either is unset the run skips cleanly without error. Each run
+considers only the latest stored `spendingInsights` month — older or backfilled
+months are never delivered late — and sends its headline, observation bullets,
+and next-month prediction as plain text through the Bot gateway's
+`/notifications/send` endpoint with topic `insights.spending`. Recipients reuse
+`MORNING_BRIEFING_RECIPIENT_USER_IDS`, the same household list as scheduled
+briefings. Delivery attempts are recorded per month and recipient in
+`spendingInsightDeliveryAttempts`; failed sends are retried by later runs, and
+sent or skipped deliveries are never repeated.
+
 Forwarded email notice delivery runs in Convex through
 `email/deliveryRunner:deliverTelegramWorthyEmailNoticesForBot`. It requires
 `BOT_SERVICE_TOKEN`, `BOT_GATEWAY_ORIGIN`, and

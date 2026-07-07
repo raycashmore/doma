@@ -47,7 +47,12 @@ Store only raw inputs in the database. All computed values are calculated at rea
   12-hour cron sweep: input assembly from budget and spend category rows
   (`insights/assembly.ts`), an OpenAI-compatible provider with defensive
   parsing (`insights/ai.ts`), and an idempotent runner that never stores a
-  second insight for a month (`insights/generation.ts`).
+  second insight for a month (`insights/generation.ts`). Telegram delivery of
+  the latest stored insight mirrors email notice delivery: a pure delivery
+  cycle (`insights/delivery.ts`), per-month-and-recipient attempts in
+  `spendingInsightDeliveryAttempts` with lease-based claiming
+  (`insights/deliveryStore.ts`), and an hourly cron runner that skips cleanly
+  when bot gateway config is absent (`insights/deliveryRunner.ts`).
 - **Date field:** All financial tables indexed by `date` (Unix timestamp in milliseconds) with a `by_date` index
 - **Crypto tables:** Use `by_platform` indexing in addition to date
 - **Derived field comments:** Schema marks derived fields with `// DERIVED: ...` comments

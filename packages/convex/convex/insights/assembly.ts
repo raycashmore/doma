@@ -115,7 +115,7 @@ function trailingMonthKeys(targetMonthKey: string): string[] {
   return monthKeys;
 }
 
-function monthLabelFromKey(monthKey: string): string {
+export function monthLabelFromKey(monthKey: string): string {
   const [year, month] = monthKey.split('-').map(Number);
   return new Intl.DateTimeFormat('en-AU', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(
     new Date(Date.UTC(year ?? 1970, (month ?? 1) - 1, 1))

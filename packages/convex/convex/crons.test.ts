@@ -7,7 +7,8 @@ const cronMocks = vi.hoisted(() => ({
   emailTriage: Symbol('emailTriage'),
   emailNoticeDelivery: Symbol('emailNoticeDelivery'),
   scheduleReminderDelivery: Symbol('scheduleReminderDelivery'),
-  spendingInsightSweep: Symbol('spendingInsightSweep')
+  spendingInsightSweep: Symbol('spendingInsightSweep'),
+  spendingInsightDelivery: Symbol('spendingInsightDelivery')
 }));
 
 vi.mock('convex/server', () => ({
@@ -40,6 +41,9 @@ vi.mock('./_generated/api', () => ({
     insights: {
       generation: {
         runDueSpendingInsightSweep: cronMocks.spendingInsightSweep
+      },
+      deliveryRunner: {
+        runDueSpendingInsightDelivery: cronMocks.spendingInsightDelivery
       }
     }
   }
@@ -49,7 +53,7 @@ describe('Convex cron registration', () => {
   it('registers proactive notification delivery without restoring event-level schedule reminders', async () => {
     await import('./crons');
 
-    expect(cronMocks.interval).toHaveBeenCalledTimes(3);
+    expect(cronMocks.interval).toHaveBeenCalledTimes(4);
     expect(cronMocks.daily).toHaveBeenCalledTimes(4);
     expect(cronMocks.interval).toHaveBeenCalledWith(
       'morning briefing delivery',
@@ -61,6 +65,11 @@ describe('Convex cron registration', () => {
       'monthly spending insight sweep',
       { hours: 12 },
       cronMocks.spendingInsightSweep
+    );
+    expect(cronMocks.interval).toHaveBeenCalledWith(
+      'monthly spending insight delivery',
+      { hours: 1 },
+      cronMocks.spendingInsightDelivery
     );
     expect(cronMocks.daily).toHaveBeenCalledWith(
       'forwarded email notice delivery morning',
