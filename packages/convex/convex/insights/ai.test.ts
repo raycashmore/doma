@@ -73,6 +73,13 @@ describe('spendingInsightSystemPrompt', () => {
   it('forbids inventing data beyond the supplied input', () => {
     expect(spendingInsightSystemPrompt).toMatch(/do not invent|never invent/i);
   });
+
+  it('demands plain family-friendly language for a busy reader, not financial speak', () => {
+    expect(spendingInsightSystemPrompt).toMatch(/everyday|plain/i);
+    expect(spendingInsightSystemPrompt).toMatch(/jargon/i);
+    expect(spendingInsightSystemPrompt).toMatch(/busy|little time|glance|seconds/i);
+    expect(spendingInsightSystemPrompt).toMatch(/warm|friendly/i);
+  });
 });
 
 describe('spendingInsightOutputJsonSchema', () => {

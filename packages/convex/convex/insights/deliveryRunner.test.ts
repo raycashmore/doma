@@ -3,18 +3,32 @@ import { describe, expect, it } from 'vitest';
 import { spendingInsightDeliveryConfigFromEnv } from './deliveryRunner';
 
 describe('spendingInsightDeliveryConfigFromEnv', () => {
-  it('reads the household briefing recipients and bot gateway config', () => {
+  it('reads the insight-specific recipient list without using morning briefing config', () => {
     expect(
       spendingInsightDeliveryConfigFromEnv({
         BOT_SERVICE_TOKEN: 'service-token',
         BOT_GATEWAY_ORIGIN: 'https://bot.example.com',
-        MORNING_BRIEFING_RECIPIENT_USER_IDS: 'household-user-1, household-user-2'
+        SPENDING_INSIGHT_RECIPIENT_USER_IDS: 'insight-user-1, insight-user-2'
       })
     ).toEqual({
       ok: true,
       serviceToken: 'service-token',
       botGatewayOrigin: 'https://bot.example.com',
-      recipientUserIds: ['household-user-1', 'household-user-2']
+      recipientUserIds: ['insight-user-1', 'insight-user-2']
+    });
+  });
+
+  it('treats a missing insight-specific recipient list as no recipients', () => {
+    expect(
+      spendingInsightDeliveryConfigFromEnv({
+        BOT_SERVICE_TOKEN: 'service-token',
+        BOT_GATEWAY_ORIGIN: 'https://bot.example.com'
+      })
+    ).toEqual({
+      ok: true,
+      serviceToken: 'service-token',
+      botGatewayOrigin: 'https://bot.example.com',
+      recipientUserIds: []
     });
   });
 
@@ -22,7 +36,7 @@ describe('spendingInsightDeliveryConfigFromEnv', () => {
     expect(
       spendingInsightDeliveryConfigFromEnv({
         BOT_GATEWAY_ORIGIN: 'https://bot.example.com',
-        MORNING_BRIEFING_RECIPIENT_USER_IDS: 'household-user-1'
+        SPENDING_INSIGHT_RECIPIENT_USER_IDS: 'insight-user-1'
       })
     ).toEqual({ ok: false, reason: 'missing_bot_service_token' });
   });
@@ -31,7 +45,7 @@ describe('spendingInsightDeliveryConfigFromEnv', () => {
     expect(
       spendingInsightDeliveryConfigFromEnv({
         BOT_SERVICE_TOKEN: 'service-token',
-        MORNING_BRIEFING_RECIPIENT_USER_IDS: 'household-user-1'
+        SPENDING_INSIGHT_RECIPIENT_USER_IDS: 'insight-user-1'
       })
     ).toEqual({ ok: false, reason: 'missing_bot_gateway_origin' });
   });

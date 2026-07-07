@@ -21,7 +21,7 @@ export type SpendingInsightDeliveryConfig =
 export function spendingInsightDeliveryConfigFromEnv(env: {
   BOT_SERVICE_TOKEN?: string;
   BOT_GATEWAY_ORIGIN?: string;
-  MORNING_BRIEFING_RECIPIENT_USER_IDS?: string;
+  SPENDING_INSIGHT_RECIPIENT_USER_IDS?: string;
 }): SpendingInsightDeliveryConfig {
   if (!env.BOT_SERVICE_TOKEN) return { ok: false, reason: 'missing_bot_service_token' };
   if (!env.BOT_GATEWAY_ORIGIN) return { ok: false, reason: 'missing_bot_gateway_origin' };
@@ -30,7 +30,7 @@ export function spendingInsightDeliveryConfigFromEnv(env: {
     ok: true,
     serviceToken: env.BOT_SERVICE_TOKEN,
     botGatewayOrigin: new URL(env.BOT_GATEWAY_ORIGIN).origin,
-    recipientUserIds: parseRecipientUserIds(env.MORNING_BRIEFING_RECIPIENT_USER_IDS)
+    recipientUserIds: parseRecipientUserIds(env.SPENDING_INSIGHT_RECIPIENT_USER_IDS)
   };
 }
 
@@ -74,7 +74,7 @@ export const runDueSpendingInsightDelivery = internalAction({
     const config = spendingInsightDeliveryConfigFromEnv({
       BOT_SERVICE_TOKEN: process.env.BOT_SERVICE_TOKEN,
       BOT_GATEWAY_ORIGIN: process.env.BOT_GATEWAY_ORIGIN,
-      MORNING_BRIEFING_RECIPIENT_USER_IDS: process.env.MORNING_BRIEFING_RECIPIENT_USER_IDS
+      SPENDING_INSIGHT_RECIPIENT_USER_IDS: process.env.SPENDING_INSIGHT_RECIPIENT_USER_IDS
     });
 
     if (!config.ok) {
