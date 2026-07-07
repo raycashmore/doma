@@ -11,7 +11,7 @@ import { v } from 'convex/values';
 
 import { briefingDeliveryAttemptsTable, briefingsTable } from './briefing/schema';
 import { capturedEmailsTable, emailNoticeDeliveryAttemptsTable, emailNoticesTable } from './email/schema';
-import { spendingInsightsTable } from './insights/schema';
+import { spendingInsightDeliveryAttemptsTable, spendingInsightsTable } from './insights/schema';
 import { scheduleEventsTable, scheduleReminderAttemptsTable, scheduleSyncMetaTable } from './schedule/schema';
 
 export default defineSchema({
@@ -141,6 +141,7 @@ export default defineSchema({
   // SPENDING INSIGHTS — Monthly AI-written spending commentary
   // ============================================================
   spendingInsights: spendingInsightsTable,
+  spendingInsightDeliveryAttempts: spendingInsightDeliveryAttemptsTable,
 
   // ============================================================
   // CRYPTO — Deposit/withdrawal transactions

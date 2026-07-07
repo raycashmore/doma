@@ -363,6 +363,7 @@ Production checks:
 | `RESEND_WEBHOOK_SECRET`                     | Vercel Bot gateway, Resend                    | Resend webhook signing secret used to verify `/inbound-email/resend` requests                                                                                       |
 | `FORWARDED_EMAIL_TRIAGE_AI_MODEL`           | Convex, `.env.local`                          | OpenAI model used by Convex to triage captured forwarded emails into notices                                                                                        |
 | `FORWARDED_EMAIL_NOTICE_RECIPIENT_USER_IDS` | Convex, `.env.local`                          | Comma-separated Clerk user IDs that should receive Telegram-worthy forwarded email notices                                                                          |
+| `SPENDING_INSIGHT_RECIPIENT_USER_IDS`       | Convex, `.env.local`                          | Comma-separated Clerk user IDs that should receive monthly spending insight messages                                                                                |
 | `SCHEDULE_CAPABILITY_URL`                   | Vercel Bot gateway, `.env.local`              | Schedule API route for `/schedule`, for example `https://schedule.example.com/schedule/api/bot/schedule`                                                            |
 | `LISTS_CAPABILITY_URL`                      | Vercel Bot gateway, `.env.local`              | Lists API route for free-text capture, for example `https://lists.example.com/lists/api/bot/lists`                                                                  |
 | `LISTS_CAPABILITY_TIMEOUT_MS`               | Vercel Bot gateway, `.env.local`              | Optional; per-request timeout for the lists capability (default 15000)                                                                                              |
@@ -420,6 +421,20 @@ Privacy: enabling this cron sends budget-level totals (income, one-offs, card
 spend), spend category labels, and category amounts for the trailing ~12
 months to the configured OpenAI-compatible provider. Account balances,
 mortgage, and investment data are never included.
+
+Monthly spending insight delivery runs in Convex cron every hour (an interval,
+not a wall-clock time) through `insights/deliveryRunner:runDueSpendingInsightDelivery`.
+It requires `BOT_SERVICE_TOKEN` and `BOT_GATEWAY_ORIGIN` in the target Convex
+deployment; when either is unset the run skips cleanly without error. Each run
+considers only the latest stored `spendingInsights` month — older or backfilled
+months are never delivered late — and sends its headline, observation bullets,
+and next-month prediction as plain text through the Bot gateway's
+`/notifications/send` endpoint with topic `insights.spending`. Recipients come
+from `SPENDING_INSIGHT_RECIPIENT_USER_IDS`, an insight-specific list separate
+from the briefing and email notice lists, so spending insight delivery can be
+enabled or limited independently. Delivery attempts are recorded per month and recipient in
+`spendingInsightDeliveryAttempts`; failed sends are retried by later runs, and
+sent or skipped deliveries are never repeated.
 
 Forwarded email notice delivery runs in Convex through
 `email/deliveryRunner:deliverTelegramWorthyEmailNoticesForBot`. It requires
