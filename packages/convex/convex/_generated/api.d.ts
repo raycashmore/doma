@@ -33,6 +33,7 @@ import type * as insights_deliveryRunner from "../insights/deliveryRunner.js";
 import type * as insights_deliveryStore from "../insights/deliveryStore.js";
 import type * as insights_generation from "../insights/generation.js";
 import type * as insights_latest from "../insights/latest.js";
+import type * as insights_qa from "../insights/qa.js";
 import type * as lists_auth from "../lists/auth.js";
 import type * as lists_bot from "../lists/bot.js";
 import type * as lists_botModel from "../lists/botModel.js";
@@ -93,6 +94,7 @@ declare const fullApi: ApiFromModules<{
   "insights/deliveryStore": typeof insights_deliveryStore;
   "insights/generation": typeof insights_generation;
   "insights/latest": typeof insights_latest;
+  "insights/qa": typeof insights_qa;
   "lists/auth": typeof lists_auth;
   "lists/bot": typeof lists_bot;
   "lists/botModel": typeof lists_botModel;

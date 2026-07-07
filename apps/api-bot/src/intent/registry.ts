@@ -50,6 +50,17 @@ export const defaultIntentDescriptors: IntentDescriptorRegistry = [
     ]
   },
   {
+    name: 'insights',
+    description:
+      'Ask about the monthly spending insights: what the latest insight said, spending patterns, or the prediction for next month.',
+    examples: [
+      'what did the insights say about groceries?',
+      "what's the prediction for next month",
+      'how is our spending trending',
+      'any spending insights this month?'
+    ]
+  },
+  {
     name: 'briefing',
     description:
       'Ask for the morning briefing: a household readiness summary of what to wear, bring, prepare, or remember today.',

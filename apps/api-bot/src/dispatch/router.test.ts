@@ -99,6 +99,18 @@ describe('createCommandDispatcher free-text routing through the intent router', 
     expect(lists).toHaveBeenCalledWith(freeText);
   });
 
+  it('routes a spending insights question to the insights capability', async () => {
+    const insights = vi.fn(async () => ({ kind: 'reply' as const, text: 'Groceries crept up over winter.' }));
+    const classify = fixedClassifier('insights');
+    const dispatcher = createCommandDispatcher({ capabilities: { insights, lists: vi.fn() }, classify });
+
+    const freeText = request({ messageText: 'what did the insights say about groceries?' });
+    const result = await dispatcher.dispatch(freeText);
+
+    expect(result).toEqual({ kind: 'reply', text: 'Groceries crept up over winter.' });
+    expect(insights).toHaveBeenCalledWith(freeText);
+  });
+
   it('routes a schedule-style ask to the schedule capability', async () => {
     const schedule = vi.fn(async () => ({ kind: 'reply' as const, text: "Here's today." }));
     const classify = fixedClassifier('schedule');
@@ -161,5 +173,9 @@ describe('buildCapabilitiesHint', () => {
     for (const descriptor of defaultIntentDescriptors) {
       expect(hint.toLowerCase()).toContain(descriptor.name);
     }
+  });
+
+  it('teaches users they can ask about spending insights', () => {
+    expect(buildCapabilitiesHint().toLowerCase()).toContain('insights');
   });
 });

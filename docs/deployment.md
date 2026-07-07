@@ -357,7 +357,7 @@ Production checks:
 | `CLERK_SECRET_KEY`                          | Vercel Bot gateway, `.env.local`              | Used to verify Clerk bearer tokens                                                                                                                                  |
 | `CLERK_PUBLISHABLE_KEY`                     | Vercel Bot gateway, `.env.local`              | Clerk backend configuration                                                                                                                                         |
 | `BOT_SERVICE_TOKEN`                         | Vercel Bot gateway, Schedule, Convex, callers | Shared bearer token for service-to-service sends, schedule bot reads, and forwarded email capture                                                                   |
-| `CONVEX_URL`                                | Vercel Bot gateway, `.env.local`              | Required when forwarded email capture is enabled; Convex deployment URL for gateway service clients                                                                 |
+| `CONVEX_URL`                                | Vercel Bot gateway, `.env.local`              | Required for forwarded email capture and the insights capability; Convex deployment URL for gateway service clients                                                 |
 | `FORWARDED_EMAIL_ALLOWED_SENDERS`           | Vercel Bot gateway, `.env.local`              | Comma-separated sender allowlist for Resend forwarded email capture                                                                                                 |
 | `RESEND_API_KEY`                            | Vercel Bot gateway, `.env.local`              | Resend API key used to fetch received email bodies after `email.received` webhooks                                                                                  |
 | `RESEND_WEBHOOK_SECRET`                     | Vercel Bot gateway, Resend                    | Resend webhook signing secret used to verify `/inbound-email/resend` requests                                                                                       |
@@ -367,7 +367,7 @@ Production checks:
 | `SCHEDULE_CAPABILITY_URL`                   | Vercel Bot gateway, `.env.local`              | Schedule API route for `/schedule`, for example `https://schedule.example.com/schedule/api/bot/schedule`                                                            |
 | `LISTS_CAPABILITY_URL`                      | Vercel Bot gateway, `.env.local`              | Lists API route for free-text capture, for example `https://lists.example.com/lists/api/bot/lists`                                                                  |
 | `LISTS_CAPABILITY_TIMEOUT_MS`               | Vercel Bot gateway, `.env.local`              | Optional; per-request timeout for the lists capability (default 15000)                                                                                              |
-| `SPENDING_INSIGHT_AI_MODEL`                 | Convex, `.env.local`                          | OpenAI model used by Convex to generate monthly spending insights from budget and spend category data                                                               |
+| `SPENDING_INSIGHT_AI_MODEL`                 | Convex, `.env.local`                          | OpenAI model used by Convex to generate monthly spending insights and answer bot questions about them                                                               |
 | `OPENAI_API_KEY`                            | Vercel Bot gateway, Convex, `.env.local`      | Enables the LLM intent router on the gateway; also used by Convex for AI item parsing, briefing generation, forwarded email triage, and spending insight generation |
 | `INTENT_ROUTER_AI_MODEL`                    | Vercel Bot gateway, `.env.local`              | Model the intent router uses; required with `OPENAI_API_KEY` to enable free-text routing                                                                            |
 | `INTENT_ROUTER_AI_TIMEOUT_MS`               | Vercel Bot gateway, `.env.local`              | Optional; per-request timeout for the intent router AI call (default 10000)                                                                                         |
@@ -486,6 +486,17 @@ The Lists route reads `CONVEX_URL` (falling back to `VITE_CONVEX_URL`) to reach
 Convex. AI item parsing is optional: with `OPENAI_API_KEY` and
 `LIST_ITEMS_AI_MODEL` set on Convex it uses the model, otherwise it falls back
 to a deterministic newline split.
+
+The insights capability answers free-text questions about the stored monthly
+spending insights ("what did the insights say about groceries?"). Unlike the
+schedule and lists capabilities it has no HTTP route: it runs in-process on the
+Bot gateway and calls the Convex `insights.qa.answerSpendingInsightQuestionForBot`
+action, which validates `BOT_SERVICE_TOKEN`. It is registered when `CONVEX_URL`
+is set on the gateway. Answers are generated fresh per question, grounded in the
+stored latest insight plus the trailing months of data that produced it, using
+`OPENAI_API_KEY` and `SPENDING_INSIGHT_AI_MODEL` on Convex; when either is unset
+the capability replies with a generic failure message, and when no insight is
+stored yet it says so instead of inventing commentary.
 
 Morning briefing delivery runs from Convex cron, not Vercel Cron. This keeps
 the Bot gateway deployable on Vercel Hobby, where frequent cron schedules are
