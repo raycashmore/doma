@@ -1,5 +1,3 @@
-import { monthLabelFromKey } from './assembly';
-
 export type SpendingInsightForDelivery = {
   monthKey: string;
   headline: string;
@@ -42,15 +40,9 @@ export type SpendingInsightDeliveryAttemptRecorder = (attempt: {
 export const spendingInsightDeliveryPendingLeaseMs = 15 * 60 * 1000;
 
 export function formatSpendingInsightMessage(insight: SpendingInsightForDelivery) {
-  return [
-    `Spending insight — ${monthLabelFromKey(insight.monthKey)}`,
-    '',
-    insight.headline.trim(),
-    '',
-    ...insight.observations.map((observation) => `- ${observation.trim()}`),
-    '',
-    `Next month: ${insight.prediction.trim()}`
-  ].join('\n');
+  // The website presents the stored forecast in its own panel. Telegram is a
+  // quick family update, so keep it to the current-month narrative.
+  return [insight.headline.trim(), ...insight.observations.map((observation) => observation.trim())].join('\n\n');
 }
 
 export async function runSpendingInsightDeliveryCycle({

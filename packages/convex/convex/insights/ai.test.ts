@@ -59,10 +59,10 @@ describe('parseSpendingInsight', () => {
 });
 
 describe('spendingInsightSystemPrompt', () => {
-  it('steers toward non-obvious patterns and away from stating the obvious', () => {
-    expect(spendingInsightSystemPrompt).toMatch(/non-obvious/i);
-    expect(spendingInsightSystemPrompt).toMatch(/multi-month creep|cyclical|trade-off/i);
-    expect(spendingInsightSystemPrompt).toMatch(/obvious/i);
+  it('steers toward meaningful patterns rather than a category list', () => {
+    expect(spendingInsightSystemPrompt).toMatch(/meaningful patterns/i);
+    expect(spendingInsightSystemPrompt).toMatch(/moving together|one-month pause|staying high/i);
+    expect(spendingInsightSystemPrompt).toMatch(/do not merely list/i);
   });
 
   it('asks for exactly one next-month prediction', () => {
@@ -74,11 +74,14 @@ describe('spendingInsightSystemPrompt', () => {
     expect(spendingInsightSystemPrompt).toMatch(/do not invent|never invent/i);
   });
 
-  it('demands plain family-friendly language for a busy reader, not financial speak', () => {
+  it('demands a brief, plain-language family update with percentage and year-on-year comparisons', () => {
     expect(spendingInsightSystemPrompt).toMatch(/everyday|plain/i);
     expect(spendingInsightSystemPrompt).toMatch(/jargon/i);
-    expect(spendingInsightSystemPrompt).toMatch(/busy|little time|glance|seconds/i);
+    expect(spendingInsightSystemPrompt).toMatch(/busy|phone/i);
     expect(spendingInsightSystemPrompt).toMatch(/warm|friendly/i);
+    expect(spendingInsightSystemPrompt).toMatch(/percentage changes/i);
+    expect(spendingInsightSystemPrompt).toMatch(/same month last year/i);
+    expect(spendingInsightSystemPrompt).toMatch(/This month/i);
   });
 });
 

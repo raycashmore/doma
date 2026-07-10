@@ -14,17 +14,14 @@ const insight = {
 } satisfies SpendingInsightForDelivery;
 
 describe('formatSpendingInsightMessage', () => {
-  it('formats the headline, observation bullets, and prediction as chat-friendly plain text', () => {
+  it('formats the headline and observations as short, separated Telegram paragraphs without the website forecast', () => {
     expect(formatSpendingInsightMessage(insight)).toBe(
       [
-        'Spending insight — June 2026',
-        '',
         'Grocery spend has crept up for a third straight month',
         '',
-        '- Groceries rose again while dining out fell',
-        '- Subscriptions held flat despite the annual renewal',
+        'Groceries rose again while dining out fell',
         '',
-        'Next month: Expect grocery spend to level off as the winter promotions end.'
+        'Subscriptions held flat despite the annual renewal'
       ].join('\n')
     );
   });

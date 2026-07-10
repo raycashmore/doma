@@ -129,7 +129,7 @@ describe('buildSpendingInsightAiInput', () => {
     ]);
   });
 
-  it('includes only the trailing 12 months up to the target month, oldest first', () => {
+  it('includes the target month and the same month last year, oldest first', () => {
     const monthKeys = [
       '2025-04',
       '2025-05',
@@ -155,6 +155,7 @@ describe('buildSpendingInsightAiInput', () => {
     });
 
     expect(input.months.map((month) => month.monthKey)).toEqual([
+      '2025-06',
       '2025-07',
       '2025-08',
       '2025-09',

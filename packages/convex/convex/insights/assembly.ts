@@ -34,7 +34,9 @@ export type SpendingInsightAiInput = {
   months: SpendingInsightAiMonth[];
 };
 
-const trailingMonthCount = 12;
+// Include the target month plus the equivalent month a year earlier, so the
+// generated update can make a year-on-year comparison.
+const trailingMonthCount = 13;
 
 // A month is eligible once both its spend category breakdown and its budget
 // row exist; insights are immutable, so generating from breakdown data alone
