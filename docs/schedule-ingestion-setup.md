@@ -43,9 +43,14 @@ In the Convex dashboard (Project → Settings → Environment Variables):
   `label` falls back to the first token, and `initials` falls back to initials
   derived from that label. Omit both in test/dev fixture flows to keep generic
   labels.
-- `tokens` are the name words used to attribute a shared-calendar event to a
-  member from its title (e.g. first name + nickname). No token match on a shared
-  event → the first configured member.
+- Shared-calendar events are unassigned by default. To show an owner label in
+  Schedule and briefings, add exactly one explicit description tag such as
+  `@doma-owner(memberA)` (or `@doma-owner(memberA,memberB)`). The tag is removed
+  from the stored event description and never shown to the household. Only
+  configured generic member ids are accepted; names in event titles and ordinary
+  description text never determine ownership.
+- `tokens` remain available for display-label fallbacks and must not be used to
+  infer shared-event ownership.
 - Add `"kind":"dailyRequirements"` to calendars that carry day-specific
   household requirements, such as clothing expectations, items to bring,
   preparation notes, or timing constraints. Morning briefings treat these

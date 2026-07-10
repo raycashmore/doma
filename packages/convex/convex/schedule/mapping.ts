@@ -42,10 +42,7 @@ export type ScheduleEventRow = {
   htmlLink: string;
 };
 
-function matchesToken(title: string, token: string): boolean {
-  const escaped = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return new RegExp(`\\b${escaped}\\b`, 'i').test(title);
-}
+const ownerTagPattern = /@doma-owner\(([^\r\n)]*)\)/gi;
 
 function decodeHtmlEntity(entity: string): string {
   const namedEntities: Record<string, string> = {
@@ -81,12 +78,39 @@ export function sanitizeEventDescription(description: string): string {
     .trim();
 }
 
-// Per-person calendar -> that member. Shared calendar -> members named in the
-// title, or the first configured member when none are named.
-export function deriveWho(title: string, calendar: CalendarConfig, members: MemberConfig[]): string[] {
+// Per-person calendars are authoritative. A shared-calendar event is assigned
+// only when its description has one unambiguous, explicit owner tag.
+export function deriveWho(
+  description: string | undefined,
+  calendar: CalendarConfig,
+  members: MemberConfig[]
+): string[] {
   if (calendar.who !== 'shared') return [calendar.who];
-  const matched = members.filter((m) => m.tokens.some((token) => matchesToken(title, token)));
-  return matched.length > 0 ? matched.map((m) => m.id) : members.slice(0, 1).map((m) => m.id);
+
+  const matches = [...(description ?? '').matchAll(ownerTagPattern)];
+  const ownerTag = matches[0];
+  const ownerTagContents = ownerTag?.[1];
+  if (matches.length !== 1 || ownerTagContents === undefined) return [];
+
+  const ownerIds = ownerTagContents
+    .split(',')
+    .map((id) => id.trim())
+    .filter(Boolean);
+  const memberIds = new Set(members.map((member) => member.id));
+
+  if (
+    ownerIds.length === 0 ||
+    new Set(ownerIds).size !== ownerIds.length ||
+    ownerIds.some((ownerId) => !memberIds.has(ownerId))
+  ) {
+    return [];
+  }
+
+  return ownerIds;
+}
+
+function withoutOwnerTags(description: string) {
+  return sanitizeEventDescription(description.replace(ownerTagPattern, ''));
 }
 
 export function toScheduleEvent(
@@ -107,6 +131,7 @@ export function toScheduleEvent(
   // midnight in `tz`.
   const start = allDay ? zonedDateStartMs(startRaw, tz) : Date.parse(startRaw);
   const end = allDay ? zonedDateStartMs(endRaw, tz) : Date.parse(endRaw);
+  const description = ev.description ? sanitizeEventDescription(ev.description) : '';
   const row: ScheduleEventRow = {
     googleEventId: ev.id,
     calendarId: calendar.calendarId,
@@ -114,15 +139,15 @@ export function toScheduleEvent(
     end,
     allDay,
     title,
-    who: deriveWho(title, calendar, members),
+    who: deriveWho(description, calendar, members),
     recurring: Boolean(ev.recurringEventId),
     htmlLink: ev.htmlLink
   };
   if (calendar.kind === 'dailyRequirements') {
     row.kind = 'dailyRequirements';
   }
-  const description = ev.description ? sanitizeEventDescription(ev.description) : '';
-  if (description) row.description = description;
+  const visibleDescription = description ? withoutOwnerTags(description) : '';
+  if (visibleDescription) row.description = visibleDescription;
   if (ev.location) row.location = ev.location;
   return row;
 }
