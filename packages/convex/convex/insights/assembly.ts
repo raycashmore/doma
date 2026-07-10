@@ -32,6 +32,17 @@ export type SpendingInsightAiMonth = {
 export type SpendingInsightAiInput = {
   targetMonthKey: string;
   months: SpendingInsightAiMonth[];
+  comparisonSummary?: {
+    fromPreviousMonth?: {
+      monthLabel: string;
+      totalSpendPercentageChange: number;
+      categoryPercentageChanges: Array<{ category: string; percentageChange: number }>;
+    };
+    fromSameMonthLastYear?: {
+      monthLabel: string;
+      totalSpendPercentageChange: number;
+    };
+  };
 };
 
 // Include the target month plus the equivalent month a year earlier, so the
@@ -98,7 +109,79 @@ export function buildSpendingInsightAiInput({
     };
   });
 
-  return { targetMonthKey, months };
+  const comparisonSummary = buildComparisonSummary({ targetMonthKey, months });
+  return { targetMonthKey, months, ...(comparisonSummary ? { comparisonSummary } : {}) };
+}
+
+function buildComparisonSummary({
+  targetMonthKey,
+  months
+}: {
+  targetMonthKey: string;
+  months: SpendingInsightAiMonth[];
+}): SpendingInsightAiInput['comparisonSummary'] {
+  const byMonthKey = new Map(months.map((month) => [month.monthKey, month]));
+  const targetMonth = byMonthKey.get(targetMonthKey);
+  if (!targetMonth) return undefined;
+
+  const previousMonth = byMonthKey.get(relativeMonthKey(targetMonthKey, -1));
+  const sameMonthLastYear = byMonthKey.get(relativeMonthKey(targetMonthKey, -12));
+  const fromPreviousMonth = previousMonth ? comparisonFromPreviousMonth({ targetMonth, previousMonth }) : undefined;
+  const fromSameMonthLastYear = sameMonthLastYear
+    ? comparisonFromSameMonthLastYear({ targetMonth, sameMonthLastYear })
+    : undefined;
+
+  if (!fromPreviousMonth && !fromSameMonthLastYear) return undefined;
+  return {
+    ...(fromPreviousMonth ? { fromPreviousMonth } : {}),
+    ...(fromSameMonthLastYear ? { fromSameMonthLastYear } : {})
+  };
+}
+
+function comparisonFromPreviousMonth({
+  targetMonth,
+  previousMonth
+}: {
+  targetMonth: SpendingInsightAiMonth;
+  previousMonth: SpendingInsightAiMonth;
+}) {
+  const totalSpendPercentageChange = percentageChange(totalSpend(targetMonth), totalSpend(previousMonth));
+  if (totalSpendPercentageChange === null) return undefined;
+
+  const previousAmountsByCategory = new Map(
+    previousMonth.categories.map((category) => [category.category, category.amount])
+  );
+  const categoryPercentageChanges = targetMonth.categories.flatMap(({ category, amount }) => {
+    const percentageChangeFromPrevious = percentageChange(amount, previousAmountsByCategory.get(category));
+    return percentageChangeFromPrevious === null ? [] : [{ category, percentageChange: percentageChangeFromPrevious }];
+  });
+
+  return {
+    monthLabel: previousMonth.monthLabel,
+    totalSpendPercentageChange,
+    categoryPercentageChanges
+  };
+}
+
+function comparisonFromSameMonthLastYear({
+  targetMonth,
+  sameMonthLastYear
+}: {
+  targetMonth: SpendingInsightAiMonth;
+  sameMonthLastYear: SpendingInsightAiMonth;
+}) {
+  const totalSpendPercentageChange = percentageChange(totalSpend(targetMonth), totalSpend(sameMonthLastYear));
+  if (totalSpendPercentageChange === null) return undefined;
+  return { monthLabel: sameMonthLastYear.monthLabel, totalSpendPercentageChange };
+}
+
+function totalSpend(month: SpendingInsightAiMonth) {
+  return month.categories.reduce((total, category) => total + category.amount, 0);
+}
+
+function percentageChange(current: number, previous: number | undefined) {
+  if (previous === undefined || previous <= 0) return null;
+  return Math.round(((current - previous) / previous) * 100);
 }
 
 export function trailingSpendingInsightMonthKeys(targetMonthKey: string): string[] {
@@ -115,6 +198,12 @@ function trailingMonthKeys(targetMonthKey: string): string[] {
     monthKeys.push(monthKeyFromTimestamp(date.getTime()));
   }
   return monthKeys;
+}
+
+function relativeMonthKey(monthKey: string, offset: number) {
+  const [year, month] = monthKey.split('-').map(Number);
+  if (!year || !month) return '';
+  return monthKeyFromTimestamp(new Date(Date.UTC(year, month - 1 + offset, 1)).getTime());
 }
 
 export function monthLabelFromKey(monthKey: string): string {

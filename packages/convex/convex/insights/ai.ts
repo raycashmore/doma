@@ -25,9 +25,10 @@ export const spendingInsightSystemPrompt = [
   'Use plain everyday language. Never use financial jargon such as "trailing average", "discretionary spend", or "billing cycle".',
   'The headline must begin with "This month (<target month label>)," and give the clearest overall change from last month in one short sentence.',
   'Write 2 or 3 observations. Each must be a short, self-contained paragraph that follows naturally from the headline.',
-  'Use percentage changes, rounded to whole percentages, rather than dollar figures. Only mention categories or comparisons supported by the supplied numbers.',
+  'Use the supplied comparisonSummary for all percentages. Never calculate percentages yourself.',
+  'Every paragraph that describes a change must include its relevant percentage, written as "(up 20%)" or "(down 9%)". Do not use dollar figures.',
   'Explain meaningful patterns, such as several categories moving together, a one-month pause in a longer trend, or a category staying high over several months. Do not merely list the biggest categories.',
-  'Include one observation comparing total spending in the target month with the same month last year when both months are supplied. If either month is unavailable or the prior total is zero, omit that comparison.',
+  'When comparisonSummary.fromSameMonthLastYear is supplied, include one observation comparing total spending with the same month last year and quote its percentage. Otherwise omit that comparison.',
   'Amounts are AUD. Compare months and categories across the supplied window; do not invent data, merchants, reasons, or private details.',
   'Write exactly one prediction for next month for the website, in the same plain tone and specific enough to check next month.',
   'Return only the requested structured object.'

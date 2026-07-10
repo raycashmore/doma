@@ -171,6 +171,36 @@ describe('buildSpendingInsightAiInput', () => {
     ]);
   });
 
+  it('provides rounded month-on-month and year-on-year percentages for the target month', () => {
+    const input = buildSpendingInsightAiInput({
+      targetMonthKey: '2026-05',
+      breakdownRows: [
+        breakdownRow('2025-05', 'Groceries', 10_000),
+        breakdownRow('2025-05', 'Shopping', 20_000),
+        breakdownRow('2026-04', 'Groceries', 10_000),
+        breakdownRow('2026-04', 'Shopping', 50_000),
+        breakdownRow('2026-05', 'Groceries', 12_000),
+        breakdownRow('2026-05', 'Shopping', 53_000)
+      ],
+      budgetRows: []
+    });
+
+    expect(input.comparisonSummary).toEqual({
+      fromPreviousMonth: {
+        monthLabel: 'April 2026',
+        totalSpendPercentageChange: 8,
+        categoryPercentageChanges: [
+          { category: 'Groceries', percentageChange: 20 },
+          { category: 'Shopping', percentageChange: 6 }
+        ]
+      },
+      fromSameMonthLastYear: {
+        monthLabel: 'May 2025',
+        totalSpendPercentageChange: 117
+      }
+    });
+  });
+
   it('omits budget totals for months without a budget row', () => {
     const input = buildSpendingInsightAiInput({
       targetMonthKey: '2026-06',

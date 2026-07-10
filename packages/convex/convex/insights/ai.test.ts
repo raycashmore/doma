@@ -74,12 +74,14 @@ describe('spendingInsightSystemPrompt', () => {
     expect(spendingInsightSystemPrompt).toMatch(/do not invent|never invent/i);
   });
 
-  it('demands a brief, plain-language family update with percentage and year-on-year comparisons', () => {
+  it('demands a brief, plain-language family update with supplied percentage and year-on-year comparisons', () => {
     expect(spendingInsightSystemPrompt).toMatch(/everyday|plain/i);
     expect(spendingInsightSystemPrompt).toMatch(/jargon/i);
     expect(spendingInsightSystemPrompt).toMatch(/busy|phone/i);
     expect(spendingInsightSystemPrompt).toMatch(/warm|friendly/i);
-    expect(spendingInsightSystemPrompt).toMatch(/percentage changes/i);
+    expect(spendingInsightSystemPrompt).toMatch(/comparisonSummary/i);
+    expect(spendingInsightSystemPrompt).toMatch(/never calculate percentages/i);
+    expect(spendingInsightSystemPrompt).toMatch(/\(up 20%\)/i);
     expect(spendingInsightSystemPrompt).toMatch(/same month last year/i);
     expect(spendingInsightSystemPrompt).toMatch(/This month/i);
   });
