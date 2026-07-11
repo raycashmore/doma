@@ -1,6 +1,7 @@
 <script lang="ts">
   import { slugifyListName } from '@repo/convex/lists/model';
   import { cubicOut } from 'svelte/easing';
+  import { SvelteSet } from 'svelte/reactivity';
   import { fade, fly } from 'svelte/transition';
   import { type DndEvent, dragHandleZone } from 'svelte-dnd-action';
 
@@ -12,6 +13,7 @@
   import ListIcon from '$lib/lists/components/ListIcon.svelte';
   import ListItemRow from '$lib/lists/components/ListItemRow.svelte';
   import ListSettingsPanel from '$lib/lists/components/ListSettingsPanel.svelte';
+  import { groupActiveItemsByProperty } from '$lib/lists/grouping';
   import { parsePastedItems, type PasteEntry } from '$lib/lists/paste-parser';
   import {
     getSelectedItem,
@@ -99,6 +101,8 @@
   let valueDraftSelectOptionId = $state('');
   let valueDraftCheckbox = $state(false);
   let previousListPublicId = $state<string | null>(null);
+  let activeGroupingPropertyId = $state<string | null>(null);
+  const collapsedActiveGroupKeys = new SvelteSet<string>();
 
   function describeError(error: unknown, fallback: string) {
     const message = error instanceof Error ? error.message : typeof error === 'string' ? error : null;
@@ -572,8 +576,36 @@
   const activeItems = $derived(selectedListData?.activeItems ?? []);
   const completedItems = $derived(selectedListData?.completedItems ?? []);
   const visibleProperties = $derived(selectedListData?.properties ?? []);
+  const activeGroupingProperty = $derived(
+    activeGroupingPropertyId
+      ? (visibleProperties.find((property) => property._id === activeGroupingPropertyId) ?? null)
+      : null
+  );
+  const activeGroups = $derived(
+    activeGroupingProperty ? groupActiveItemsByProperty({ property: activeGroupingProperty, items: activeItems }) : []
+  );
   const selectedItem = $derived(getSelectedItem(activeItems, completedItems, selectedItemId));
   const currentDefaultList = $derived(store.defaultList);
+
+  $effect(() => {
+    if (!activeGroupingPropertyId) return;
+    if (visibleProperties.some((property) => property._id === activeGroupingPropertyId)) return;
+    activeGroupingPropertyId = null;
+  });
+
+  function activeGroupStateKey(groupKey: string) {
+    return `${activeGroupingProperty?._id ?? 'manual'}:${groupKey}`;
+  }
+
+  function isActiveGroupCollapsed(groupKey: string) {
+    return collapsedActiveGroupKeys.has(activeGroupStateKey(groupKey));
+  }
+
+  function toggleActiveGroup(groupKey: string) {
+    const stateKey = activeGroupStateKey(groupKey);
+    if (collapsedActiveGroupKeys.has(stateKey)) collapsedActiveGroupKeys.delete(stateKey);
+    else collapsedActiveGroupKeys.add(stateKey);
+  }
 
   function summarizeItemValues(item: VisibleListItem) {
     const parts: string[] = [];
@@ -1035,6 +1067,21 @@
                     </span>
                   </div>
                   <div class="flex items-center gap-2">
+                    <label
+                      class="flex h-8 items-center gap-1 rounded-full bg-warm-section-mortgage px-2 text-xs font-semibold text-warm-text-secondary"
+                    >
+                      <span class="text-[11px]">Group</span>
+                      <select
+                        aria-label="Group active items by"
+                        bind:value={activeGroupingPropertyId}
+                        class="min-w-0 bg-transparent text-xs font-semibold text-warm-text-primary outline-none"
+                      >
+                        <option value={null}>Manual order</option>
+                        {#each visibleProperties as property (property._id)}
+                          <option value={property._id}>{property.name}</option>
+                        {/each}
+                      </select>
+                    </label>
                     <button
                       type="button"
                       class="flex h-8 w-8 items-center justify-center rounded-full text-warm-text-tertiary hover:text-warm-accent disabled:opacity-40"
@@ -1049,7 +1096,48 @@
                 </div>
 
                 <div class="md:min-h-0 md:flex-1 md:overflow-y-auto">
-                  {#if activeDndItems.length}
+                  {#if activeGroupingProperty && activeGroups.length}
+                    <div class="mt-3 flex min-w-0 flex-col divide-y divide-warm-border/60">
+                      {#each activeGroups as group (group.key)}
+                        {@const collapsed = isActiveGroupCollapsed(group.key)}
+                        <section class="min-w-0">
+                          <button
+                            type="button"
+                            class="flex min-h-11 w-full items-center gap-2 px-4 py-3 text-left text-sm font-semibold text-warm-text-primary hover:bg-warm-section-mortgage"
+                            aria-label={`${collapsed ? 'Expand' : 'Collapse'} ${group.label} group`}
+                            aria-expanded={!collapsed}
+                            onclick={() => toggleActiveGroup(group.key)}
+                          >
+                            <span class={`transition-transform ${collapsed ? '' : 'rotate-180'}`} aria-hidden="true">
+                              <ListIcon name="chevron-down" size={16} />
+                            </span>
+                            <span class="min-w-0 flex-1 truncate">{group.label}</span>
+                            <span class="rounded-full bg-warm-bg-card px-2 py-0.5 text-[11px] text-warm-text-secondary">
+                              {group.items.length}
+                            </span>
+                          </button>
+                          {#if !collapsed}
+                            <ul class="flex min-w-0 flex-col divide-y divide-warm-border/60">
+                              {#each group.items as item (item._id)}
+                                <li class="min-w-0">
+                                  <ListItemRow
+                                    {item}
+                                    valueSummary={summarizeItemValues(item)}
+                                    completed={false}
+                                    reorderable={false}
+                                    selected={selectedItemId === item._id}
+                                    onToggleComplete={() => void toggleItemCompletion(item)}
+                                    onOpenDetail={() => openItemDetails(item._id)}
+                                    onDelete={() => void removeItem(item._id)}
+                                  />
+                                </li>
+                              {/each}
+                            </ul>
+                          {/if}
+                        </section>
+                      {/each}
+                    </div>
+                  {:else if activeDndItems.length}
                     <ul
                       class="mt-3 flex min-w-0 flex-col divide-y divide-warm-border/60"
                       use:dragHandleZone={{ items: activeDndItems, flipDurationMs: 160, dropTargetStyle: {} }}
@@ -1062,6 +1150,7 @@
                             item={entry.item}
                             valueSummary={summarizeItemValues(entry.item)}
                             completed={false}
+                            reorderable={true}
                             selected={selectedItemId === entry.item._id}
                             onToggleComplete={() => void toggleItemCompletion(entry.item)}
                             onOpenDetail={() => openItemDetails(entry.item._id)}
@@ -1082,6 +1171,7 @@
                             {item}
                             valueSummary={summarizeItemValues(item)}
                             completed={true}
+                            reorderable={false}
                             selected={selectedItemId === item._id}
                             onToggleComplete={() => void toggleItemCompletion(item)}
                             onOpenDetail={() => openItemDetails(item._id)}
