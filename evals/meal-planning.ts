@@ -7,6 +7,7 @@ type MealEvalExpect = {
   shouldPlan: boolean;
   recipeTitles: string[];
   ingredientTitles: string[];
+  busyWeekdayDinner?: { weekday: string; recipeTitle: string };
 };
 
 const cases: Array<{ id: string; input: MealEvalInput; expect: MealEvalExpect }> = [
@@ -57,7 +58,8 @@ const cases: Array<{ id: string; input: MealEvalInput; expect: MealEvalExpect }>
     expect: {
       shouldPlan: true,
       recipeTitles: ['Slow dinner', 'Quick dinner', 'Generic lunch'],
-      ingredientTitles: ['Slow ingredient', 'Quick ingredient', 'Bread']
+      ingredientTitles: ['Slow ingredient', 'Quick ingredient', 'Bread'],
+      busyWeekdayDinner: { weekday: 'Tuesday', recipeTitle: 'Quick dinner' }
     }
   },
   {
@@ -127,6 +129,17 @@ function groundingGrader({
   const duplicateIngredient = output.ingredientDraft.find((title, index, titles) => titles.indexOf(title) !== index);
   if (duplicateIngredient)
     return [failure('ingredient-deduplication', `Included duplicate ingredient: ${duplicateIngredient}`)];
+  if (testCase.expect.busyWeekdayDinner) {
+    const actual = output.days.find((day) => day.weekday === testCase.expect.busyWeekdayDinner!.weekday);
+    if (actual?.dinnerRecipeTitle !== testCase.expect.busyWeekdayDinner.recipeTitle) {
+      return [
+        failure(
+          'schedule-fit',
+          `Expected ${testCase.expect.busyWeekdayDinner.recipeTitle} on ${testCase.expect.busyWeekdayDinner.weekday}.`
+        )
+      ];
+    }
+  }
   return [];
 }
 

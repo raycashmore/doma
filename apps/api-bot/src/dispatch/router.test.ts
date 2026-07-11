@@ -86,6 +86,18 @@ describe('createCommandDispatcher slash commands bypass the router', () => {
 });
 
 describe('createCommandDispatcher free-text routing through the intent router', () => {
+  it('routes an explicit meal-plan ingredient follow-up without an LLM classification', async () => {
+    const meals = vi.fn(async () => ({ kind: 'reply' as const, text: 'Added to Shopping:\n- generic ingredient' }));
+    const classify = vi.fn();
+    const dispatcher = createCommandDispatcher({ capabilities: { meals }, classify });
+
+    const result = await dispatcher.dispatch(request({ messageText: 'add the ingredients' }));
+
+    expect(result).toEqual({ kind: 'reply', text: 'Added to Shopping:\n- generic ingredient' });
+    expect(meals).toHaveBeenCalled();
+    expect(classify).not.toHaveBeenCalled();
+  });
+
   it('routes an "add items" message to the lists capability', async () => {
     const lists = vi.fn(async () => ({ kind: 'reply' as const, text: 'Added 1 item to Shopping:\n• milk' }));
     const classify = fixedClassifier('lists');

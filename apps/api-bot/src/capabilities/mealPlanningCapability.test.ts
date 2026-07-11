@@ -138,6 +138,35 @@ describe('createMealPlanningCapability', () => {
     });
   });
 
+  it('requires active recipe titles to be unique before planning', async () => {
+    const capability = createMealPlanningCapability({
+      loadAddressableLists: async () => [
+        { id: 'list_recipes', name: 'Recipes' },
+        { id: 'list_shopping', name: 'Shopping' }
+      ],
+      loadList: async (_userId, publicId) =>
+        publicId === 'list_shopping'
+          ? shopping
+          : {
+              ...recipes,
+              activeItems: [...recipes.activeItems, { ...recipes.activeItems[0]!, id: 'duplicate_pasta' }]
+            }
+    });
+
+    await expect(
+      capability({
+        userId: 'user_123',
+        command: 'meals',
+        messageText: '/meals Recipes | Shopping',
+        receivedAt: 1,
+        providerContext: { provider: 'telegram', providerUserId: 'telegram_user', providerChatId: 'telegram_chat' }
+      })
+    ).resolves.toEqual({
+      kind: 'reply',
+      text: 'I found more than one active recipe named Pasta bake. Please use unique recipe titles before planning.'
+    });
+  });
+
   it('applies only an explicit ingredient follow-up and confirms the created titles', async () => {
     const applyDraft = vi.fn().mockResolvedValue({
       kind: 'applied',

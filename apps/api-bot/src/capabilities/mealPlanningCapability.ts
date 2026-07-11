@@ -93,6 +93,16 @@ function recipesFromList(list: MealPlanningList) {
   }));
 }
 
+function duplicateRecipeTitle(recipes: ReturnType<typeof recipesFromList>) {
+  const seen = new Set<string>();
+  for (const recipe of recipes) {
+    const normalized = recipe.title.trim().toLowerCase();
+    if (normalized && seen.has(normalized)) return recipe.title;
+    seen.add(normalized);
+  }
+  return null;
+}
+
 function formatPlan(
   plan: NonNullable<ReturnType<typeof buildWeeklyMealPlan>>,
   recipeListName: string,
@@ -196,8 +206,16 @@ export function createMealPlanningCapability({
     if (!recipes || !shopping) return { kind: 'reply', text: 'I could not load those lists just now.' };
 
     const [busyWeekdays] = await Promise.all([loadBusyWeekdays()]);
+    const recipesForPlan = recipesFromList(recipes);
+    const duplicateTitle = duplicateRecipeTitle(recipesForPlan);
+    if (duplicateTitle) {
+      return {
+        kind: 'reply',
+        text: `I found more than one active recipe named ${duplicateTitle}. Please use unique recipe titles before planning.`
+      };
+    }
     const input = buildMealPlannerInput({
-      recipes: recipesFromList(recipes),
+      recipes: recipesForPlan,
       activeShoppingItemTitles: shopping.activeItems.map((item) => item.title),
       busyWeekdays,
       avoidIngredient: ask.constraint.avoidIngredient,

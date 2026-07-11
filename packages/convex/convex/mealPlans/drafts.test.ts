@@ -67,7 +67,18 @@ afterEach(() => vi.restoreAllMocks());
 describe('meal-plan drafts', () => {
   it('applies the latest unexpired draft once and confirms only its created titles', async () => {
     vi.spyOn(Date, 'now').mockReturnValue(1_000);
-    const { ctx, tables } = createCtx();
+    const { ctx, tables } = createCtx({
+      listItems: [
+        {
+          _id: 'listItems_existing',
+          listId: 'lists_shopping',
+          title: 'generic ingredient',
+          sortOrder: 0,
+          createdAt: 1,
+          updatedAt: 1
+        }
+      ]
+    });
     await saveMealPlanDraftForUser(ctx, {
       currentUserId: 'user_123',
       providerChatId: 'telegram_chat',
@@ -79,7 +90,7 @@ describe('meal-plan drafts', () => {
       applyLatestMealPlanDraftForUser(ctx, { currentUserId: 'user_123', providerChatId: 'telegram_chat' })
     ).resolves.toEqual({
       kind: 'applied',
-      createdTitles: ['generic ingredient', 'other ingredient'],
+      createdTitles: ['other ingredient'],
       listName: 'Shopping'
     });
     await expect(

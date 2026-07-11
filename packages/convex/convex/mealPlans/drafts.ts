@@ -2,7 +2,7 @@ import { v } from 'convex/values';
 
 import { mutation } from '../_generated/server';
 import { createListItemsForUser } from '../lists/botModel';
-import type { ListsMutationCtx } from '../lists/items';
+import { findListByPublicId, type ListsMutationCtx, readListItems } from '../lists/items';
 
 export const MEAL_PLAN_DRAFT_TTL_MS = 30 * 60 * 1_000;
 
@@ -77,10 +77,19 @@ export async function applyLatestMealPlanDraftForUser(
   if (draft.appliedAt !== undefined) return { kind: 'already_applied' };
   if (draft.expiresAt <= Date.now()) return { kind: 'expired' };
 
+  const shoppingList = await findListByPublicId(ctx, draft.shoppingListPublicId);
+  if (!shoppingList) return { kind: 'missing' };
+  const activeTitles = new Set(
+    (await readListItems(ctx, shoppingList._id))
+      .filter((item) => item.completedAt === undefined)
+      .map((item) => item.title.trim().toLowerCase())
+  );
+  const titlesToCreate = draft.ingredientTitles.filter((title) => !activeTitles.has(title.trim().toLowerCase()));
+
   const created = await createListItemsForUser(ctx, {
     currentUserId,
     listPublicId: draft.shoppingListPublicId,
-    titles: draft.ingredientTitles
+    titles: titlesToCreate
   });
   await ctx.db.patch(draft._id as never, { appliedAt: Date.now() });
   return { kind: 'applied', createdTitles: created.items.map((item) => item.title), listName: created.list.name };

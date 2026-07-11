@@ -63,8 +63,8 @@ export const defaultIntentDescriptors: IntentDescriptorRegistry = [
   {
     name: 'meals',
     description:
-      'Plan weekday dinners and lunches from a named recipe list and Shopping list. Use /meals Recipe list | Shopping list.',
-    examples: ['plan meals for next week', '/meals Recipes | Shopping']
+      'Plan weekday dinners and lunches from a named recipe list and Shopping list, or explicitly add the current meal-plan ingredients.',
+    examples: ['plan meals for next week', '/meals Recipes | Shopping', 'add the ingredients']
   },
   {
     name: 'briefing',
