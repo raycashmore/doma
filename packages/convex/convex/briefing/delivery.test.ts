@@ -4,11 +4,11 @@ import type { ScheduleDisplayMember } from '../schedule/config';
 import { type BotMorningBriefing, runMorningBriefingDeliveryCycle } from './delivery';
 
 const timeZone = 'Australia/Sydney';
-const dueAtMs = Date.parse('2026-06-12T21:35:00.000Z'); // 7:35am 2026-06-13 in Sydney
+const dueAtMs = Date.parse('2026-06-11T21:35:00.000Z'); // 7:35am 2026-06-12 in Sydney
 const members: ScheduleDisplayMember[] = [{ id: 'childA', label: 'Child A', initials: 'CA' }];
 const briefing: BotMorningBriefing = {
-  briefingKey: 'morning:2026-06-13',
-  localDate: '2026-06-13',
+  briefingKey: 'morning:2026-06-12',
+  localDate: '2026-06-12',
   generationStatus: 'ai',
   shouldSend: true,
   message: 'Today:\nLibrary bag and dancing pickup.',
@@ -95,9 +95,9 @@ describe('runMorningBriefingDeliveryCycle', () => {
     });
 
     expect(syncSchedule).toHaveBeenCalledOnce();
-    expect(loadBriefing).toHaveBeenCalledWith({ localDate: '2026-06-13' });
+    expect(loadBriefing).toHaveBeenCalledWith({ localDate: '2026-06-12' });
     expect(generateBriefing).toHaveBeenCalledWith({
-      localDate: '2026-06-13',
+      localDate: '2026-06-12',
       timeZone,
       generatedAt: dueAtMs
     });
@@ -180,6 +180,88 @@ This morning:
       })
     ).rejects.toThrow('Morning briefing is not valid stored briefing content');
 
+    expect(sendNotification).not.toHaveBeenCalled();
+    expect(recordDeliveryAttempt).not.toHaveBeenCalled();
+  });
+
+  it('sends the full daily summary in the morning on weekends', async () => {
+    const weekendDueAtMs = Date.parse('2026-06-12T21:35:00.000Z'); // 7:35am Saturday in Sydney
+    const weekendBriefing: BotMorningBriefing = {
+      ...briefing,
+      briefingKey: 'morning:2026-06-13',
+      localDate: '2026-06-13',
+      message: 'Outdated stored text.'
+    };
+    const syncSchedule = vi.fn(async () => ({ ok: true as const, lastSyncedAt: weekendDueAtMs }));
+    const loadBriefing = vi.fn(async () => weekendBriefing);
+    const generateBriefing = vi.fn();
+    const sendNotification = vi.fn(async () => ({ status: 'sent' as const }));
+    const recordDeliveryAttempt = vi.fn(async () => ({ claimed: true as const }));
+
+    await expect(
+      runMorningBriefingDeliveryCycle({
+        nowMs: weekendDueAtMs,
+        timeZone,
+        members,
+        recipientUserIds: ['user_123'],
+        attempts: [],
+        lastSyncedAt: weekendDueAtMs,
+        syncSchedule,
+        loadBriefing,
+        generateBriefing,
+        sendNotification,
+        recordDeliveryAttempt
+      })
+    ).resolves.toMatchObject({ processed: 1, sent: 1, generated: false });
+
+    expect(sendNotification).toHaveBeenCalledWith({
+      recipientUserId: 'user_123',
+      topic: 'briefing.morning',
+      message: `Today:
+Library bag and dancing pickup.
+
+This morning:
+- Child A: Bring library bag.
+
+This afternoon:
+- Child A: Bring dancing shoes.`,
+      metadata: {
+        briefingKey: weekendBriefing.briefingKey,
+        deliveryKey: `${weekendBriefing.briefingKey}:morning`,
+        deliverySlot: 'morning',
+        localDate: weekendBriefing.localDate,
+        generationStatus: weekendBriefing.generationStatus
+      }
+    });
+  });
+
+  it('does not run an afternoon briefing cycle on weekends', async () => {
+    const weekendAfternoonAtMs = Date.parse('2026-06-13T04:30:00.000Z'); // 2:30pm Saturday in Sydney
+    const syncSchedule = vi.fn();
+    const loadBriefing = vi.fn();
+    const generateBriefing = vi.fn();
+    const sendNotification = vi.fn();
+    const recordDeliveryAttempt = vi.fn();
+
+    await expect(
+      runMorningBriefingDeliveryCycle({
+        nowMs: weekendAfternoonAtMs,
+        timeZone,
+        members,
+        recipientUserIds: ['user_123'],
+        attempts: [],
+        lastSyncedAt: weekendAfternoonAtMs,
+        syncSchedule,
+        loadBriefing,
+        generateBriefing,
+        sendNotification,
+        recordDeliveryAttempt
+      })
+    ).resolves.toMatchObject({ processed: 0, sent: 0, outsideDeliveryWindow: true, generated: false });
+
+    expect(syncSchedule).not.toHaveBeenCalled();
+    expect(loadBriefing).not.toHaveBeenCalled();
+    expect(generateBriefing).not.toHaveBeenCalled();
     expect(sendNotification).not.toHaveBeenCalled();
     expect(recordDeliveryAttempt).not.toHaveBeenCalled();
   });
@@ -427,8 +509,8 @@ This morning:
 
   it('records suppressed or empty briefings as skipped without sending an empty notification', async () => {
     const suppressedBriefing: BotMorningBriefing = {
-      briefingKey: 'morning:2026-06-13',
-      localDate: '2026-06-13',
+      briefingKey: 'morning:2026-06-12',
+      localDate: '2026-06-12',
       generationStatus: 'ai',
       shouldSend: false,
       message: ''
@@ -476,7 +558,7 @@ This morning:
   });
 
   it('skips the afternoon slot when weather is ready but the briefing has no afternoon content', async () => {
-    const afternoonDueAtMs = Date.parse('2026-06-13T04:30:00.000Z'); // 2:30pm in Sydney
+    const afternoonDueAtMs = Date.parse('2026-06-12T04:30:00.000Z'); // 2:30pm in Sydney
     const structuredBriefing = briefing.briefing;
     if (!structuredBriefing) throw new Error('Test fixture should include structured briefing content');
     const morningOnlyBriefing: BotMorningBriefing = {
@@ -539,12 +621,12 @@ This morning:
     });
 
     expect(generateBriefing).toHaveBeenCalledWith({
-      localDate: '2026-06-13',
+      localDate: '2026-06-12',
       timeZone,
       generatedAt: afternoonDueAtMs,
       replaceExisting: true
     });
-    expect(loadWeather).toHaveBeenCalledWith({ localDate: '2026-06-13', timeZone });
+    expect(loadWeather).toHaveBeenCalledWith({ localDate: '2026-06-12', timeZone });
     expect(sendNotification).not.toHaveBeenCalled();
     expect(recordDeliveryAttempt).toHaveBeenCalledWith({
       briefingKey: `${briefing.briefingKey}:afternoon`,
@@ -561,7 +643,7 @@ This morning:
   });
 
   it('regenerates the stored briefing for the afternoon slot after a successful schedule sync', async () => {
-    const afternoonDueAtMs = Date.parse('2026-06-13T04:30:00.000Z'); // 2:30pm in Sydney
+    const afternoonDueAtMs = Date.parse('2026-06-12T04:30:00.000Z'); // 2:30pm in Sydney
     const refreshedBriefing: BotMorningBriefing = {
       ...briefing,
       message: 'Today:\nLibrary bag only.',
@@ -604,9 +686,9 @@ This morning:
       generated: true
     });
 
-    expect(loadBriefing).toHaveBeenCalledWith({ localDate: '2026-06-13' });
+    expect(loadBriefing).toHaveBeenCalledWith({ localDate: '2026-06-12' });
     expect(generateBriefing).toHaveBeenCalledWith({
-      localDate: '2026-06-13',
+      localDate: '2026-06-12',
       timeZone,
       generatedAt: afternoonDueAtMs,
       replaceExisting: true
@@ -621,7 +703,7 @@ This morning:
   });
 
   it('does not refresh the afternoon briefing when every recipient already completed the afternoon slot', async () => {
-    const afternoonRetryAtMs = Date.parse('2026-06-13T04:40:00.000Z'); // 2:40pm in Sydney
+    const afternoonRetryAtMs = Date.parse('2026-06-12T04:40:00.000Z'); // 2:40pm in Sydney
     const syncSchedule = vi.fn(async () => ({ ok: true as const, lastSyncedAt: afternoonRetryAtMs }));
     const loadBriefing = vi.fn(async () => briefing);
     const generateBriefing = vi.fn(async () => briefing);
@@ -657,7 +739,7 @@ This morning:
   });
 
   it('sends the afternoon slot at 2:30pm with refreshed afternoon weather', async () => {
-    const afternoonDueAtMs = Date.parse('2026-06-13T04:30:00.000Z'); // 2:30pm in Sydney
+    const afternoonDueAtMs = Date.parse('2026-06-12T04:30:00.000Z'); // 2:30pm in Sydney
     const syncSchedule = vi.fn(async () => ({ ok: true as const, lastSyncedAt: afternoonDueAtMs }));
     const loadBriefing = vi.fn(async () => briefing);
     const generateBriefing = vi.fn(async () => briefing);
@@ -707,12 +789,12 @@ This morning:
     });
 
     expect(generateBriefing).toHaveBeenCalledWith({
-      localDate: '2026-06-13',
+      localDate: '2026-06-12',
       timeZone,
       generatedAt: afternoonDueAtMs,
       replaceExisting: true
     });
-    expect(loadWeather).toHaveBeenCalledWith({ localDate: '2026-06-13', timeZone });
+    expect(loadWeather).toHaveBeenCalledWith({ localDate: '2026-06-12', timeZone });
     expect(sendNotification).toHaveBeenCalledWith({
       recipientUserId: 'user_123',
       topic: 'briefing.morning',

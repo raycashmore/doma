@@ -2,6 +2,7 @@ import type { ScheduleDisplayMember } from '../schedule/config';
 import {
   type BriefingDeliverySlot,
   formatBriefingDeliveryMessage,
+  formatMorningBriefing,
   isPlainBriefingText,
   isValidMorningBriefingForMembers,
   type MorningBriefing,
@@ -65,6 +66,7 @@ function localParts(nowMs: number, timeZone: string) {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
+    weekday: 'short',
     hour: '2-digit',
     minute: '2-digit',
     hourCycle: 'h23'
@@ -73,27 +75,30 @@ function localParts(nowMs: number, timeZone: string) {
   const year = part('year');
   const month = part('month');
   const day = part('day');
+  const weekday = part('weekday');
   const hour = Number(part('hour'));
   const minute = Number(part('minute'));
 
-  if (!year || !month || !day || !Number.isFinite(hour) || !Number.isFinite(minute)) {
+  if (!year || !month || !day || !weekday || !Number.isFinite(hour) || !Number.isFinite(minute)) {
     throw new Error('Could not resolve local morning briefing time');
   }
 
   return {
     localDate: `${year}-${month}-${day}`,
+    isWeekend: weekday === 'Sat' || weekday === 'Sun',
     minuteOfDay: hour * 60 + minute
   };
 }
 
 function deliverySlotForTime(nowMs: number, timeZone: string): BriefingDeliverySlot | null {
-  const { minuteOfDay } = localParts(nowMs, timeZone);
+  const { isWeekend, minuteOfDay } = localParts(nowMs, timeZone);
   const morningStart = retryWindowStart.hour * 60 + retryWindowStart.minute;
   const morningEnd = retryWindowEnd.hour * 60 + retryWindowEnd.minute;
   const afternoonStart = afternoonRetryWindowStart.hour * 60 + afternoonRetryWindowStart.minute;
   const afternoonEnd = afternoonRetryWindowEnd.hour * 60 + afternoonRetryWindowEnd.minute;
 
   if (minuteOfDay >= morningStart && minuteOfDay < morningEnd) return 'morning';
+  if (isWeekend) return null;
   if (minuteOfDay >= afternoonStart && minuteOfDay < afternoonEnd) return 'afternoon';
   return null;
 }
@@ -136,16 +141,21 @@ function deliveryMessage({
   briefing,
   members,
   slot,
+  isWeekend,
   weather
 }: {
   briefing: BotMorningBriefing;
   members: ScheduleDisplayMember[];
   slot: BriefingDeliverySlot;
+  isWeekend: boolean;
   weather?: MorningBriefingWeatherContext;
 }) {
-  const message = briefing.briefing
-    ? formatBriefingDeliveryMessage(briefing.briefing, members, { slot, weather })
-    : briefing.message;
+  const message =
+    isWeekend && slot === 'morning' && briefing.briefing
+      ? formatMorningBriefing(briefing.briefing, members)
+      : briefing.briefing
+        ? formatBriefingDeliveryMessage(briefing.briefing, members, { slot, weather })
+        : briefing.message;
 
   return message;
 }
@@ -197,7 +207,7 @@ export async function runMorningBriefingDeliveryCycle({
     return emptyCounts();
   }
 
-  const { localDate } = localParts(nowMs, timeZone);
+  const { isWeekend, localDate } = localParts(nowMs, timeZone);
   const baseBriefingKey = morningBriefingKey({ briefingKind: 'morning', localDate });
   const key = deliveryKey(baseBriefingKey, deliverySlot);
   const completedRecipients = completedRecipientIds(
@@ -234,7 +244,7 @@ export async function runMorningBriefingDeliveryCycle({
   }
   const counts = emptyCounts({ syncFailed, staleCache, generated });
   const weather = deliverySlot === 'afternoon' && loadWeather ? await loadWeather({ localDate, timeZone }) : undefined;
-  const baseMessage = deliveryMessage({ briefing, members, slot: deliverySlot, weather });
+  const baseMessage = deliveryMessage({ briefing, members, slot: deliverySlot, isWeekend, weather });
   const message = staleCache ? withStaleScheduleNote(baseMessage) : baseMessage;
   const shouldSend = briefing.shouldSend && message.trim().length > 0;
 
