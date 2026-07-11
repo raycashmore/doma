@@ -35,30 +35,76 @@ describe('buildMealPlannerInput', () => {
         }
       ],
       activeShoppingItemTitles: ['tomato sauce'],
-      busyWeekdays: []
+      busyWeekdays: [],
+      avoidIngredient: null,
+      preferQuick: false
     });
   });
 });
 
 describe('buildWeeklyMealPlan', () => {
+  it('uses grounded lunch recipes and intentional leftovers alongside schedule-sensitive dinners', () => {
+    const input = buildMealPlannerInput({
+      recipes: [
+        { title: 'Long dinner', ingredients: 'Rice\nBeans', prepMinutes: 45, mealType: 'Dinner' },
+        { title: 'Quick leftovers', ingredients: 'Pasta\nSauce', prepMinutes: 10, mealType: 'Dinner with leftovers' },
+        { title: 'Lunch box', ingredients: 'Bread\nFruit', prepMinutes: 5, mealType: 'Lunch' }
+      ],
+      activeShoppingItemTitles: [],
+      busyWeekdays: ['Tuesday']
+    });
+
+    expect(buildWeeklyMealPlan(input)).toEqual({
+      days: [
+        { weekday: 'Monday', dinnerRecipeTitle: 'Long dinner', lunch: { kind: 'recipe', recipeTitle: 'Lunch box' } },
+        {
+          weekday: 'Tuesday',
+          dinnerRecipeTitle: 'Quick leftovers',
+          lunch: { kind: 'recipe', recipeTitle: 'Lunch box' }
+        },
+        {
+          weekday: 'Wednesday',
+          dinnerRecipeTitle: 'Quick leftovers',
+          lunch: { kind: 'leftovers', recipeTitle: 'Quick leftovers' }
+        },
+        {
+          weekday: 'Thursday',
+          dinnerRecipeTitle: 'Long dinner',
+          lunch: { kind: 'leftovers', recipeTitle: 'Quick leftovers' }
+        },
+        {
+          weekday: 'Friday',
+          dinnerRecipeTitle: 'Quick leftovers',
+          lunch: { kind: 'recipe', recipeTitle: 'Lunch box' }
+        }
+      ],
+      ingredientDraft: ['Bread', 'Fruit', 'Pasta', 'Sauce', 'Rice', 'Beans']
+    });
+  });
+
   it('uses only grounded recipes and excludes already-active shopping items from its ingredient draft', () => {
     const input = buildMealPlannerInput({
       recipes: [
         { title: 'Pasta bake', ingredients: 'Pasta\nTomato sauce\nCheese', prepMinutes: 20, mealType: 'Dinner' },
-        { title: 'Bean wraps', ingredients: 'Wraps\nBeans\nCheese', prepMinutes: 10, mealType: 'Dinner' }
+        { title: 'Bean wraps', ingredients: 'Wraps\nBeans\nCheese', prepMinutes: 10, mealType: 'Dinner' },
+        { title: 'Lunch wraps', ingredients: 'Wraps\nFruit', prepMinutes: 5, mealType: 'Lunch' }
       ],
       activeShoppingItemTitles: ['Cheese']
     });
 
     expect(buildWeeklyMealPlan(input)).toEqual({
       days: [
-        { weekday: 'Monday', dinnerRecipeTitle: 'Pasta bake' },
-        { weekday: 'Tuesday', dinnerRecipeTitle: 'Bean wraps' },
-        { weekday: 'Wednesday', dinnerRecipeTitle: 'Pasta bake' },
-        { weekday: 'Thursday', dinnerRecipeTitle: 'Bean wraps' },
-        { weekday: 'Friday', dinnerRecipeTitle: 'Pasta bake' }
+        { weekday: 'Monday', dinnerRecipeTitle: 'Pasta bake', lunch: { kind: 'recipe', recipeTitle: 'Lunch wraps' } },
+        { weekday: 'Tuesday', dinnerRecipeTitle: 'Bean wraps', lunch: { kind: 'recipe', recipeTitle: 'Lunch wraps' } },
+        {
+          weekday: 'Wednesday',
+          dinnerRecipeTitle: 'Pasta bake',
+          lunch: { kind: 'recipe', recipeTitle: 'Lunch wraps' }
+        },
+        { weekday: 'Thursday', dinnerRecipeTitle: 'Bean wraps', lunch: { kind: 'recipe', recipeTitle: 'Lunch wraps' } },
+        { weekday: 'Friday', dinnerRecipeTitle: 'Pasta bake', lunch: { kind: 'recipe', recipeTitle: 'Lunch wraps' } }
       ],
-      ingredientDraft: ['Wraps', 'Beans', 'Pasta', 'Tomato sauce']
+      ingredientDraft: ['Wraps', 'Fruit', 'Beans', 'Pasta', 'Tomato sauce']
     });
   });
 });

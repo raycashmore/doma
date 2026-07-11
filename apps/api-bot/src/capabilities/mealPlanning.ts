@@ -10,6 +10,15 @@ export type MealPlannerInput = {
   recipes: MealPlannerRecipe[];
   activeShoppingItemTitles: string[];
   busyWeekdays?: string[];
+  avoidIngredient?: string | null;
+  preferQuick?: boolean;
+};
+
+export type MealPlanLunch = { kind: 'recipe'; recipeTitle: string } | { kind: 'leftovers'; recipeTitle: string };
+
+export type WeeklyMealPlan = {
+  days: Array<{ weekday: (typeof WEEKDAYS)[number]; dinnerRecipeTitle: string; lunch: MealPlanLunch }>;
+  ingredientDraft: string[];
 };
 
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] as const;
@@ -41,11 +50,15 @@ function normalizedShoppingItemTitles(titles: string[]) {
 export function buildMealPlannerInput({
   recipes,
   activeShoppingItemTitles,
-  busyWeekdays = []
+  busyWeekdays = [],
+  avoidIngredient = null,
+  preferQuick = false
 }: {
   recipes: RawRecipe[];
   activeShoppingItemTitles: string[];
   busyWeekdays?: string[];
+  avoidIngredient?: string | null;
+  preferQuick?: boolean;
 }): MealPlannerInput {
   return {
     recipes: recipes.flatMap((recipe) => {
@@ -64,7 +77,9 @@ export function buildMealPlannerInput({
       ];
     }),
     activeShoppingItemTitles: normalizedShoppingItemTitles(activeShoppingItemTitles),
-    busyWeekdays: [...new Set(busyWeekdays)]
+    busyWeekdays: [...new Set(busyWeekdays)],
+    avoidIngredient: avoidIngredient?.trim().toLowerCase() || null,
+    preferQuick
   };
 }
 
@@ -75,10 +90,18 @@ export function buildMealPlannerInput({
  * receives the same narrow result contract.
  */
 export function buildWeeklyMealPlan(input: MealPlannerInput) {
-  const recipes = [...input.recipes].sort(
-    (left, right) => (left.prepMinutes ?? Number.MAX_SAFE_INTEGER) - (right.prepMinutes ?? Number.MAX_SAFE_INTEGER)
-  );
-  if (recipes.length === 0) return null;
+  const recipes = input.recipes
+    .filter(
+      (recipe) =>
+        !input.avoidIngredient ||
+        !recipe.ingredients.some((ingredient) => ingredient.trim().toLowerCase() === input.avoidIngredient)
+    )
+    .sort(
+      (left, right) => (left.prepMinutes ?? Number.MAX_SAFE_INTEGER) - (right.prepMinutes ?? Number.MAX_SAFE_INTEGER)
+    );
+  const dinnerRecipes = recipes.filter((recipe) => mealKind(recipe) !== 'lunch');
+  const lunchRecipes = recipes.filter((recipe) => mealKind(recipe) === 'lunch');
+  if (dinnerRecipes.length === 0 || lunchRecipes.length === 0) return null;
 
   const activeShoppingItems = new Set(input.activeShoppingItemTitles);
   const selectedRecipeTitles = new Set<string>();
@@ -86,15 +109,26 @@ export function buildWeeklyMealPlan(input: MealPlannerInput) {
   const seenIngredientTitles = new Set<string>();
 
   const busyWeekdays = new Set(input.busyWeekdays ?? []);
-  const slowestFirst = [...recipes].reverse();
+  const slowestFirst = [...dinnerRecipes].reverse();
   let quickIndex = 0;
   let slowIndex = 0;
-  const days = WEEKDAYS.map((weekday) => {
-    const candidates = busyWeekdays.has(weekday) ? recipes : slowestFirst;
-    const index = busyWeekdays.has(weekday) ? quickIndex++ : slowIndex++;
+  const dinners = WEEKDAYS.map((weekday) => {
+    const quickDay = input.preferQuick || busyWeekdays.has(weekday);
+    const candidates = quickDay ? dinnerRecipes : slowestFirst;
+    const index = quickDay ? quickIndex++ : slowIndex++;
     const recipe = candidates[index % candidates.length]!;
     selectedRecipeTitles.add(recipe.title);
-    return { weekday, dinnerRecipeTitle: recipe.title };
+    return { weekday, recipe };
+  });
+
+  const days = dinners.map(({ weekday, recipe }, index) => {
+    const priorDinner = dinners[index - 1]?.recipe;
+    const lunch =
+      priorDinner && mealKind(priorDinner) === 'dinner_with_leftovers'
+        ? { kind: 'leftovers' as const, recipeTitle: priorDinner.title }
+        : { kind: 'recipe' as const, recipeTitle: lunchRecipes[index % lunchRecipes.length]!.title };
+    selectedRecipeTitles.add(lunch.recipeTitle);
+    return { weekday, dinnerRecipeTitle: recipe.title, lunch };
   });
 
   for (const recipe of recipes) {
@@ -107,5 +141,12 @@ export function buildWeeklyMealPlan(input: MealPlannerInput) {
     }
   }
 
-  return { days, ingredientDraft };
+  return { days, ingredientDraft } satisfies WeeklyMealPlan;
+}
+
+function mealKind(recipe: MealPlannerRecipe) {
+  const normalized = recipe.mealType?.trim().toLowerCase();
+  if (normalized === 'lunch') return 'lunch';
+  if (normalized === 'dinner with leftovers') return 'dinner_with_leftovers';
+  return 'dinner';
 }
