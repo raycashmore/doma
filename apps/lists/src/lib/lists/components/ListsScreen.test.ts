@@ -195,7 +195,6 @@ describe('ListsScreen item header', () => {
 
     expect(count).not.toBeNull();
     expect(count?.previousElementSibling?.textContent).toBe('Items');
-    expect(target.querySelector('button[aria-label="Clear completed items"]')?.previousElementSibling).toBeNull();
   });
 
   it('moves a completed item immediately while the live query catches up', async () => {
@@ -256,6 +255,41 @@ describe('ListsScreen mobile switcher', () => {
     await tick();
 
     expect(target.querySelector('[title="Shared list"]')).not.toBeNull();
+  });
+});
+
+describe('ListsScreen active-item grouping', () => {
+  it('groups active items by a property and collapses a group without affecting its items', async () => {
+    const target = await renderScreen();
+    await provideLiveData();
+
+    const grouping = target.querySelector<HTMLSelectElement>('select[aria-label="Group active items by"]');
+    expect(grouping).not.toBeNull();
+    if (!grouping) throw new Error('Expected grouping control');
+
+    grouping.value = 'preview-property-aisle';
+    grouping.dispatchEvent(new Event('change', { bubbles: true }));
+    await tick();
+
+    const dairyGroup = target.querySelector<HTMLButtonElement>('button[aria-label="Collapse Dairy group"]');
+    expect(dairyGroup?.textContent).toContain('Dairy');
+    expect(target.querySelector('button[aria-label="Mark Milk complete"]')).not.toBeNull();
+    expect(target.querySelector('[aria-label="Drag to reorder Milk"]')).toBeNull();
+    expect(target.querySelector('button[aria-label="Collapse Unassigned group"]')).not.toBeNull();
+
+    dairyGroup?.click();
+    await tick();
+
+    expect(target.querySelector('button[aria-label="Expand Dairy group"]')).not.toBeNull();
+    expect(target.querySelector('button[aria-label="Mark Milk complete"]')).toBeNull();
+    expect(target.querySelector('button[aria-label="Mark Apples active"]')).not.toBeNull();
+
+    grouping.value = '';
+    grouping.dispatchEvent(new Event('change', { bubbles: true }));
+    await tick();
+
+    expect(target.querySelector('button[aria-label="Collapse Dairy group"]')).toBeNull();
+    expect(target.querySelector('[aria-label="Drag to reorder Milk"]')).not.toBeNull();
   });
 });
 

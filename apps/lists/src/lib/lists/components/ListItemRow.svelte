@@ -8,6 +8,7 @@
     item,
     valueSummary,
     completed,
+    reorderable,
     selected,
     onToggleComplete,
     onOpenDetail,
@@ -16,6 +17,7 @@
     item: VisibleListItem;
     valueSummary: string;
     completed: boolean;
+    reorderable: boolean;
     selected: boolean;
     onToggleComplete: () => void;
     onOpenDetail: () => void;
@@ -37,7 +39,7 @@
     }
   }}
 >
-  {#if completed}
+  {#if completed || !reorderable}
     <span class="invisible flex h-7 w-6 shrink-0 items-center justify-center" aria-hidden="true">
       <ListIcon name="grip" size={16} />
     </span>
