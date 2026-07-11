@@ -36,7 +36,7 @@ describe('intentRouterOutputJsonSchema', () => {
   it('constrains the capability to the registered names plus none', () => {
     const schema = intentRouterOutputJsonSchema(descriptors);
 
-    expect(schema.properties.capability.enum).toEqual(['lists', 'schedule', 'insights', 'briefing', NO_CAPABILITY]);
+    expect(schema.properties.capability.enum).toEqual(['lists', 'schedule', 'insights', 'meals', 'briefing', NO_CAPABILITY]);
     expect(schema.required).toContain('capability');
   });
 });

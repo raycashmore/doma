@@ -6,7 +6,10 @@ import {
   isListVisibleToUser,
   type ListsMutationCtx,
   type ListsReadCtx,
-  readListItems
+  readListItemPropertyValuesByListId,
+  readListItems,
+  readListProperties,
+  sortListProperties
 } from './items';
 import { nextActiveSortOrder } from './transitions';
 
@@ -19,6 +22,27 @@ export type ListsBotMutationCtx = BotWriteCtx & Pick<MutationCtx, 'scheduler'>;
 export type DefaultListSummary = { publicId: string; name: string };
 
 export type AddressableListSummary = { id: string; name: string };
+
+export type MealPlanningList = {
+  publicId: string;
+  name: string;
+  properties: Array<{
+    id: string;
+    name: string;
+    type: 'text' | 'number' | 'date' | 'select' | 'checkbox';
+    options?: Array<{ id: string; label: string }>;
+  }>;
+  activeItems: Array<{
+    id: string;
+    title: string;
+    propertyValues: Array<{
+      propertyId: string;
+      textValue?: string;
+      numberValue?: number;
+      selectOptionId?: string;
+    }>;
+  }>;
+};
 
 /**
  * The lists a household user can have the bot target: their own personal lists
@@ -73,6 +97,53 @@ export async function readDefaultListForUser(
   if (!list || !isListVisibleToUser(list, currentUserId)) return null;
 
   return { publicId: list.publicId, name: list.name };
+}
+
+/**
+ * Read one addressable list with only the recipe/planning fields the bot needs.
+ * The service caller still acts as the linked household user, so another
+ * household user's personal list can never become planning context.
+ */
+export async function readMealPlanningListForUser(
+  ctx: BotReadCtx,
+  { currentUserId, publicId }: { currentUserId: string; publicId: string }
+): Promise<MealPlanningList | null> {
+  const list = await findListByPublicId(ctx, publicId);
+  if (!list || !isListVisibleToUser(list, currentUserId)) return null;
+
+  const [items, propertyRows, propertyValues] = await Promise.all([
+    readListItems(ctx, list._id),
+    readListProperties(ctx, list._id),
+    readListItemPropertyValuesByListId(ctx, list._id)
+  ]);
+  const properties = sortListProperties(propertyRows);
+  const propertyValuesByItem = new Map<string, typeof propertyValues>();
+  for (const item of items) propertyValuesByItem.set(item._id, []);
+  for (const value of propertyValues) propertyValuesByItem.get(value.listItemId)?.push(value);
+
+  return {
+    publicId: list.publicId,
+    name: list.name,
+    properties: properties.map((property) => ({
+      id: property._id,
+      name: property.name,
+      type: property.type,
+      options: property.options
+    })),
+    activeItems: items
+      .filter((item) => item.completedAt === undefined)
+      .sort((left, right) => left.sortOrder - right.sortOrder || left.createdAt - right.createdAt)
+      .map((item) => ({
+        id: item._id,
+        title: item.title,
+        propertyValues: (propertyValuesByItem.get(item._id) ?? []).map((value) => ({
+          propertyId: value.listPropertyId,
+          textValue: value.textValue,
+          numberValue: value.numberValue,
+          selectOptionId: value.selectOptionId
+        }))
+      }))
+  };
 }
 
 export async function setDefaultListForUser(

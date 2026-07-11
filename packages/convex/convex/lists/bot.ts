@@ -6,6 +6,7 @@ import {
   createListItemsForUser,
   type ListsBotMutationCtx,
   type ListsBotReadCtx,
+  readMealPlanningListForUser,
   readAddressableListsForUser,
   readDefaultListForUser,
   setDefaultListForUser
@@ -49,6 +50,14 @@ export async function addressableListsForBotHandler(
 ): Promise<AddressableListSummary[]> {
   assertAuthorizedServiceToken(serviceToken);
   return readAddressableListsForUser(ctx, { currentUserId: clerkUserId });
+}
+
+export async function mealPlanningListForBotHandler(
+  ctx: ListsBotReadCtx,
+  { serviceToken, clerkUserId, publicId }: { serviceToken: string; clerkUserId: string; publicId: string }
+) {
+  assertAuthorizedServiceToken(serviceToken);
+  return readMealPlanningListForUser(ctx, { currentUserId: clerkUserId, publicId });
 }
 
 export async function createListItemsForBotHandler(
@@ -104,6 +113,11 @@ export const defaultListForBot = query({
 export const addressableListsForBot = query({
   args: { serviceToken: v.string(), clerkUserId: v.string() },
   handler: (ctx, args) => addressableListsForBotHandler(ctx, args)
+});
+
+export const mealPlanningListForBot = query({
+  args: { serviceToken: v.string(), clerkUserId: v.string(), publicId: v.string() },
+  handler: (ctx, args) => mealPlanningListForBotHandler(ctx, args)
 });
 
 export const createListItemsForBot = mutation({
