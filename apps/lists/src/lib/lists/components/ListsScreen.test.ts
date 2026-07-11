@@ -291,6 +291,23 @@ describe('ListsScreen active-item grouping', () => {
     expect(target.querySelector('button[aria-label="Collapse Dairy group"]')).toBeNull();
     expect(target.querySelector('[aria-label="Drag to reorder Milk"]')).not.toBeNull();
   });
+
+  it('returns to Manual order when the selected list does not define the active grouping property', async () => {
+    const target = await renderScreen();
+    await provideLiveData();
+
+    const grouping = target.querySelector<HTMLSelectElement>('select[aria-label="Group active items by"]');
+    if (!grouping) throw new Error('Expected grouping control');
+    grouping.value = 'preview-property-aisle';
+    grouping.dispatchEvent(new Event('change', { bubbles: true }));
+    await tick();
+
+    await provideLiveData('home-reset');
+
+    const updatedGrouping = target.querySelector<HTMLSelectElement>('select[aria-label="Group active items by"]');
+    expect(updatedGrouping?.selectedOptions[0]?.textContent).toBe('Manual order');
+    expect(target.querySelector('[aria-label="Drag to reorder Fold laundry"]')).not.toBeNull();
+  });
 });
 
 describe('ListsScreen offline fallback', () => {

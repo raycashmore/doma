@@ -587,6 +587,12 @@
   const selectedItem = $derived(getSelectedItem(activeItems, completedItems, selectedItemId));
   const currentDefaultList = $derived(store.defaultList);
 
+  $effect(() => {
+    if (!activeGroupingPropertyId) return;
+    if (visibleProperties.some((property) => property._id === activeGroupingPropertyId)) return;
+    activeGroupingPropertyId = null;
+  });
+
   function activeGroupStateKey(groupKey: string) {
     return `${activeGroupingProperty?._id ?? 'manual'}:${groupKey}`;
   }

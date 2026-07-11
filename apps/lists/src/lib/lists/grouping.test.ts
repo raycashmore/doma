@@ -11,7 +11,8 @@ const property: VisibleListProperty = {
   sortOrder: 0,
   options: [
     { id: 'produce', label: 'Produce' },
-    { id: 'bakery', label: 'Bakery' }
+    { id: 'bakery', label: 'Bakery' },
+    { id: 'household', label: 'Household' }
   ]
 };
 
