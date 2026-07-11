@@ -16,6 +16,12 @@ Run the harness foundation tests from the repo root:
 pnpm evals:test
 ```
 
+Run the weekly meal-planning launch-blocking suite:
+
+```bash
+pnpm evals:meals
+```
+
 These scripts use Node's TypeScript stripping rather than `tsx`, so they can run
 even when the package-manager preflight has not linked `node_modules/.bin`.
 

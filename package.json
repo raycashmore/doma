@@ -13,6 +13,7 @@
     "ci:checks": "scripts/ci-checks.sh",
     "ci:local": "scripts/ci-local.sh",
     "evals": "node --experimental-strip-types evals/demo.ts",
+    "evals:meals": "node --experimental-strip-types evals/meal-planning.ts",
     "evals:test": "node --experimental-strip-types --test evals/**/*.test.ts",
     "bot": "pnpm --filter api-bot dev",
     "bot:test": "pnpm --filter api-bot test",
