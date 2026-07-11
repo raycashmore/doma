@@ -111,7 +111,9 @@ Morning briefing messages render as compact readiness summaries, not raw event
 feeds. Busy days lead with the shape of the day, then include morning,
 afternoon, and watchout sections when relevant. Scheduled delivery splits that
 stored briefing into a morning notification with the summary and morning details
-only, and an afternoon notification with afternoon details. AI-generated
+only, and an afternoon notification with afternoon details.
+On weekends, the morning notification renders the full daily summary instead,
+and the afternoon delivery slot does not run. AI-generated
 briefings can use optional Open-Meteo weather context to make the headline or
 block lines more practical, such as noting a cold start or wet pickup. Afternoon
 delivery can refresh the same weather context and add relevant afternoon
@@ -133,8 +135,8 @@ briefing text can contain private household schedule details, so do not copy it
 into committed fixtures.
 
 Scheduled delivery runs from Convex cron during the local
-`07:35 <= time < 08:30` morning retry window and the
-`14:30 <= time < 15:00` afternoon retry window. The runner forces schedule sync
+`07:35 <= time < 08:30` morning retry window every day and the
+`14:30 <= time < 15:00` afternoon retry window on weekdays only. The runner forces schedule sync
 before generation when possible, reuses an existing stored briefing for morning
 retries, refreshes the stored briefing after a successful afternoon sync, sends
 through the bot gateway's provider-neutral `/notifications/send` endpoint, and
