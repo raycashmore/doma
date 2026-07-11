@@ -131,7 +131,7 @@
               <div class="flex min-w-0 items-center gap-1">
                 <button
                   type="button"
-                  class="truncate text-sm font-semibold text-warm-text-primary"
+                  class="whitespace-pre-wrap break-words text-right text-sm font-semibold text-warm-text-primary"
                   onclick={() => openValueEditor(property, currentValue)}
                 >
                   {describePropertyValue(property, currentValue)}
@@ -161,12 +161,13 @@
         {#if valueEditorPropertyId === property._id}
           <div class="mt-3 flex flex-col gap-2">
             {#if property.type === 'text'}
-              <input
-                class="rounded-xl border border-warm-border bg-warm-bg px-3 py-2 text-sm text-warm-text-primary outline-none"
+              <textarea
+                class="min-h-24 resize-y rounded-xl border border-warm-border bg-warm-bg px-3 py-2 text-sm text-warm-text-primary outline-none"
+                rows="3"
                 value={valueDraftText}
                 oninput={(event) => setValueDraftText(event.currentTarget.value)}
                 placeholder={`Add ${property.name.toLowerCase()}`}
-              />
+              ></textarea>
             {:else if property.type === 'number'}
               <input
                 type="number"

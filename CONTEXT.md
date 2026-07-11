@@ -72,6 +72,18 @@ _Avoid_: Formula field, file field, reminder field
 A checkable entry inside a **list**. A **list item** has its own completion state, a manual order while active, and may store values for the list's properties.
 _Avoid_: Task, shopping row
 
+**Recipe**:
+A reference-style **list item** in a **recipe list**, named for the dish and described through that list's properties. A recipe's ingredient lines are the authoritative source for preparing a shopping-list draft; its instructions and serving information help decide whether it suits a meal.
+_Avoid_: Generated meal, pantry item, shopping item
+
+**Recipe list**:
+A **list** whose active **list items** are recipes. It stays an ordinary list so a household can edit recipe names and properties alongside other Doma lists.
+_Avoid_: Cookbook app, special list template
+
+**Weekly meal plan**:
+A Monday-to-Friday household plan that assigns approved recipes to dinners and school lunches. It accounts for recipe suitability and schedule timing, including intentional leftovers, but does not include weekend meals.
+_Avoid_: Recipe list, grocery list, weekend menu
+
 **Active item order**:
 The manual ordering of active **list items**. A new active item is placed after the highest existing order (one past the current maximum), so completing or deleting items may leave gaps in the order numbers without affecting how items read. Gaps are harmless: items show in ascending order, ties broken by creation time. A reorder renumbers the active items densely from the top. Placing a new item by active count rather than highest-order-plus-one is a bug, because it can slot the item into an existing gap instead of the end.
 _Avoid_: Sort index, position field, dense rank
