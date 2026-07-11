@@ -18,6 +18,12 @@ export type MealPlanningList = {
 
 type ListSummary = { id: string; name: string };
 
+type ApplyMealPlanDraftResult =
+  | { kind: 'applied'; createdTitles: string[]; listName: string }
+  | { kind: 'missing' }
+  | { kind: 'expired' }
+  | { kind: 'already_applied' };
+
 function parseAsk(messageText: string) {
   const match = /^\/meals(?:@\w+)?\s+(.+?)\s*\|\s*(.+?)(?:\s*\|\s*(.+))?$/i.exec(messageText.trim());
   if (!match) return null;
@@ -106,6 +112,20 @@ function formatPlan(
   ].join('\n');
 }
 
+function isExplicitIngredientAdd(messageText: string) {
+  return /^(?:\/meals(?:@\w+)?\s+)?add(?:\s+the)?\s+ingredients$/i.test(messageText.trim());
+}
+
+function formatApplyResult(result: ApplyMealPlanDraftResult) {
+  if (result.kind === 'applied') {
+    return [`Added to ${result.listName}:`, ...result.createdTitles.map((title) => `- ${title}`)].join('\n');
+  }
+  if (result.kind === 'already_applied') return 'Those ingredients were already added from this meal plan.';
+  if (result.kind === 'expired')
+    return 'That meal-plan ingredient draft has expired. Please ask me to plan the week again.';
+  return 'I do not have a current meal-plan ingredient draft to add.';
+}
+
 function busyWeekdaysFromEvents(events: Array<{ start: number }>) {
   const counts = new Map<string, number>();
   for (const event of events) {
@@ -120,13 +140,30 @@ function busyWeekdaysFromEvents(events: Array<{ start: number }>) {
 export function createMealPlanningCapability({
   loadAddressableLists,
   loadList,
-  loadBusyWeekdays = async () => []
+  loadBusyWeekdays = async () => [],
+  saveDraft = async () => undefined,
+  applyDraft = async () => ({ kind: 'missing' }) as const
 }: {
   loadAddressableLists: (userId: string) => Promise<ListSummary[]>;
   loadList: (userId: string, publicId: string) => Promise<MealPlanningList | null>;
   loadBusyWeekdays?: () => Promise<string[]>;
+  saveDraft?: (args: {
+    userId: string;
+    providerChatId: string;
+    shoppingListPublicId: string;
+    ingredientTitles: string[];
+  }) => Promise<void>;
+  applyDraft?: (args: { userId: string; providerChatId: string }) => Promise<ApplyMealPlanDraftResult>;
 }): CapabilityHandler {
   return async (request) => {
+    if (isExplicitIngredientAdd(request.messageText)) {
+      return {
+        kind: 'reply',
+        text: formatApplyResult(
+          await applyDraft({ userId: request.userId, providerChatId: request.providerContext.providerChatId })
+        )
+      };
+    }
     const ask = parseAsk(request.messageText);
     if (!ask) {
       return {
@@ -173,6 +210,13 @@ export function createMealPlanningCapability({
         text: 'I need at least one active recipe with an Ingredients text property before I can plan the week.'
       };
 
+    await saveDraft({
+      userId: request.userId,
+      providerChatId: request.providerContext.providerChatId,
+      shoppingListPublicId: shopping.publicId,
+      ingredientTitles: plan.ingredientDraft
+    });
+
     return { kind: 'reply', text: formatPlan(plan, recipes.name, shopping.name) };
   };
 }
@@ -192,6 +236,22 @@ const currentWeekForBot = makeFunctionReference<
   { serviceToken: string },
   { events: Array<{ start: number }> }
 >('schedule.queries.currentWeekForBot');
+const saveMealPlanDraftForBot = makeFunctionReference<
+  'mutation',
+  {
+    serviceToken: string;
+    clerkUserId: string;
+    providerChatId: string;
+    shoppingListPublicId: string;
+    ingredientTitles: string[];
+  },
+  null
+>('mealPlans/drafts:saveMealPlanDraftForBot');
+const applyLatestMealPlanDraftForBot = makeFunctionReference<
+  'mutation',
+  { serviceToken: string; clerkUserId: string; providerChatId: string },
+  ApplyMealPlanDraftResult
+>('mealPlans/drafts:applyLatestMealPlanDraftForBot');
 
 export function createConvexMealPlanningCapability(config: BotConfig): CapabilityHandler {
   if (!config.convexUrl) throw new Error('CONVEX_URL is required for the meals capability');
@@ -202,6 +262,21 @@ export function createConvexMealPlanningCapability(config: BotConfig): Capabilit
     loadList: (userId, publicId) =>
       client.query(mealPlanningListForBot, { serviceToken: config.botServiceToken, clerkUserId: userId, publicId }),
     loadBusyWeekdays: async () =>
-      busyWeekdaysFromEvents((await client.query(currentWeekForBot, { serviceToken: config.botServiceToken })).events)
+      busyWeekdaysFromEvents((await client.query(currentWeekForBot, { serviceToken: config.botServiceToken })).events),
+    saveDraft: async ({ userId, providerChatId, shoppingListPublicId, ingredientTitles }) => {
+      await client.mutation(saveMealPlanDraftForBot, {
+        serviceToken: config.botServiceToken,
+        clerkUserId: userId,
+        providerChatId,
+        shoppingListPublicId,
+        ingredientTitles
+      });
+    },
+    applyDraft: ({ userId, providerChatId }) =>
+      client.mutation(applyLatestMealPlanDraftForBot, {
+        serviceToken: config.botServiceToken,
+        clerkUserId: userId,
+        providerChatId
+      })
   });
 }

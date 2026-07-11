@@ -47,7 +47,9 @@ describe('createOpenAiIntentClassifierProvider', () => {
         json_schema: {
           name: 'intent_router',
           strict: true,
-          schema: { properties: { capability: { enum: ['lists', 'schedule', 'insights', 'meals', 'briefing', NO_CAPABILITY] } } }
+          schema: {
+            properties: { capability: { enum: ['lists', 'schedule', 'insights', 'meals', 'briefing', NO_CAPABILITY] } }
+          }
         }
       }
     });

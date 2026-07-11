@@ -9,9 +9,9 @@ import {
 import type { ListsBotMutationCtx } from './botModel';
 import {
   createListItemsForUser,
-  readMealPlanningListForUser,
   readAddressableListsForUser,
   readDefaultListForUser,
+  readMealPlanningListForUser,
   setDefaultListForUser
 } from './botModel';
 import type { ListsMutationCtx } from './items';
@@ -237,7 +237,15 @@ describe('readMealPlanningListForUser', () => {
         }
       ],
       listProperties: [
-        { _id: 'property_ingredients', listId: 'lists_shared', name: 'Ingredients', type: 'text', sortOrder: 0, createdAt: 1, updatedAt: 1 }
+        {
+          _id: 'property_ingredients',
+          listId: 'lists_shared',
+          name: 'Ingredients',
+          type: 'text',
+          sortOrder: 0,
+          createdAt: 1,
+          updatedAt: 1
+        }
       ],
       listItemPropertyValues: [
         {
@@ -252,7 +260,9 @@ describe('readMealPlanningListForUser', () => {
       ]
     });
 
-    await expect(readMealPlanningListForUser(ctx, { currentUserId: 'user_b', publicId: 'list_shared' })).resolves.toEqual({
+    await expect(
+      readMealPlanningListForUser(ctx, { currentUserId: 'user_b', publicId: 'list_shared' })
+    ).resolves.toEqual({
       publicId: 'list_shared',
       name: 'Shopping',
       properties: [{ id: 'property_ingredients', name: 'Ingredients', type: 'text', options: undefined }],
@@ -260,7 +270,14 @@ describe('readMealPlanningListForUser', () => {
         {
           id: 'item_active',
           title: 'Pasta bake',
-          propertyValues: [{ propertyId: 'property_ingredients', textValue: 'Pasta\nSauce', numberValue: undefined, selectOptionId: undefined }]
+          propertyValues: [
+            {
+              propertyId: 'property_ingredients',
+              textValue: 'Pasta\nSauce',
+              numberValue: undefined,
+              selectOptionId: undefined
+            }
+          ]
         }
       ]
     });

@@ -6,9 +6,9 @@ import {
   createListItemsForUser,
   type ListsBotMutationCtx,
   type ListsBotReadCtx,
-  readMealPlanningListForUser,
   readAddressableListsForUser,
   readDefaultListForUser,
+  readMealPlanningListForUser,
   setDefaultListForUser
 } from './botModel';
 import { scheduleListCategorisation } from './categorisation';

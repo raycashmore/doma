@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { createMealPlanningCapability } from './mealPlanningCapability.js';
 
@@ -136,5 +136,28 @@ describe('createMealPlanningCapability', () => {
       kind: 'reply',
       text: 'I found more than one list named Recipes. Please rename one or use a unique list name.'
     });
+  });
+
+  it('applies only an explicit ingredient follow-up and confirms the created titles', async () => {
+    const applyDraft = vi.fn().mockResolvedValue({
+      kind: 'applied',
+      listName: 'Shopping',
+      createdTitles: ['generic ingredient']
+    });
+    const capability = createMealPlanningCapability({
+      loadAddressableLists: async () => [],
+      loadList: async () => null,
+      applyDraft
+    } as never);
+
+    await expect(
+      capability({
+        userId: 'user_123',
+        messageText: 'add the ingredients',
+        receivedAt: 1,
+        providerContext: { provider: 'telegram', providerUserId: 'telegram_user', providerChatId: 'telegram_chat' }
+      })
+    ).resolves.toEqual({ kind: 'reply', text: 'Added to Shopping:\n- generic ingredient' });
+    expect(applyDraft).toHaveBeenCalledWith({ userId: 'user_123', providerChatId: 'telegram_chat' });
   });
 });
