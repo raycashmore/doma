@@ -19,6 +19,7 @@ type FutureListPropertiesModule = typeof propertiesModule & {
   removeListPropertyHandler: (...args: unknown[]) => Promise<unknown>;
   reorderListPropertyHandler: (...args: unknown[]) => Promise<unknown>;
   replaceListPropertyOptionsHandler: (...args: unknown[]) => Promise<unknown>;
+  setListPropertyCategorisationHandler: (...args: unknown[]) => Promise<unknown>;
 };
 
 const createListPropertyHandler = getFutureHandler<FutureListPropertiesModule['createListPropertyHandler']>(
@@ -40,6 +41,9 @@ const reorderListPropertyHandler = getFutureHandler<FutureListPropertiesModule['
 const replaceListPropertyOptionsHandler = getFutureHandler<
   FutureListPropertiesModule['replaceListPropertyOptionsHandler']
 >(propertiesModule, 'replaceListPropertyOptionsHandler');
+const setListPropertyCategorisationHandler = getFutureHandler<
+  FutureListPropertiesModule['setListPropertyCategorisationHandler']
+>(propertiesModule, 'setListPropertyCategorisationHandler');
 
 function createPropertiesCtx(
   identity: { subject: string } | null,
@@ -363,6 +367,76 @@ describe('renameListProperty', () => {
         name: '   '
       })
     ).rejects.toThrow('List property name is required');
+  });
+});
+
+describe('setListPropertyCategorisation', () => {
+  it('configures one select property and clears an existing categorisation property in the same list', async () => {
+    const configuredProperty: TestListPropertyRow = {
+      ...priorityProperty,
+      _id: 'prop_existing_category',
+      categorisationInstruction: 'Use the existing store sections.'
+    };
+    const { ctx, patchedRows } = createPropertiesCtx(
+      { subject: 'user_b' },
+      [sharedList],
+      [configuredProperty, priorityProperty]
+    );
+    vi.spyOn(Date, 'now').mockReturnValue(400);
+
+    await expect(
+      setListPropertyCategorisationHandler(ctx as never, {
+        propertyId: listPropertyId(priorityProperty._id),
+        instruction: '  Put groceries into the correct store section.  '
+      })
+    ).resolves.toMatchObject({
+      _id: priorityProperty._id,
+      categorisationInstruction: 'Put groceries into the correct store section.'
+    });
+
+    expect(patchedRows).toEqual([
+      {
+        id: configuredProperty._id,
+        patch: { categorisationInstruction: undefined, updatedAt: 400 }
+      },
+      {
+        id: priorityProperty._id,
+        patch: { categorisationInstruction: 'Put groceries into the correct store section.', updatedAt: 400 }
+      }
+    ]);
+  });
+
+  it('rejects categorisation for non-select properties and blank instructions', async () => {
+    const { ctx } = createPropertiesCtx({ subject: 'user_b' }, [sharedList], [notesProperty, priorityProperty]);
+
+    await expect(
+      setListPropertyCategorisationHandler(ctx as never, {
+        propertyId: listPropertyId(notesProperty._id),
+        instruction: 'Group items'
+      })
+    ).rejects.toThrow('Only select properties can be used for AI categorisation');
+
+    await expect(
+      setListPropertyCategorisationHandler(ctx as never, {
+        propertyId: listPropertyId(priorityProperty._id),
+        instruction: '  '
+      })
+    ).rejects.toThrow('Categorisation instruction is required');
+  });
+
+  it('requires an existing select option for AI categorisation', async () => {
+    const emptySelectProperty: TestListPropertyRow = {
+      ...priorityProperty,
+      options: []
+    };
+    const { ctx } = createPropertiesCtx({ subject: 'user_b' }, [sharedList], [emptySelectProperty]);
+
+    await expect(
+      setListPropertyCategorisationHandler(ctx as never, {
+        propertyId: listPropertyId(emptySelectProperty._id),
+        instruction: 'Use the existing sections.'
+      })
+    ).rejects.toThrow('AI categorisation properties must have at least one option');
   });
 });
 

@@ -2,6 +2,7 @@ import { v } from 'convex/values';
 import { customAlphabet } from 'nanoid/non-secure';
 
 import { mutation, type MutationCtx } from '../_generated/server';
+import { scheduleListCategorisation } from './categorisation';
 import {
   clearCompletedListItemsHandler,
   completeListItemHandler,
@@ -17,12 +18,14 @@ import {
 import { buildListPublicId, slugifyListName } from './model';
 import {
   clearListItemPropertyValueHandler,
+  clearListPropertyCategorisationHandler,
   createListPropertyHandler,
   removeListPropertyHandler,
   renameListPropertyHandler,
   reorderListPropertyHandler,
   replaceListPropertyOptionsHandler,
-  setListItemPropertyValueHandler
+  setListItemPropertyValueHandler,
+  setListPropertyCategorisationHandler
 } from './properties';
 
 const createSeed = customAlphabet('abcdefghjkmnpqrstuvwxyz23456789', 8);
@@ -62,6 +65,31 @@ const listItemPropertyValue = v.union(
 );
 
 type ListsMutationCtx = Pick<MutationCtx, 'auth' | 'db'>;
+
+export async function createListItemAndScheduleHandler(
+  ctx: MutationCtx,
+  args: { listPublicId: string; title: string }
+) {
+  const item = await createListItemHandler(ctx, args);
+  if (!item) throw new Error('Unable to create list item');
+  await scheduleListCategorisation(ctx, { listId: item.listId, itemIds: [item._id] });
+  return item;
+}
+
+export async function createListItemsAndScheduleHandler(
+  ctx: MutationCtx,
+  args: { listPublicId: string; titles: string[] }
+) {
+  const items = await createListItemsHandler(ctx, args);
+  const listId = items[0]?.listId;
+  if (listId) {
+    await scheduleListCategorisation(ctx, {
+      listId,
+      itemIds: items.flatMap((item) => (item ? [item._id] : []))
+    });
+  }
+  return items;
+}
 
 export function assertCanEditList(
   row: { visibility: 'personal' | 'shared'; createdByUserId: string },
@@ -174,7 +202,7 @@ export const createListItem = mutation({
     listPublicId: v.string(),
     title: v.string()
   },
-  handler: createListItemHandler
+  handler: createListItemAndScheduleHandler
 });
 
 export const createListItems = mutation({
@@ -182,7 +210,7 @@ export const createListItems = mutation({
     listPublicId: v.string(),
     titles: v.array(v.string())
   },
-  handler: createListItemsHandler
+  handler: createListItemsAndScheduleHandler
 });
 
 export const renameListItem = mutation({
@@ -276,6 +304,19 @@ export const replaceListPropertyOptions = mutation({
     options: v.array(listPropertyOption)
   },
   handler: replaceListPropertyOptionsHandler
+});
+
+export const setListPropertyCategorisation = mutation({
+  args: {
+    propertyId: v.id('listProperties'),
+    instruction: v.string()
+  },
+  handler: setListPropertyCategorisationHandler
+});
+
+export const clearListPropertyCategorisation = mutation({
+  args: { propertyId: v.id('listProperties') },
+  handler: clearListPropertyCategorisationHandler
 });
 
 export const setListItemPropertyValue = mutation({

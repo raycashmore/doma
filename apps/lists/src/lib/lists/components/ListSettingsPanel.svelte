@@ -30,7 +30,9 @@
     onDeleteList,
     availableLists,
     currentDefaultPublicId,
-    onSetDefaultList
+    onSetDefaultList,
+    onSetCategorisation,
+    onClearCategorisation
   }: {
     properties: VisibleListProperty[];
     error: string | null;
@@ -61,6 +63,8 @@
     currentDefaultPublicId: string | null;
     /** Called with the chosen list's stable publicId when the default changes. */
     onSetDefaultList: (publicId: string) => void;
+    onSetCategorisation: (input: { propertyId: string; instruction: string }) => void;
+    onClearCategorisation: (propertyId: string) => void;
   } = $props();
 
   const personalLists = $derived(availableLists.filter((list) => list.visibility === 'personal'));
@@ -71,6 +75,9 @@
   let dndItems = $state<{ id: string; property: VisibleListProperty }[]>([]);
   let isDragging = $state(false);
   let pendingOrder = $state<string[] | null>(null);
+  let categorisationPropertyId = $state('');
+  let categorisationInstruction = $state('');
+  let categorisationSnapshot = $state('');
 
   $effect(() => {
     const next = properties.map((property) => ({ id: property._id, property }));
@@ -81,6 +88,20 @@
       pendingOrder = null;
     }
     dndItems = next;
+  });
+
+  const selectProperties = $derived(properties.filter((property) => property.type === 'select'));
+  const configuredCategorisationPropertyId = $derived(
+    selectProperties.find((property) => property.categorisationInstruction)?._id ?? ''
+  );
+
+  $effect(() => {
+    const configured = selectProperties.find((property) => property._id === configuredCategorisationPropertyId);
+    const snapshot = `${configured?._id ?? ''}\0${configured?.categorisationInstruction ?? ''}`;
+    if (snapshot === categorisationSnapshot) return;
+    categorisationSnapshot = snapshot;
+    categorisationPropertyId = configured?._id ?? '';
+    categorisationInstruction = configured?.categorisationInstruction ?? '';
   });
 
   function handleConsider(event: CustomEvent<DndEvent<{ id: string; property: VisibleListProperty }>>) {
@@ -158,6 +179,56 @@
       <p class="mt-2 text-xs text-warm-text-secondary">Create a list to choose a default.</p>
     {/if}
   </div>
+
+  {#if selectProperties.length}
+    <form
+      class="rounded-2xl border border-warm-border bg-warm-bg-card p-3"
+      onsubmit={(event) => {
+        event.preventDefault();
+        if (categorisationPropertyId && categorisationInstruction.trim()) {
+          onSetCategorisation({ propertyId: categorisationPropertyId, instruction: categorisationInstruction });
+        }
+      }}
+    >
+      <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-warm-text-secondary">AI categorisation</p>
+      <p class="mt-1 text-xs text-warm-text-secondary">
+        Choose one select property and tell AI how to use its existing options.
+      </p>
+      <select
+        class="mt-2 w-full rounded-xl border border-warm-border bg-warm-bg px-3 py-2 text-sm text-warm-text-primary outline-none"
+        aria-label="AI categorisation property"
+        bind:value={categorisationPropertyId}
+      >
+        <option value="" disabled>Select property</option>
+        {#each selectProperties as property (property._id)}
+          <option value={property._id}>{property.name}</option>
+        {/each}
+      </select>
+      <input
+        class="mt-2 w-full rounded-xl border border-warm-border bg-warm-bg px-3 py-2 text-sm text-warm-text-primary outline-none"
+        aria-label="AI categorisation instruction"
+        bind:value={categorisationInstruction}
+        maxlength="500"
+        placeholder="Place groceries into the correct store section"
+      />
+      <button
+        type="submit"
+        class="mt-2 w-full rounded-full bg-warm-text-primary px-4 py-2 text-sm font-bold text-warm-text-on-dark disabled:opacity-60"
+        disabled={!categorisationPropertyId || !categorisationInstruction.trim()}
+      >
+        Save AI categorisation
+      </button>
+      {#if configuredCategorisationPropertyId}
+        <button
+          type="button"
+          class="mt-2 w-full rounded-full border border-warm-border px-4 py-2 text-sm font-semibold text-warm-text-secondary"
+          onclick={() => onClearCategorisation(configuredCategorisationPropertyId)}
+        >
+          Turn off AI categorisation
+        </button>
+      {/if}
+    </form>
+  {/if}
 
   {#if dndItems.length}
     <ul

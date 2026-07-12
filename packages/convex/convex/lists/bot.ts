@@ -10,6 +10,7 @@ import {
   readDefaultListForUser,
   setDefaultListForUser
 } from './botModel';
+import { scheduleListCategorisation } from './categorisation';
 import { requireUserId } from './items';
 import {
   type AddressableList,
@@ -61,6 +62,8 @@ export async function createListItemsForBotHandler(
 ) {
   assertAuthorizedServiceToken(serviceToken);
   const { list, items } = await createListItemsForUser(ctx, { currentUserId: clerkUserId, listPublicId, titles });
+  const listId = items[0]?.listId;
+  if (listId) await scheduleListCategorisation(ctx, { listId, itemIds: items.map((item) => item._id) });
   return { list, items: items.map((item) => ({ id: item._id, title: item.title })) };
 }
 

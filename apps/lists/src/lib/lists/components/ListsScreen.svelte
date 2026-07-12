@@ -102,6 +102,7 @@
   let valueDraftCheckbox = $state(false);
   let previousListPublicId = $state<string | null>(null);
   let activeGroupingPropertyId = $state<string | null>(null);
+  let categorising = $state(false);
   const collapsedActiveGroupKeys = new SvelteSet<string>();
 
   function describeError(error: unknown, fallback: string) {
@@ -568,6 +569,24 @@
     }
   }
 
+  async function handleSetPropertyCategorisation(input: { propertyId: string; instruction: string }) {
+    propertyMutationError = null;
+    try {
+      await store.setPropertyCategorisation(input);
+    } catch (error) {
+      propertyMutationError = describeError(error, 'Unable to configure AI categorisation.');
+    }
+  }
+
+  async function handleClearPropertyCategorisation(propertyId: string) {
+    propertyMutationError = null;
+    try {
+      await store.clearPropertyCategorisation({ propertyId });
+    } catch (error) {
+      propertyMutationError = describeError(error, 'Unable to turn off AI categorisation.');
+    }
+  }
+
   const visibleListRows = $derived(store.lists);
   const selectedListData = $derived(store.selected);
   const selectedRow = $derived(selectedListData?.list ?? null);
@@ -576,6 +595,16 @@
   const activeItems = $derived(selectedListData?.activeItems ?? []);
   const completedItems = $derived(selectedListData?.completedItems ?? []);
   const visibleProperties = $derived(selectedListData?.properties ?? []);
+  const categorisationProperty = $derived(
+    visibleProperties.find(
+      (property) => property.type === 'select' && property.categorisationInstruction && property.options?.length
+    ) ?? null
+  );
+  const unassignedCategorisationCount = $derived(
+    categorisationProperty
+      ? activeItems.filter((item) => !findPropertyValue(item, categorisationProperty._id)).length
+      : 0
+  );
   const activeGroupingProperty = $derived(
     activeGroupingPropertyId
       ? (visibleProperties.find((property) => property._id === activeGroupingPropertyId) ?? null)
@@ -616,6 +645,19 @@
       if (described) parts.push(described);
     }
     return parts.join(' · ');
+  }
+
+  async function handleAutoCategorise() {
+    if (!selectedRow?.publicId || !categorisationProperty || categorising) return;
+    categorising = true;
+    itemMutationError = null;
+    try {
+      await store.autoCategoriseUnassigned({ listPublicId: selectedRow.publicId });
+    } catch (error) {
+      itemMutationError = describeError(error, 'Unable to start auto categorisation.');
+    } finally {
+      categorising = false;
+    }
   }
 
   // svelte-dnd-action requires the bound `items` array to be updated on EVERY
@@ -824,6 +866,8 @@
         availableLists={visibleListRows}
         currentDefaultPublicId={currentDefaultList?.publicId ?? null}
         onSetDefaultList={(publicId) => void handleSetDefaultList(publicId)}
+        onSetCategorisation={(input) => void handleSetPropertyCategorisation(input)}
+        onClearCategorisation={(propertyId) => void handleClearPropertyCategorisation(propertyId)}
       />
     {/if}
   </div>
@@ -1067,6 +1111,18 @@
                     </span>
                   </div>
                   <div class="flex items-center gap-2">
+                    {#if categorisationProperty}
+                      <button
+                        type="button"
+                        class="rounded-full border border-warm-accent px-3 py-1.5 text-xs font-semibold text-warm-accent disabled:opacity-40"
+                        disabled={categorising || unassignedCategorisationCount === 0}
+                        onclick={() => void handleAutoCategorise()}
+                      >
+                        {categorising
+                          ? 'Categorising…'
+                          : `Auto categorise${unassignedCategorisationCount ? ` (${unassignedCategorisationCount})` : ''}`}
+                      </button>
+                    {/if}
                     <label
                       class="flex h-8 items-center gap-1 rounded-full bg-warm-section-mortgage px-2 text-xs font-semibold text-warm-text-secondary"
                     >

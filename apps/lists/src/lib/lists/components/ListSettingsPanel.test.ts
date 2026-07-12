@@ -13,8 +13,22 @@ vi.mock('svelte-dnd-action', () => ({
 }));
 
 const properties: VisibleListProperty[] = [
-  { _id: 'priority', listId: 'list', name: 'Priority', type: 'select', sortOrder: 0 },
-  { _id: 'aisle', listId: 'list', name: 'Aisle', type: 'text', sortOrder: 1 }
+  {
+    _id: 'priority',
+    listId: 'list',
+    name: 'Priority',
+    type: 'select',
+    sortOrder: 0,
+    categorisationInstruction: 'Group by priority.'
+  },
+  {
+    _id: 'aisle',
+    listId: 'list',
+    name: 'Aisle',
+    type: 'select',
+    sortOrder: 1,
+    options: [{ id: 'bread', label: 'Breads' }]
+  }
 ];
 
 const availableLists: VisibleList[] = [
@@ -48,6 +62,8 @@ function renderPanel(
     onReorder?: (propertyId: string, targetIndex: number) => Promise<boolean>;
     currentDefaultPublicId?: string | null;
     onSetDefaultList?: (publicId: string) => void;
+    onSetCategorisation?: (input: { propertyId: string; instruction: string }) => void;
+    onClearCategorisation?: (propertyId: string) => void;
     error?: string | null;
   } = {}
 ) {
@@ -80,7 +96,9 @@ function renderPanel(
       onDeleteList: vi.fn(),
       availableLists,
       currentDefaultPublicId: overrides.currentDefaultPublicId ?? null,
-      onSetDefaultList: overrides.onSetDefaultList ?? vi.fn()
+      onSetDefaultList: overrides.onSetDefaultList ?? vi.fn(),
+      onSetCategorisation: overrides.onSetCategorisation ?? vi.fn(),
+      onClearCategorisation: overrides.onClearCategorisation ?? vi.fn()
     }
   });
   mounted.push(component);
@@ -105,6 +123,46 @@ describe('ListSettingsPanel reordering', () => {
     expect(target.querySelector<HTMLElement>('[aria-label="Drag to reorder Priority"]')?.dataset.dragHandle).toBe(
       'true'
     );
+  });
+
+  it('saves AI categorisation only for a select property with a human instruction', async () => {
+    const onSetCategorisation = vi.fn();
+    const target = renderPanel({ onSetCategorisation });
+    const property = target.querySelector<HTMLSelectElement>('[aria-label="AI categorisation property"]');
+    const instruction = target.querySelector<HTMLInputElement>('[aria-label="AI categorisation instruction"]');
+    const form = instruction?.closest('form');
+
+    expect(property).not.toBeNull();
+    expect(instruction).not.toBeNull();
+    expect(form).not.toBeNull();
+
+    await tick();
+    expect(property!.value).toBe('priority');
+    instruction!.value = 'Place groceries into the correct section.';
+    instruction!.dispatchEvent(new Event('input', { bubbles: true }));
+    await tick();
+    form!.querySelector<HTMLButtonElement>('button[type="submit"]')!.click();
+
+    expect(onSetCategorisation).toHaveBeenCalledWith({
+      propertyId: 'priority',
+      instruction: 'Place groceries into the correct section.'
+    });
+  });
+
+  it('turns off the configured property after choosing a different property', async () => {
+    const onClearCategorisation = vi.fn();
+    const target = renderPanel({ onClearCategorisation });
+    const property = target.querySelector<HTMLSelectElement>('[aria-label="AI categorisation property"]');
+
+    await tick();
+    property!.value = 'aisle';
+    property!.dispatchEvent(new Event('change', { bubbles: true }));
+    await tick();
+    [...target.querySelectorAll('button')]
+      .find((button) => button.textContent?.trim() === 'Turn off AI categorisation')
+      ?.click();
+
+    expect(onClearCategorisation).toHaveBeenCalledWith('priority');
   });
 
   it('rolls an optimistic order back when persistence fails', async () => {

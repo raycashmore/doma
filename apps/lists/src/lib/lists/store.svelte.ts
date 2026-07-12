@@ -63,6 +63,9 @@ export type ListStore = {
   renameProperty(input: { propertyId: string; name: string }): Promise<void>;
   reorderProperty(input: { propertyId: string; targetIndex: number }): Promise<void>;
   removeProperty(input: { propertyId: string }): Promise<void>;
+  setPropertyCategorisation(input: { propertyId: string; instruction: string }): Promise<void>;
+  clearPropertyCategorisation(input: { propertyId: string }): Promise<void>;
+  autoCategoriseUnassigned(input: { listPublicId: string }): Promise<void>;
   setPropertyValue(input: { itemId: string; propertyId: string; value: ListItemPropertyValueInput }): Promise<void>;
   clearPropertyValue(input: { itemId: string; propertyId: string }): Promise<void>;
 };
@@ -356,6 +359,35 @@ export class InMemoryListStore implements ListStore {
       };
     });
   }
+  async setPropertyCategorisation({
+    propertyId,
+    instruction
+  }: {
+    propertyId: string;
+    instruction: string;
+  }): Promise<void> {
+    this.#updatePropertyList(propertyId, (current) => ({
+      ...current,
+      properties: current.properties.map((property) =>
+        property.type !== 'select'
+          ? property
+          : property._id === propertyId
+            ? { ...property, categorisationInstruction: instruction.trim() }
+            : { ...property, categorisationInstruction: undefined }
+      )
+    }));
+  }
+  async clearPropertyCategorisation({ propertyId }: { propertyId: string }): Promise<void> {
+    this.#updatePropertyList(propertyId, (current) => ({
+      ...current,
+      properties: current.properties.map((property) =>
+        property._id === propertyId ? { ...property, categorisationInstruction: undefined } : property
+      )
+    }));
+  }
+  async autoCategoriseUnassigned(): Promise<void> {
+    // Preview fixtures have no AI provider; live categorisation remains a backend-only operation.
+  }
   async setPropertyValue({
     itemId,
     propertyId,
@@ -451,6 +483,9 @@ export class ConvexListStore implements ListStore {
   #renameListProperty = useMutation(api.lists.mutations.renameListProperty);
   #reorderListProperty = useMutation(api.lists.mutations.reorderListProperty);
   #removeListProperty = useMutation(api.lists.mutations.removeListProperty);
+  #setListPropertyCategorisation = useMutation(api.lists.mutations.setListPropertyCategorisation);
+  #clearListPropertyCategorisation = useMutation(api.lists.mutations.clearListPropertyCategorisation);
+  #autoCategoriseUnassignedItems = useMutation(api.lists.categorisation.autoCategoriseUnassignedItems);
   #setListItemPropertyValue = useMutation(api.lists.mutations.setListItemPropertyValue);
   #clearListItemPropertyValue = useMutation(api.lists.mutations.clearListItemPropertyValue);
   #setListItemNotes = useMutation(api.lists.mutations.setListItemNotes);
@@ -577,6 +612,18 @@ export class ConvexListStore implements ListStore {
   }
   async removeProperty(input: { propertyId: string }): Promise<void> {
     await this.#removeListProperty({ propertyId: input.propertyId as never });
+  }
+  async setPropertyCategorisation(input: { propertyId: string; instruction: string }): Promise<void> {
+    await this.#setListPropertyCategorisation({
+      propertyId: input.propertyId as never,
+      instruction: input.instruction
+    });
+  }
+  async clearPropertyCategorisation(input: { propertyId: string }): Promise<void> {
+    await this.#clearListPropertyCategorisation({ propertyId: input.propertyId as never });
+  }
+  async autoCategoriseUnassigned(input: { listPublicId: string }): Promise<void> {
+    await this.#autoCategoriseUnassignedItems(input);
   }
   async setPropertyValue(input: {
     itemId: string;
@@ -750,6 +797,15 @@ export class ListStoreFacade implements ListStore {
   }
   removeProperty(input: { propertyId: string }): Promise<void> {
     return this.#active.removeProperty(input);
+  }
+  setPropertyCategorisation(input: { propertyId: string; instruction: string }): Promise<void> {
+    return this.#active.setPropertyCategorisation(input);
+  }
+  clearPropertyCategorisation(input: { propertyId: string }): Promise<void> {
+    return this.#active.clearPropertyCategorisation(input);
+  }
+  autoCategoriseUnassigned(input: { listPublicId: string }): Promise<void> {
+    return this.#active.autoCategoriseUnassigned(input);
   }
   setPropertyValue(input: { itemId: string; propertyId: string; value: ListItemPropertyValueInput }): Promise<void> {
     return this.#active.setPropertyValue(input);

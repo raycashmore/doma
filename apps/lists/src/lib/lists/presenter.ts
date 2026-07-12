@@ -26,6 +26,7 @@ export type VisibleListProperty = {
   type: 'text' | 'number' | 'date' | 'select' | 'checkbox';
   sortOrder: number;
   options?: Array<{ id: string; label: string }>;
+  categorisationInstruction?: string;
 };
 
 export type VisibleListItemPropertyValue = {

@@ -232,6 +232,8 @@ export default defineSchema({
         })
       )
     ),
+    // Present only on the one select property a List uses for AI categorisation.
+    categorisationInstruction: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number()
   })
