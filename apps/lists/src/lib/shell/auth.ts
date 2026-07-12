@@ -49,7 +49,7 @@ export async function loadClerkSession(
   await clerk.load({ ui: { ClerkUI: (window as ClerkWindow).__internal_ClerkUICtor } });
 
   if (!clerk.user || !clerk.session) {
-    clerk.mountSignIn(signInElement);
+    clerk.mountSignIn(signInElement, { forceRedirectUrl: '/lists' });
     return { status: 'ready', session: null };
   }
 
