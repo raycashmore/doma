@@ -163,6 +163,28 @@ describe('InMemoryListStore reorderItem', () => {
 });
 
 describe('InMemoryListStore property values', () => {
+  it('keeps assignments when a Select option label changes', async () => {
+    const { store } = makeStore('weekly-shop');
+
+    await store.setPropertyValue({
+      itemId: 'preview-item-bread',
+      propertyId: 'preview-property-priority',
+      value: { type: 'select', optionId: 'high' }
+    });
+    await store.replacePropertyOptions({
+      propertyId: 'preview-property-priority',
+      options: [
+        { id: 'high', label: 'Urgent' },
+        { id: 'low', label: 'Later' }
+      ]
+    });
+
+    const bread = store.selected!.activeItems.find((item) => item._id === 'preview-item-bread')!;
+    const priority = store.selected!.properties.find((property) => property._id === 'preview-property-priority')!;
+    expect(priority.options?.[0]).toEqual({ id: 'high', label: 'Urgent' });
+    expect(bread.propertyValues.find((value) => value.listPropertyId === priority._id)?.selectOptionId).toBe('high');
+  });
+
   it('adds a typed value to an item that had none', async () => {
     const { store } = makeStore('weekly-shop');
 

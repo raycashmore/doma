@@ -35,9 +35,11 @@ type QueryResult = {
 };
 
 const queryResults: QueryResult[] = [];
+const { autoCategoriseAction } = vi.hoisted(() => ({ autoCategoriseAction: vi.fn() }));
 
 vi.mock('convex-svelte', () => ({
   useMutation: () => vi.fn(async () => undefined),
+  useAction: () => autoCategoriseAction,
   useQuery: () => {
     let data: QueryValue;
     let error: Error | undefined;
@@ -85,6 +87,8 @@ let mounted: ReturnType<typeof mount> | null = null;
 
 beforeEach(() => {
   queryResults.length = 0;
+  autoCategoriseAction.mockReset();
+  autoCategoriseAction.mockResolvedValue({ status: 'applied', assignmentCount: 2 });
 });
 
 afterEach(async () => {
@@ -222,6 +226,21 @@ describe('ListsScreen item header', () => {
   });
 });
 
+describe('ListsScreen property settings', () => {
+  it('opens Select options in the property editor', async () => {
+    const target = await renderScreen();
+    await provideLiveData();
+
+    target.querySelector<HTMLButtonElement>('button[aria-label="List settings"]')?.click();
+    await tick();
+    target.querySelector<HTMLButtonElement>('button[aria-label="Rename Priority"]')?.click();
+    await tick();
+
+    expect(target.querySelector<HTMLInputElement>('[aria-label="Option High"]')?.value).toBe('High');
+    expect(target.querySelector<HTMLInputElement>('[aria-label="Option Low"]')?.value).toBe('Low');
+  });
+});
+
 describe('ListsScreen mobile switcher', () => {
   it('opens on the selected shared list tab', async () => {
     const target = await renderScreen();
@@ -259,6 +278,77 @@ describe('ListsScreen mobile switcher', () => {
 });
 
 describe('ListsScreen active-item grouping', () => {
+  it('shows a stable loading state until auto categorisation completes', async () => {
+    let resolveCategorisation: ((value: { status: 'applied'; assignmentCount: number }) => void) | undefined;
+    autoCategoriseAction.mockImplementationOnce(
+      () =>
+        new Promise<{ status: 'applied'; assignmentCount: number }>((resolve) => {
+          resolveCategorisation = resolve;
+        })
+    );
+    const target = await renderScreen();
+    const weeklyShop = previewItemsByListPublicId['weekly-shop'];
+    queryResults[0]?.set({ data: previewVisibleLists, isLoading: false });
+    queryResults[1]?.set({
+      data: {
+        ...weeklyShop,
+        properties: weeklyShop.properties.map((property) =>
+          property._id === 'preview-property-priority'
+            ? { ...property, categorisationInstruction: 'Group items by priority.' }
+            : property
+        )
+      },
+      isLoading: false
+    });
+    await tick();
+
+    target.querySelector<HTMLButtonElement>('[data-testid="auto-categorise-action"]')?.click();
+    await tick();
+
+    expect(target.querySelector('[role="status"]')?.textContent).toContain('Categorising items');
+    expect(
+      target.querySelector<HTMLSelectElement>('select[aria-label="Group active items by"]')?.selectedOptions[0]
+        ?.textContent
+    ).toBe('Manual order');
+
+    resolveCategorisation?.({ status: 'applied', assignmentCount: 2 });
+    await new Promise((resolve) => setTimeout(resolve));
+    await tick();
+
+    expect(target.querySelector('[role="status"]')).toBeNull();
+    expect(
+      target.querySelector<HTMLSelectElement>('select[aria-label="Group active items by"]')?.selectedOptions[0]
+        ?.textContent
+    ).toBe('Priority');
+  });
+
+  it('groups by the configured categorisation property after auto categorisation starts', async () => {
+    const target = await renderScreen();
+    const weeklyShop = previewItemsByListPublicId['weekly-shop'];
+    queryResults[0]?.set({ data: previewVisibleLists, isLoading: false });
+    queryResults[1]?.set({
+      data: {
+        ...weeklyShop,
+        properties: weeklyShop.properties.map((property) =>
+          property._id === 'preview-property-priority'
+            ? { ...property, categorisationInstruction: 'Group items by priority.' }
+            : property
+        )
+      },
+      isLoading: false
+    });
+    await tick();
+
+    const autoCategorise = target.querySelector<HTMLButtonElement>('[data-testid="auto-categorise-action"]');
+    expect(autoCategorise?.disabled).toBe(false);
+    autoCategorise?.click();
+    await new Promise((resolve) => setTimeout(resolve));
+    await tick();
+
+    const grouping = target.querySelector<HTMLSelectElement>('select[aria-label="Group active items by"]');
+    expect(grouping?.selectedOptions[0]?.textContent).toBe('Priority');
+  });
+
   it('groups active items by a property and collapses a group without affecting its items', async () => {
     const target = await renderScreen();
     await provideLiveData();

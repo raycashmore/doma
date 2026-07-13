@@ -8,7 +8,7 @@ import {
   propertyValuePatch,
   reorderByIndex
 } from '@repo/convex/lists/transitions';
-import { useMutation, useQuery } from 'convex-svelte';
+import { useAction, useMutation, useQuery } from 'convex-svelte';
 
 import type {
   VisibleList,
@@ -22,6 +22,32 @@ export type ListRouteTarget = { publicId: string; slug: string };
 
 /** The stored default list for the current household user. */
 export type DefaultList = { publicId: string; name: string };
+export type AutoCategorisationResult =
+  | { status: 'applied'; assignmentCount: number }
+  | { status: 'idle' }
+  | { status: 'skipped'; reason: 'invalid_response' | 'missing_configuration' }
+  | { status: 'failed'; reason: 'provider_failure' };
+
+function normalizePropertyOptions(
+  type: VisibleListProperty['type'],
+  options: NonNullable<VisibleListProperty['options']>
+) {
+  if (type !== 'select') throw new Error('List property options are only supported for select properties');
+  if (!options.length) throw new Error('List property options are required');
+
+  const normalizedOptions = options.map((option) => ({ id: option.id.trim(), label: option.label.trim() }));
+  if (normalizedOptions.some((option) => !option.id)) throw new Error('List property option id is required');
+  if (normalizedOptions.some((option) => !option.label)) throw new Error('List property option label is required');
+  if (
+    normalizedOptions.some(
+      (option, index) => normalizedOptions.findIndex((candidate) => candidate.id === option.id) !== index
+    )
+  ) {
+    throw new Error('List property option ids must be unique');
+  }
+
+  return normalizedOptions;
+}
 
 /**
  * The seam the Lists screen reads and writes through. Reactive getters expose
@@ -61,11 +87,20 @@ export type ListStore = {
     options?: VisibleListProperty['options'];
   }): Promise<void>;
   renameProperty(input: { propertyId: string; name: string }): Promise<void>;
+  updateProperty(input: {
+    propertyId: string;
+    name: string;
+    options?: NonNullable<VisibleListProperty['options']>;
+  }): Promise<void>;
+  replacePropertyOptions(input: {
+    propertyId: string;
+    options: NonNullable<VisibleListProperty['options']>;
+  }): Promise<void>;
   reorderProperty(input: { propertyId: string; targetIndex: number }): Promise<void>;
   removeProperty(input: { propertyId: string }): Promise<void>;
   setPropertyCategorisation(input: { propertyId: string; instruction: string }): Promise<void>;
   clearPropertyCategorisation(input: { propertyId: string }): Promise<void>;
-  autoCategoriseUnassigned(input: { listPublicId: string }): Promise<void>;
+  autoCategoriseUnassigned(input: { listPublicId: string }): Promise<AutoCategorisationResult>;
   setPropertyValue(input: { itemId: string; propertyId: string; value: ListItemPropertyValueInput }): Promise<void>;
   clearPropertyValue(input: { itemId: string; propertyId: string }): Promise<void>;
 };
@@ -333,6 +368,56 @@ export class InMemoryListStore implements ListStore {
     }));
   }
 
+  async updateProperty({
+    propertyId,
+    name,
+    options
+  }: {
+    propertyId: string;
+    name: string;
+    options?: NonNullable<VisibleListProperty['options']>;
+  }): Promise<void> {
+    this.#updatePropertyList(propertyId, (current) => {
+      const property = current.properties.find((entry) => entry._id === propertyId);
+      if (!property) throw new Error('List property unavailable');
+      const nextOptions = options === undefined ? undefined : normalizePropertyOptions(property.type, options);
+      const allowedOptionIds = nextOptions?.map((option) => option.id) ?? [];
+      const retainAllowedValues = (item: VisibleListItem): VisibleListItem => ({
+        ...item,
+        propertyValues: item.propertyValues.filter(
+          (value) =>
+            nextOptions === undefined ||
+            value.listPropertyId !== propertyId ||
+            !value.selectOptionId ||
+            allowedOptionIds.includes(value.selectOptionId)
+        )
+      });
+
+      return {
+        ...current,
+        properties: current.properties.map((entry) =>
+          entry._id === propertyId
+            ? { ...entry, name: name.trim(), ...(nextOptions === undefined ? {} : { options: nextOptions }) }
+            : entry
+        ),
+        activeItems: current.activeItems.map(retainAllowedValues),
+        completedItems: current.completedItems.map(retainAllowedValues)
+      };
+    });
+  }
+
+  async replacePropertyOptions({
+    propertyId,
+    options
+  }: {
+    propertyId: string;
+    options: NonNullable<VisibleListProperty['options']>;
+  }): Promise<void> {
+    const property = this.selected?.properties.find((entry) => entry._id === propertyId);
+    if (!property) throw new Error('List property unavailable');
+    await this.updateProperty({ propertyId, name: property.name, options });
+  }
+
   async reorderProperty({ propertyId, targetIndex }: { propertyId: string; targetIndex: number }): Promise<void> {
     this.#updatePropertyList(propertyId, (current) => ({
       ...current,
@@ -385,8 +470,9 @@ export class InMemoryListStore implements ListStore {
       )
     }));
   }
-  async autoCategoriseUnassigned(): Promise<void> {
+  async autoCategoriseUnassigned(): Promise<AutoCategorisationResult> {
     // Preview fixtures have no AI provider; live categorisation remains a backend-only operation.
+    return { status: 'idle' };
   }
   async setPropertyValue({
     itemId,
@@ -481,11 +567,13 @@ export class ConvexListStore implements ListStore {
   #clearCompletedListItems = useMutation(api.lists.mutations.clearCompletedListItems);
   #createListProperty = useMutation(api.lists.mutations.createListProperty);
   #renameListProperty = useMutation(api.lists.mutations.renameListProperty);
+  #updateListProperty = useMutation(api.lists.mutations.updateListProperty);
+  #replaceListPropertyOptions = useMutation(api.lists.mutations.replaceListPropertyOptions);
   #reorderListProperty = useMutation(api.lists.mutations.reorderListProperty);
   #removeListProperty = useMutation(api.lists.mutations.removeListProperty);
   #setListPropertyCategorisation = useMutation(api.lists.mutations.setListPropertyCategorisation);
   #clearListPropertyCategorisation = useMutation(api.lists.mutations.clearListPropertyCategorisation);
-  #autoCategoriseUnassignedItems = useMutation(api.lists.categorisation.autoCategoriseUnassignedItems);
+  #autoCategoriseUnassignedItems = useAction(api.lists.categorisation.autoCategoriseUnassignedItems);
   #setListItemPropertyValue = useMutation(api.lists.mutations.setListItemPropertyValue);
   #clearListItemPropertyValue = useMutation(api.lists.mutations.clearListItemPropertyValue);
   #setListItemNotes = useMutation(api.lists.mutations.setListItemNotes);
@@ -607,6 +695,23 @@ export class ConvexListStore implements ListStore {
   async renameProperty(input: { propertyId: string; name: string }): Promise<void> {
     await this.#renameListProperty({ propertyId: input.propertyId as never, name: input.name });
   }
+  async updateProperty(input: {
+    propertyId: string;
+    name: string;
+    options?: NonNullable<VisibleListProperty['options']>;
+  }): Promise<void> {
+    await this.#updateListProperty({
+      propertyId: input.propertyId as never,
+      name: input.name,
+      options: input.options
+    });
+  }
+  async replacePropertyOptions(input: {
+    propertyId: string;
+    options: NonNullable<VisibleListProperty['options']>;
+  }): Promise<void> {
+    await this.#replaceListPropertyOptions({ propertyId: input.propertyId as never, options: input.options });
+  }
   async reorderProperty(input: { propertyId: string; targetIndex: number }): Promise<void> {
     await this.#reorderListProperty({ propertyId: input.propertyId as never, targetIndex: input.targetIndex });
   }
@@ -622,8 +727,8 @@ export class ConvexListStore implements ListStore {
   async clearPropertyCategorisation(input: { propertyId: string }): Promise<void> {
     await this.#clearListPropertyCategorisation({ propertyId: input.propertyId as never });
   }
-  async autoCategoriseUnassigned(input: { listPublicId: string }): Promise<void> {
-    await this.#autoCategoriseUnassignedItems(input);
+  async autoCategoriseUnassigned(input: { listPublicId: string }): Promise<AutoCategorisationResult> {
+    return await this.#autoCategoriseUnassignedItems(input);
   }
   async setPropertyValue(input: {
     itemId: string;
@@ -792,6 +897,19 @@ export class ListStoreFacade implements ListStore {
   renameProperty(input: { propertyId: string; name: string }): Promise<void> {
     return this.#active.renameProperty(input);
   }
+  updateProperty(input: {
+    propertyId: string;
+    name: string;
+    options?: NonNullable<VisibleListProperty['options']>;
+  }): Promise<void> {
+    return this.#active.updateProperty(input);
+  }
+  replacePropertyOptions(input: {
+    propertyId: string;
+    options: NonNullable<VisibleListProperty['options']>;
+  }): Promise<void> {
+    return this.#active.replacePropertyOptions(input);
+  }
   reorderProperty(input: { propertyId: string; targetIndex: number }): Promise<void> {
     return this.#active.reorderProperty(input);
   }
@@ -804,7 +922,7 @@ export class ListStoreFacade implements ListStore {
   clearPropertyCategorisation(input: { propertyId: string }): Promise<void> {
     return this.#active.clearPropertyCategorisation(input);
   }
-  autoCategoriseUnassigned(input: { listPublicId: string }): Promise<void> {
+  autoCategoriseUnassigned(input: { listPublicId: string }): Promise<AutoCategorisationResult> {
     return this.#active.autoCategoriseUnassigned(input);
   }
   setPropertyValue(input: { itemId: string; propertyId: string; value: ListItemPropertyValueInput }): Promise<void> {

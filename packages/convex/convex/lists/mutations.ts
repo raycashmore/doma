@@ -25,7 +25,8 @@ import {
   reorderListPropertyHandler,
   replaceListPropertyOptionsHandler,
   setListItemPropertyValueHandler,
-  setListPropertyCategorisationHandler
+  setListPropertyCategorisationHandler,
+  updateListPropertyHandler
 } from './properties';
 
 const createSeed = customAlphabet('abcdefghjkmnpqrstuvwxyz23456789', 8);
@@ -289,6 +290,15 @@ export const renameListProperty = mutation({
     name: v.string()
   },
   handler: renameListPropertyHandler
+});
+
+export const updateListProperty = mutation({
+  args: {
+    propertyId: v.id('listProperties'),
+    name: v.string(),
+    options: v.optional(v.array(listPropertyOption))
+  },
+  handler: updateListPropertyHandler
 });
 
 export const removeListProperty = mutation({

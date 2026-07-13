@@ -37,6 +37,7 @@ describe('categoriseListItems', () => {
       },
       applyAssignments: async (assignments) => {
         applied.push(...assignments);
+        return { appliedCount: assignments.length };
       }
     });
 
@@ -67,6 +68,7 @@ describe('categoriseListItems', () => {
       }),
       applyAssignments: async (assignments) => {
         applied.push(...assignments);
+        return { appliedCount: assignments.length };
       }
     });
 
@@ -87,11 +89,27 @@ describe('categoriseListItems', () => {
       }),
       applyAssignments: async (assignments) => {
         applied.push(...assignments);
+        return { appliedCount: assignments.length };
       }
     });
 
     expect(applied).toEqual([{ itemId: 'item_bread', expectedUpdatedAt: 10, optionId: 'bread' }]);
     expect(result).toEqual({ status: 'applied', assignmentCount: 1 });
+  });
+
+  it('reports only assignments that persisted after guarded writes', async () => {
+    const result = await categoriseListItems({
+      input,
+      provider: async () => ({
+        assignments: [
+          { itemIndex: 0, optionId: 'bread' },
+          { itemIndex: 1, optionId: 'frozen' }
+        ]
+      }),
+      applyAssignments: async () => ({ appliedCount: 0 })
+    });
+
+    expect(result).toEqual({ status: 'applied', assignmentCount: 0 });
   });
 
   it('does not apply an assignment when the provider is unavailable', async () => {
@@ -104,6 +122,7 @@ describe('categoriseListItems', () => {
       },
       applyAssignments: async (assignments) => {
         applied.push(...assignments);
+        return { appliedCount: assignments.length };
       }
     });
 

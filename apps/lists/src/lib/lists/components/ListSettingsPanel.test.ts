@@ -65,6 +65,11 @@ function renderPanel(
     onSetCategorisation?: (input: { propertyId: string; instruction: string }) => void;
     onClearCategorisation?: (propertyId: string) => void;
     error?: string | null;
+    propertyRenameId?: string | null;
+    propertyRenameName?: string;
+    propertyRenameOptions?: NonNullable<VisibleListProperty['options']>;
+    setPropertyRenameOptions?: (options: NonNullable<VisibleListProperty['options']>) => void;
+    addPropertyRenameOption?: () => void;
   } = {}
 ) {
   const target = document.body.appendChild(document.createElement('div'));
@@ -75,9 +80,12 @@ function renderPanel(
       error: overrides.error ?? null,
       onClose: vi.fn(),
       onReorder: overrides.onReorder ?? vi.fn(async () => true),
-      propertyRenameId: null,
-      propertyRenameName: '',
+      propertyRenameId: overrides.propertyRenameId ?? null,
+      propertyRenameName: overrides.propertyRenameName ?? '',
       setPropertyRenameName: vi.fn(),
+      propertyRenameOptions: overrides.propertyRenameOptions ?? [],
+      setPropertyRenameOptions: overrides.setPropertyRenameOptions ?? vi.fn(),
+      addPropertyRenameOption: overrides.addPropertyRenameOption ?? vi.fn(),
       beginRename: vi.fn(),
       cancelRename: vi.fn(),
       onSaveRename: vi.fn(),
@@ -114,6 +122,66 @@ function picker(target: HTMLElement) {
 }
 
 describe('ListSettingsPanel reordering', () => {
+  it('uses an accessible icon control to rename a property', async () => {
+    const target = renderPanel();
+    await tick();
+
+    const rename = target.querySelector<HTMLButtonElement>('[aria-label="Rename Priority"]');
+
+    expect(rename).not.toBeNull();
+    expect(rename?.textContent?.trim()).toBe('');
+    expect(rename?.querySelector('svg')).not.toBeNull();
+  });
+
+  it('reveals the Add property form only after the user asks for it', async () => {
+    const target = renderPanel();
+    await tick();
+
+    expect(target.querySelector<HTMLInputElement>('[placeholder="Priority"]')).toBeNull();
+
+    Array.from(target.querySelectorAll<HTMLButtonElement>('button'))
+      .find((button) => button.textContent?.trim() === 'Add property')
+      ?.click();
+    await tick();
+
+    expect(target.querySelector<HTMLInputElement>('[placeholder="Priority"]')).not.toBeNull();
+  });
+
+  it('shows Select options in the property editor', async () => {
+    const setPropertyRenameOptions = vi.fn();
+    const addPropertyRenameOption = vi.fn();
+    const target = renderPanel({
+      propertyRenameId: 'aisle',
+      propertyRenameName: 'Aisle',
+      propertyRenameOptions: [
+        { id: 'bread', label: 'Breads' },
+        { id: 'meat', label: 'Meats' }
+      ],
+      setPropertyRenameOptions,
+      addPropertyRenameOption
+    });
+    await tick();
+
+    const option = target.querySelector<HTMLInputElement>('[aria-label="Option Breads"]');
+
+    expect(option?.value).toBe('Breads');
+    expect(target.textContent).toContain('Removing an option clears it from any assigned items.');
+    option!.value = 'Bakery';
+    option!.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(setPropertyRenameOptions).toHaveBeenCalledWith([
+      { id: 'bread', label: 'Bakery' },
+      { id: 'meat', label: 'Meats' }
+    ]);
+
+    target.querySelector<HTMLButtonElement>('[aria-label="Remove Meats"]')?.click();
+    expect(setPropertyRenameOptions).toHaveBeenLastCalledWith([{ id: 'bread', label: 'Breads' }]);
+
+    Array.from(target.querySelectorAll<HTMLButtonElement>('button'))
+      .find((button) => button.textContent?.trim() === 'Add option')
+      ?.click();
+    expect(addPropertyRenameOption).toHaveBeenCalledOnce();
+  });
+
   it('enables dragging only through property handles', async () => {
     const target = renderPanel();
     await tick();

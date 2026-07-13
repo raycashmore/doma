@@ -3,7 +3,7 @@ import { v } from 'convex/values';
 
 import { internal } from '../_generated/api';
 import type { Id } from '../_generated/dataModel';
-import { internalAction, internalMutation, internalQuery, mutation, type MutationCtx } from '../_generated/server';
+import { action, internalAction, internalMutation, internalQuery, type MutationCtx } from '../_generated/server';
 import {
   assertCanEditList,
   findItemPropertyValue,
@@ -85,7 +85,7 @@ export async function categoriseListItems({
 }: {
   input: CategorisationInput;
   provider: ListCategorisationProvider;
-  applyAssignments: (assignments: CategorisationAssignment[]) => Promise<void>;
+  applyAssignments: (assignments: CategorisationAssignment[]) => Promise<{ appliedCount: number }>;
 }): Promise<CategorisationResult> {
   let output: unknown;
   try {
@@ -107,8 +107,8 @@ export async function categoriseListItems({
     return optionId ? [{ itemId: item.itemId, expectedUpdatedAt: item.updatedAt, optionId }] : [];
   });
 
-  if (assignments.length) await applyAssignments(assignments);
-  return { status: 'applied', assignmentCount: assignments.length };
+  const assignmentCount = assignments.length ? (await applyAssignments(assignments)).appliedCount : 0;
+  return { status: 'applied', assignmentCount };
 }
 
 const categorisationOutputJsonSchema = {
@@ -192,6 +192,12 @@ type ListCategorisationSource = {
 };
 
 type CategorisationRefs = {
+  prepareListCategorisation: FunctionReference<
+    'mutation',
+    'internal',
+    { listPublicId: string },
+    { listId: Id<'lists'>; itemIds: Id<'listItems'>[] }
+  >;
   categorisationSource: FunctionReference<
     'query',
     'internal',
@@ -325,14 +331,17 @@ export const runCategorisation = internalAction({
       input: source,
       provider,
       applyAssignments: async (assignments) => {
-        await ctx.runMutation(categorisationRefs.applyAssignments, { propertyId: source.propertyId, assignments });
+        return await ctx.runMutation(categorisationRefs.applyAssignments, {
+          propertyId: source.propertyId,
+          assignments
+        });
       }
     });
   }
 });
 
-export async function requestListCategorisationHandler(
-  ctx: Pick<MutationCtx, 'auth' | 'db' | 'scheduler'>,
+export async function prepareListCategorisationHandler(
+  ctx: Pick<MutationCtx, 'auth' | 'db'>,
   { listPublicId }: { listPublicId: string }
 ) {
   const visible = await requireVisibleList(ctx, listPublicId);
@@ -351,11 +360,28 @@ export async function requestListCategorisationHandler(
     if (!existing) itemIds.push(item._id);
   }
 
-  await scheduleListCategorisation(ctx, { listId: visible.list._id, itemIds });
-  return { scheduledCount: itemIds.length };
+  return { listId: visible.list._id, itemIds };
 }
 
-export const autoCategoriseUnassignedItems = mutation({
+export async function requestListCategorisationHandler(
+  ctx: Pick<MutationCtx, 'auth' | 'db' | 'scheduler'>,
+  { listPublicId }: { listPublicId: string }
+) {
+  const request = await prepareListCategorisationHandler(ctx, { listPublicId });
+  await scheduleListCategorisation(ctx, request);
+  return { scheduledCount: request.itemIds.length };
+}
+
+export const prepareListCategorisation = internalMutation({
   args: { listPublicId: v.string() },
-  handler: requestListCategorisationHandler
+  handler: prepareListCategorisationHandler
+});
+
+export const autoCategoriseUnassignedItems = action({
+  args: { listPublicId: v.string() },
+  handler: async (ctx, args) => {
+    const request = await ctx.runMutation(categorisationRefs.prepareListCategorisation, args);
+    if (!request.itemIds.length) return { status: 'idle' as const };
+    return await ctx.runAction(categorisationRefs.runCategorisation, request);
+  }
 });

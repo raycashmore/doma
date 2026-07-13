@@ -109,6 +109,45 @@ export async function renameListPropertyHandler(
   return { ...property, ...patch };
 }
 
+/** Update a property's name and, when it is Select, its available options atomically. */
+export async function updateListPropertyHandler(
+  ctx: ListsMutationCtx,
+  {
+    propertyId,
+    name,
+    options
+  }: {
+    propertyId: Id<'listProperties'>;
+    name: string;
+    options?: ListPropertyOption[];
+  }
+) {
+  const { property } = await requireEditableProperty(ctx, propertyId);
+  const normalizedOptions = options === undefined ? undefined : normalizeListPropertyOptions(property.type, options);
+  const patch = {
+    name: normalizeListPropertyName(name),
+    ...(normalizedOptions === undefined ? {} : { options: normalizedOptions }),
+    updatedAt: Date.now()
+  };
+  await ctx.db.patch(property._id, patch);
+
+  if (normalizedOptions) {
+    const allowedOptionIds = new Set(normalizedOptions.map((option) => option.id));
+    const propertyValues = await ctx.db
+      .query('listItemPropertyValues')
+      .withIndex('by_property_id', (q) => q.eq('listPropertyId', property._id))
+      .collect();
+
+    for (const propertyValue of propertyValues) {
+      if (propertyValue.selectOptionId && !allowedOptionIds.has(propertyValue.selectOptionId)) {
+        await ctx.db.delete(propertyValue._id);
+      }
+    }
+  }
+
+  return { ...property, ...patch };
+}
+
 export async function reorderListPropertyHandler(
   ctx: ListsMutationCtx,
   { propertyId, targetIndex }: { propertyId: Id<'listProperties'>; targetIndex: number }

@@ -7,6 +7,7 @@
     | 'chevron-down'
     | 'open-panel'
     | 'plus'
+    | 'sparkles'
     | 'check'
     | 'edit'
     | 'users';
@@ -55,6 +56,10 @@
   {:else if name === 'plus'}
     <path d="M5 12h14" />
     <path d="M12 5v14" />
+  {:else if name === 'sparkles'}
+    <path d="m12 3-1.2 4.8L6 9l4.8 1.2L12 15l1.2-4.8L18 9l-4.8-1.2L12 3Z" />
+    <path d="m19 15-.6 2.4L16 18l2.4.6L19 21l.6-2.4L22 18l-2.4-.6L19 15Z" />
+    <path d="m5 15-.5 2L2.5 18l2 .5L5 20.5l.5-2 2-.5-2-.5L5 15Z" />
   {:else if name === 'check'}
     <path d="M20 6 9 17l-5-5" />
   {:else if name === 'edit'}

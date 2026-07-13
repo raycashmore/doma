@@ -15,6 +15,7 @@ import {
 
 type FutureListPropertiesModule = typeof propertiesModule & {
   createListPropertyHandler: (...args: unknown[]) => Promise<unknown>;
+  updateListPropertyHandler: (...args: unknown[]) => Promise<unknown>;
   renameListPropertyHandler: (...args: unknown[]) => Promise<unknown>;
   removeListPropertyHandler: (...args: unknown[]) => Promise<unknown>;
   reorderListPropertyHandler: (...args: unknown[]) => Promise<unknown>;
@@ -25,6 +26,10 @@ type FutureListPropertiesModule = typeof propertiesModule & {
 const createListPropertyHandler = getFutureHandler<FutureListPropertiesModule['createListPropertyHandler']>(
   propertiesModule,
   'createListPropertyHandler'
+);
+const updateListPropertyHandler = getFutureHandler<FutureListPropertiesModule['updateListPropertyHandler']>(
+  propertiesModule,
+  'updateListPropertyHandler'
 );
 const renameListPropertyHandler = getFutureHandler<FutureListPropertiesModule['renameListPropertyHandler']>(
   propertiesModule,
@@ -367,6 +372,46 @@ describe('renameListProperty', () => {
         name: '   '
       })
     ).rejects.toThrow('List property name is required');
+  });
+});
+
+describe('updateListProperty', () => {
+  it('renames a Select property and replaces its options in one patch', async () => {
+    const { ctx, patchedRows } = createPropertiesCtx({ subject: 'user_b' }, [sharedList], [priorityProperty]);
+    vi.spyOn(Date, 'now').mockReturnValue(300);
+
+    await expect(
+      updateListPropertyHandler(ctx as never, {
+        propertyId: listPropertyId(priorityProperty._id),
+        name: '  Store section  ',
+        options: [
+          { id: 'opt_low', label: 'Later' },
+          { id: 'opt_high', label: 'Urgent' }
+        ]
+      })
+    ).resolves.toMatchObject({
+      _id: priorityProperty._id,
+      name: 'Store section',
+      options: [
+        { id: 'opt_low', label: 'Later' },
+        { id: 'opt_high', label: 'Urgent' }
+      ],
+      updatedAt: 300
+    });
+
+    expect(patchedRows).toEqual([
+      {
+        id: priorityProperty._id,
+        patch: {
+          name: 'Store section',
+          options: [
+            { id: 'opt_low', label: 'Later' },
+            { id: 'opt_high', label: 'Urgent' }
+          ],
+          updatedAt: 300
+        }
+      }
+    ]);
   });
 });
 

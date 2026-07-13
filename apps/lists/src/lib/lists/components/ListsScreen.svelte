@@ -93,6 +93,7 @@
   let propertyDraftOptions = $state('');
   let propertyRenameId = $state<string | null>(null);
   let propertyRenameName = $state('');
+  let propertyRenameOptions = $state<NonNullable<VisibleListProperty['options']>>([]);
   let pendingRemovePropertyId = $state<string | null>(null);
   let valueEditorPropertyId = $state<string | null>(null);
   let valueDraftText = $state('');
@@ -213,6 +214,7 @@
   function beginPropertyRename(property: VisibleListProperty) {
     propertyRenameId = property._id;
     propertyRenameName = property.name;
+    propertyRenameOptions = property.options?.map((option) => ({ ...option })) ?? [];
     pendingRemovePropertyId = null;
     propertyMutationError = null;
   }
@@ -220,6 +222,18 @@
   function cancelPropertyRename() {
     propertyRenameId = null;
     propertyRenameName = '';
+    propertyRenameOptions = [];
+  }
+
+  function addPropertyRenameOption() {
+    const usedIds = new Set(propertyRenameOptions.map((option) => option.id));
+    let number = propertyRenameOptions.length + 1;
+    let id = `option_${number}`;
+    while (usedIds.has(id)) {
+      number += 1;
+      id = `option_${number}`;
+    }
+    propertyRenameOptions = [...propertyRenameOptions, { id, label: '' }];
   }
 
   function openValueEditor(
@@ -484,10 +498,18 @@
   async function handleRenameProperty() {
     if (!propertyRenameId) return;
     propertyMutationError = null;
+    const propertyId = propertyRenameId;
+    const propertyName = propertyRenameName;
+    const property = visibleProperties.find((entry) => entry._id === propertyId);
+    const options = propertyRenameOptions.map((option) => ({ ...option }));
 
     try {
-      await store.renameProperty({ propertyId: propertyRenameId, name: propertyRenameName });
-      cancelPropertyRename();
+      await store.updateProperty({
+        propertyId,
+        name: propertyName,
+        options: property?.type === 'select' ? options : undefined
+      });
+      if (propertyRenameId === propertyId) cancelPropertyRename();
     } catch (error) {
       propertyMutationError = describeError(error, 'Unable to rename property.');
     }
@@ -652,7 +674,11 @@
     categorising = true;
     itemMutationError = null;
     try {
-      await store.autoCategoriseUnassigned({ listPublicId: selectedRow.publicId });
+      const result = await store.autoCategoriseUnassigned({ listPublicId: selectedRow.publicId });
+      if (result.status === 'applied' && result.assignmentCount > 0)
+        activeGroupingPropertyId = categorisationProperty._id;
+      else if (result.status === 'failed') itemMutationError = 'Unable to categorise items.';
+      else if (result.status === 'skipped') itemMutationError = 'AI categorisation is not configured.';
     } catch (error) {
       itemMutationError = describeError(error, 'Unable to start auto categorisation.');
     } finally {
@@ -842,6 +868,9 @@
         {propertyRenameId}
         {propertyRenameName}
         setPropertyRenameName={(value) => (propertyRenameName = value)}
+        {propertyRenameOptions}
+        setPropertyRenameOptions={(options) => (propertyRenameOptions = options)}
+        {addPropertyRenameOption}
         beginRename={beginPropertyRename}
         cancelRename={cancelPropertyRename}
         onSaveRename={() => void handleRenameProperty()}
@@ -1114,19 +1143,22 @@
                     {#if categorisationProperty}
                       <button
                         type="button"
-                        class="rounded-full border border-warm-accent px-3 py-1.5 text-xs font-semibold text-warm-accent disabled:opacity-40"
+                        data-testid="auto-categorise-action"
+                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-warm-accent bg-warm-section-spend text-sm font-semibold text-warm-accent disabled:opacity-40 sm:h-auto sm:w-36 sm:flex-none sm:justify-center sm:gap-2 sm:rounded-full sm:bg-transparent sm:px-3 sm:py-1.5 sm:text-xs"
+                        aria-label={`Auto categorise ${unassignedCategorisationCount} Unassigned items`}
                         disabled={categorising || unassignedCategorisationCount === 0}
                         onclick={() => void handleAutoCategorise()}
                       >
-                        {categorising
-                          ? 'Categorising…'
-                          : `Auto categorise${unassignedCategorisationCount ? ` (${unassignedCategorisationCount})` : ''}`}
+                        <ListIcon name="sparkles" size={16} />
+                        <span class="hidden whitespace-nowrap sm:inline"
+                          >{categorising ? 'Categorising…' : 'Auto categorise'}</span
+                        >
                       </button>
                     {/if}
                     <label
-                      class="flex h-8 items-center gap-1 rounded-full bg-warm-section-mortgage px-2 text-xs font-semibold text-warm-text-secondary"
+                      class="ml-auto flex h-10 shrink-0 items-center gap-1 rounded-xl bg-warm-section-mortgage px-2 text-xs font-semibold text-warm-text-secondary sm:ml-0 sm:h-8 sm:rounded-full"
                     >
-                      <span class="text-[11px]">Group</span>
+                      <span class="hidden text-[11px] min-[420px]:inline">Group</span>
                       <select
                         aria-label="Group active items by"
                         bind:value={activeGroupingPropertyId}
@@ -1140,7 +1172,7 @@
                     </label>
                     <button
                       type="button"
-                      class="flex h-8 w-8 items-center justify-center rounded-full text-warm-text-tertiary hover:text-warm-accent disabled:opacity-40"
+                      class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-warm-text-tertiary hover:text-warm-accent disabled:opacity-40 sm:h-8 sm:w-8 sm:rounded-full"
                       aria-label="Clear completed items"
                       title="Clear completed"
                       disabled={!completedItems.length}
@@ -1152,7 +1184,23 @@
                 </div>
 
                 <div class="md:min-h-0 md:flex-1 md:overflow-y-auto">
-                  {#if activeGroupingProperty && activeGroups.length}
+                  {#if categorising}
+                    <div
+                      class="flex min-h-48 flex-col items-center justify-center gap-2 px-4 text-center"
+                      role="status"
+                      aria-live="polite"
+                    >
+                      <span
+                        class="flex h-10 w-10 items-center justify-center rounded-full bg-warm-section-spend text-warm-accent animate-pulse"
+                      >
+                        <ListIcon name="sparkles" size={18} />
+                      </span>
+                      <p class="text-sm font-semibold text-warm-text-primary">Categorising items…</p>
+                      <p class="text-xs text-warm-text-secondary">
+                        Organising them into {categorisationProperty?.name} groups.
+                      </p>
+                    </div>
+                  {:else if activeGroupingProperty && activeGroups.length}
                     <div class="mt-3 flex min-w-0 flex-col divide-y divide-warm-border/60">
                       {#each activeGroups as group (group.key)}
                         {@const collapsed = isActiveGroupCollapsed(group.key)}
