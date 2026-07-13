@@ -1,7 +1,7 @@
 <script lang="ts">
   import { slugifyListName } from '@repo/convex/lists/model';
   import { cubicOut } from 'svelte/easing';
-  import { SvelteSet } from 'svelte/reactivity';
+  import { SvelteMap, SvelteSet } from 'svelte/reactivity';
   import { fade, fly } from 'svelte/transition';
   import { type DndEvent, dragHandleZone } from 'svelte-dnd-action';
 
@@ -103,6 +103,11 @@
   let valueDraftCheckbox = $state(false);
   let previousListPublicId = $state<string | null>(null);
   let activeGroupingPropertyId = $state<string | null>(null);
+  let groupingPreferenceListPublicId = $state<string | null>(null);
+  let observedGroupingPreference = $state<string | null>(null);
+  let groupingPreferenceRequestId = 0;
+  const groupingPreferenceWrites = new SvelteMap<string, Promise<void>>();
+  const confirmedGroupingPreferences = new SvelteMap<string, string | null>();
   let categorising = $state(false);
   const collapsedActiveGroupKeys = new SvelteSet<string>();
 
@@ -639,10 +644,55 @@
   const currentDefaultList = $derived(store.defaultList);
 
   $effect(() => {
+    const listPublicId = selectedRow?.publicId ?? null;
+    const persistedPropertyId = store.activeGroupingPropertyId;
+    if (!listPublicId) {
+      activeGroupingPropertyId = null;
+      groupingPreferenceListPublicId = null;
+      observedGroupingPreference = null;
+      return;
+    }
+    if (store.activeGroupingLoading) return;
+    if (groupingPreferenceListPublicId !== listPublicId || observedGroupingPreference !== persistedPropertyId) {
+      activeGroupingPropertyId = persistedPropertyId;
+      groupingPreferenceListPublicId = listPublicId;
+      observedGroupingPreference = persistedPropertyId;
+      confirmedGroupingPreferences.set(listPublicId, persistedPropertyId);
+    }
+  });
+
+  $effect(() => {
     if (!activeGroupingPropertyId) return;
     if (visibleProperties.some((property) => property._id === activeGroupingPropertyId)) return;
     activeGroupingPropertyId = null;
   });
+
+  async function setActiveGroupingProperty(propertyId: string | null, listPublicId = selectedRow?.publicId) {
+    if (!listPublicId) return;
+    const isCurrentList = selectedRow?.publicId === listPublicId;
+    const previousPropertyId = activeGroupingPropertyId;
+    const requestId = ++groupingPreferenceRequestId;
+    if (isCurrentList) activeGroupingPropertyId = propertyId;
+
+    const previousWrite = groupingPreferenceWrites.get(listPublicId) ?? Promise.resolve();
+    const write = previousWrite.then(async () => {
+      await store.setActiveGroupingProperty({ listPublicId, propertyId });
+    });
+    const settledWrite = write.catch(() => undefined);
+    groupingPreferenceWrites.set(listPublicId, settledWrite);
+
+    try {
+      await write;
+      confirmedGroupingPreferences.set(listPublicId, propertyId);
+    } catch (error) {
+      if (requestId === groupingPreferenceRequestId && selectedRow?.publicId === listPublicId) {
+        activeGroupingPropertyId = confirmedGroupingPreferences.get(listPublicId) ?? previousPropertyId;
+        itemMutationError = describeError(error, 'Unable to save the grouping preference.');
+      }
+    } finally {
+      if (groupingPreferenceWrites.get(listPublicId) === settledWrite) groupingPreferenceWrites.delete(listPublicId);
+    }
+  }
 
   function activeGroupStateKey(groupKey: string) {
     return `${activeGroupingProperty?._id ?? 'manual'}:${groupKey}`;
@@ -671,12 +721,14 @@
 
   async function handleAutoCategorise() {
     if (!selectedRow?.publicId || !categorisationProperty || categorising) return;
+    const listPublicId = selectedRow.publicId;
+    const propertyId = categorisationProperty._id;
     categorising = true;
     itemMutationError = null;
     try {
-      const result = await store.autoCategoriseUnassigned({ listPublicId: selectedRow.publicId });
+      const result = await store.autoCategoriseUnassigned({ listPublicId });
       if (result.status === 'applied' && result.assignmentCount > 0)
-        activeGroupingPropertyId = categorisationProperty._id;
+        await setActiveGroupingProperty(propertyId, listPublicId);
       else if (result.status === 'failed') itemMutationError = 'Unable to categorise items.';
       else if (result.status === 'skipped') itemMutationError = 'AI categorisation is not configured.';
     } catch (error) {
@@ -1161,10 +1213,11 @@
                       <span class="hidden text-[11px] min-[420px]:inline">Group</span>
                       <select
                         aria-label="Group active items by"
-                        bind:value={activeGroupingPropertyId}
+                        value={activeGroupingPropertyId ?? ''}
+                        onchange={(event) => void setActiveGroupingProperty(event.currentTarget.value || null)}
                         class="min-w-0 bg-transparent text-xs font-semibold text-warm-text-primary outline-none"
                       >
-                        <option value={null}>Manual order</option>
+                        <option value="">Manual order</option>
                         {#each visibleProperties as property (property._id)}
                           <option value={property._id}>{property.name}</option>
                         {/each}
