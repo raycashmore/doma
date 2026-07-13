@@ -17,7 +17,7 @@ export type UsePwaUpdateOptions = {
  *
  * The generated worker always waits for a `SKIP_WAITING` message (see
  * `@repo/pwa`), so the page never reloads until `reload()` is called — either
- * from a user-facing {@link PwaUpdateToast} or automatically (see the `silent`
+ * from a user-facing {@link PwaUpdateToast} or automatically (see the `autoReload`
  * option on {@link PwaUpdater}).
  */
 export function usePwaUpdate({ swUrl, scope, enabled = true }: UsePwaUpdateOptions) {
@@ -44,20 +44,19 @@ export function usePwaUpdate({ swUrl, scope, enabled = true }: UsePwaUpdateOptio
 }
 
 export type PwaUpdaterProps = UsePwaUpdateOptions & {
-  /** Reload as soon as a new build is ready instead of showing the toast. */
-  silent?: boolean;
+  /** Reload as soon as a new build is ready while keeping the toast as a fallback. */
+  autoReload?: boolean;
 };
 
 /** Drop-in service-worker updater: registers the worker and, when a new build
- * is ready, either reloads immediately (`silent`) or shows a "new version
- * available" toast. */
-export function PwaUpdater({ silent = false, ...options }: PwaUpdaterProps) {
+ * is ready, shows a "new version available" toast and can reload immediately
+ * when `autoReload` is enabled. */
+export function PwaUpdater({ autoReload = false, ...options }: PwaUpdaterProps) {
   const { needRefresh, reload } = usePwaUpdate(options);
 
   useEffect(() => {
-    if (silent && needRefresh) reload();
-  }, [silent, needRefresh, reload]);
+    if (autoReload && needRefresh) reload();
+  }, [autoReload, needRefresh, reload]);
 
-  if (silent) return null;
   return <PwaUpdateToast show={needRefresh} onReload={reload} />;
 }

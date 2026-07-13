@@ -84,7 +84,7 @@ function RootDocument() {
             />
           </ConvexProvider>
         </AuthGate>
-        <PwaUpdater swUrl={`${APP_BASE_URL}sw.js`} scope={APP_BASE_URL} enabled={IS_PROD} />
+        <PwaUpdater swUrl={`${APP_BASE_URL}sw.js`} scope={APP_BASE_URL} enabled={IS_PROD} autoReload />
         <Scripts />
       </body>
     </html>

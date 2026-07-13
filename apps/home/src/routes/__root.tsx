@@ -64,7 +64,7 @@ function RootDocument() {
             ]}
           />
         </AuthGate>
-        <PwaUpdater swUrl="/sw.js" scope="/" enabled={IS_PROD} silent />
+        <PwaUpdater swUrl="/sw.js" scope="/" enabled={IS_PROD} autoReload />
         <Scripts />
       </body>
     </html>

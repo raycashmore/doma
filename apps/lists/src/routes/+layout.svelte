@@ -48,6 +48,7 @@
         scope: `${base}/`,
         onNeedRefresh: () => {
           updateReady = true;
+          swController?.reload();
         }
       });
     }
