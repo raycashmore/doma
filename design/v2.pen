@@ -1,5 +1,5 @@
 {
-  "version": "2.13",
+  "version": "2.14",
   "children": [
     {
       "type": "frame",
@@ -23405,6 +23405,2535 @@
           ]
         }
       ]
+    },
+    {
+      "type": "frame",
+      "id": "wAxO1",
+      "x": -340,
+      "y": 3537,
+      "name": "Home · Family Noticeboard",
+      "clip": true,
+      "width": 1440,
+      "height": 1024,
+      "fill": "$warm-bg",
+      "layout": "vertical",
+      "padding": 32,
+      "children": [
+        {
+          "id": "G8ouw8",
+          "type": "ref",
+          "ref": "TrB8r",
+          "name": "Home Shell",
+          "width": "fill_container",
+          "height": "fill_container",
+          "descendants": {
+            "w5oJrt/rSg9k": {
+              "content": "Home"
+            },
+            "w5oJrt/AkVxm": {
+              "content": "Mon, 13 Jul"
+            },
+            "w5oJrt/j2Npd7/x7P29": {
+              "icon": "plus"
+            },
+            "w5oJrt/HzfsS/x7P29": {
+              "icon": "ellipsis"
+            },
+            "J3cGRC": {
+              "type": "frame",
+              "id": "fZHiI",
+              "name": "Family Noticeboard Content",
+              "clip": true,
+              "width": "fill_container",
+              "height": 832,
+              "fill": "$warm-bg-card",
+              "layout": "vertical",
+              "gap": 20,
+              "padding": 28,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "uVFdZ",
+                  "name": "Board Intro",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "KLQBv",
+                      "name": "Board Intro Copy",
+                      "layout": "vertical",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "JNjre",
+                          "name": "Board Label",
+                          "fill": "$warm-text-tertiary",
+                          "content": "FAMILY NOTICEBOARD",
+                          "fontFamily": "$warm-font-body",
+                          "fontSize": 11,
+                          "fontWeight": "700",
+                          "letterSpacing": 1.2
+                        },
+                        {
+                          "type": "text",
+                          "id": "yVG5O",
+                          "name": "Board Headline",
+                          "fill": "$warm-text",
+                          "content": "What matters today",
+                          "fontFamily": "$warm-font-display",
+                          "fontSize": 30,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "s8Adx",
+                      "name": "Add Note Button",
+                      "fill": "$warm-text",
+                      "cornerRadius": 999,
+                      "gap": 8,
+                      "padding": [
+                        10,
+                        16
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "p4O19O",
+                          "name": "Add Note Icon",
+                          "width": 16,
+                          "height": 16,
+                          "icon": "plus",
+                          "library": "lucide",
+                          "fill": "$warm-bg"
+                        },
+                        {
+                          "type": "text",
+                          "id": "CVZ6K",
+                          "name": "Add Note Label",
+                          "fill": "$warm-bg",
+                          "content": "Add a note",
+                          "fontFamily": "$warm-font-body",
+                          "fontSize": 13,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "XjXu6",
+                  "name": "Noticeboard",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "gap": 20,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "alOFc",
+                      "name": "Briefing Column",
+                      "width": "fill_container",
+                      "height": "fill_container",
+                      "layout": "vertical",
+                      "gap": 18,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "zXegs",
+                          "name": "Today Brief",
+                          "width": "fill_container",
+                          "height": 380,
+                          "fill": "$warm-card-butter",
+                          "cornerRadius": 24,
+                          "layout": "vertical",
+                          "gap": 16,
+                          "padding": 28,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "E4Bxa",
+                              "name": "Briefing Meta",
+                              "gap": 8,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "mAW9W",
+                                  "name": "Briefing Sun",
+                                  "width": 16,
+                                  "height": 16,
+                                  "icon": "sun",
+                                  "library": "lucide",
+                                  "fill": "$warm-text"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "znlTV",
+                                  "name": "Briefing Label",
+                                  "fill": "$warm-text-secondary",
+                                  "content": "MORNING BRIEFING · 7:35 AM",
+                                  "fontFamily": "$warm-font-body",
+                                  "fontSize": 11,
+                                  "fontWeight": "700",
+                                  "letterSpacing": 1
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "NHow8",
+                              "name": "Briefing Headline",
+                              "fill": "$warm-text",
+                              "content": "A full day in two acts",
+                              "lineHeight": 1.05,
+                              "fontFamily": "$warm-font-display",
+                              "fontSize": 38,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "FzPb6",
+                              "name": "Morning Line",
+                              "width": "fill_container",
+                              "gap": 10,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "ellipse",
+                                  "id": "spC1V",
+                                  "name": "Morning Dot",
+                                  "fill": "$warm-accent",
+                                  "width": 8,
+                                  "height": 8
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "IkNN1",
+                                  "name": "Morning Text",
+                                  "fill": "$warm-text",
+                                  "content": "Morning · memberA — bring library bag",
+                                  "fontFamily": "$warm-font-body",
+                                  "fontSize": 15,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "n69yMe",
+                              "name": "Afternoon Line",
+                              "width": "fill_container",
+                              "gap": 10,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "ellipse",
+                                  "id": "g0cYeG",
+                                  "name": "Afternoon Dot",
+                                  "fill": "$warm-warning",
+                                  "width": 8,
+                                  "height": 8
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "FeOEc",
+                                  "name": "Afternoon Text",
+                                  "fill": "$warm-text",
+                                  "content": "Afternoon · memberB — sport kit for 4:00 pm",
+                                  "fontFamily": "$warm-font-body",
+                                  "fontSize": 15,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "H1XgQ",
+                              "name": "Watchout",
+                              "width": "fill_container",
+                              "fill": "$warm-card-peach",
+                              "cornerRadius": 14,
+                              "gap": 10,
+                              "padding": [
+                                10,
+                                12
+                              ],
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "sDlLy",
+                                  "name": "Watchout Icon",
+                                  "width": 17,
+                                  "height": 17,
+                                  "icon": "triangle-alert",
+                                  "library": "lucide",
+                                  "fill": "$warm-accent-deep"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "BxOX9",
+                                  "name": "Watchout Text",
+                                  "fill": "$warm-text",
+                                  "content": "Watchout · signed form due tomorrow",
+                                  "fontFamily": "$warm-font-body",
+                                  "fontSize": 13,
+                                  "fontWeight": "700"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "d0IGHR",
+                          "name": "Briefing Small Notes",
+                          "width": "fill_container",
+                          "height": "fill_container",
+                          "gap": 18,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "eFbfD",
+                              "name": "Afternoon Note",
+                              "width": "fill_container",
+                              "height": "fill_container",
+                              "fill": "$warm-card-sky",
+                              "cornerRadius": 22,
+                              "layout": "vertical",
+                              "gap": 12,
+                              "padding": 22,
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "ndvwS",
+                                  "name": "Afternoon Icon",
+                                  "width": 22,
+                                  "height": 22,
+                                  "icon": "clock-3",
+                                  "library": "lucide",
+                                  "fill": "$warm-text"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "gg3zD",
+                                  "name": "Afternoon Label",
+                                  "fill": "$warm-text-secondary",
+                                  "content": "LATER TODAY",
+                                  "fontFamily": "$warm-font-body",
+                                  "fontSize": 11,
+                                  "fontWeight": "700",
+                                  "letterSpacing": 1
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "CyHHm",
+                                  "name": "Afternoon Title",
+                                  "fill": "$warm-text",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "A bag by the door makes the afternoon easier.",
+                                  "lineHeight": 1.12,
+                                  "fontFamily": "$warm-font-display",
+                                  "fontSize": 24,
+                                  "fontWeight": "700"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "x1Rt2p",
+                                  "name": "Afternoon Detail",
+                                  "fill": "$warm-text-secondary",
+                                  "content": "Schedule timing and readiness, together.",
+                                  "fontFamily": "$warm-font-body",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "m6v7n7",
+                              "name": "Board Reminder",
+                              "width": "fill_container",
+                              "height": "fill_container",
+                              "fill": "$warm-card-sage",
+                              "cornerRadius": 22,
+                              "layout": "vertical",
+                              "gap": 12,
+                              "padding": 22,
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "hFViu",
+                                  "name": "Reminder Icon",
+                                  "width": 22,
+                                  "height": 22,
+                                  "icon": "pin",
+                                  "library": "lucide",
+                                  "fill": "$warm-text"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "Vv4zV",
+                                  "name": "Reminder Label",
+                                  "fill": "$warm-text-secondary",
+                                  "content": "ON THE BOARD",
+                                  "fontFamily": "$warm-font-body",
+                                  "fontSize": 11,
+                                  "fontWeight": "700",
+                                  "letterSpacing": 1
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "AMAhb",
+                                  "name": "Reminder Title",
+                                  "fill": "$warm-text",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "Keep the useful bits visible, not buried in a feed.",
+                                  "lineHeight": 1.12,
+                                  "fontFamily": "$warm-font-display",
+                                  "fontSize": 24,
+                                  "fontWeight": "700"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "N1PhX4",
+                                  "name": "Reminder Detail",
+                                  "fill": "$warm-text-secondary",
+                                  "content": "A home for small, mixed signals.",
+                                  "fontFamily": "$warm-font-body",
+                                  "fontSize": 13,
+                                  "fontWeight": "normal"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "VoIfq",
+                      "name": "Email Notice Column",
+                      "width": 360,
+                      "height": "fill_container",
+                      "layout": "vertical",
+                      "gap": 18,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "x7cf1",
+                          "name": "High Priority Email Notice",
+                          "width": "fill_container",
+                          "height": 332,
+                          "fill": "$warm-card-peach",
+                          "cornerRadius": 22,
+                          "layout": "vertical",
+                          "gap": 14,
+                          "padding": 24,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "C8em6D",
+                              "name": "Email Notice Meta",
+                              "width": "fill_container",
+                              "justifyContent": "space_between",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "PNI98",
+                                  "name": "Email Source",
+                                  "gap": 7,
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "icon",
+                                      "id": "X0pgPW",
+                                      "name": "Email Icon",
+                                      "width": 16,
+                                      "height": 16,
+                                      "icon": "mail",
+                                      "library": "lucide",
+                                      "fill": "$warm-text"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "bTjNt",
+                                      "name": "Email Source Label",
+                                      "fill": "$warm-text-secondary",
+                                      "content": "FORWARDED EMAIL",
+                                      "fontFamily": "$warm-font-body",
+                                      "fontSize": 10,
+                                      "fontWeight": "700",
+                                      "letterSpacing": 0.8
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "DOX0u",
+                                  "name": "Priority Chip",
+                                  "fill": "$warm-accent",
+                                  "cornerRadius": 999,
+                                  "padding": [
+                                    5,
+                                    9
+                                  ],
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "jc95X",
+                                      "name": "Priority Label",
+                                      "fill": "$warm-bg",
+                                      "content": "HIGH",
+                                      "fontFamily": "$warm-font-body",
+                                      "fontSize": 10,
+                                      "fontWeight": "700"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "m1es04",
+                              "name": "Email Notice Title",
+                              "fill": "$warm-text",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Permission form needs a reply",
+                              "lineHeight": 1.08,
+                              "fontFamily": "$warm-font-display",
+                              "fontSize": 29,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "dRwfJ",
+                              "name": "Email Notice Body",
+                              "fill": "$warm-text-secondary",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "A useful message was triaged into a board notice so it stays in view.",
+                              "lineHeight": 1.35,
+                              "fontFamily": "$warm-font-body",
+                              "fontSize": 14,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "tC6nu",
+                              "name": "Email Fact",
+                              "fill": "$warm-bg-card",
+                              "cornerRadius": 14,
+                              "gap": 8,
+                              "padding": [
+                                10,
+                                12
+                              ],
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "ynNnp",
+                                  "name": "Fact Icon",
+                                  "width": 16,
+                                  "height": 16,
+                                  "icon": "calendar-days",
+                                  "library": "lucide",
+                                  "fill": "$warm-accent-deep"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "TteLI",
+                                  "name": "Fact Text",
+                                  "fill": "$warm-text",
+                                  "content": "Due · Wed, 15 Jul",
+                                  "fontFamily": "$warm-font-body",
+                                  "fontSize": 13,
+                                  "fontWeight": "700"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "ftfpX",
+                          "name": "Quiet Email Notice",
+                          "width": "fill_container",
+                          "height": "fill_container",
+                          "fill": "$warm-card-lavender",
+                          "cornerRadius": 22,
+                          "layout": "vertical",
+                          "gap": 12,
+                          "padding": 22,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "ZhBJl",
+                              "name": "Quiet Email Meta",
+                              "gap": 8,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "MfV89",
+                                  "name": "Quiet Email Icon",
+                                  "width": 18,
+                                  "height": 18,
+                                  "icon": "inbox",
+                                  "library": "lucide",
+                                  "fill": "$warm-text"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "Pa5yU",
+                                  "name": "Quiet Email Label",
+                                  "fill": "$warm-text-secondary",
+                                  "content": "ADMIN NOTICE",
+                                  "fontFamily": "$warm-font-body",
+                                  "fontSize": 11,
+                                  "fontWeight": "700",
+                                  "letterSpacing": 1
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "QVk7v",
+                              "name": "Quiet Email Title",
+                              "fill": "$warm-text",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Checklist attached for the week ahead",
+                              "lineHeight": 1.1,
+                              "fontFamily": "$warm-font-display",
+                              "fontSize": 25,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "EK0J8",
+                              "name": "Quiet Email Detail",
+                              "fill": "$warm-text-secondary",
+                              "content": "Board-visible · no chat interruption",
+                              "fontFamily": "$warm-font-body",
+                              "fontSize": 13,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "eQJM7",
+                              "name": "Attachment Fact",
+                              "gap": 8,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "ESxjk",
+                                  "name": "Attachment Icon",
+                                  "width": 15,
+                                  "height": 15,
+                                  "icon": "paperclip",
+                                  "library": "lucide",
+                                  "fill": "$warm-text-secondary"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "zfN3C",
+                                  "name": "Attachment Text",
+                                  "fill": "$warm-text-secondary",
+                                  "content": "1 attachment",
+                                  "fontFamily": "$warm-font-body",
+                                  "fontSize": 12,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "q0BHp",
+      "x": 1196,
+      "y": 3537,
+      "name": "Home · Family Noticeboard · Pinned",
+      "clip": true,
+      "width": 1440,
+      "height": 1024,
+      "fill": "$warm-bg",
+      "layout": "none",
+      "children": [
+        {
+          "type": "frame",
+          "id": "ZGAqZ",
+          "layoutPosition": "absolute",
+          "x": 32,
+          "y": 32,
+          "name": "Pinned Noticeboard Shell",
+          "clip": true,
+          "width": 1376,
+          "height": 960,
+          "fill": "$bg-dark",
+          "cornerRadius": 32,
+          "layout": "none",
+          "children": [
+            {
+              "type": "frame",
+              "id": "k30GF",
+              "x": 0,
+              "y": 0,
+              "name": "Pinned Sidebar",
+              "width": 96,
+              "height": 960,
+              "fill": "$bg-dark",
+              "layout": "vertical",
+              "padding": [
+                24,
+                0
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "CjOna",
+                  "name": "Pinned Logo",
+                  "width": 48,
+                  "height": 48,
+                  "fill": "$warm-accent",
+                  "cornerRadius": 12,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "l5fY8",
+                      "name": "Pinned Logo Letter",
+                      "fill": "$warm-bg",
+                      "content": "D",
+                      "fontFamily": "$warm-font-display",
+                      "fontSize": 24,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "V1IYlg",
+                  "name": "Pinned Nav Spacer",
+                  "width": 24,
+                  "height": 48
+                },
+                {
+                  "type": "frame",
+                  "id": "f5isER",
+                  "name": "Pinned Nav",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 18,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "f1OYHG",
+                      "name": "Pinned Home Nav",
+                      "width": 48,
+                      "height": 48,
+                      "fill": "$bg-dark-muted",
+                      "cornerRadius": 14,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "jIadE",
+                          "name": "Pinned Home Nav Icon",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "layout-dashboard",
+                          "library": "lucide",
+                          "fill": "$text-on-dark"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "icon",
+                      "id": "R0d8M0",
+                      "name": "Pinned Nav Budget",
+                      "width": 20,
+                      "height": 20,
+                      "icon": "wallet",
+                      "library": "lucide",
+                      "fill": "$text-tertiary"
+                    },
+                    {
+                      "type": "icon",
+                      "id": "dFLu2",
+                      "name": "Pinned Nav Schedule",
+                      "width": 20,
+                      "height": 20,
+                      "icon": "calendar-days",
+                      "library": "lucide",
+                      "fill": "$text-tertiary"
+                    },
+                    {
+                      "type": "icon",
+                      "id": "LVql1",
+                      "name": "Pinned Nav Lists",
+                      "width": 20,
+                      "height": 20,
+                      "icon": "list-checks",
+                      "library": "lucide",
+                      "fill": "$text-tertiary"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "YrrEs",
+              "x": 96,
+              "y": 0,
+              "name": "Pinned Main",
+              "width": 1280,
+              "height": 960,
+              "layout": "none",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "FfFKu",
+                  "x": 8,
+                  "y": 28,
+                  "name": "Pinned Header",
+                  "width": 1244,
+                  "height": 65,
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "SoggV",
+                      "name": "Pinned Header Title",
+                      "fill": "$text-on-dark",
+                      "content": "Home",
+                      "fontFamily": "$warm-font-display",
+                      "fontSize": 36,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "tB8nz",
+                      "name": "Pinned Header Actions",
+                      "gap": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "OmnGY",
+                          "name": "Pinned Date Chip",
+                          "fill": "$bg-dark-muted",
+                          "cornerRadius": 999,
+                          "gap": 8,
+                          "padding": [
+                            10,
+                            16
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "APgw6",
+                              "name": "Pinned Date Icon",
+                              "width": 14,
+                              "height": 14,
+                              "icon": "calendar",
+                              "library": "lucide",
+                              "fill": "$text-on-dark"
+                            },
+                            {
+                              "type": "text",
+                              "id": "zfFpu",
+                              "name": "Pinned Date Text",
+                              "fill": "$text-on-dark",
+                              "content": "Mon, 13 Jul",
+                              "fontFamily": "$warm-font-body",
+                              "fontSize": 12,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "jbLbK",
+                          "name": "Pinned Header Add",
+                          "width": 40,
+                          "height": 40,
+                          "fill": "$bg-dark-muted",
+                          "cornerRadius": 999,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "MIb6W",
+                              "name": "Pinned Header Add Icon",
+                              "width": 16,
+                              "height": 16,
+                              "icon": "plus",
+                              "library": "lucide",
+                              "fill": "$text-on-dark"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "ImSKW",
+                          "name": "Pinned Header More",
+                          "width": 40,
+                          "height": 40,
+                          "fill": "$bg-dark-muted",
+                          "cornerRadius": 999,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "sLQ1B",
+                              "name": "Pinned Header More Icon",
+                              "width": 16,
+                              "height": 16,
+                              "icon": "ellipsis",
+                              "library": "lucide",
+                              "fill": "$text-on-dark"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "pzRth",
+                  "x": 8,
+                  "y": 113,
+                  "name": "Pinned Board Canvas",
+                  "clip": true,
+                  "width": 1244,
+                  "height": 832,
+                  "fill": "$warm-bg-card",
+                  "cornerRadius": 28,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "xeZZv",
+                      "x": 28,
+                      "y": 24,
+                      "name": "Pinned Canvas Label",
+                      "fill": "$warm-text-tertiary",
+                      "content": "FAMILY NOTICEBOARD · PINNED",
+                      "fontFamily": "$warm-font-body",
+                      "fontSize": 11,
+                      "fontWeight": "700",
+                      "letterSpacing": 1.1
+                    },
+                    {
+                      "type": "text",
+                      "id": "X6ocN",
+                      "x": 28,
+                      "y": 43,
+                      "name": "Pinned Canvas Title",
+                      "fill": "$warm-text",
+                      "content": "A mess of useful things",
+                      "fontFamily": "$warm-font-display",
+                      "fontSize": 30,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "dHVfe",
+                      "x": 1059,
+                      "y": 25,
+                      "name": "Pinned Add Note",
+                      "width": 157,
+                      "height": 44,
+                      "fill": "$warm-text",
+                      "cornerRadius": 999,
+                      "gap": 8,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "C8PyP",
+                          "name": "Pinned Add Note Icon",
+                          "width": 16,
+                          "height": 16,
+                          "icon": "plus",
+                          "library": "lucide",
+                          "fill": "$warm-bg"
+                        },
+                        {
+                          "type": "text",
+                          "id": "iXQWv",
+                          "name": "Pinned Add Note Text",
+                          "fill": "$warm-bg",
+                          "content": "Add a note",
+                          "fontFamily": "$warm-font-body",
+                          "fontSize": 13,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "CKNAs",
+                      "x": 32,
+                      "y": 103,
+                      "name": "Pinned Daily Brief",
+                      "width": 520,
+                      "height": 392,
+                      "fill": "$warm-card-butter",
+                      "cornerRadius": 24,
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "$warm-shadow",
+                        "offset": {
+                          "x": 0,
+                          "y": 10
+                        },
+                        "blur": 22
+                      },
+                      "layout": "vertical",
+                      "gap": 15,
+                      "padding": 28,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "zXN3m",
+                          "name": "Pinned Brief Meta",
+                          "gap": 8,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "Dohy5",
+                              "name": "Pinned Brief Icon",
+                              "width": 17,
+                              "height": 17,
+                              "icon": "pin",
+                              "library": "lucide",
+                              "fill": "$warm-accent-deep"
+                            },
+                            {
+                              "type": "text",
+                              "id": "we9Vy",
+                              "name": "Pinned Brief Label",
+                              "fill": "$warm-text-secondary",
+                              "content": "TODAY'S BRIEF · 7:35 AM",
+                              "fontFamily": "$warm-font-body",
+                              "fontSize": 11,
+                              "fontWeight": "700",
+                              "letterSpacing": 1
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "gfWMu",
+                          "name": "Pinned Brief Heading",
+                          "fill": "$warm-text",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Get the bags by the door.",
+                          "lineHeight": 1.05,
+                          "fontFamily": "$warm-font-display",
+                          "fontSize": 40,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "d554t",
+                          "name": "Pinned Brief Detail",
+                          "fill": "$warm-text-secondary",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "A quick readiness note from today's schedule.",
+                          "lineHeight": 1.35,
+                          "fontFamily": "$warm-font-body",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "kEOD1",
+                          "name": "Pinned Brief Morning",
+                          "gap": 10,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "ellipse",
+                              "id": "xlu0z",
+                              "name": "Pinned Morning Dot",
+                              "fill": "$warm-accent",
+                              "width": 9,
+                              "height": 9
+                            },
+                            {
+                              "type": "text",
+                              "id": "VdlTR",
+                              "name": "Pinned Morning Text",
+                              "fill": "$warm-text",
+                              "content": "memberA · bring library bag",
+                              "fontFamily": "$warm-font-body",
+                              "fontSize": 15,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "VwfsE",
+                          "name": "Pinned Brief Afternoon",
+                          "gap": 10,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "ellipse",
+                              "id": "S4aKrd",
+                              "name": "Pinned Afternoon Dot",
+                              "fill": "$warm-warning",
+                              "width": 9,
+                              "height": 9
+                            },
+                            {
+                              "type": "text",
+                              "id": "v9ReCD",
+                              "name": "Pinned Afternoon Text",
+                              "fill": "$warm-text",
+                              "content": "memberB · sport kit for 4:00 pm",
+                              "fontFamily": "$warm-font-body",
+                              "fontSize": 15,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "YrT0J",
+                          "name": "Pinned Brief Watchout",
+                          "fill": "$warm-card-peach",
+                          "cornerRadius": 12,
+                          "gap": 8,
+                          "padding": [
+                            9,
+                            11
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "izQaw",
+                              "name": "Pinned Watchout Icon",
+                              "width": 16,
+                              "height": 16,
+                              "icon": "triangle-alert",
+                              "library": "lucide",
+                              "fill": "$warm-accent-deep"
+                            },
+                            {
+                              "type": "text",
+                              "id": "wMM7g",
+                              "name": "Pinned Watchout Text",
+                              "fill": "$warm-text",
+                              "content": "Signed form due tomorrow",
+                              "fontFamily": "$warm-font-body",
+                              "fontSize": 13,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "fxlHQ",
+                      "x": 580,
+                      "y": 112,
+                      "name": "Pinned Email Card",
+                      "width": 292,
+                      "height": 268,
+                      "fill": "$warm-card-peach",
+                      "cornerRadius": 22,
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "$warm-shadow",
+                        "offset": {
+                          "x": 0,
+                          "y": 10
+                        },
+                        "blur": 22
+                      },
+                      "layout": "vertical",
+                      "gap": 12,
+                      "padding": 23,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "m9Jbz",
+                          "name": "Pinned Email Meta",
+                          "width": "fill_container",
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "Ty9wB",
+                              "name": "Pinned Email Source",
+                              "gap": 7,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "b0hFyO",
+                                  "name": "Pinned Email Icon",
+                                  "width": 16,
+                                  "height": 16,
+                                  "icon": "mail",
+                                  "library": "lucide",
+                                  "fill": "$warm-text"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "Wt0HG",
+                                  "name": "Pinned Email Label",
+                                  "fill": "$warm-text-secondary",
+                                  "content": "FORWARDED EMAIL",
+                                  "fontFamily": "$warm-font-body",
+                                  "fontSize": 10,
+                                  "fontWeight": "700",
+                                  "letterSpacing": 0.7
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "rG4nQ",
+                              "name": "Pinned Email Priority",
+                              "fill": "$warm-accent-deep",
+                              "content": "HIGH",
+                              "fontFamily": "$warm-font-body",
+                              "fontSize": 10,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "HdeKb",
+                          "name": "Pinned Email Title",
+                          "fill": "$warm-text",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Permission form needs a reply",
+                          "lineHeight": 1.08,
+                          "fontFamily": "$warm-font-display",
+                          "fontSize": 27,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "OYUqe",
+                          "name": "Pinned Email Detail",
+                          "fill": "$warm-text-secondary",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "A useful email, kept where everyone can see it.",
+                          "lineHeight": 1.35,
+                          "fontFamily": "$warm-font-body",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "ExEgH",
+                          "name": "Pinned Email Due",
+                          "fill": "$warm-bg-card",
+                          "cornerRadius": 12,
+                          "gap": 7,
+                          "padding": [
+                            8,
+                            10
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "u5PGjL",
+                              "name": "Pinned Due Icon",
+                              "width": 15,
+                              "height": 15,
+                              "icon": "calendar-days",
+                              "library": "lucide",
+                              "fill": "$warm-accent-deep"
+                            },
+                            {
+                              "type": "text",
+                              "id": "ME2xE",
+                              "name": "Pinned Due Text",
+                              "fill": "$warm-text",
+                              "content": "Due Wed, 15 Jul",
+                              "fontFamily": "$warm-font-body",
+                              "fontSize": 12,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "jFVg0",
+                      "x": 903,
+                      "y": 88,
+                      "name": "Pinned Admin Card",
+                      "width": 312,
+                      "height": 212,
+                      "fill": "$warm-card-lavender",
+                      "cornerRadius": 22,
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "$warm-shadow",
+                        "offset": {
+                          "x": 0,
+                          "y": 8
+                        },
+                        "blur": 18
+                      },
+                      "layout": "vertical",
+                      "gap": 11,
+                      "padding": 21,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "a6BuY",
+                          "name": "Pinned Admin Meta",
+                          "gap": 8,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "dt2qx",
+                              "name": "Pinned Admin Icon",
+                              "width": 18,
+                              "height": 18,
+                              "icon": "inbox",
+                              "library": "lucide",
+                              "fill": "$warm-text"
+                            },
+                            {
+                              "type": "text",
+                              "id": "fPYb3",
+                              "name": "Pinned Admin Label",
+                              "fill": "$warm-text-secondary",
+                              "content": "ADMIN NOTICE",
+                              "fontFamily": "$warm-font-body",
+                              "fontSize": 11,
+                              "fontWeight": "700",
+                              "letterSpacing": 1
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "xT7Iw",
+                          "name": "Pinned Admin Title",
+                          "fill": "$warm-text",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Checklist attached for the week ahead",
+                          "lineHeight": 1.08,
+                          "fontFamily": "$warm-font-display",
+                          "fontSize": 24,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "tAoNI",
+                          "name": "Pinned Admin Detail",
+                          "fill": "$warm-text-secondary",
+                          "content": "1 attachment · saved to the board",
+                          "fontFamily": "$warm-font-body",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Mwfdw",
+                      "x": 575,
+                      "y": 414,
+                      "name": "Pinned Later Card",
+                      "width": 286,
+                      "height": 251,
+                      "fill": "$warm-card-sky",
+                      "cornerRadius": 22,
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "$warm-shadow",
+                        "offset": {
+                          "x": 0,
+                          "y": 8
+                        },
+                        "blur": 18
+                      },
+                      "layout": "vertical",
+                      "gap": 11,
+                      "padding": 22,
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "uMbD1",
+                          "name": "Pinned Later Icon",
+                          "width": 22,
+                          "height": 22,
+                          "icon": "clock-3",
+                          "library": "lucide",
+                          "fill": "$warm-text"
+                        },
+                        {
+                          "type": "text",
+                          "id": "ebnRK",
+                          "name": "Pinned Later Label",
+                          "fill": "$warm-text-secondary",
+                          "content": "LATER TODAY",
+                          "fontFamily": "$warm-font-body",
+                          "fontSize": 11,
+                          "fontWeight": "700",
+                          "letterSpacing": 1
+                        },
+                        {
+                          "type": "text",
+                          "id": "iHeVC",
+                          "name": "Pinned Later Title",
+                          "fill": "$warm-text",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "The 4:00 pm kit is the next handoff.",
+                          "lineHeight": 1.1,
+                          "fontFamily": "$warm-font-display",
+                          "fontSize": 25,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "b02ExL",
+                          "name": "Pinned Later Detail",
+                          "fill": "$warm-text-secondary",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "A schedule signal worth keeping visible.",
+                          "lineHeight": 1.35,
+                          "fontFamily": "$warm-font-body",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "PpwAu",
+                      "x": 901,
+                      "y": 337,
+                      "name": "Pinned Shared Card",
+                      "width": 314,
+                      "height": 307,
+                      "fill": "$warm-card-sage",
+                      "cornerRadius": 22,
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "$warm-shadow",
+                        "offset": {
+                          "x": 0,
+                          "y": 10
+                        },
+                        "blur": 22
+                      },
+                      "layout": "vertical",
+                      "gap": 12,
+                      "padding": 24,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "GjQzT",
+                          "name": "Pinned Shared Meta",
+                          "gap": 8,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "OtwoY",
+                              "name": "Pinned Shared Icon",
+                              "width": 18,
+                              "height": 18,
+                              "icon": "sticky-note",
+                              "library": "lucide",
+                              "fill": "$warm-text"
+                            },
+                            {
+                              "type": "text",
+                              "id": "sO9si",
+                              "name": "Pinned Shared Label",
+                              "fill": "$warm-text-secondary",
+                              "content": "FOR THE HOUSE",
+                              "fontFamily": "$warm-font-body",
+                              "fontSize": 11,
+                              "fontWeight": "700",
+                              "letterSpacing": 1
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "mctr4",
+                          "name": "Pinned Shared Title",
+                          "fill": "$warm-text",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "The board is for the things that need a home.",
+                          "lineHeight": 1.1,
+                          "fontFamily": "$warm-font-display",
+                          "fontSize": 27,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "H6wyfG",
+                          "name": "Pinned Shared Detail",
+                          "fill": "$warm-text-secondary",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Notes can arrive from a briefing, an email, or someone in the family.",
+                          "lineHeight": 1.38,
+                          "fontFamily": "$warm-font-body",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "QFByU",
+                          "name": "Pinned Shared Footnote",
+                          "fill": "$warm-text-secondary",
+                          "content": "Visible now · tidy up later",
+                          "fontFamily": "$warm-font-body",
+                          "fontSize": 12,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "RZaIP",
+                      "x": 442,
+                      "y": 492,
+                      "name": "Pinned Reminder Card",
+                      "width": 202,
+                      "height": 157,
+                      "fill": "$warm-card-sand",
+                      "cornerRadius": 20,
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "$warm-shadow",
+                        "offset": {
+                          "x": 0,
+                          "y": 8
+                        },
+                        "blur": 18
+                      },
+                      "layout": "vertical",
+                      "gap": 8,
+                      "padding": 18,
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "g8p9TV",
+                          "name": "Pinned Reminder Icon",
+                          "width": 20,
+                          "height": 20,
+                          "icon": "pen-line",
+                          "library": "lucide",
+                          "fill": "$warm-text"
+                        },
+                        {
+                          "type": "text",
+                          "id": "Nsj0r",
+                          "name": "Pinned Reminder Title",
+                          "fill": "$warm-text",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Sign before Wednesday",
+                          "lineHeight": 1.1,
+                          "fontFamily": "$warm-font-display",
+                          "fontSize": 21,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "CLk5f",
+                          "name": "Pinned Reminder Detail",
+                          "fill": "$warm-text-secondary",
+                          "content": "From the email notice",
+                          "fontFamily": "$warm-font-body",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "tXIU3",
+                      "x": 70,
+                      "y": 546,
+                      "name": "Pinned Inbox Card",
+                      "width": 330,
+                      "height": 167,
+                      "fill": "$warm-bg",
+                      "cornerRadius": 22,
+                      "stroke": "$warm-border",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
+                      "layout": "vertical",
+                      "gap": 10,
+                      "padding": 22,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "OGOq3",
+                          "name": "Pinned Inbox Label",
+                          "fill": "$warm-text-tertiary",
+                          "content": "IN THE INBOX",
+                          "fontFamily": "$warm-font-body",
+                          "fontSize": 11,
+                          "fontWeight": "700",
+                          "letterSpacing": 1
+                        },
+                        {
+                          "type": "text",
+                          "id": "H1Uow",
+                          "name": "Pinned Inbox Title",
+                          "fill": "$warm-text",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Two useful messages found a place to land.",
+                          "lineHeight": 1.12,
+                          "fontFamily": "$warm-font-display",
+                          "fontSize": 24,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "NntIh",
+                          "name": "Pinned Inbox Detail",
+                          "fill": "$warm-text-secondary",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Urgent ones can still interrupt chat; the rest stay here.",
+                          "lineHeight": 1.35,
+                          "fontFamily": "$warm-font-body",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "Yqmwu",
+      "x": 2732,
+      "y": 3537,
+      "name": "Home · Traditional List View",
+      "clip": true,
+      "width": 1440,
+      "height": 1024,
+      "fill": "$warm-bg",
+      "layout": "none",
+      "children": [
+        {
+          "type": "frame",
+          "id": "N5sse",
+          "layoutPosition": "absolute",
+          "x": 32,
+          "y": 32,
+          "name": "Traditional Shell",
+          "clip": true,
+          "width": 1376,
+          "height": 960,
+          "fill": "$bg-dark",
+          "cornerRadius": 32,
+          "layout": "none",
+          "children": [
+            {
+              "type": "frame",
+              "id": "K3XFp",
+              "layoutPosition": "absolute",
+              "x": 0,
+              "y": 0,
+              "name": "Traditional Sidebar",
+              "width": 96,
+              "height": 960,
+              "fill": "$bg-dark",
+              "layout": "vertical",
+              "padding": [
+                24,
+                0
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "wMmoE",
+                  "name": "Traditional Logo",
+                  "width": 48,
+                  "height": 48,
+                  "fill": "$warm-accent",
+                  "cornerRadius": 12,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "m915SN",
+                      "name": "Traditional Logo Letter",
+                      "fill": "$warm-bg",
+                      "content": "D",
+                      "fontFamily": "$warm-font-display",
+                      "fontSize": 24,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "icon",
+                  "id": "CNBtj",
+                  "layoutPosition": "absolute",
+                  "x": 38,
+                  "y": 122,
+                  "name": "Traditional Home Icon",
+                  "width": 20,
+                  "height": 20,
+                  "icon": "layout-dashboard",
+                  "library": "lucide",
+                  "fill": "$text-on-dark"
+                },
+                {
+                  "type": "icon",
+                  "id": "TXPdJ",
+                  "layoutPosition": "absolute",
+                  "x": 38,
+                  "y": 190,
+                  "name": "Traditional Schedule Icon",
+                  "width": 20,
+                  "height": 20,
+                  "icon": "calendar-days",
+                  "library": "lucide",
+                  "fill": "$text-tertiary"
+                },
+                {
+                  "type": "icon",
+                  "id": "TNV7a",
+                  "layoutPosition": "absolute",
+                  "x": 38,
+                  "y": 258,
+                  "name": "Traditional Lists Icon",
+                  "width": 20,
+                  "height": 20,
+                  "icon": "list-checks",
+                  "library": "lucide",
+                  "fill": "$text-tertiary"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "J4jzo",
+              "layoutPosition": "absolute",
+              "x": 96,
+              "y": 0,
+              "name": "Traditional Main",
+              "width": 1280,
+              "height": 960,
+              "layout": "none",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "xEr9N",
+                  "layoutPosition": "absolute",
+                  "x": 8,
+                  "y": 28,
+                  "name": "Traditional Header",
+                  "width": 1244,
+                  "height": 65,
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "zbxCq",
+                      "name": "Traditional Header Title",
+                      "fill": "$text-on-dark",
+                      "content": "Home",
+                      "fontFamily": "$warm-font-display",
+                      "fontSize": 36,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "HPAdW",
+                      "name": "Traditional Header Actions",
+                      "gap": 12,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "w7FJJp",
+                          "name": "Traditional Date",
+                          "fill": "$bg-dark-muted",
+                          "cornerRadius": 999,
+                          "gap": 8,
+                          "padding": [
+                            10,
+                            16
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "U5PTXA",
+                              "name": "Traditional Date Text",
+                              "fill": "$text-on-dark",
+                              "content": "Mon, 13 Jul",
+                              "fontFamily": "$warm-font-body",
+                              "fontSize": 12,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "BWCLG",
+                          "name": "Traditional New Note",
+                          "fill": "$warm-accent",
+                          "cornerRadius": 999,
+                          "gap": 8,
+                          "padding": [
+                            10,
+                            16
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "l7k9nq",
+                              "name": "Traditional New Note Icon",
+                              "width": 16,
+                              "height": 16,
+                              "icon": "plus",
+                              "library": "lucide",
+                              "fill": "$warm-bg"
+                            },
+                            {
+                              "type": "text",
+                              "id": "PER5e",
+                              "name": "Traditional New Note Text",
+                              "fill": "$warm-bg",
+                              "content": "New note",
+                              "fontFamily": "$warm-font-body",
+                              "fontSize": 13,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Cz8Au",
+                  "layoutPosition": "absolute",
+                  "x": 8,
+                  "y": 113,
+                  "name": "Traditional Content",
+                  "clip": true,
+                  "width": 1244,
+                  "height": 832,
+                  "fill": "$warm-bg-card",
+                  "cornerRadius": 28,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "D7Tq7Z",
+                      "layoutPosition": "absolute",
+                      "x": 28,
+                      "y": 28,
+                      "name": "Traditional Eyebrow",
+                      "fill": "$warm-text-tertiary",
+                      "content": "MONDAY, 13 JULY",
+                      "fontFamily": "$warm-font-body",
+                      "fontSize": 11,
+                      "fontWeight": "700",
+                      "letterSpacing": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "wPsvh",
+                      "layoutPosition": "absolute",
+                      "x": 28,
+                      "y": 48,
+                      "name": "Traditional Greeting",
+                      "fill": "$warm-text",
+                      "content": "Good morning",
+                      "fontFamily": "$warm-font-display",
+                      "fontSize": 32,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "text",
+                      "id": "gOI2w",
+                      "layoutPosition": "absolute",
+                      "x": 28,
+                      "y": 87,
+                      "name": "Traditional Subtitle",
+                      "fill": "$warm-text-secondary",
+                      "content": "A clear view of what needs attention today.",
+                      "fontFamily": "$warm-font-body",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "I0dzt",
+                      "layoutPosition": "absolute",
+                      "x": 28,
+                      "y": 128,
+                      "name": "Today List Panel",
+                      "width": 736,
+                      "height": 672,
+                      "fill": "$warm-bg",
+                      "cornerRadius": 22,
+                      "stroke": "$warm-border",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
+                      "layout": "vertical",
+                      "gap": 18,
+                      "padding": 24,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "hN2Ip",
+                          "name": "Today List Header",
+                          "width": "fill_container",
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "raJTS",
+                              "name": "Today List Title",
+                              "fill": "$warm-text",
+                              "content": "Today",
+                              "fontFamily": "$warm-font-display",
+                              "fontSize": 26,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "jqlvn",
+                              "name": "Today List Count",
+                              "fill": "$warm-text-secondary",
+                              "content": "4 items",
+                              "fontFamily": "$warm-font-body",
+                              "fontSize": 12,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "JE6QB",
+                          "name": "Morning Group",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 8,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "S5JatK",
+                              "name": "Morning Label",
+                              "fill": "$warm-text-tertiary",
+                              "content": "MORNING",
+                              "fontFamily": "$warm-font-body",
+                              "fontSize": 11,
+                              "fontWeight": "700",
+                              "letterSpacing": 1
+                            },
+                            {
+                              "type": "frame",
+                              "id": "JDenK",
+                              "name": "Library Bag",
+                              "width": "fill_container",
+                              "fill": "$warm-card-butter",
+                              "cornerRadius": 14,
+                              "gap": 12,
+                              "padding": [
+                                13,
+                                14
+                              ],
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "ellipse",
+                                  "id": "AvcEo",
+                                  "name": "Library Bag Check",
+                                  "width": 20,
+                                  "height": 20,
+                                  "stroke": "$warm-warning",
+                                  "strokeWidth": 2,
+                                  "strokeAlignment": "inner"
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "DbTwj",
+                                  "name": "Library Bag Copy",
+                                  "layout": "vertical",
+                                  "gap": 3,
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "aTx52",
+                                      "name": "Library Bag Title",
+                                      "fill": "$warm-text",
+                                      "content": "Bring library bag",
+                                      "fontFamily": "$warm-font-body",
+                                      "fontSize": 15,
+                                      "fontWeight": "700"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "QgMpg",
+                                      "name": "Library Bag Detail",
+                                      "fill": "$warm-text-secondary",
+                                      "content": "memberA · from morning briefing",
+                                      "fontFamily": "$warm-font-body",
+                                      "fontSize": 12,
+                                      "fontWeight": "normal"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "DcK8d",
+                              "name": "Earlier Start",
+                              "width": "fill_container",
+                              "fill": "$warm-bg",
+                              "cornerRadius": 14,
+                              "gap": 12,
+                              "padding": [
+                                13,
+                                14
+                              ],
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "ellipse",
+                                  "id": "r3lAZx",
+                                  "name": "Earlier Start Check",
+                                  "width": 20,
+                                  "height": 20,
+                                  "stroke": "$warm-warning",
+                                  "strokeWidth": 2,
+                                  "strokeAlignment": "inner"
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "C82pGh",
+                                  "name": "Earlier Start Copy",
+                                  "layout": "vertical",
+                                  "gap": 3,
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "SOD1M",
+                                      "name": "Earlier Start Title",
+                                      "fill": "$warm-text",
+                                      "content": "Earlier start today",
+                                      "fontFamily": "$warm-font-body",
+                                      "fontSize": 15,
+                                      "fontWeight": "700"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "fYUbl",
+                                      "name": "Earlier Start Detail",
+                                      "fill": "$warm-text-secondary",
+                                      "content": "memberB · schedule",
+                                      "fontFamily": "$warm-font-body",
+                                      "fontSize": 12,
+                                      "fontWeight": "normal"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "COwQM",
+                          "name": "Afternoon Group",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 8,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "kwK0Q",
+                              "name": "Afternoon Label",
+                              "fill": "$warm-text-tertiary",
+                              "content": "AFTERNOON",
+                              "fontFamily": "$warm-font-body",
+                              "fontSize": 11,
+                              "fontWeight": "700",
+                              "letterSpacing": 1
+                            },
+                            {
+                              "type": "frame",
+                              "id": "KAvl8",
+                              "name": "Sport Kit",
+                              "width": "fill_container",
+                              "fill": "$warm-card-sky",
+                              "cornerRadius": 14,
+                              "gap": 12,
+                              "padding": [
+                                13,
+                                14
+                              ],
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "ellipse",
+                                  "id": "Eq4Yl",
+                                  "name": "Sport Kit Check",
+                                  "width": 20,
+                                  "height": 20,
+                                  "stroke": "$warm-warning",
+                                  "strokeWidth": 2,
+                                  "strokeAlignment": "inner"
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "ZBy03",
+                                  "name": "Sport Kit Copy",
+                                  "layout": "vertical",
+                                  "gap": 3,
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "A4Fnr",
+                                      "name": "Sport Kit Title",
+                                      "fill": "$warm-text",
+                                      "content": "Pack sport kit",
+                                      "fontFamily": "$warm-font-body",
+                                      "fontSize": 15,
+                                      "fontWeight": "700"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "bbEdG",
+                                      "name": "Sport Kit Detail",
+                                      "fill": "$warm-text-secondary",
+                                      "content": "4:00 pm · memberB",
+                                      "fontFamily": "$warm-font-body",
+                                      "fontSize": 12,
+                                      "fontWeight": "normal"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "xYx9m",
+                          "name": "Watchout Group",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 8,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "ySdLl",
+                              "name": "Watchout Label",
+                              "fill": "$warm-text-tertiary",
+                              "content": "WATCHOUT",
+                              "fontFamily": "$warm-font-body",
+                              "fontSize": 11,
+                              "fontWeight": "700",
+                              "letterSpacing": 1
+                            },
+                            {
+                              "type": "frame",
+                              "id": "BbzJS",
+                              "name": "Watchout Row",
+                              "width": "fill_container",
+                              "fill": "$warm-card-peach",
+                              "cornerRadius": 14,
+                              "gap": 12,
+                              "padding": [
+                                13,
+                                14
+                              ],
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "x0k8L1",
+                                  "name": "Watchout Icon",
+                                  "width": 20,
+                                  "height": 20,
+                                  "icon": "triangle-alert",
+                                  "library": "lucide",
+                                  "fill": "$warm-accent-deep"
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "qKoeJ",
+                                  "name": "Watchout Copy",
+                                  "layout": "vertical",
+                                  "gap": 3,
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "O3rUDJ",
+                                      "name": "Watchout Title",
+                                      "fill": "$warm-text",
+                                      "content": "Signed form due tomorrow",
+                                      "fontFamily": "$warm-font-body",
+                                      "fontSize": 15,
+                                      "fontWeight": "700"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "BM8Fy",
+                                      "name": "Watchout Detail",
+                                      "fill": "$warm-text-secondary",
+                                      "content": "Keep it visible before the deadline.",
+                                      "fontFamily": "$warm-font-body",
+                                      "fontSize": 12,
+                                      "fontWeight": "normal"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "UcNxp",
+                      "layoutPosition": "absolute",
+                      "x": 786,
+                      "y": 128,
+                      "name": "Notices Panel",
+                      "width": 430,
+                      "height": 672,
+                      "fill": "$warm-bg",
+                      "cornerRadius": 22,
+                      "stroke": "$warm-border",
+                      "strokeWidth": 1,
+                      "strokeAlignment": "inner",
+                      "layout": "vertical",
+                      "gap": 16,
+                      "padding": 24,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "B4jDzE",
+                          "name": "Notices Header",
+                          "width": "fill_container",
+                          "justifyContent": "space_between",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "imwJs",
+                              "name": "Notices Title",
+                              "fill": "$warm-text",
+                              "content": "Notices",
+                              "fontFamily": "$warm-font-display",
+                              "fontSize": 26,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "A8Phzy",
+                              "name": "Notices Link",
+                              "fill": "$warm-accent-deep",
+                              "content": "View all",
+                              "fontFamily": "$warm-font-body",
+                              "fontSize": 12,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "bjppJ",
+                          "name": "High Notice",
+                          "width": "fill_container",
+                          "fill": "$warm-card-peach",
+                          "cornerRadius": 16,
+                          "layout": "vertical",
+                          "gap": 9,
+                          "padding": 18,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "w1vqck",
+                              "name": "High Notice Meta",
+                              "gap": 7,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "emEZC",
+                                  "name": "High Notice Icon",
+                                  "width": 16,
+                                  "height": 16,
+                                  "icon": "mail",
+                                  "library": "lucide",
+                                  "fill": "$warm-text"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "itIzK",
+                                  "name": "High Notice Label",
+                                  "fill": "$warm-text-secondary",
+                                  "content": "FORWARDED EMAIL · HIGH",
+                                  "fontFamily": "$warm-font-body",
+                                  "fontSize": 10,
+                                  "fontWeight": "700",
+                                  "letterSpacing": 0.7
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "r1JJM9",
+                              "name": "High Notice Title",
+                              "fill": "$warm-text",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Permission form needs a reply",
+                              "lineHeight": 1.1,
+                              "fontFamily": "$warm-font-display",
+                              "fontSize": 22,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "jmKUq",
+                              "name": "High Notice Detail",
+                              "fill": "$warm-text-secondary",
+                              "content": "Due Wed, 15 Jul",
+                              "fontFamily": "$warm-font-body",
+                              "fontSize": 12,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "Qz0e8",
+                          "name": "Admin Notice",
+                          "width": "fill_container",
+                          "fill": "$warm-card-lavender",
+                          "cornerRadius": 16,
+                          "layout": "vertical",
+                          "gap": 9,
+                          "padding": 18,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "j7Zn4",
+                              "name": "Admin Notice Meta",
+                              "gap": 7,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "vkznz",
+                                  "name": "Admin Notice Icon",
+                                  "width": 16,
+                                  "height": 16,
+                                  "icon": "paperclip",
+                                  "library": "lucide",
+                                  "fill": "$warm-text"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "vgU99",
+                                  "name": "Admin Notice Label",
+                                  "fill": "$warm-text-secondary",
+                                  "content": "ADMIN NOTICE",
+                                  "fontFamily": "$warm-font-body",
+                                  "fontSize": 10,
+                                  "fontWeight": "700",
+                                  "letterSpacing": 0.7
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "pUCqk",
+                              "name": "Admin Notice Title",
+                              "fill": "$warm-text",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Checklist attached for the week ahead",
+                              "lineHeight": 1.1,
+                              "fontFamily": "$warm-font-display",
+                              "fontSize": 22,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "B8jI2",
+                              "name": "Admin Notice Detail",
+                              "fill": "$warm-text-secondary",
+                              "content": "1 attachment · board-visible",
+                              "fontFamily": "$warm-font-body",
+                              "fontSize": 12,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "mReDo",
+                          "name": "Quiet Notice",
+                          "width": "fill_container",
+                          "fill": "$warm-card-sage",
+                          "cornerRadius": 16,
+                          "layout": "vertical",
+                          "gap": 9,
+                          "padding": 18,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "tJg2n",
+                              "name": "Quiet Notice Meta",
+                              "gap": 7,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "kIUZR",
+                                  "name": "Quiet Notice Icon",
+                                  "width": 16,
+                                  "height": 16,
+                                  "icon": "bell-off",
+                                  "library": "lucide",
+                                  "fill": "$warm-text"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "zZJ9M",
+                                  "name": "Quiet Notice Label",
+                                  "fill": "$warm-text-secondary",
+                                  "content": "QUIET UPDATE",
+                                  "fontFamily": "$warm-font-body",
+                                  "fontSize": 10,
+                                  "fontWeight": "700",
+                                  "letterSpacing": 0.7
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "p4XjpS",
+                              "name": "Quiet Notice Title",
+                              "fill": "$warm-text",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "Saved to Home without a chat interruption",
+                              "lineHeight": 1.1,
+                              "fontFamily": "$warm-font-display",
+                              "fontSize": 22,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "FMzRt",
+                              "name": "Quiet Notice Detail",
+                              "fill": "$warm-text-secondary",
+                              "content": "Less urgent, still easy to find.",
+                              "fontFamily": "$warm-font-body",
+                              "fontSize": 12,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
   "variables": {
@@ -23504,5 +26033,6 @@
       "type": "color",
       "value": "#FFDFC7"
     }
-  }
+  },
+  "fileToken": "7588bfc6-b3e6-430b-a38f-0dbcab7daeb0"
 }
