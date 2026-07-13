@@ -1,4 +1,5 @@
 import type { Doc, Id } from '../_generated/dataModel';
+import type { MutationCtx } from '../_generated/server';
 import {
   assertCanEditList,
   findListByPublicId,
@@ -13,7 +14,7 @@ type BotReadCtx = ListsReadCtx;
 type BotWriteCtx = ListsMutationCtx;
 
 export type ListsBotReadCtx = BotReadCtx;
-export type ListsBotMutationCtx = BotWriteCtx;
+export type ListsBotMutationCtx = BotWriteCtx & Pick<MutationCtx, 'scheduler'>;
 
 export type DefaultListSummary = { publicId: string; name: string };
 
@@ -97,7 +98,7 @@ export async function setDefaultListForUser(
   return { publicId: list.publicId, name: list.name };
 }
 
-export type CreatedBotListItem = { _id: Id<'listItems'>; title: string };
+export type CreatedBotListItem = { _id: Id<'listItems'>; listId: Id<'lists'>; title: string };
 
 /**
  * Create title-only list items in a list the given user can edit, acting as
@@ -128,7 +129,7 @@ export async function createListItemsForUser(
       createdAt: now,
       updatedAt: now
     })) as Id<'listItems'>;
-    items.push({ _id, title });
+    items.push({ _id, listId: list._id, title });
   }
 
   return { list: { publicId: list.publicId, name: list.name }, items };

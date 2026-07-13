@@ -13,8 +13,22 @@ vi.mock('svelte-dnd-action', () => ({
 }));
 
 const properties: VisibleListProperty[] = [
-  { _id: 'priority', listId: 'list', name: 'Priority', type: 'select', sortOrder: 0 },
-  { _id: 'aisle', listId: 'list', name: 'Aisle', type: 'text', sortOrder: 1 }
+  {
+    _id: 'priority',
+    listId: 'list',
+    name: 'Priority',
+    type: 'select',
+    sortOrder: 0,
+    categorisationInstruction: 'Group by priority.'
+  },
+  {
+    _id: 'aisle',
+    listId: 'list',
+    name: 'Aisle',
+    type: 'select',
+    sortOrder: 1,
+    options: [{ id: 'bread', label: 'Breads' }]
+  }
 ];
 
 const availableLists: VisibleList[] = [
@@ -48,7 +62,14 @@ function renderPanel(
     onReorder?: (propertyId: string, targetIndex: number) => Promise<boolean>;
     currentDefaultPublicId?: string | null;
     onSetDefaultList?: (publicId: string) => void;
+    onSetCategorisation?: (input: { propertyId: string; instruction: string }) => void;
+    onClearCategorisation?: (propertyId: string) => void;
     error?: string | null;
+    propertyRenameId?: string | null;
+    propertyRenameName?: string;
+    propertyRenameOptions?: NonNullable<VisibleListProperty['options']>;
+    setPropertyRenameOptions?: (options: NonNullable<VisibleListProperty['options']>) => void;
+    addPropertyRenameOption?: () => void;
   } = {}
 ) {
   const target = document.body.appendChild(document.createElement('div'));
@@ -59,9 +80,12 @@ function renderPanel(
       error: overrides.error ?? null,
       onClose: vi.fn(),
       onReorder: overrides.onReorder ?? vi.fn(async () => true),
-      propertyRenameId: null,
-      propertyRenameName: '',
+      propertyRenameId: overrides.propertyRenameId ?? null,
+      propertyRenameName: overrides.propertyRenameName ?? '',
       setPropertyRenameName: vi.fn(),
+      propertyRenameOptions: overrides.propertyRenameOptions ?? [],
+      setPropertyRenameOptions: overrides.setPropertyRenameOptions ?? vi.fn(),
+      addPropertyRenameOption: overrides.addPropertyRenameOption ?? vi.fn(),
       beginRename: vi.fn(),
       cancelRename: vi.fn(),
       onSaveRename: vi.fn(),
@@ -80,7 +104,9 @@ function renderPanel(
       onDeleteList: vi.fn(),
       availableLists,
       currentDefaultPublicId: overrides.currentDefaultPublicId ?? null,
-      onSetDefaultList: overrides.onSetDefaultList ?? vi.fn()
+      onSetDefaultList: overrides.onSetDefaultList ?? vi.fn(),
+      onSetCategorisation: overrides.onSetCategorisation ?? vi.fn(),
+      onClearCategorisation: overrides.onClearCategorisation ?? vi.fn()
     }
   });
   mounted.push(component);
@@ -96,6 +122,66 @@ function picker(target: HTMLElement) {
 }
 
 describe('ListSettingsPanel reordering', () => {
+  it('uses an accessible icon control to rename a property', async () => {
+    const target = renderPanel();
+    await tick();
+
+    const rename = target.querySelector<HTMLButtonElement>('[aria-label="Rename Priority"]');
+
+    expect(rename).not.toBeNull();
+    expect(rename?.textContent?.trim()).toBe('');
+    expect(rename?.querySelector('svg')).not.toBeNull();
+  });
+
+  it('reveals the Add property form only after the user asks for it', async () => {
+    const target = renderPanel();
+    await tick();
+
+    expect(target.querySelector<HTMLInputElement>('[placeholder="Priority"]')).toBeNull();
+
+    Array.from(target.querySelectorAll<HTMLButtonElement>('button'))
+      .find((button) => button.textContent?.trim() === 'Add property')
+      ?.click();
+    await tick();
+
+    expect(target.querySelector<HTMLInputElement>('[placeholder="Priority"]')).not.toBeNull();
+  });
+
+  it('shows Select options in the property editor', async () => {
+    const setPropertyRenameOptions = vi.fn();
+    const addPropertyRenameOption = vi.fn();
+    const target = renderPanel({
+      propertyRenameId: 'aisle',
+      propertyRenameName: 'Aisle',
+      propertyRenameOptions: [
+        { id: 'bread', label: 'Breads' },
+        { id: 'meat', label: 'Meats' }
+      ],
+      setPropertyRenameOptions,
+      addPropertyRenameOption
+    });
+    await tick();
+
+    const option = target.querySelector<HTMLInputElement>('[aria-label="Option Breads"]');
+
+    expect(option?.value).toBe('Breads');
+    expect(target.textContent).toContain('Removing an option clears it from any assigned items.');
+    option!.value = 'Bakery';
+    option!.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(setPropertyRenameOptions).toHaveBeenCalledWith([
+      { id: 'bread', label: 'Bakery' },
+      { id: 'meat', label: 'Meats' }
+    ]);
+
+    target.querySelector<HTMLButtonElement>('[aria-label="Remove Meats"]')?.click();
+    expect(setPropertyRenameOptions).toHaveBeenLastCalledWith([{ id: 'bread', label: 'Breads' }]);
+
+    Array.from(target.querySelectorAll<HTMLButtonElement>('button'))
+      .find((button) => button.textContent?.trim() === 'Add option')
+      ?.click();
+    expect(addPropertyRenameOption).toHaveBeenCalledOnce();
+  });
+
   it('enables dragging only through property handles', async () => {
     const target = renderPanel();
     await tick();
@@ -105,6 +191,46 @@ describe('ListSettingsPanel reordering', () => {
     expect(target.querySelector<HTMLElement>('[aria-label="Drag to reorder Priority"]')?.dataset.dragHandle).toBe(
       'true'
     );
+  });
+
+  it('saves AI categorisation only for a select property with a human instruction', async () => {
+    const onSetCategorisation = vi.fn();
+    const target = renderPanel({ onSetCategorisation });
+    const property = target.querySelector<HTMLSelectElement>('[aria-label="AI categorisation property"]');
+    const instruction = target.querySelector<HTMLInputElement>('[aria-label="AI categorisation instruction"]');
+    const form = instruction?.closest('form');
+
+    expect(property).not.toBeNull();
+    expect(instruction).not.toBeNull();
+    expect(form).not.toBeNull();
+
+    await tick();
+    expect(property!.value).toBe('priority');
+    instruction!.value = 'Place groceries into the correct section.';
+    instruction!.dispatchEvent(new Event('input', { bubbles: true }));
+    await tick();
+    form!.querySelector<HTMLButtonElement>('button[type="submit"]')!.click();
+
+    expect(onSetCategorisation).toHaveBeenCalledWith({
+      propertyId: 'priority',
+      instruction: 'Place groceries into the correct section.'
+    });
+  });
+
+  it('turns off the configured property after choosing a different property', async () => {
+    const onClearCategorisation = vi.fn();
+    const target = renderPanel({ onClearCategorisation });
+    const property = target.querySelector<HTMLSelectElement>('[aria-label="AI categorisation property"]');
+
+    await tick();
+    property!.value = 'aisle';
+    property!.dispatchEvent(new Event('change', { bubbles: true }));
+    await tick();
+    [...target.querySelectorAll('button')]
+      .find((button) => button.textContent?.trim() === 'Turn off AI categorisation')
+      ?.click();
+
+    expect(onClearCategorisation).toHaveBeenCalledWith('priority');
   });
 
   it('rolls an optimistic order back when persistence fails', async () => {

@@ -6,6 +6,7 @@ import {
   defaultListForBotHandler,
   parseListItemsForBotHandler
 } from './bot';
+import type { ListsBotMutationCtx } from './botModel';
 import {
   createListItemsForUser,
   readAddressableListsForUser,
@@ -24,6 +25,7 @@ function createCtx(seed: Record<string, Row[]> = {}) {
     ...structuredClone(seed)
   };
   let nextId = 1;
+  const scheduled: unknown[][] = [];
 
   const allRows = () => Object.values(tables).flat();
 
@@ -60,10 +62,16 @@ function createCtx(seed: Record<string, Row[]> = {}) {
           collect: async () => rows()
         };
       }
+    },
+    scheduler: {
+      runAfter: async (...args: unknown[]) => {
+        scheduled.push(args);
+        return 'scheduled';
+      }
     }
   };
 
-  return { ctx: ctx as unknown as ListsMutationCtx, tables };
+  return { ctx: ctx as unknown as ListsMutationCtx & ListsBotMutationCtx, scheduled, tables };
 }
 
 const sharedList: Row = {
@@ -263,7 +271,7 @@ describe('bot function service-token guard', () => {
   });
 
   it('allows reads, writes, and parsing with a valid token', async () => {
-    const { ctx } = createCtx({ lists: [sharedList] });
+    const { ctx, scheduled } = createCtx({ lists: [sharedList] });
 
     await expect(
       defaultListForBotHandler(ctx, { serviceToken: 'service-token', clerkUserId: 'user_b' })
@@ -280,6 +288,8 @@ describe('bot function service-token guard', () => {
       titles: ['milk']
     });
     expect(created.items.map((item) => item.title)).toEqual(['milk']);
+    expect(scheduled).toHaveLength(1);
+    expect(scheduled[0]?.[2]).toEqual({ listId: sharedList._id, itemIds: ['listItems_1'] });
 
     // No OPENAI_API_KEY/LIST_ITEMS_AI_MODEL set, so parsing uses the deterministic fallback.
     await expect(parseListItemsForBotHandler({ serviceToken: 'service-token', messageText: 'a\nb' })).resolves.toEqual({

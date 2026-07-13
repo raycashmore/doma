@@ -28,6 +28,7 @@ export type TestListPropertyRow = {
   type: 'text' | 'number' | 'date' | 'select' | 'checkbox';
   sortOrder: number;
   options?: Array<{ id: string; label: string }>;
+  categorisationInstruction?: string;
   createdAt: number;
   updatedAt: number;
 };

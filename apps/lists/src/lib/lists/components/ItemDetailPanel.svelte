@@ -128,13 +128,23 @@
           <p class="text-sm text-warm-text-secondary">{property.name}</p>
           {#if valueEditorPropertyId !== property._id}
             {#if currentValue}
-              <button
-                type="button"
-                class="truncate text-sm font-semibold text-warm-text-primary"
-                onclick={() => openValueEditor(property, currentValue)}
-              >
-                {describePropertyValue(property, currentValue)}
-              </button>
+              <div class="flex min-w-0 items-center gap-1">
+                <button
+                  type="button"
+                  class="truncate text-sm font-semibold text-warm-text-primary"
+                  onclick={() => openValueEditor(property, currentValue)}
+                >
+                  {describePropertyValue(property, currentValue)}
+                </button>
+                <button
+                  type="button"
+                  class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-warm-text-tertiary hover:text-warm-text-primary"
+                  aria-label={`Clear ${property.name}`}
+                  onclick={() => onClearValue(property._id)}
+                >
+                  <ListIcon name="close" size={14} />
+                </button>
+              </div>
             {:else}
               <button
                 type="button"

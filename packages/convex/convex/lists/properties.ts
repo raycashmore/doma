@@ -15,6 +15,7 @@ import { type ListItemPropertyValueInput, propertyValuePatch, reorderByIndex } f
 type ListPropertyType = 'text' | 'number' | 'date' | 'select' | 'checkbox';
 type ListPropertyOption = { id: string; label: string };
 type SetListItemPropertyValue = ListItemPropertyValueInput;
+const MAX_CATEGORISATION_INSTRUCTION_LENGTH = 500;
 
 type ListItemRow = Awaited<ReturnType<typeof requireEditableItem>>['item'];
 
@@ -53,6 +54,15 @@ function normalizeListPropertyOptions(type: ListPropertyType, options?: ListProp
   }
 
   return normalizedOptions;
+}
+
+function normalizeCategorisationInstruction(instruction: string) {
+  const trimmed = instruction.trim();
+  if (!trimmed) throw new Error('Categorisation instruction is required');
+  if (trimmed.length > MAX_CATEGORISATION_INSTRUCTION_LENGTH) {
+    throw new Error('Categorisation instruction is too long');
+  }
+  return trimmed;
 }
 
 async function serializeListItemPropertyValueMutation(ctx: ListsMutationCtx, item: ListItemRow, now: number) {
@@ -96,6 +106,45 @@ export async function renameListPropertyHandler(
   };
 
   await ctx.db.patch(property._id, patch);
+  return { ...property, ...patch };
+}
+
+/** Update a property's name and, when it is Select, its available options atomically. */
+export async function updateListPropertyHandler(
+  ctx: ListsMutationCtx,
+  {
+    propertyId,
+    name,
+    options
+  }: {
+    propertyId: Id<'listProperties'>;
+    name: string;
+    options?: ListPropertyOption[];
+  }
+) {
+  const { property } = await requireEditableProperty(ctx, propertyId);
+  const normalizedOptions = options === undefined ? undefined : normalizeListPropertyOptions(property.type, options);
+  const patch = {
+    name: normalizeListPropertyName(name),
+    ...(normalizedOptions === undefined ? {} : { options: normalizedOptions }),
+    updatedAt: Date.now()
+  };
+  await ctx.db.patch(property._id, patch);
+
+  if (normalizedOptions) {
+    const allowedOptionIds = new Set(normalizedOptions.map((option) => option.id));
+    const propertyValues = await ctx.db
+      .query('listItemPropertyValues')
+      .withIndex('by_property_id', (q) => q.eq('listPropertyId', property._id))
+      .collect();
+
+    for (const propertyValue of propertyValues) {
+      if (propertyValue.selectOptionId && !allowedOptionIds.has(propertyValue.selectOptionId)) {
+        await ctx.db.delete(propertyValue._id);
+      }
+    }
+  }
+
   return { ...property, ...patch };
 }
 
@@ -194,6 +243,40 @@ export async function replaceListPropertyOptionsHandler(
     }
   }
 
+  return { ...property, ...patch };
+}
+
+/** Configure the one select property this List may use for AI categorisation. */
+export async function setListPropertyCategorisationHandler(
+  ctx: ListsMutationCtx,
+  { propertyId, instruction }: { propertyId: Id<'listProperties'>; instruction: string }
+) {
+  const { list, property } = await requireEditableProperty(ctx, propertyId);
+  if (property.type !== 'select') throw new Error('Only select properties can be used for AI categorisation');
+  if (!property.options?.length) throw new Error('AI categorisation properties must have at least one option');
+
+  const categorisationInstruction = normalizeCategorisationInstruction(instruction);
+  const now = Date.now();
+  const properties = await readListProperties(ctx, list._id);
+
+  for (const candidate of properties) {
+    if (candidate._id === property._id || !candidate.categorisationInstruction) continue;
+    await ctx.db.patch(candidate._id, { categorisationInstruction: undefined, updatedAt: now });
+  }
+
+  const patch = { categorisationInstruction, updatedAt: now };
+  await ctx.db.patch(property._id, patch);
+  return { ...property, ...patch };
+}
+
+export async function clearListPropertyCategorisationHandler(
+  ctx: ListsMutationCtx,
+  { propertyId }: { propertyId: Id<'listProperties'> }
+) {
+  const { property } = await requireEditableProperty(ctx, propertyId);
+  if (property.type !== 'select') throw new Error('Only select properties can be used for AI categorisation');
+  const patch = { categorisationInstruction: undefined, updatedAt: Date.now() };
+  await ctx.db.patch(property._id, patch);
   return { ...property, ...patch };
 }
 

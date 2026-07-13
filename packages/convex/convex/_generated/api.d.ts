@@ -37,6 +37,7 @@ import type * as insights_qa from "../insights/qa.js";
 import type * as lists_auth from "../lists/auth.js";
 import type * as lists_bot from "../lists/bot.js";
 import type * as lists_botModel from "../lists/botModel.js";
+import type * as lists_categorisation from "../lists/categorisation.js";
 import type * as lists_items from "../lists/items.js";
 import type * as lists_model from "../lists/model.js";
 import type * as lists_mutations from "../lists/mutations.js";
@@ -98,6 +99,7 @@ declare const fullApi: ApiFromModules<{
   "lists/auth": typeof lists_auth;
   "lists/bot": typeof lists_bot;
   "lists/botModel": typeof lists_botModel;
+  "lists/categorisation": typeof lists_categorisation;
   "lists/items": typeof lists_items;
   "lists/model": typeof lists_model;
   "lists/mutations": typeof lists_mutations;

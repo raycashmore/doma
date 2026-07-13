@@ -521,7 +521,8 @@ briefings:
 | `MORNING_BRIEFING_LATITUDE`           | Convex                     | Optional latitude for weather context in AI-generated morning briefings; configure with `MORNING_BRIEFING_LONGITUDE`                                  |
 | `MORNING_BRIEFING_LONGITUDE`          | Convex                     | Optional longitude for weather context in AI-generated morning briefings; configure with `MORNING_BRIEFING_LATITUDE`                                  |
 | `LIST_ITEMS_AI_MODEL`                 | Convex                     | Optional; with `OPENAI_API_KEY`, the model used to parse free-text Telegram captures into list items; otherwise a deterministic newline split is used |
-| `OPENAI_API_KEY`                      | Convex                     | Required with `MORNING_BRIEFING_AI_MODEL` (or `LIST_ITEMS_AI_MODEL`) for AI generation                                                                |
+| `LIST_CATEGORISATION_AI_MODEL`        | Convex                     | Optional; with `OPENAI_API_KEY`, the model used to assign list items to the configured select-property options; otherwise items remain Unassigned     |
+| `OPENAI_API_KEY`                      | Convex                     | Required with `MORNING_BRIEFING_AI_MODEL`, `LIST_ITEMS_AI_MODEL`, or `LIST_CATEGORISATION_AI_MODEL` for AI generation                                 |
 
 Morning briefing operations:
 
