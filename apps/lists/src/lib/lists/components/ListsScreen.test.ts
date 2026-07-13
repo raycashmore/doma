@@ -25,7 +25,7 @@ if (!Element.prototype.animate) {
 import type { VisibleList, VisibleListItemsResult } from '$lib/lists/presenter';
 import { previewItemsByListPublicId, previewVisibleLists } from '$lib/lists/presenter';
 
-type QueryValue = VisibleList[] | VisibleListItemsResult | null | undefined;
+type QueryValue = VisibleList[] | VisibleListItemsResult | string | null | undefined;
 
 type QueryResult = {
   readonly data: QueryValue;
@@ -35,10 +35,17 @@ type QueryResult = {
 };
 
 const queryResults: QueryResult[] = [];
-const { autoCategoriseAction } = vi.hoisted(() => ({ autoCategoriseAction: vi.fn() }));
+const { autoCategoriseAction, mutationFunctions } = vi.hoisted(() => ({
+  autoCategoriseAction: vi.fn(),
+  mutationFunctions: [] as Array<ReturnType<typeof vi.fn>>
+}));
 
 vi.mock('convex-svelte', () => ({
-  useMutation: () => vi.fn(async () => undefined),
+  useMutation: () => {
+    const mutation = vi.fn(async () => undefined);
+    mutationFunctions.push(mutation);
+    return mutation;
+  },
   useAction: () => autoCategoriseAction,
   useQuery: () => {
     let data: QueryValue;
@@ -87,6 +94,7 @@ let mounted: ReturnType<typeof mount> | null = null;
 
 beforeEach(() => {
   queryResults.length = 0;
+  mutationFunctions.length = 0;
   autoCategoriseAction.mockReset();
   autoCategoriseAction.mockResolvedValue({ status: 'applied', assignmentCount: 2 });
 });
@@ -108,6 +116,7 @@ async function renderScreen(selectedPublicId: string | null = 'weekly-shop') {
 async function provideLiveData(publicId = 'weekly-shop') {
   queryResults[0]?.set({ data: previewVisibleLists, isLoading: false });
   queryResults[1]?.set({ data: previewItemsByListPublicId[publicId], isLoading: false });
+  queryResults[3]?.set({ data: null, isLoading: false });
   await tick();
 }
 
@@ -278,6 +287,60 @@ describe('ListsScreen mobile switcher', () => {
 });
 
 describe('ListsScreen active-item grouping', () => {
+  it('queues rapid grouping changes so the last selection is saved last', async () => {
+    const target = await renderScreen();
+    await provideLiveData();
+    const groupingMutation = mutationFunctions[1];
+    if (!groupingMutation) throw new Error('Expected active grouping mutation');
+
+    let resolveFirstSave: (() => void) | undefined;
+    groupingMutation.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveFirstSave = resolve;
+        })
+    );
+
+    const grouping = target.querySelector<HTMLSelectElement>('select[aria-label="Group active items by"]');
+    if (!grouping) throw new Error('Expected grouping control');
+    grouping.value = 'preview-property-priority';
+    grouping.dispatchEvent(new Event('change', { bubbles: true }));
+    await Promise.resolve();
+
+    grouping.value = 'preview-property-aisle';
+    grouping.dispatchEvent(new Event('change', { bubbles: true }));
+    await Promise.resolve();
+
+    expect(groupingMutation).toHaveBeenCalledTimes(1);
+    expect(groupingMutation).toHaveBeenLastCalledWith({
+      listPublicId: 'weekly-shop',
+      propertyId: 'preview-property-priority'
+    });
+
+    resolveFirstSave?.();
+    await new Promise((resolve) => setTimeout(resolve));
+    await tick();
+
+    expect(groupingMutation).toHaveBeenCalledTimes(2);
+    expect(groupingMutation).toHaveBeenLastCalledWith({
+      listPublicId: 'weekly-shop',
+      propertyId: 'preview-property-aisle'
+    });
+  });
+
+  it('restores the current user’s saved grouping when the list loads', async () => {
+    const target = await renderScreen();
+    queryResults[0]?.set({ data: previewVisibleLists, isLoading: false });
+    queryResults[1]?.set({ data: previewItemsByListPublicId['weekly-shop'], isLoading: false });
+    queryResults[3]?.set({ data: 'preview-property-aisle', isLoading: false });
+    await tick();
+
+    expect(
+      target.querySelector<HTMLSelectElement>('select[aria-label="Group active items by"]')?.selectedOptions[0]
+        ?.textContent
+    ).toBe('Aisle');
+  });
+
   it('shows a stable loading state until auto categorisation completes', async () => {
     let resolveCategorisation: ((value: { status: 'applied'; assignmentCount: number }) => void) | undefined;
     autoCategoriseAction.mockImplementationOnce(

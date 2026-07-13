@@ -247,6 +247,15 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number()
   }).index('by_user', ['userId']),
+  // Per-household-user view preference. This is deliberately separate from
+  // Lists so people can group the same shared list differently.
+  listGroupingPreferences: defineTable({
+    userId: v.string(),
+    listId: v.id('lists'),
+    propertyId: v.id('listProperties'),
+    createdAt: v.number(),
+    updatedAt: v.number()
+  }).index('by_user_and_list', ['userId', 'listId']),
   listItemPropertyValues: defineTable({
     listId: v.id('lists'),
     listItemId: v.id('listItems'),

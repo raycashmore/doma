@@ -64,11 +64,14 @@ export type ListStore = {
   readonly selectedLoading: boolean;
   readonly selectedError: Error | null;
   readonly defaultList: DefaultList | null;
+  readonly activeGroupingPropertyId: string | null;
+  readonly activeGroupingLoading: boolean;
 
   createList(input: { name: string; visibility: 'personal' | 'shared' }): Promise<ListRouteTarget>;
   renameList(input: { publicId: string; name: string }): Promise<ListRouteTarget>;
   deleteList(input: { publicId: string }): Promise<void>;
   setDefaultList(input: { publicId: string }): Promise<void>;
+  setActiveGroupingProperty(input: { listPublicId: string; propertyId: string | null }): Promise<void>;
 
   createItem(input: { listPublicId: string; title: string }): Promise<void>;
   createItems(input: { listPublicId: string; titles: string[] }): Promise<void>;
@@ -122,6 +125,7 @@ export class InMemoryListStore implements ListStore {
   #lists = $state<VisibleList[]>([]);
   #itemsByPublicId = $state<Record<string, VisibleListItemsResult>>({});
   #defaultList = $state<DefaultList | null>(null);
+  #activeGroupingByListPublicId = $state<Record<string, string | null>>({});
 
   constructor(seed: InMemorySeed) {
     this.#getSelectedPublicId = seed.getSelectedPublicId;
@@ -151,6 +155,15 @@ export class InMemoryListStore implements ListStore {
 
   get defaultList(): DefaultList | null {
     return this.#defaultList;
+  }
+
+  get activeGroupingPropertyId(): string | null {
+    const listPublicId = this.selected?.list.publicId;
+    return listPublicId ? (this.#activeGroupingByListPublicId[listPublicId] ?? null) : null;
+  }
+
+  get activeGroupingLoading(): boolean {
+    return false;
   }
 
   get selected(): VisibleListItemsResult | null {
@@ -206,6 +219,24 @@ export class InMemoryListStore implements ListStore {
     const list = this.#lists.find((l) => l.publicId === publicId);
     if (!list) throw new Error('List unavailable');
     this.#defaultList = { publicId: list.publicId, name: list.name };
+  }
+
+  async setActiveGroupingProperty({
+    listPublicId,
+    propertyId
+  }: {
+    listPublicId: string;
+    propertyId: string | null;
+  }): Promise<void> {
+    const list = this.#itemsByPublicId[listPublicId];
+    if (!list) throw new Error('List unavailable');
+    if (propertyId && !list.properties.some((property) => property._id === propertyId)) {
+      throw new Error('List property unavailable');
+    }
+    this.#activeGroupingByListPublicId = {
+      ...this.#activeGroupingByListPublicId,
+      [listPublicId]: propertyId
+    };
   }
 
   async createList({
@@ -552,8 +583,10 @@ export class ConvexListStore implements ListStore {
   #lists;
   #items;
   #defaultListQuery;
+  #activeGroupingPreferenceQuery;
   #pendingCompletions = $state<Record<string, PendingCompletion>>({});
   #setDefaultListMutation = useMutation(api.lists.bot.setDefaultList);
+  #setActiveGroupingPropertyMutation = useMutation(api.lists.preferences.setActiveGroupingProperty);
   #createList = useMutation(api.lists.mutations.createList);
   #renameList = useMutation(api.lists.mutations.renameList);
   #deleteList = useMutation(api.lists.mutations.deleteList);
@@ -586,6 +619,11 @@ export class ConvexListStore implements ListStore {
       return publicId ? { publicId } : 'skip';
     });
     this.#defaultListQuery = useQuery(api.lists.queries.getDefaultList, () => (seed.enabled ? {} : 'skip'));
+    this.#activeGroupingPreferenceQuery = useQuery(api.lists.preferences.getActiveGroupingProperty, () => {
+      if (!seed.enabled) return 'skip';
+      const listPublicId = seed.getSelectedPublicId();
+      return listPublicId ? { listPublicId } : 'skip';
+    });
   }
 
   /** True once either live query has produced data or an error. */
@@ -619,6 +657,12 @@ export class ConvexListStore implements ListStore {
   get defaultList(): DefaultList | null {
     return this.#defaultListQuery.data ?? null;
   }
+  get activeGroupingPropertyId(): string | null {
+    return this.#activeGroupingPreferenceQuery.data ?? null;
+  }
+  get activeGroupingLoading(): boolean {
+    return this.#activeGroupingPreferenceQuery.isLoading;
+  }
 
   async createList(input: { name: string; visibility: 'personal' | 'shared' }): Promise<ListRouteTarget> {
     const created = await this.#createList(input);
@@ -633,6 +677,12 @@ export class ConvexListStore implements ListStore {
   }
   async setDefaultList(input: { publicId: string }): Promise<void> {
     await this.#setDefaultListMutation(input);
+  }
+  async setActiveGroupingProperty(input: { listPublicId: string; propertyId: string | null }): Promise<void> {
+    await this.#setActiveGroupingPropertyMutation({
+      listPublicId: input.listPublicId,
+      propertyId: input.propertyId as never
+    });
   }
   async createItem(input: { listPublicId: string; title: string }): Promise<void> {
     await this.#createListItem(input);
@@ -846,6 +896,12 @@ export class ListStoreFacade implements ListStore {
   get defaultList(): DefaultList | null {
     return this.#active.defaultList;
   }
+  get activeGroupingPropertyId(): string | null {
+    return this.#active.activeGroupingPropertyId;
+  }
+  get activeGroupingLoading(): boolean {
+    return this.#active.activeGroupingLoading;
+  }
 
   createList(input: { name: string; visibility: 'personal' | 'shared' }): Promise<ListRouteTarget> {
     return this.#active.createList(input);
@@ -858,6 +914,9 @@ export class ListStoreFacade implements ListStore {
   }
   setDefaultList(input: { publicId: string }): Promise<void> {
     return this.#active.setDefaultList(input);
+  }
+  setActiveGroupingProperty(input: { listPublicId: string; propertyId: string | null }): Promise<void> {
+    return this.#active.setActiveGroupingProperty(input);
   }
   createItem(input: { listPublicId: string; title: string }): Promise<void> {
     return this.#active.createItem(input);
