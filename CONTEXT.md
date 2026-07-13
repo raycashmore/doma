@@ -73,12 +73,8 @@ A checkable entry inside a **list**. A **list item** has its own completion stat
 _Avoid_: Task, shopping row
 
 **Recipe**:
-A reference-style **list item** in a **recipe list**, named for the dish and described through that list's properties. A recipe's ingredient lines are the authoritative source for preparing a shopping-list draft; its instructions and serving information help decide whether it suits a meal.
-_Avoid_: Generated meal, pantry item, shopping item
-
-**Recipe list**:
-A **list** whose active **list items** are recipes. It stays an ordinary list so a household can edit recipe names and properties alongside other Doma lists.
-_Avoid_: Cookbook app, special list template
+A household cookbook entry for an approved dish. A recipe is useful on its own and is the authoritative source for meal-planning ingredients, instructions, servings, and suitability.
+_Avoid_: List item, generated meal, pantry item, shopping item
 
 **Weekly meal plan**:
 A Monday-to-Friday household plan that assigns approved recipes to dinners and school lunches. It accounts for recipe suitability and schedule timing, including intentional leftovers, but does not include weekend meals.
