@@ -6961,8 +6961,8 @@
     {
       "type": "frame",
       "id": "j0cc5U",
-      "x": -2505,
-      "y": -858,
+      "x": -340,
+      "y": -5072,
       "name": "Design System",
       "width": 1200,
       "height": 3035,
@@ -19348,8 +19348,8 @@
     {
       "type": "frame",
       "id": "STO07",
-      "x": -4105,
-      "y": 2549,
+      "x": 1236,
+      "y": -5072,
       "name": "Icon Exploration",
       "clip": true,
       "width": 2800,
@@ -20789,8 +20789,8 @@
     {
       "type": "frame",
       "id": "uPcIm",
-      "x": -1625,
-      "y": 4204,
+      "x": 4217,
+      "y": -5072,
       "name": "Hearth Icon",
       "width": 320,
       "height": 320,
@@ -23415,9 +23415,8 @@
       "clip": true,
       "width": 1440,
       "height": 1024,
-      "fill": "$warm-bg",
+      "fill": "$bg-dark",
       "layout": "vertical",
-      "padding": 32,
       "children": [
         {
           "id": "G8ouw8",
@@ -23426,6 +23425,7 @@
           "name": "Home Shell",
           "width": "fill_container",
           "height": "fill_container",
+          "cornerRadius": 0,
           "descendants": {
             "w5oJrt/rSg9k": {
               "content": "Home"
@@ -24080,21 +24080,20 @@
       "clip": true,
       "width": 1440,
       "height": 1024,
-      "fill": "$warm-bg",
+      "fill": "$bg-dark",
       "layout": "none",
       "children": [
         {
           "type": "frame",
           "id": "ZGAqZ",
           "layoutPosition": "absolute",
-          "x": 32,
-          "y": 32,
+          "x": 0,
+          "y": 0,
           "name": "Pinned Noticeboard Shell",
           "clip": true,
-          "width": 1376,
-          "height": 960,
+          "width": 1440,
+          "height": 1024,
           "fill": "$bg-dark",
-          "cornerRadius": 32,
           "layout": "none",
           "children": [
             {
@@ -24104,7 +24103,7 @@
               "y": 0,
               "name": "Pinned Sidebar",
               "width": 96,
-              "height": 960,
+              "height": 1024,
               "fill": "$bg-dark",
               "layout": "vertical",
               "padding": [
@@ -24215,8 +24214,8 @@
               "x": 96,
               "y": 0,
               "name": "Pinned Main",
-              "width": 1280,
-              "height": 960,
+              "width": 1344,
+              "height": 1024,
               "layout": "none",
               "children": [
                 {
@@ -25090,21 +25089,20 @@
       "clip": true,
       "width": 1440,
       "height": 1024,
-      "fill": "$warm-bg",
+      "fill": "$bg-dark",
       "layout": "none",
       "children": [
         {
           "type": "frame",
           "id": "N5sse",
           "layoutPosition": "absolute",
-          "x": 32,
-          "y": 32,
+          "x": 0,
+          "y": 0,
           "name": "Traditional Shell",
           "clip": true,
-          "width": 1376,
-          "height": 960,
+          "width": 1440,
+          "height": 1024,
           "fill": "$bg-dark",
-          "cornerRadius": 32,
           "layout": "none",
           "children": [
             {
@@ -25115,7 +25113,7 @@
               "y": 0,
               "name": "Traditional Sidebar",
               "width": 96,
-              "height": 960,
+              "height": 1024,
               "fill": "$bg-dark",
               "layout": "vertical",
               "padding": [
@@ -25195,8 +25193,8 @@
               "x": 96,
               "y": 0,
               "name": "Traditional Main",
-              "width": 1280,
-              "height": 960,
+              "width": 1344,
+              "height": 1024,
               "layout": "none",
               "children": [
                 {
@@ -25938,14 +25936,13 @@
     {
       "type": "frame",
       "id": "e85aa",
-      "x": 7992,
-      "y": -858,
+      "x": -340,
+      "y": 5164,
       "name": "Meals · Week · Desktop",
       "width": 1440,
       "height": 1024,
-      "fill": "$warm-bg",
+      "fill": "$bg-dark",
       "layout": "vertical",
-      "padding": 32,
       "children": [
         {
           "id": "fAN34",
@@ -25954,6 +25951,7 @@
           "name": "Meals Week Shell",
           "width": "fill_container",
           "height": "fill_container",
+          "cornerRadius": 0,
           "descendants": {
             "d0WsGR/ESpfC": {
               "fill": "$warm-accent"
@@ -25986,11 +25984,20 @@
             "w5oJrt/AkVxm": {
               "content": "Mon, 13 Jul"
             },
+            "w5oJrt/j2Npd7": {
+              "enabled": false
+            },
             "w5oJrt/j2Npd7/x7P29": {
               "icon": "search"
             },
+            "w5oJrt/uZeHo": {
+              "enabled": false
+            },
             "w5oJrt/uZeHo/x7P29": {
               "icon": "plus"
+            },
+            "w5oJrt/HzfsS": {
+              "enabled": false
             },
             "w5oJrt/HzfsS/x7P29": {
               "icon": "ellipsis"
@@ -26139,7 +26146,7 @@
                               "id": "FcYUS",
                               "name": "Suggest Label",
                               "fill": "$warm-bg",
-                              "content": "Suggest next week",
+                              "content": "Suggest meals",
                               "fontFamily": "$warm-font-body",
                               "fontSize": 13,
                               "fontWeight": "700"
@@ -26178,7 +26185,7 @@
                               "id": "v0vd6i",
                               "name": "Week Subtitle",
                               "fill": "$warm-text-secondary",
-                              "content": "Mon 20 Jul – Fri 24 Jul · choose meals, then edit what you need",
+                              "content": "Mon 20 Jul – Fri 24 Jul",
                               "fontFamily": "$warm-font-body",
                               "fontSize": 13,
                               "fontWeight": "normal"
@@ -26592,7 +26599,7 @@
                                   "fill": "$warm-text-secondary",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
-                                  "content": "Fresh and easy to pack",
+                                  "content": "Wraps, hummus, cucumber",
                                   "lineHeight": 1.3,
                                   "fontFamily": "$warm-font-body",
                                   "fontSize": 11,
@@ -26685,7 +26692,7 @@
                                   "fill": "$warm-text-secondary",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
-                                  "content": "Good for a busy day",
+                                  "content": "Pasta, tomatoes, cheese",
                                   "lineHeight": 1.3,
                                   "fontFamily": "$warm-font-body",
                                   "fontSize": 11,
@@ -26778,7 +26785,7 @@
                                   "fill": "$warm-text-secondary",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
-                                  "content": "Build your own bowl",
+                                  "content": "Rice, edamame, carrots",
                                   "lineHeight": 1.3,
                                   "fontFamily": "$warm-font-body",
                                   "fontSize": 11,
@@ -26871,7 +26878,7 @@
                                   "fill": "$warm-text-secondary",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
-                                  "content": "Simple and familiar",
+                                  "content": "Tortillas, beans, cheese",
                                   "lineHeight": 1.3,
                                   "fontFamily": "$warm-font-body",
                                   "fontSize": 11,
@@ -26964,7 +26971,7 @@
                                   "fill": "$warm-text-secondary",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
-                                  "content": "Good for a busy day",
+                                  "content": "Pasta, tomatoes, cheese",
                                   "lineHeight": 1.3,
                                   "fontFamily": "$warm-font-body",
                                   "fontSize": 11,
@@ -27125,7 +27132,7 @@
                                   "fill": "$warm-text-secondary",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
-                                  "content": "Roast veg, minimal washing",
+                                  "content": "Chicken, potatoes, carrots",
                                   "lineHeight": 1.3,
                                   "fontFamily": "$warm-font-body",
                                   "fontSize": 11,
@@ -27218,7 +27225,7 @@
                                   "fill": "$warm-text-secondary",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
-                                  "content": "Warm and satisfying",
+                                  "content": "Soup base, bread, butter",
                                   "lineHeight": 1.3,
                                   "fontFamily": "$warm-font-body",
                                   "fontSize": 11,
@@ -27311,7 +27318,7 @@
                                   "fill": "$warm-text-secondary",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
-                                  "content": "Simple and filling",
+                                  "content": "Tortillas, beans, cheese",
                                   "lineHeight": 1.3,
                                   "fontFamily": "$warm-font-body",
                                   "fontSize": 11,
@@ -27404,7 +27411,7 @@
                                   "fill": "$warm-text-secondary",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
-                                  "content": "A reliable favourite",
+                                  "content": "Pasta, passata, mozzarella",
                                   "lineHeight": 1.3,
                                   "fontFamily": "$warm-font-body",
                                   "fontSize": 11,
@@ -27545,86 +27552,6 @@
                       ]
                     },
                     {
-                      "type": "text",
-                      "id": "NM6zJ",
-                      "name": "Cart Note",
-                      "fill": "$warm-text-secondary",
-                      "textGrowth": "fixed-width",
-                      "width": "fill_container",
-                      "content": "Updates as you change the week. Edit before sending.",
-                      "lineHeight": 1.35,
-                      "fontFamily": "$warm-font-body",
-                      "fontSize": 12,
-                      "fontWeight": "normal"
-                    },
-                    {
-                      "type": "frame",
-                      "id": "OH4CP",
-                      "name": "On Hand Toggle",
-                      "width": "fill_container",
-                      "stroke": "$warm-border",
-                      "strokeWidth": {
-                        "bottom": 1
-                      },
-                      "padding": [
-                        10,
-                        0
-                      ],
-                      "justifyContent": "space_between",
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "frame",
-                          "id": "fIkod",
-                          "name": "On Hand Label Group",
-                          "gap": 7,
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "icon",
-                              "id": "KXm9X",
-                              "name": "On Hand Icon",
-                              "width": 15,
-                              "height": 15,
-                              "icon": "package-check",
-                              "library": "lucide",
-                              "fill": "$warm-text-secondary"
-                            },
-                            {
-                              "type": "text",
-                              "id": "bDoVG",
-                              "name": "On Hand Label",
-                              "fill": "$warm-text",
-                              "content": "Hide on-hand items",
-                              "fontFamily": "$warm-font-body",
-                              "fontSize": 12,
-                              "fontWeight": "600"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "kyJ2y",
-                          "name": "Toggle Off",
-                          "width": 34,
-                          "height": 20,
-                          "fill": "$warm-border",
-                          "cornerRadius": 999,
-                          "padding": 3,
-                          "children": [
-                            {
-                              "type": "ellipse",
-                              "id": "payfq",
-                              "name": "Toggle Knob",
-                              "fill": "$warm-bg-card",
-                              "width": 14,
-                              "height": 14
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
                       "type": "frame",
                       "id": "NrvPC",
                       "name": "Produce Cart Group",
@@ -27636,7 +27563,7 @@
                       "layout": "vertical",
                       "gap": 7,
                       "padding": [
-                        0,
+                        16,
                         0,
                         10,
                         0
@@ -28428,14 +28355,13 @@
     {
       "type": "frame",
       "id": "maONB",
-      "x": 9528,
-      "y": -858,
+      "x": 1196,
+      "y": 5164,
       "name": "Meals · Collection · Desktop",
       "width": 1440,
       "height": 1024,
-      "fill": "$warm-bg",
+      "fill": "$bg-dark",
       "layout": "vertical",
-      "padding": 32,
       "children": [
         {
           "id": "s7mIvw",
@@ -28444,6 +28370,7 @@
           "name": "Meals Collection Shell",
           "width": "fill_container",
           "height": "fill_container",
+          "cornerRadius": 0,
           "descendants": {
             "d0WsGR/ESpfC": {
               "fill": "$warm-accent"
@@ -28473,14 +28400,26 @@
             "w5oJrt/rSg9k": {
               "content": "Meals"
             },
+            "w5oJrt/R4OXjj": {
+              "width": 272
+            },
             "w5oJrt/AkVxm": {
               "content": "Mon, 13 Jul"
+            },
+            "w5oJrt/j2Npd7": {
+              "enabled": false
             },
             "w5oJrt/j2Npd7/x7P29": {
               "icon": "search"
             },
+            "w5oJrt/uZeHo": {
+              "enabled": false
+            },
             "w5oJrt/uZeHo/x7P29": {
               "icon": "plus"
+            },
+            "w5oJrt/HzfsS": {
+              "enabled": false
             },
             "w5oJrt/HzfsS/x7P29": {
               "icon": "ellipsis"
@@ -28650,19 +28589,19 @@
                           "id": "UKxpj",
                           "name": "Collection Title",
                           "fill": "$warm-text",
-                          "content": "Your regular repertoire",
+                          "content": "Repertoire",
                           "fontFamily": "$warm-font-display",
                           "fontSize": 30,
                           "fontWeight": "700"
                         },
                         {
                           "type": "text",
-                          "id": "UV6Wl",
-                          "name": "Collection Subtitle",
+                          "id": "rmnuT",
+                          "name": "Collection Count",
                           "fill": "$warm-text-secondary",
-                          "content": "The dependable meals your household plans from",
+                          "content": "18 recipes saved · 9 visible",
                           "fontFamily": "$warm-font-body",
-                          "fontSize": 13,
+                          "fontSize": 12,
                           "fontWeight": "normal"
                         }
                       ]
@@ -28850,7 +28789,8 @@
                   "name": "Meal Collection Content",
                   "width": "fill_container",
                   "height": "fill_container",
-                  "gap": 18,
+                  "layout": "vertical",
+                  "gap": 10,
                   "children": [
                     {
                       "type": "frame",
@@ -30152,382 +30092,710 @@
                               ]
                             }
                           ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "rPDHt",
+                          "name": "Meal Grid Row Three",
+                          "width": "fill_container",
+                          "height": "fill_container",
+                          "gap": 14,
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "Gd2ll",
+                              "name": "Salmon rice tray Meal Card",
+                              "width": "fill_container",
+                              "height": "fill_container",
+                              "fill": "$warm-bg",
+                              "cornerRadius": 18,
+                              "stroke": "$warm-border",
+                              "strokeWidth": 1,
+                              "strokeAlignment": "inner",
+                              "layout": "vertical",
+                              "gap": 10,
+                              "padding": 16,
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "q50EFe",
+                                  "name": "Salmon rice tray Card Header",
+                                  "width": "fill_container",
+                                  "justifyContent": "space_between",
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "IwYQN",
+                                      "name": "Salmon rice tray Icon Badge",
+                                      "width": 38,
+                                      "height": 38,
+                                      "fill": "$warm-card-sky",
+                                      "cornerRadius": 12,
+                                      "justifyContent": "center",
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "icon",
+                                          "id": "vCLQ3",
+                                          "name": "Salmon rice tray Icon",
+                                          "width": 18,
+                                          "height": 18,
+                                          "icon": "fish",
+                                          "library": "lucide",
+                                          "fill": "$warm-text"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "icon",
+                                      "id": "sO4An",
+                                      "name": "Salmon rice tray Menu",
+                                      "width": 16,
+                                      "height": 16,
+                                      "icon": "ellipsis",
+                                      "library": "lucide",
+                                      "fill": "$warm-text-secondary"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "L7MSr",
+                                  "name": "Salmon rice tray Title",
+                                  "fill": "$warm-text",
+                                  "content": "Salmon rice tray",
+                                  "fontFamily": "$warm-font-display",
+                                  "fontSize": 20,
+                                  "fontWeight": "700"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "ZCNcv",
+                                  "name": "Salmon rice tray Description",
+                                  "fill": "$warm-text-secondary",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "Salmon, rice, cucumber and nori",
+                                  "lineHeight": 1.35,
+                                  "fontFamily": "$warm-font-body",
+                                  "fontSize": 11,
+                                  "fontWeight": "normal"
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "MgFJr",
+                                  "name": "Salmon rice tray Card Space",
+                                  "width": "fill_container",
+                                  "height": "fill_container"
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "xid3R",
+                                  "name": "Salmon rice tray Meta",
+                                  "width": "fill_container",
+                                  "gap": 12,
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "l2BCB",
+                                      "name": "Salmon rice tray 30 min",
+                                      "gap": 5,
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "icon",
+                                          "id": "J0uq6Q",
+                                          "name": "30 min Icon",
+                                          "width": 13,
+                                          "height": 13,
+                                          "icon": "timer",
+                                          "library": "lucide",
+                                          "fill": "$warm-text-secondary"
+                                        },
+                                        {
+                                          "type": "text",
+                                          "id": "feUFv",
+                                          "name": "30 min Text",
+                                          "fill": "$warm-text-secondary",
+                                          "content": "30 min",
+                                          "fontFamily": "$warm-font-body",
+                                          "fontSize": 10,
+                                          "fontWeight": "normal"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "OG1CC",
+                                      "name": "Salmon rice tray Serves 4",
+                                      "gap": 5,
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "icon",
+                                          "id": "Lyu3g",
+                                          "name": "Serves 4 Icon",
+                                          "width": 13,
+                                          "height": 13,
+                                          "icon": "users",
+                                          "library": "lucide",
+                                          "fill": "$warm-text-secondary"
+                                        },
+                                        {
+                                          "type": "text",
+                                          "id": "W962d",
+                                          "name": "Serves 4 Text",
+                                          "fill": "$warm-text-secondary",
+                                          "content": "Serves 4",
+                                          "fontFamily": "$warm-font-body",
+                                          "fontSize": 10,
+                                          "fontWeight": "normal"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "BALTU",
+                                  "name": "Salmon rice tray Suitability",
+                                  "width": "fill_container",
+                                  "gap": 6,
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "E1fBS",
+                                      "name": "Dinner Tag",
+                                      "fill": "$warm-card-sky",
+                                      "cornerRadius": 999,
+                                      "padding": [
+                                        5,
+                                        8
+                                      ],
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "q6YuXW",
+                                          "name": "Dinner Label",
+                                          "fill": "$warm-text",
+                                          "content": "Dinner",
+                                          "fontFamily": "$warm-font-body",
+                                          "fontSize": 9,
+                                          "fontWeight": "600"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "p19AS",
+                                      "name": "30 min or less Tag",
+                                      "fill": "$warm-card-sky",
+                                      "cornerRadius": 999,
+                                      "padding": [
+                                        5,
+                                        8
+                                      ],
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "vxgRv",
+                                          "name": "30 min or less Label",
+                                          "fill": "$warm-text",
+                                          "content": "30 min or less",
+                                          "fontFamily": "$warm-font-body",
+                                          "fontSize": 9,
+                                          "fontWeight": "600"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "ugkvR",
+                              "name": "Lentil bolognese Meal Card",
+                              "width": "fill_container",
+                              "height": "fill_container",
+                              "fill": "$warm-bg",
+                              "cornerRadius": 18,
+                              "stroke": "$warm-border",
+                              "strokeWidth": 1,
+                              "strokeAlignment": "inner",
+                              "layout": "vertical",
+                              "gap": 10,
+                              "padding": 16,
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "s0bLyW",
+                                  "name": "Lentil bolognese Card Header",
+                                  "width": "fill_container",
+                                  "justifyContent": "space_between",
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "RWxwL",
+                                      "name": "Lentil bolognese Icon Badge",
+                                      "width": 38,
+                                      "height": 38,
+                                      "fill": "$warm-card-peach",
+                                      "cornerRadius": 12,
+                                      "justifyContent": "center",
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "icon",
+                                          "id": "PqPlz",
+                                          "name": "Lentil bolognese Icon",
+                                          "width": 18,
+                                          "height": 18,
+                                          "icon": "wheat",
+                                          "library": "lucide",
+                                          "fill": "$warm-text"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "icon",
+                                      "id": "Y1jbZ",
+                                      "name": "Lentil bolognese Menu",
+                                      "width": 16,
+                                      "height": 16,
+                                      "icon": "ellipsis",
+                                      "library": "lucide",
+                                      "fill": "$warm-text-secondary"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "LLM31",
+                                  "name": "Lentil bolognese Title",
+                                  "fill": "$warm-text",
+                                  "content": "Lentil bolognese",
+                                  "fontFamily": "$warm-font-display",
+                                  "fontSize": 20,
+                                  "fontWeight": "700"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "Q3zrv",
+                                  "name": "Lentil bolognese Description",
+                                  "fill": "$warm-text-secondary",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "Lentils, passata and spaghetti",
+                                  "lineHeight": 1.35,
+                                  "fontFamily": "$warm-font-body",
+                                  "fontSize": 11,
+                                  "fontWeight": "normal"
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "Euc6g",
+                                  "name": "Lentil bolognese Card Space",
+                                  "width": "fill_container",
+                                  "height": "fill_container"
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "HSgFW",
+                                  "name": "Lentil bolognese Meta",
+                                  "width": "fill_container",
+                                  "gap": 12,
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "Ik2jx",
+                                      "name": "Lentil bolognese 35 min",
+                                      "gap": 5,
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "icon",
+                                          "id": "LIWOK",
+                                          "name": "35 min Icon",
+                                          "width": 13,
+                                          "height": 13,
+                                          "icon": "timer",
+                                          "library": "lucide",
+                                          "fill": "$warm-text-secondary"
+                                        },
+                                        {
+                                          "type": "text",
+                                          "id": "UNjxS",
+                                          "name": "35 min Text",
+                                          "fill": "$warm-text-secondary",
+                                          "content": "35 min",
+                                          "fontFamily": "$warm-font-body",
+                                          "fontSize": 10,
+                                          "fontWeight": "normal"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "CoUMT",
+                                      "name": "Lentil bolognese Serves 6",
+                                      "gap": 5,
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "icon",
+                                          "id": "Vjkmu",
+                                          "name": "Serves 6 Icon",
+                                          "width": 13,
+                                          "height": 13,
+                                          "icon": "users",
+                                          "library": "lucide",
+                                          "fill": "$warm-text-secondary"
+                                        },
+                                        {
+                                          "type": "text",
+                                          "id": "DtF3S",
+                                          "name": "Serves 6 Text",
+                                          "fill": "$warm-text-secondary",
+                                          "content": "Serves 6",
+                                          "fontFamily": "$warm-font-body",
+                                          "fontSize": 10,
+                                          "fontWeight": "normal"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "mSnIZ",
+                                  "name": "Lentil bolognese Suitability",
+                                  "width": "fill_container",
+                                  "gap": 6,
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "LBHrA",
+                                      "name": "Dinner Tag",
+                                      "fill": "$warm-card-peach",
+                                      "cornerRadius": 999,
+                                      "padding": [
+                                        5,
+                                        8
+                                      ],
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "JrTqV",
+                                          "name": "Dinner Label",
+                                          "fill": "$warm-text",
+                                          "content": "Dinner",
+                                          "fontFamily": "$warm-font-body",
+                                          "fontSize": 9,
+                                          "fontWeight": "600"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "ijx2o",
+                                      "name": "Freezer friendly Tag",
+                                      "fill": "$warm-card-peach",
+                                      "cornerRadius": 999,
+                                      "padding": [
+                                        5,
+                                        8
+                                      ],
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "ydWtM",
+                                          "name": "Freezer friendly Label",
+                                          "fill": "$warm-text",
+                                          "content": "Freezer friendly",
+                                          "fontFamily": "$warm-font-body",
+                                          "fontSize": 9,
+                                          "fontWeight": "600"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "DGddp",
+                              "name": "Egg fried rice Meal Card",
+                              "width": "fill_container",
+                              "height": "fill_container",
+                              "fill": "$warm-bg",
+                              "cornerRadius": 18,
+                              "stroke": "$warm-border",
+                              "strokeWidth": 1,
+                              "strokeAlignment": "inner",
+                              "layout": "vertical",
+                              "gap": 10,
+                              "padding": 16,
+                              "children": [
+                                {
+                                  "type": "frame",
+                                  "id": "FqeFw",
+                                  "name": "Egg fried rice Card Header",
+                                  "width": "fill_container",
+                                  "justifyContent": "space_between",
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "UtXeE",
+                                      "name": "Egg fried rice Icon Badge",
+                                      "width": 38,
+                                      "height": 38,
+                                      "fill": "$warm-card-butter",
+                                      "cornerRadius": 12,
+                                      "justifyContent": "center",
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "icon",
+                                          "id": "zRmgN",
+                                          "name": "Egg fried rice Icon",
+                                          "width": 18,
+                                          "height": 18,
+                                          "icon": "egg-fried",
+                                          "library": "lucide",
+                                          "fill": "$warm-text"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "icon",
+                                      "id": "N48BK",
+                                      "name": "Egg fried rice Menu",
+                                      "width": 16,
+                                      "height": 16,
+                                      "icon": "ellipsis",
+                                      "library": "lucide",
+                                      "fill": "$warm-text-secondary"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "Rd4cu",
+                                  "name": "Egg fried rice Title",
+                                  "fill": "$warm-text",
+                                  "content": "Egg fried rice",
+                                  "fontFamily": "$warm-font-display",
+                                  "fontSize": 20,
+                                  "fontWeight": "700"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "vT2Ek",
+                                  "name": "Egg fried rice Description",
+                                  "fill": "$warm-text-secondary",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "Eggs, rice, peas and corn",
+                                  "lineHeight": 1.35,
+                                  "fontFamily": "$warm-font-body",
+                                  "fontSize": 11,
+                                  "fontWeight": "normal"
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "MoELz",
+                                  "name": "Egg fried rice Card Space",
+                                  "width": "fill_container",
+                                  "height": "fill_container"
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "U34Mp",
+                                  "name": "Egg fried rice Meta",
+                                  "width": "fill_container",
+                                  "gap": 12,
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "vlpBr",
+                                      "name": "Egg fried rice 18 min",
+                                      "gap": 5,
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "icon",
+                                          "id": "DGvPD",
+                                          "name": "18 min Icon",
+                                          "width": 13,
+                                          "height": 13,
+                                          "icon": "timer",
+                                          "library": "lucide",
+                                          "fill": "$warm-text-secondary"
+                                        },
+                                        {
+                                          "type": "text",
+                                          "id": "WTvC7",
+                                          "name": "18 min Text",
+                                          "fill": "$warm-text-secondary",
+                                          "content": "18 min",
+                                          "fontFamily": "$warm-font-body",
+                                          "fontSize": 10,
+                                          "fontWeight": "normal"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "kujv0",
+                                      "name": "Egg fried rice Serves 4",
+                                      "gap": 5,
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "icon",
+                                          "id": "BUxXk",
+                                          "name": "Serves 4 Icon",
+                                          "width": 13,
+                                          "height": 13,
+                                          "icon": "users",
+                                          "library": "lucide",
+                                          "fill": "$warm-text-secondary"
+                                        },
+                                        {
+                                          "type": "text",
+                                          "id": "yyK8I",
+                                          "name": "Serves 4 Text",
+                                          "fill": "$warm-text-secondary",
+                                          "content": "Serves 4",
+                                          "fontFamily": "$warm-font-body",
+                                          "fontSize": 10,
+                                          "fontWeight": "normal"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "AVDjS",
+                                  "name": "Egg fried rice Suitability",
+                                  "width": "fill_container",
+                                  "gap": 6,
+                                  "children": [
+                                    {
+                                      "type": "frame",
+                                      "id": "tJ1um",
+                                      "name": "Lunch or dinner Tag",
+                                      "fill": "$warm-card-butter",
+                                      "cornerRadius": 999,
+                                      "padding": [
+                                        5,
+                                        8
+                                      ],
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "If8Ng",
+                                          "name": "Lunch or dinner Label",
+                                          "fill": "$warm-text",
+                                          "content": "Lunch or dinner",
+                                          "fontFamily": "$warm-font-body",
+                                          "fontSize": 9,
+                                          "fontWeight": "600"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "frame",
+                                      "id": "U045I",
+                                      "name": "Quick prep Tag",
+                                      "fill": "$warm-card-butter",
+                                      "cornerRadius": 999,
+                                      "padding": [
+                                        5,
+                                        8
+                                      ],
+                                      "children": [
+                                        {
+                                          "type": "text",
+                                          "id": "Asao4",
+                                          "name": "Quick prep Label",
+                                          "fill": "$warm-text",
+                                          "content": "Quick prep",
+                                          "fontFamily": "$warm-font-body",
+                                          "fontSize": 9,
+                                          "fontWeight": "600"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
                         }
                       ]
                     },
                     {
                       "type": "frame",
-                      "id": "k5jMpZ",
-                      "name": "Planning Signals",
-                      "width": 270,
-                      "height": "fill_container",
+                      "id": "QjjNZ",
+                      "name": "Repertoire Overflow Footer",
+                      "width": "fill_container",
                       "fill": "$warm-bg",
-                      "cornerRadius": 20,
+                      "cornerRadius": 999,
                       "stroke": "$warm-border",
                       "strokeWidth": 1,
                       "strokeAlignment": "inner",
-                      "layout": "vertical",
-                      "gap": 14,
-                      "padding": 18,
+                      "padding": [
+                        8,
+                        12
+                      ],
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
                       "children": [
                         {
                           "type": "frame",
-                          "id": "C6TPhJ",
-                          "name": "Planning Signals Header",
-                          "gap": 8,
+                          "id": "e7aoc",
+                          "name": "Overflow Copy",
+                          "gap": 7,
                           "alignItems": "center",
                           "children": [
                             {
                               "type": "icon",
-                              "id": "a7cpVq",
-                              "name": "Planning Signals Icon",
-                              "width": 17,
-                              "height": 17,
-                              "icon": "wand-sparkles",
+                              "id": "WBsZz",
+                              "name": "Overflow Indicator Icon",
+                              "width": 14,
+                              "height": 14,
+                              "icon": "chevrons-down",
                               "library": "lucide",
-                              "fill": "$warm-accent"
+                              "fill": "$warm-text-secondary"
                             },
                             {
                               "type": "text",
-                              "id": "plCb6",
-                              "name": "Planning Signals Title",
+                              "id": "oiroE",
+                              "name": "Overflow Label",
                               "fill": "$warm-text",
-                              "content": "Planning signals",
-                              "fontFamily": "$warm-font-display",
-                              "fontSize": 19,
-                              "fontWeight": "700"
+                              "content": "Showing 9 of 18 recipes",
+                              "fontFamily": "$warm-font-body",
+                              "fontSize": 11,
+                              "fontWeight": "600"
                             }
                           ]
                         },
                         {
                           "type": "text",
-                          "id": "l4klt5",
-                          "name": "Planning Signals Copy",
+                          "id": "sarLP",
+                          "name": "Overflow Hint",
                           "fill": "$warm-text-secondary",
-                          "textGrowth": "fixed-width",
-                          "width": "fill_container",
-                          "content": "Suggestions use these details to choose meals that fit the week.",
-                          "lineHeight": 1.4,
+                          "content": "Scroll Repertoire for more",
                           "fontFamily": "$warm-font-body",
-                          "fontSize": 12,
+                          "fontSize": 10,
                           "fontWeight": "normal"
-                        },
-                        {
-                          "type": "frame",
-                          "id": "uvHDl",
-                          "name": "School lunch Signal",
-                          "width": "fill_container",
-                          "stroke": "$warm-border",
-                          "strokeWidth": {
-                            "bottom": 1
-                          },
-                          "gap": 10,
-                          "padding": [
-                            10,
-                            0
-                          ],
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "frame",
-                              "id": "j7A5pe",
-                              "name": "School lunch Signal Badge",
-                              "width": 32,
-                              "height": 32,
-                              "fill": "$warm-card-butter",
-                              "cornerRadius": 10,
-                              "justifyContent": "center",
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "icon",
-                                  "id": "MTTlm",
-                                  "name": "School lunch Signal Icon",
-                                  "width": 15,
-                                  "height": 15,
-                                  "icon": "briefcase-business",
-                                  "library": "lucide",
-                                  "fill": "$warm-text"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "frame",
-                              "id": "UMXzl",
-                              "name": "School lunch Signal Copy",
-                              "width": "fill_container",
-                              "layout": "vertical",
-                              "gap": 2,
-                              "children": [
-                                {
-                                  "type": "text",
-                                  "id": "aF6iP",
-                                  "name": "School lunch Signal Label",
-                                  "fill": "$warm-text",
-                                  "content": "School lunch",
-                                  "fontFamily": "$warm-font-body",
-                                  "fontSize": 12,
-                                  "fontWeight": "700"
-                                },
-                                {
-                                  "type": "text",
-                                  "id": "L7THO6",
-                                  "name": "School lunch Signal Count",
-                                  "fill": "$warm-text-secondary",
-                                  "content": "5 meals",
-                                  "fontFamily": "$warm-font-body",
-                                  "fontSize": 10,
-                                  "fontWeight": "normal"
-                                }
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "vTvoY",
-                          "name": "Weeknight dinner Signal",
-                          "width": "fill_container",
-                          "stroke": "$warm-border",
-                          "strokeWidth": {
-                            "bottom": 1
-                          },
-                          "gap": 10,
-                          "padding": [
-                            10,
-                            0
-                          ],
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "frame",
-                              "id": "nEk5u",
-                              "name": "Weeknight dinner Signal Badge",
-                              "width": 32,
-                              "height": 32,
-                              "fill": "$warm-card-sage",
-                              "cornerRadius": 10,
-                              "justifyContent": "center",
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "icon",
-                                  "id": "xH6Bd",
-                                  "name": "Weeknight dinner Signal Icon",
-                                  "width": 15,
-                                  "height": 15,
-                                  "icon": "moon-star",
-                                  "library": "lucide",
-                                  "fill": "$warm-text"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "frame",
-                              "id": "j8Pho",
-                              "name": "Weeknight dinner Signal Copy",
-                              "width": "fill_container",
-                              "layout": "vertical",
-                              "gap": 2,
-                              "children": [
-                                {
-                                  "type": "text",
-                                  "id": "TgyMM",
-                                  "name": "Weeknight dinner Signal Label",
-                                  "fill": "$warm-text",
-                                  "content": "Weeknight dinner",
-                                  "fontFamily": "$warm-font-body",
-                                  "fontSize": 12,
-                                  "fontWeight": "700"
-                                },
-                                {
-                                  "type": "text",
-                                  "id": "Utlzb",
-                                  "name": "Weeknight dinner Signal Count",
-                                  "fill": "$warm-text-secondary",
-                                  "content": "7 meals",
-                                  "fontFamily": "$warm-font-body",
-                                  "fontSize": 10,
-                                  "fontWeight": "normal"
-                                }
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "fKF1j",
-                          "name": "30 min or less Signal",
-                          "width": "fill_container",
-                          "stroke": "$warm-border",
-                          "strokeWidth": {
-                            "bottom": 1
-                          },
-                          "gap": 10,
-                          "padding": [
-                            10,
-                            0
-                          ],
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "frame",
-                              "id": "Juq3I",
-                              "name": "30 min or less Signal Badge",
-                              "width": 32,
-                              "height": 32,
-                              "fill": "$warm-card-sky",
-                              "cornerRadius": 10,
-                              "justifyContent": "center",
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "icon",
-                                  "id": "WTDju",
-                                  "name": "30 min or less Signal Icon",
-                                  "width": 15,
-                                  "height": 15,
-                                  "icon": "timer",
-                                  "library": "lucide",
-                                  "fill": "$warm-text"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "frame",
-                              "id": "HIQFI",
-                              "name": "30 min or less Signal Copy",
-                              "width": "fill_container",
-                              "layout": "vertical",
-                              "gap": 2,
-                              "children": [
-                                {
-                                  "type": "text",
-                                  "id": "aQILs",
-                                  "name": "30 min or less Signal Label",
-                                  "fill": "$warm-text",
-                                  "content": "30 min or less",
-                                  "fontFamily": "$warm-font-body",
-                                  "fontSize": 12,
-                                  "fontWeight": "700"
-                                },
-                                {
-                                  "type": "text",
-                                  "id": "s2Tr7",
-                                  "name": "30 min or less Signal Count",
-                                  "fill": "$warm-text-secondary",
-                                  "content": "4 meals",
-                                  "fontFamily": "$warm-font-body",
-                                  "fontSize": 10,
-                                  "fontWeight": "normal"
-                                }
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "SyBW3",
-                          "name": "Family favourite Signal",
-                          "width": "fill_container",
-                          "stroke": "$warm-border",
-                          "strokeWidth": {
-                            "bottom": 1
-                          },
-                          "gap": 10,
-                          "padding": [
-                            10,
-                            0
-                          ],
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "frame",
-                              "id": "k5pyl",
-                              "name": "Family favourite Signal Badge",
-                              "width": 32,
-                              "height": 32,
-                              "fill": "$warm-card-peach",
-                              "cornerRadius": 10,
-                              "justifyContent": "center",
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "icon",
-                                  "id": "ThDxV",
-                                  "name": "Family favourite Signal Icon",
-                                  "width": 15,
-                                  "height": 15,
-                                  "icon": "heart",
-                                  "library": "lucide",
-                                  "fill": "$warm-text"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "frame",
-                              "id": "UnayW",
-                              "name": "Family favourite Signal Copy",
-                              "width": "fill_container",
-                              "layout": "vertical",
-                              "gap": 2,
-                              "children": [
-                                {
-                                  "type": "text",
-                                  "id": "d7AUFk",
-                                  "name": "Family favourite Signal Label",
-                                  "fill": "$warm-text",
-                                  "content": "Family favourite",
-                                  "fontFamily": "$warm-font-body",
-                                  "fontSize": 12,
-                                  "fontWeight": "700"
-                                },
-                                {
-                                  "type": "text",
-                                  "id": "uY1N7",
-                                  "name": "Family favourite Signal Count",
-                                  "fill": "$warm-text-secondary",
-                                  "content": "6 meals",
-                                  "fontFamily": "$warm-font-body",
-                                  "fontSize": 10,
-                                  "fontWeight": "normal"
-                                }
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "BHYAY",
-                          "name": "Signal Space",
-                          "width": "fill_container",
-                          "height": "fill_container"
-                        },
-                        {
-                          "type": "frame",
-                          "id": "w6Lj7",
-                          "name": "Manage Suitability",
-                          "width": "fill_container",
-                          "fill": "$warm-card-sand",
-                          "cornerRadius": 999,
-                          "padding": [
-                            10,
-                            12
-                          ],
-                          "justifyContent": "center",
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "WxyBN",
-                              "name": "Manage Suitability Label",
-                              "fill": "$warm-text",
-                              "content": "Review meal details",
-                              "fontFamily": "$warm-font-body",
-                              "fontSize": 11,
-                              "fontWeight": "700"
-                            }
-                          ]
                         }
                       ]
                     }
@@ -30542,14 +30810,13 @@
     {
       "type": "frame",
       "id": "fAhV1",
-      "x": 11064,
-      "y": -858,
+      "x": 2732,
+      "y": 5164,
       "name": "Meals · Detail · Desktop",
       "width": 1440,
       "height": 1024,
-      "fill": "$warm-bg",
+      "fill": "$bg-dark",
       "layout": "vertical",
-      "padding": 32,
       "children": [
         {
           "id": "nk2ZO",
@@ -30558,6 +30825,7 @@
           "name": "Meal Detail Shell",
           "width": "fill_container",
           "height": "fill_container",
+          "cornerRadius": 0,
           "descendants": {
             "d0WsGR/ESpfC": {
               "fill": "$warm-accent"
@@ -30590,11 +30858,20 @@
             "w5oJrt/AkVxm": {
               "content": "Mon, 13 Jul"
             },
+            "w5oJrt/j2Npd7": {
+              "enabled": false
+            },
             "w5oJrt/j2Npd7/x7P29": {
               "icon": "search"
             },
+            "w5oJrt/uZeHo": {
+              "enabled": false
+            },
             "w5oJrt/uZeHo/x7P29": {
               "icon": "plus"
+            },
+            "w5oJrt/HzfsS": {
+              "enabled": false
             },
             "w5oJrt/HzfsS/x7P29": {
               "icon": "ellipsis"
@@ -31405,46 +31682,36 @@
                             },
                             {
                               "type": "frame",
-                              "id": "loNyc",
-                              "name": "Servings Control",
+                              "id": "mrnIi",
+                              "name": "Fixed Servings",
                               "fill": "$warm-card-sand",
                               "cornerRadius": 999,
-                              "gap": 7,
+                              "gap": 5,
                               "padding": [
                                 6,
-                                9
+                                10
                               ],
                               "alignItems": "center",
                               "children": [
                                 {
                                   "type": "icon",
-                                  "id": "g8nlU",
-                                  "name": "Servings Minus",
+                                  "id": "Liqqd",
+                                  "name": "Fixed Servings Icon",
                                   "width": 12,
                                   "height": 12,
-                                  "icon": "minus",
+                                  "icon": "users",
                                   "library": "lucide",
                                   "fill": "$warm-text-secondary"
                                 },
                                 {
                                   "type": "text",
-                                  "id": "bjyT5",
-                                  "name": "Servings Value",
+                                  "id": "YHbiF",
+                                  "name": "Fixed Servings Label",
                                   "fill": "$warm-text",
-                                  "content": "4 servings",
+                                  "content": "Serves 4–6",
                                   "fontFamily": "$warm-font-body",
                                   "fontSize": 10,
                                   "fontWeight": "700"
-                                },
-                                {
-                                  "type": "icon",
-                                  "id": "sZ7oS",
-                                  "name": "Servings Plus",
-                                  "width": 12,
-                                  "height": 12,
-                                  "icon": "plus",
-                                  "library": "lucide",
-                                  "fill": "$warm-text-secondary"
                                 }
                               ]
                             }
@@ -31455,7 +31722,7 @@
                           "id": "Hh7EF",
                           "name": "Ingredients Note",
                           "fill": "$warm-text-secondary",
-                          "content": "Quantities adjust with servings.",
+                          "content": "Amounts are fixed for this recipe.",
                           "fontFamily": "$warm-font-body",
                           "fontSize": 11,
                           "fontWeight": "normal"
@@ -31881,14 +32148,13 @@
     {
       "type": "frame",
       "id": "D7Oruw",
-      "x": 12600,
-      "y": -858,
+      "x": 4268,
+      "y": 5164,
       "name": "Meals · Edit · Desktop",
       "width": 1440,
       "height": 1024,
-      "fill": "$warm-bg",
+      "fill": "$bg-dark",
       "layout": "vertical",
-      "padding": 32,
       "children": [
         {
           "id": "ScZZK",
@@ -31897,6 +32163,7 @@
           "name": "Meal Edit Shell",
           "width": "fill_container",
           "height": "fill_container",
+          "cornerRadius": 0,
           "descendants": {
             "d0WsGR/ESpfC": {
               "fill": "$warm-accent"
@@ -31929,11 +32196,20 @@
             "w5oJrt/AkVxm": {
               "content": "Mon, 13 Jul"
             },
+            "w5oJrt/j2Npd7": {
+              "enabled": false
+            },
             "w5oJrt/j2Npd7/x7P29": {
               "icon": "search"
             },
+            "w5oJrt/uZeHo": {
+              "enabled": false
+            },
             "w5oJrt/uZeHo/x7P29": {
               "icon": "plus"
+            },
+            "w5oJrt/HzfsS": {
+              "enabled": false
             },
             "w5oJrt/HzfsS/x7P29": {
               "icon": "ellipsis"
@@ -32290,55 +32566,6 @@
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
                                   "content": "A dependable one-tray dinner with roast vegetables.",
-                                  "fontFamily": "$warm-font-body",
-                                  "fontSize": 12,
-                                  "fontWeight": "normal"
-                                }
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "nceW6",
-                          "name": "Servings Field",
-                          "width": "fill_container",
-                          "layout": "vertical",
-                          "gap": 6,
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "ecxsA",
-                              "name": "Servings Label",
-                              "fill": "$warm-text-secondary",
-                              "content": "Servings",
-                              "fontFamily": "$warm-font-body",
-                              "fontSize": 10,
-                              "fontWeight": "700"
-                            },
-                            {
-                              "type": "frame",
-                              "id": "Kfucg",
-                              "name": "Servings Input",
-                              "width": "fill_container",
-                              "fill": "$warm-bg-card",
-                              "cornerRadius": 11,
-                              "stroke": "$warm-border",
-                              "strokeWidth": 1,
-                              "strokeAlignment": "inner",
-                              "padding": [
-                                10,
-                                12
-                              ],
-                              "children": [
-                                {
-                                  "type": "text",
-                                  "id": "sKfzQ",
-                                  "name": "Servings Value",
-                                  "fill": "$warm-text",
-                                  "textGrowth": "fixed-width",
-                                  "width": "fill_container",
-                                  "content": "4–6",
                                   "fontFamily": "$warm-font-body",
                                   "fontSize": 12,
                                   "fontWeight": "normal"
@@ -33093,8 +33320,8 @@
     {
       "type": "frame",
       "id": "A2fVi",
-      "x": 7992,
-      "y": 262,
+      "x": -340,
+      "y": 6284,
       "name": "Meals · Week · Mobile",
       "clip": true,
       "width": 390,
@@ -33252,29 +33479,6 @@
                       "icon": "plus",
                       "library": "lucide",
                       "fill": "$text-on-dark"
-                    }
-                  ]
-                },
-                {
-                  "type": "frame",
-                  "id": "I2Igcg",
-                  "name": "Mobile Avatar",
-                  "width": 34,
-                  "height": 34,
-                  "fill": "$warm-card-peach",
-                  "cornerRadius": 999,
-                  "justifyContent": "center",
-                  "alignItems": "center",
-                  "children": [
-                    {
-                      "type": "text",
-                      "id": "cDD82",
-                      "name": "Mobile Avatar Initial",
-                      "fill": "$warm-text",
-                      "content": "M",
-                      "fontFamily": "$warm-font-display",
-                      "fontSize": 14,
-                      "fontWeight": "700"
                     }
                   ]
                 }
@@ -33748,7 +33952,9 @@
                           "id": "Q5hxSl",
                           "name": "Mobile School lunch Suitability",
                           "fill": "$warm-text-secondary",
-                          "content": "Kid favourite",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Wraps, hummus, cucumber",
                           "fontFamily": "$warm-font-body",
                           "fontSize": 10,
                           "fontWeight": "normal"
@@ -33837,7 +34043,9 @@
                           "id": "yQWkK",
                           "name": "Mobile Dinner Suitability",
                           "fill": "$warm-text-secondary",
-                          "content": "One tray",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Chicken, potatoes, carrots",
                           "fontFamily": "$warm-font-body",
                           "fontSize": 10,
                           "fontWeight": "normal"
@@ -34160,8 +34368,8 @@
     {
       "type": "frame",
       "id": "m73Vm",
-      "x": 8422,
-      "y": 262,
+      "x": 90,
+      "y": 6284,
       "name": "Meals · Collection · Mobile",
       "clip": true,
       "width": 390,
@@ -34321,29 +34529,6 @@
                       "fill": "$warm-bg"
                     }
                   ]
-                },
-                {
-                  "type": "frame",
-                  "id": "G8l8UB",
-                  "name": "Collection Avatar",
-                  "width": 34,
-                  "height": 34,
-                  "fill": "$warm-card-peach",
-                  "cornerRadius": 999,
-                  "justifyContent": "center",
-                  "alignItems": "center",
-                  "children": [
-                    {
-                      "type": "text",
-                      "id": "ffhSt",
-                      "name": "Collection Avatar Initial",
-                      "fill": "$warm-text",
-                      "content": "M",
-                      "fontFamily": "$warm-font-display",
-                      "fontSize": 14,
-                      "fontWeight": "700"
-                    }
-                  ]
                 }
               ]
             }
@@ -34467,20 +34652,10 @@
                   "id": "e2IpP",
                   "name": "Mobile Collection Title",
                   "fill": "$warm-text",
-                  "content": "Your regular repertoire",
+                  "content": "Repertoire",
                   "fontFamily": "$warm-font-display",
                   "fontSize": 23,
                   "fontWeight": "700"
-                },
-                {
-                  "type": "text",
-                  "id": "ByRhV",
-                  "name": "Mobile Collection Subtitle",
-                  "fill": "$warm-text-secondary",
-                  "content": "Dependable meals to plan the week from",
-                  "fontFamily": "$warm-font-body",
-                  "fontSize": 11,
-                  "fontWeight": "normal"
                 }
               ]
             },
@@ -35203,8 +35378,8 @@
     {
       "type": "frame",
       "id": "XN416",
-      "x": 8852,
-      "y": 262,
+      "x": 520,
+      "y": 6284,
       "name": "Meals · Detail · Mobile",
       "clip": true,
       "width": 390,
@@ -35675,7 +35850,7 @@
                       "id": "MbS58",
                       "name": "Mobile Ingredient Servings",
                       "fill": "$warm-text-secondary",
-                      "content": "4 servings",
+                      "content": "Serves 4–6",
                       "fontFamily": "$warm-font-body",
                       "fontSize": 10,
                       "fontWeight": "600"
@@ -36224,8 +36399,8 @@
     {
       "type": "frame",
       "id": "gNzbY",
-      "x": 9282,
-      "y": 262,
+      "x": 950,
+      "y": 6284,
       "name": "Meals · Edit · Mobile",
       "clip": true,
       "width": 390,
@@ -36496,53 +36671,6 @@
               "width": "fill_container",
               "gap": 8,
               "children": [
-                {
-                  "type": "frame",
-                  "id": "T6dpg",
-                  "name": "Mobile Servings Field",
-                  "width": "fill_container",
-                  "layout": "vertical",
-                  "gap": 4,
-                  "children": [
-                    {
-                      "type": "text",
-                      "id": "E37WJ6",
-                      "name": "Mobile Servings Label",
-                      "fill": "$warm-text-secondary",
-                      "content": "Servings",
-                      "fontFamily": "$warm-font-body",
-                      "fontSize": 9,
-                      "fontWeight": "700"
-                    },
-                    {
-                      "type": "frame",
-                      "id": "cZKXn",
-                      "name": "Mobile Servings Input",
-                      "width": "fill_container",
-                      "fill": "$warm-bg",
-                      "cornerRadius": 10,
-                      "stroke": "$warm-border",
-                      "strokeWidth": 1,
-                      "strokeAlignment": "inner",
-                      "padding": [
-                        9,
-                        10
-                      ],
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "eYHHZ",
-                          "name": "Mobile Servings Value",
-                          "fill": "$warm-text",
-                          "content": "4–6",
-                          "fontFamily": "$warm-font-body",
-                          "fontSize": 11,
-                          "fontWeight": "normal"
-                        }
-                      ]
-                    }
-                  ]
-                },
                 {
                   "type": "frame",
                   "id": "b6uLD",
@@ -37086,8 +37214,8 @@
     {
       "type": "frame",
       "id": "dWlML",
-      "x": 9712,
-      "y": 262,
+      "x": 1380,
+      "y": 6284,
       "name": "Meals · Week Cart · Mobile",
       "clip": true,
       "width": 390,
@@ -37741,7 +37869,9 @@
                           "id": "SLn1W",
                           "name": "Mobile School lunch Suitability",
                           "fill": "$warm-text-secondary",
-                          "content": "Kid favourite",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Wraps, hummus, cucumber",
                           "fontFamily": "$warm-font-body",
                           "fontSize": 10,
                           "fontWeight": "normal"
@@ -37830,7 +37960,9 @@
                           "id": "V2AIJf",
                           "name": "Mobile Dinner Suitability",
                           "fill": "$warm-text-secondary",
-                          "content": "One tray",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "Chicken, potatoes, carrots",
                           "fontFamily": "$warm-font-body",
                           "fontSize": 10,
                           "fontWeight": "normal"
