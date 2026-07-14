@@ -730,7 +730,9 @@
       if (result.status === 'applied' && result.assignmentCount > 0)
         await setActiveGroupingProperty(propertyId, listPublicId);
       else if (result.status === 'failed') itemMutationError = 'Unable to categorise items.';
-      else if (result.status === 'skipped') itemMutationError = 'AI categorisation is not configured.';
+      else if (result.status === 'skipped' && result.reason === 'missing_configuration')
+        itemMutationError = 'Configure AI categorisation in List settings first.';
+      else if (result.status === 'skipped') itemMutationError = 'AI returned an unusable categorisation. Try again.';
     } catch (error) {
       itemMutationError = describeError(error, 'Unable to start auto categorisation.');
     } finally {
