@@ -111,25 +111,29 @@ export async function categoriseListItems({
   return { status: 'applied', assignmentCount };
 }
 
-const categorisationOutputJsonSchema = {
-  type: 'object',
-  additionalProperties: false,
-  required: ['assignments'],
-  properties: {
-    assignments: {
-      type: 'array',
-      items: {
-        type: 'object',
-        additionalProperties: false,
-        required: ['itemIndex', 'optionId'],
-        properties: {
-          itemIndex: { type: 'integer' },
-          optionId: { type: ['string', 'null'] }
+function categorisationOutputJsonSchema(input: CategorisationProviderInput) {
+  return {
+    type: 'object',
+    additionalProperties: false,
+    required: ['assignments'],
+    properties: {
+      assignments: {
+        type: 'array',
+        minItems: input.items.length,
+        maxItems: input.items.length,
+        items: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['itemIndex', 'optionId'],
+          properties: {
+            itemIndex: { type: 'integer' },
+            optionId: { type: ['string', 'null'], enum: [...input.options.map((option) => option.id), null] }
+          }
         }
       }
     }
-  }
-} as const;
+  } as const;
+}
 
 const categorisationSystemPrompt = [
   'Categorise each list item using only one supplied option id, or null when uncertain.',
@@ -172,7 +176,7 @@ export function createOpenAiListCategorisationProvider({
           json_schema: {
             name: 'list_categorisation',
             strict: true,
-            schema: categorisationOutputJsonSchema
+            schema: categorisationOutputJsonSchema(input)
           }
         }
       })
