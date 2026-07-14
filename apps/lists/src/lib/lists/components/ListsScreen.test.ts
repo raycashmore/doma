@@ -412,6 +412,56 @@ describe('ListsScreen active-item grouping', () => {
     expect(grouping?.selectedOptions[0]?.textContent).toBe('Priority');
   });
 
+  it('explains when AI categorisation has not been configured', async () => {
+    autoCategoriseAction.mockResolvedValueOnce({ status: 'skipped', reason: 'missing_configuration' });
+    const target = await renderScreen();
+    const weeklyShop = previewItemsByListPublicId['weekly-shop'];
+    queryResults[0]?.set({ data: previewVisibleLists, isLoading: false });
+    queryResults[1]?.set({
+      data: {
+        ...weeklyShop,
+        properties: weeklyShop.properties.map((property) =>
+          property._id === 'preview-property-priority'
+            ? { ...property, categorisationInstruction: 'Group items by priority.' }
+            : property
+        )
+      },
+      isLoading: false
+    });
+    await tick();
+
+    target.querySelector<HTMLButtonElement>('[data-testid="auto-categorise-action"]')?.click();
+    await new Promise((resolve) => setTimeout(resolve));
+    await tick();
+
+    expect(target.textContent).toContain('Configure AI categorisation in List settings first.');
+  });
+
+  it('explains when AI returns an unusable categorisation', async () => {
+    autoCategoriseAction.mockResolvedValueOnce({ status: 'skipped', reason: 'invalid_response' });
+    const target = await renderScreen();
+    const weeklyShop = previewItemsByListPublicId['weekly-shop'];
+    queryResults[0]?.set({ data: previewVisibleLists, isLoading: false });
+    queryResults[1]?.set({
+      data: {
+        ...weeklyShop,
+        properties: weeklyShop.properties.map((property) =>
+          property._id === 'preview-property-priority'
+            ? { ...property, categorisationInstruction: 'Group items by priority.' }
+            : property
+        )
+      },
+      isLoading: false
+    });
+    await tick();
+
+    target.querySelector<HTMLButtonElement>('[data-testid="auto-categorise-action"]')?.click();
+    await new Promise((resolve) => setTimeout(resolve));
+    await tick();
+
+    expect(target.textContent).toContain('AI returned an unusable categorisation. Try again.');
+  });
+
   it('groups active items by a property and collapses a group without affecting its items', async () => {
     const target = await renderScreen();
     await provideLiveData();
