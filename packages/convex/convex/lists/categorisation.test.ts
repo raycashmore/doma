@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   applyCategorisationAssignmentsHandler,
   categoriseListItems,
+  createOpenAiListCategorisationProvider,
   requestListCategorisationHandler
 } from './categorisation';
 import { activeItemA, activeItemB, completedItem, personalList, priorityProperty, sharedList } from './testHelpers';
@@ -128,6 +129,52 @@ describe('categoriseListItems', () => {
 
     expect(applied).toEqual([]);
     expect(result).toEqual({ status: 'failed', reason: 'provider_failure' });
+  });
+});
+
+describe('createOpenAiListCategorisationProvider', () => {
+  it('constrains the structured response to the supplied option ids and item count', async () => {
+    const requests: Array<{ body: Record<string, unknown> }> = [];
+    const fetchImpl: typeof fetch = async (_url, init) => {
+      requests.push({ body: JSON.parse(String(init?.body)) as Record<string, unknown> });
+      return new Response(
+        JSON.stringify({
+          choices: [
+            {
+              message: {
+                content: JSON.stringify({
+                  assignments: [
+                    { itemIndex: 0, optionId: 'bread' },
+                    { itemIndex: 1, optionId: 'frozen' }
+                  ]
+                })
+              }
+            }
+          ]
+        }),
+        { status: 200 }
+      );
+    };
+    const provider = createOpenAiListCategorisationProvider({ apiKey: 'test-key', model: 'test-model', fetchImpl });
+
+    await provider({
+      instruction: input.instruction,
+      options: input.options,
+      items: input.items.map(({ title, notes }) => (notes ? { title, notes } : { title }))
+    });
+
+    const schema = (
+      (requests[0]?.body.response_format as { json_schema: { schema: Record<string, unknown> } }).json_schema.schema
+        .properties as {
+        assignments: { minItems?: number; maxItems?: number; items: { properties: Record<string, unknown> } };
+      }
+    ).assignments;
+    expect(schema.minItems).toBe(2);
+    expect(schema.maxItems).toBe(2);
+    expect(schema.items.properties.optionId).toEqual({
+      type: ['string', 'null'],
+      enum: ['bread', 'frozen', null]
+    });
   });
 });
 
