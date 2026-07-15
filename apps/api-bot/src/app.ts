@@ -3,7 +3,6 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import { Hono } from 'hono';
 
 import { createConvexInsightsAnswer, createInsightsCapability } from './capabilities/insightsCapability.js';
-import { createConvexMealPlanningCapability } from './capabilities/mealPlanningCapability.js';
 import type { BotConfig } from './config.js';
 import { getConfig } from './config.js';
 import { createHttpCapability } from './dispatch/httpCapability.js';
@@ -63,7 +62,6 @@ function createRuntimeCapabilities(config: BotConfig): Record<string, Capability
       answerQuestion: createConvexInsightsAnswer(config),
       timeoutMs: config.insightsCapabilityTimeoutMs
     });
-    capabilities.meals = createConvexMealPlanningCapability(config);
   }
 
   return capabilities;

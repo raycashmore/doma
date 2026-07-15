@@ -11,7 +11,6 @@ import {
   createListItemsForUser,
   readAddressableListsForUser,
   readDefaultListForUser,
-  readMealPlanningListForUser,
   setDefaultListForUser
 } from './botModel';
 import type { ListsMutationCtx } from './items';
@@ -217,70 +216,6 @@ describe('readAddressableListsForUser', () => {
     const result = await readAddressableListsForUser(ctx, { currentUserId: 'user_b' });
 
     expect(result).toEqual([{ id: 'list_shared', name: 'Shopping' }]);
-  });
-});
-
-describe('readMealPlanningListForUser', () => {
-  it('returns only active recipe items and their list property values', async () => {
-    const { ctx } = createCtx({
-      lists: [sharedList],
-      listItems: [
-        { _id: 'item_active', listId: 'lists_shared', title: 'Pasta bake', sortOrder: 0, createdAt: 1, updatedAt: 1 },
-        {
-          _id: 'item_done',
-          listId: 'lists_shared',
-          title: 'Old recipe',
-          sortOrder: 1,
-          completedAt: 2,
-          createdAt: 1,
-          updatedAt: 2
-        }
-      ],
-      listProperties: [
-        {
-          _id: 'property_ingredients',
-          listId: 'lists_shared',
-          name: 'Ingredients',
-          type: 'text',
-          sortOrder: 0,
-          createdAt: 1,
-          updatedAt: 1
-        }
-      ],
-      listItemPropertyValues: [
-        {
-          _id: 'value_ingredients',
-          listId: 'lists_shared',
-          listItemId: 'item_active',
-          listPropertyId: 'property_ingredients',
-          textValue: 'Pasta\nSauce',
-          createdAt: 1,
-          updatedAt: 1
-        }
-      ]
-    });
-
-    await expect(
-      readMealPlanningListForUser(ctx, { currentUserId: 'user_b', publicId: 'list_shared' })
-    ).resolves.toEqual({
-      publicId: 'list_shared',
-      name: 'Shopping',
-      properties: [{ id: 'property_ingredients', name: 'Ingredients', type: 'text', options: undefined }],
-      activeItems: [
-        {
-          id: 'item_active',
-          title: 'Pasta bake',
-          propertyValues: [
-            {
-              propertyId: 'property_ingredients',
-              textValue: 'Pasta\nSauce',
-              numberValue: undefined,
-              selectOptionId: undefined
-            }
-          ]
-        }
-      ]
-    });
   });
 });
 

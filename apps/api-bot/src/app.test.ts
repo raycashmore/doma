@@ -194,6 +194,58 @@ describe('api-bot app', () => {
     );
   });
 
+  it('does not expose the retired /meals capability when Convex is configured', async () => {
+    const storage = createMemoryStorage();
+    await storage.upsertChannelLink({
+      clerkUserId: 'user_123',
+      provider: 'telegram',
+      providerUserId: '789',
+      providerChatId: '123',
+      status: 'active',
+      createdAt: 1,
+      updatedAt: 1
+    });
+    const app = createApp({
+      config: testConfig,
+      storage,
+      sendTelegramMessage: vi.fn()
+    });
+
+    const response = await app.request('/telegram/webhook', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-telegram-bot-api-secret-token': testConfig.telegramWebhookSecret
+      },
+      body: JSON.stringify({
+        update_id: 123,
+        message: {
+          message_id: 1,
+          date: 1_700_000_000,
+          text: '/meals',
+          from: {
+            id: 789,
+            is_bot: false,
+            first_name: 'Member'
+          },
+          chat: {
+            id: 123,
+            type: 'private'
+          }
+        }
+      })
+    });
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      ok: true,
+      dispatchResult: {
+        kind: 'reply',
+        text: 'I can help with scheduling soon. Try /schedule.'
+      }
+    });
+  });
+
   it('mounts notification routes', async () => {
     const app = createApp({
       config: testConfig,

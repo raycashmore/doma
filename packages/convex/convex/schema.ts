@@ -271,15 +271,5 @@ export default defineSchema({
     .index('by_list_id', ['listId'])
     .index('by_item_id', ['listItemId'])
     .index('by_property_id', ['listPropertyId'])
-    .index('by_item_id_and_property_id', ['listItemId', 'listPropertyId']),
-  mealPlanDrafts: defineTable({
-    userId: v.string(),
-    providerChatId: v.string(),
-    shoppingListPublicId: v.string(),
-    ingredientTitles: v.array(v.string()),
-    expiresAt: v.number(),
-    createdAt: v.number(),
-    supersededAt: v.optional(v.number()),
-    appliedAt: v.optional(v.number())
-  }).index('by_user_and_chat', ['userId', 'providerChatId'])
+    .index('by_item_id_and_property_id', ['listItemId', 'listPropertyId'])
 });

@@ -5,10 +5,6 @@ import { CAPABILITY_FALLBACK_RESPONSE } from './types.js';
 
 export const DEFAULT_HELP = 'I can help with scheduling soon. Try /schedule.';
 
-function isExplicitMealPlanIngredientAdd(messageText: string) {
-  return /^add(?:\s+the)?\s+ingredients$/i.test(messageText.trim());
-}
-
 /**
  * The router's classify-only contract: given the free-text message, decide which
  * single capability should handle it (or `none`). The dispatcher injects this so
@@ -62,10 +58,6 @@ export function createCommandDispatcher({
       // call. The webhook has already parsed `command` from the leading `/word`.
       if (request.command) {
         return runCapability(request.command, request);
-      }
-
-      if (capabilities.meals && isExplicitMealPlanIngredientAdd(request.messageText)) {
-        return runCapability('meals', request);
       }
 
       // Free-text is classified to exactly one capability or `none`.
