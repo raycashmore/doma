@@ -39,7 +39,7 @@ function RootDocument() {
       <body>
         <AuthGate publishableKey={CLERK_KEY}>
           <MealsConvexProvider>
-            <AppFrame appId="meals" title="Meals" isDev={IS_DEV}>
+            <AppFrame appId="meals" title="Meals" isDev={IS_DEV} mainClassName="md:pb-7 md:pr-7 md:pl-2">
               <Outlet />
             </AppFrame>
           </MealsConvexProvider>
