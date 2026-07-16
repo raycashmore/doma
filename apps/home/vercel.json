@@ -50,6 +50,18 @@
     {
       "source": "/lists/:path*",
       "destination": "https://lists.rayandromana.com/lists/:path*"
+    },
+    {
+      "source": "/meals",
+      "destination": "https://meals.rayandromana.com/meals/"
+    },
+    {
+      "source": "/meals/",
+      "destination": "https://meals.rayandromana.com/meals/"
+    },
+    {
+      "source": "/meals/:path*",
+      "destination": "https://meals.rayandromana.com/meals/:path*"
     }
   ]
 }

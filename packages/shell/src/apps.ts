@@ -19,7 +19,7 @@ const iconsByAppId: Record<AppId, LucideIcon> = {
   mortgage: Landmark,
   schedule: Calendar,
   lists: ListChecks,
-  recipes: ChefHat
+  meals: ChefHat
 };
 
 export const APPS: AppDescriptor[] = BASE_APPS.map((app) => ({

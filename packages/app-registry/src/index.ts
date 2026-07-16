@@ -1,4 +1,4 @@
-export type AppId = 'home' | 'budget' | 'mortgage' | 'schedule' | 'lists' | 'recipes';
+export type AppId = 'home' | 'budget' | 'mortgage' | 'schedule' | 'lists' | 'meals';
 
 export type AppDescriptor = {
   id: AppId;
@@ -47,11 +47,11 @@ export const APPS: AppDescriptor[] = [
     devPort: 3004
   },
   {
-    id: 'recipes',
-    label: 'Recipes',
-    href: '/recipes',
-    enabled: false,
-    devPort: 3006
+    id: 'meals',
+    label: 'Meals',
+    href: '/meals',
+    enabled: true,
+    devPort: 3005
   }
 ];
 

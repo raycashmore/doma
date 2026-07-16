@@ -1,0 +1,22 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import '@repo/tokens/tokens.css';
+@import '@repo/tokens/theme.css';
+
+@source "../../../packages/shell/src/**/*.{ts,tsx}";
+
+body {
+  @apply m-0;
+  font-family: var(--warm-font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
