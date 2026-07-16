@@ -44,7 +44,39 @@ export default defineConfig(({ command }) => ({
         scope: MEALS_BASE_URL,
         display: 'standalone',
         background_color: '#ffffff',
-        theme_color: '#2d2d2d'
+        theme_color: '#2d2d2d',
+        icons: [
+          {
+            src: `${MEALS_BASE_URL}icons/icon.svg`,
+            sizes: 'any',
+            type: 'image/svg+xml',
+            purpose: 'any'
+          },
+          {
+            src: `${MEALS_BASE_URL}icons/icon-192.png`,
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: `${MEALS_BASE_URL}icons/icon-512.png`,
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: `${MEALS_BASE_URL}icons/icon-maskable-192.png`,
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'maskable'
+          },
+          {
+            src: `${MEALS_BASE_URL}icons/icon-maskable-512.png`,
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
+          }
+        ]
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],

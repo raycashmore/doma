@@ -20,11 +20,25 @@ export const Route = createRootRoute({
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
       { name: 'theme-color', content: '#2d2d2d' },
+      { name: 'mobile-web-app-capable', content: 'yes' },
+      { name: 'apple-mobile-web-app-capable', content: 'yes' },
+      { name: 'apple-mobile-web-app-title', content: 'Meals' },
+      { name: 'apple-mobile-web-app-status-bar-style', content: 'default' },
       { title: 'Meals' }
     ],
     links: [
       { rel: 'stylesheet', href: appCss },
-      { rel: 'manifest', href: `${APP_BASE_URL}manifest.webmanifest` }
+      { rel: 'manifest', href: `${APP_BASE_URL}manifest.webmanifest` },
+      {
+        rel: 'icon',
+        type: 'image/svg+xml',
+        href: `${APP_BASE_URL}icons/icon.svg`
+      },
+      {
+        rel: 'apple-touch-icon',
+        sizes: '180x180',
+        href: `${APP_BASE_URL}icons/apple-touch-icon.png`
+      }
     ]
   }),
   shellComponent: RootDocument
