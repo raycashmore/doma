@@ -3,11 +3,11 @@
 Meals is Doma's standalone household cookbook, mounted at `/meals`. It owns
 recipes; Lists continues to own shopping-list items.
 
-The current foundation provides the independently deployable TanStack Start
-zone, shared navigation, Clerk and Convex integration, and the Meals-owned
-recipe model. Recipe collection, detail, and editing screens will be added from
-the approved Pencil designs. The root route remains deliberately empty until
-that design source is available to inspect.
+The app provides an independently deployable TanStack Start zone, shared
+navigation, Clerk and Convex integration, and the Meals-owned recipe model. Its
+Pencil-based cookbook screens support browsing, searching, filtering, creating,
+viewing, and editing recipes. `/meals/week` is reserved with an explicit
+placeholder for future weekly planning.
 
 ## Local development
 
@@ -16,6 +16,10 @@ Run the app without a Clerk session for zone and shell work:
 ```bash
 pnpm --filter meals dev:no-auth
 ```
+
+No-auth fixture mode is available only in local development and persists
+generic recipes in local storage. Production fails closed when Clerk or Convex
+configuration is missing.
 
 Run its checks:
 

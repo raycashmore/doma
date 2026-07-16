@@ -3,16 +3,14 @@ import { ConvexProviderWithClerk } from 'convex/react-clerk';
 import { useAuth } from '@clerk/clerk-react';
 import type { ReactNode } from 'react';
 
-const CONVEX_URL = import.meta.env.VITE_CONVEX_URL;
-const CLERK_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+import { ConfigurationError } from '@/integrations/auth/AuthGate';
+import { CLERK_KEY, CONVEX_URL } from '@/config/runtime';
 
-if (!CONVEX_URL) {
-  console.error('missing envar VITE_CONVEX_URL');
-}
-
-const convex = new ConvexReactClient(CONVEX_URL);
+const convex = CONVEX_URL ? new ConvexReactClient(CONVEX_URL) : null;
 
 export function MealsConvexProvider({ children }: { children: ReactNode }) {
+  if (!convex) return <ConfigurationError message="VITE_CONVEX_URL is required." />;
+
   if (CLERK_KEY) {
     return (
       <ConvexProviderWithClerk client={convex} useAuth={useAuth}>

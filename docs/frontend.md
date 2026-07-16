@@ -59,6 +59,9 @@ and runs locally on port 3005. The zone owns cookbook UI only; its recipe data
 comes from `packages/convex/convex/meals/`, while Lists remains the shopping
 item owner.
 
-The cookbook screens must use the approved Pencil collection, detail, and edit
-frames as their visual source. Until that file is available to inspect, the
-zone deliberately exposes no recipe-screen UI.
+The cookbook collection, detail, create, and edit screens use the approved
+Pencil frames as their visual source. The collection supports search and
+suitability filters; recipe forms preserve ordered free-form ingredients. The
+`/meals/week` route is reserved for future planning. Local no-auth development
+uses generic persisted fixtures, while production requires Clerk and Convex and
+fails closed when either is missing.

@@ -7,9 +7,9 @@ import type { RecipeFormValue } from '@/components/meals/types';
 import { RecipeForm } from '@/components/meals/RecipeForm';
 import { mealHref } from '@/components/meals/links';
 import { getMealsBaseUrl } from '@/config/basePath';
+import { FIXTURE_MODE } from '@/config/runtime';
 import { getFixtureRecipe, updateFixtureRecipe } from '@/lib/fixtureRecipes';
 
-const FIXTURE_MODE = !import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 // eslint-disable-next-line turbo/no-undeclared-env-vars
 const APP_BASE_URL = getMealsBaseUrl(import.meta.env.DEV);
 
