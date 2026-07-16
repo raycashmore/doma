@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ComponentType } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 
 const mocks = vi.hoisted(() => ({
   recipeMutation: vi.fn(),
@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@tanstack/react-router', () => ({
   createFileRoute: () => (options: unknown) => ({ options, useParams: () => ({ recipeId: 'recipe_route' }) }),
+  Link: ({ children, to }: { children: ReactNode; to: string }) => <a href={to}>{children}</a>,
   useNavigate: () => mocks.navigate
 }));
 

@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import { ChefHat, ChevronRight, Clock3, Plus, Search, Utensils } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
 
 import { MealSectionTabs } from './MealSectionTabs';
-import { mealHref } from './links';
 import type { RecipeView } from './types';
 import { cn } from '@/lib/utils';
 
 const FILTERS = ['All meals', 'School lunch', 'Dinner', 'Quick', 'Favourite'] as const;
 const CARD_TONES = ['bg-meal-butter', 'bg-meal-sage', 'bg-meal-sky', 'bg-meal-lavender', 'bg-meal-peach'];
 
-export function RecipeCollection({ recipes, baseUrl = '/meals/' }: { recipes: Array<RecipeView>; baseUrl?: string }) {
+export function RecipeCollection({ recipes }: { recipes: Array<RecipeView> }) {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>('All meals');
   const normalizedQuery = query.trim().toLocaleLowerCase();
@@ -25,15 +25,15 @@ export function RecipeCollection({ recipes, baseUrl = '/meals/' }: { recipes: Ar
   return (
     <section className="flex min-h-full flex-col gap-4 rounded-t-[24px] bg-warm-bg-card p-4 md:h-full md:min-h-0 md:gap-5 md:rounded-[28px] md:p-6">
       <div className="flex items-center justify-between gap-3">
-        <MealSectionTabs baseUrl={baseUrl} />
-        <a
-          href={mealHref(baseUrl, 'recipes/new')}
+        <MealSectionTabs />
+        <Link
+          to="/recipes/new"
           className="flex items-center justify-center gap-2 rounded-full bg-warm-text-primary p-2.5 text-xs font-bold text-warm-bg-card-soft md:px-4"
         >
           <Plus aria-hidden="true" size={16} />
           <span className="hidden md:inline">Add meal</span>
           <span className="sr-only md:hidden">Add meal</span>
-        </a>
+        </Link>
       </div>
 
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
@@ -89,12 +89,12 @@ export function RecipeCollection({ recipes, baseUrl = '/meals/' }: { recipes: Ar
               Add an approved household recipe to begin your cookbook.
             </p>
           </div>
-          <a
-            href={mealHref(baseUrl, 'recipes/new')}
+          <Link
+            to="/recipes/new"
             className="rounded-full bg-warm-text-primary px-4 py-2.5 text-xs font-bold text-warm-bg-card-soft"
           >
             Add your first meal
-          </a>
+          </Link>
         </div>
       ) : filteredRecipes.length === 0 ? (
         <div className="flex min-h-48 flex-1 items-center justify-center rounded-[20px] border border-dashed border-warm-border text-center text-sm text-warm-text-secondary">
@@ -103,9 +103,10 @@ export function RecipeCollection({ recipes, baseUrl = '/meals/' }: { recipes: Ar
       ) : (
         <div className="grid content-start gap-2.5 overflow-y-auto md:grid-cols-2 lg:grid-cols-3 md:gap-3">
           {filteredRecipes.map((recipe, index) => (
-            <a
+            <Link
               key={recipe.publicId}
-              href={mealHref(baseUrl, `recipes/${recipe.publicId}`)}
+              to="/recipes/$recipeId"
+              params={{ recipeId: recipe.publicId }}
               className="group flex items-center gap-3 rounded-[14px] border border-warm-border bg-warm-bg-card-soft p-2.5 transition-transform hover:-translate-y-0.5 md:flex-col md:items-stretch md:gap-3 md:rounded-[18px] md:p-4"
             >
               <div className="flex items-start gap-3">
@@ -141,7 +142,7 @@ export function RecipeCollection({ recipes, baseUrl = '/meals/' }: { recipes: Ar
                 </div>
               </div>
               <ChevronRight aria-hidden="true" className="shrink-0 text-warm-text-tertiary md:hidden" size={16} />
-            </a>
+            </Link>
           ))}
         </div>
       )}

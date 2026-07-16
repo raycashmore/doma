@@ -1,27 +1,28 @@
 import { ArrowLeft, Clock3, Pencil, Utensils } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
 
 import { MealSectionTabs } from './MealSectionTabs';
-import { mealHref } from './links';
 import type { RecipeView } from './types';
 
-export function RecipeDetail({ recipe, baseUrl = '/meals/' }: { recipe: RecipeView; baseUrl?: string }) {
+export function RecipeDetail({ recipe }: { recipe: RecipeView }) {
   return (
     <section className="flex min-h-full flex-col gap-4 rounded-t-[24px] bg-warm-bg-card p-4 md:h-full md:min-h-0 md:rounded-[28px] md:p-6">
       <div className="flex items-center justify-between gap-3">
-        <MealSectionTabs baseUrl={baseUrl} />
+        <MealSectionTabs />
         <div className="flex items-center gap-2">
-          <a
-            href={mealHref(baseUrl)}
+          <Link
+            to="/"
             className="hidden rounded-full border border-warm-border px-3.5 py-2 text-xs font-semibold text-warm-text-secondary md:flex md:items-center md:gap-1.5"
           >
             <ArrowLeft aria-hidden="true" size={14} /> Back
-          </a>
-          <a
-            href={mealHref(baseUrl, `recipes/${recipe.publicId}/edit`)}
+          </Link>
+          <Link
+            to="/recipes/$recipeId/edit"
+            params={{ recipeId: recipe.publicId }}
             className="flex items-center gap-1.5 rounded-full bg-warm-text-primary px-3.5 py-2 text-xs font-bold text-warm-bg-card-soft"
           >
             <Pencil aria-hidden="true" size={13} /> Edit
-          </a>
+          </Link>
         </div>
       </div>
 

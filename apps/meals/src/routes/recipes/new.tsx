@@ -5,12 +5,8 @@ import { api } from '@repo/convex';
 
 import type { RecipeFormValue } from '@/components/meals/types';
 import { RecipeForm } from '@/components/meals/RecipeForm';
-import { getMealsBaseUrl } from '@/config/basePath';
 import { FIXTURE_MODE } from '@/config/runtime';
 import { createFixtureRecipe } from '@/lib/fixtureRecipes';
-
-// eslint-disable-next-line turbo/no-undeclared-env-vars
-const APP_BASE_URL = getMealsBaseUrl(import.meta.env.DEV);
 
 export const Route = createFileRoute('/recipes/new')({ ssr: !FIXTURE_MODE, component: NewRecipeRoute });
 
@@ -32,13 +28,5 @@ function NewRecipeRoute() {
     }
   }
 
-  return (
-    <RecipeForm
-      mode="create"
-      onSubmit={handleSubmit}
-      submitting={submitting}
-      submitError={submitError}
-      baseUrl={APP_BASE_URL}
-    />
-  );
+  return <RecipeForm mode="create" onSubmit={handleSubmit} submitting={submitting} submitError={submitError} />;
 }

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Check, MoveDown, MoveUp, Plus, Trash2 } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
 
 import { MealSectionTabs } from './MealSectionTabs';
-import { mealHref } from './links';
 import type { FormEvent } from 'react';
 import type { RecipeFormValue } from './types';
 import { cn } from '@/lib/utils';
@@ -30,8 +30,7 @@ type RecipeFormProps = {
   initialValue?: RecipeFormValue;
   submitting?: boolean;
   submitError?: string;
-  cancelHref?: string;
-  baseUrl?: string;
+  cancelRecipeId?: string;
   onSubmit: (value: RecipeFormValue) => void | Promise<void>;
 };
 
@@ -40,8 +39,7 @@ export function RecipeForm({
   initialValue = EMPTY_VALUE,
   submitting = false,
   submitError,
-  cancelHref,
-  baseUrl = '/meals/',
+  cancelRecipeId,
   onSubmit
 }: RecipeFormProps) {
   const [value, setValue] = useState<RecipeFormValue>(() => ({
@@ -106,14 +104,21 @@ export function RecipeForm({
       className="flex min-h-full flex-col gap-4 rounded-t-[24px] bg-warm-bg-card p-4 pb-24 md:h-full md:min-h-0 md:rounded-[28px] md:p-6"
     >
       <div className="flex items-center justify-between gap-3">
-        <MealSectionTabs baseUrl={baseUrl} />
+        <MealSectionTabs />
         <div className="hidden items-center gap-2 md:flex">
-          <a
-            href={cancelHref ?? mealHref(baseUrl)}
-            className="rounded-full px-3.5 py-2 text-xs font-semibold text-warm-text-secondary"
-          >
-            Cancel
-          </a>
+          {cancelRecipeId ? (
+            <Link
+              to="/recipes/$recipeId"
+              params={{ recipeId: cancelRecipeId }}
+              className="rounded-full px-3.5 py-2 text-xs font-semibold text-warm-text-secondary"
+            >
+              Cancel
+            </Link>
+          ) : (
+            <Link to="/" className="rounded-full px-3.5 py-2 text-xs font-semibold text-warm-text-secondary">
+              Cancel
+            </Link>
+          )}
           <button
             type="submit"
             disabled={submitting}

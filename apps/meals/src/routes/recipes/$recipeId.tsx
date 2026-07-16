@@ -3,12 +3,8 @@ import { useQuery } from 'convex/react';
 import { api } from '@repo/convex';
 
 import { RecipeDetail } from '@/components/meals/RecipeDetail';
-import { getMealsBaseUrl } from '@/config/basePath';
 import { FIXTURE_MODE } from '@/config/runtime';
 import { getFixtureRecipe } from '@/lib/fixtureRecipes';
-
-// eslint-disable-next-line turbo/no-undeclared-env-vars
-const APP_BASE_URL = getMealsBaseUrl(import.meta.env.DEV);
 
 export const Route = createFileRoute('/recipes/$recipeId')({ ssr: !FIXTURE_MODE, component: RecipeDetailRoute });
 
@@ -26,5 +22,5 @@ function RecipeDetailRoute() {
       </div>
     );
 
-  return <RecipeDetail recipe={recipe} baseUrl={APP_BASE_URL} />;
+  return <RecipeDetail recipe={recipe} />;
 }

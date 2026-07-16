@@ -2,17 +2,13 @@ import { createFileRoute } from '@tanstack/react-router';
 import { CalendarDays } from 'lucide-react';
 
 import { MealSectionTabs } from '@/components/meals/MealSectionTabs';
-import { getMealsBaseUrl } from '@/config/basePath';
-
-// eslint-disable-next-line turbo/no-undeclared-env-vars
-const APP_BASE_URL = getMealsBaseUrl(import.meta.env.DEV);
 
 export const Route = createFileRoute('/week')({ component: WeekRoute });
 
 export function WeekRoute() {
   return (
     <section className="flex min-h-full flex-col gap-6 rounded-t-[24px] bg-warm-bg-card p-4 md:h-full md:rounded-[28px] md:p-6">
-      <MealSectionTabs baseUrl={APP_BASE_URL} active="week" />
+      <MealSectionTabs active="week" />
       <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-[20px] border border-dashed border-warm-border bg-warm-bg-card-soft p-8 text-center">
         <span className="flex size-12 items-center justify-center rounded-2xl bg-meal-sage">
           <CalendarDays aria-hidden="true" size={22} />

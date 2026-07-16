@@ -3,12 +3,8 @@ import { useQuery } from 'convex/react';
 import { api } from '@repo/convex';
 
 import { RecipeCollection } from '@/components/meals/RecipeCollection';
-import { getMealsBaseUrl } from '@/config/basePath';
 import { FIXTURE_MODE } from '@/config/runtime';
 import { listFixtureRecipes } from '@/lib/fixtureRecipes';
-
-// eslint-disable-next-line turbo/no-undeclared-env-vars
-const APP_BASE_URL = getMealsBaseUrl(import.meta.env.DEV);
 
 export const Route = createFileRoute('/')({
   ssr: !FIXTURE_MODE,
@@ -23,5 +19,5 @@ function MealsCollectionRoute() {
     return <div className="h-full animate-pulse rounded-[28px] bg-warm-bg-card" aria-label="Loading meals" />;
   }
 
-  return <RecipeCollection recipes={visibleRecipes} baseUrl={APP_BASE_URL} />;
+  return <RecipeCollection recipes={visibleRecipes} />;
 }

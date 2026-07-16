@@ -1,19 +1,13 @@
 import { BookOpen, CalendarDays } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
 
-import { mealHref } from './links';
 import { cn } from '@/lib/utils';
 
-export function MealSectionTabs({
-  baseUrl = '/meals/',
-  active = 'meals'
-}: {
-  baseUrl?: string;
-  active?: 'week' | 'meals';
-}) {
+export function MealSectionTabs({ active = 'meals' }: { active?: 'week' | 'meals' }) {
   return (
     <div className="flex w-full max-w-64 rounded-full bg-meal-sand p-1 text-xs font-semibold">
-      <a
-        href={mealHref(baseUrl, 'week')}
+      <Link
+        to="/week"
         aria-current={active === 'week' ? 'page' : undefined}
         className={cn(
           'flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2',
@@ -22,9 +16,9 @@ export function MealSectionTabs({
       >
         <CalendarDays aria-hidden="true" size={14} />
         Week
-      </a>
-      <a
-        href={mealHref(baseUrl)}
+      </Link>
+      <Link
+        to="/"
         aria-current={active === 'meals' ? 'page' : undefined}
         className={cn(
           'flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2',
@@ -33,7 +27,7 @@ export function MealSectionTabs({
       >
         <BookOpen aria-hidden="true" size={14} />
         Meals
-      </a>
+      </Link>
     </div>
   );
 }
