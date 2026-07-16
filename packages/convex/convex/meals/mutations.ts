@@ -2,7 +2,15 @@ import { v } from 'convex/values';
 import { customAlphabet } from 'nanoid/non-secure';
 
 import { mutation, type MutationCtx } from '../_generated/server';
-import { buildRecipePublicId, normalizeRecipeInput, type RecipeInput } from './model';
+import {
+  buildRecipePublicId,
+  getWeekDates,
+  normalizeRecipeInput,
+  type RecipeInput,
+  setWeeklyMealAssignment,
+  type WeeklyMealAssignmentChange
+} from './model';
+import { weeklyMealPlanArgs } from './schema';
 
 const createSeed = customAlphabet('abcdefghjkmnpqrstuvwxyz23456789', 8);
 const CREATE_RECIPE_PUBLIC_ID_ATTEMPTS = 3;
@@ -64,6 +72,50 @@ export async function updateRecipeHandler(ctx: RecipesMutationCtx, args: RecipeI
   return { ...existing, ...patch };
 }
 
+type WeeklyMealAssignmentArgs = WeeklyMealAssignmentChange & {
+  weekStart: string;
+};
+
+export async function setWeeklyMealAssignmentHandler(ctx: RecipesMutationCtx, args: WeeklyMealAssignmentArgs) {
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity) throw new Error('Not authenticated');
+  getWeekDates(args.weekStart);
+
+  if (args.recipePublicId) {
+    const recipe = await findRecipeByPublicId(ctx, args.recipePublicId);
+    if (!recipe) throw new Error('Recipe unavailable');
+  }
+
+  const existing = await ctx.db
+    .query('weeklyMealPlans')
+    .withIndex('by_week_start', (q) => q.eq('weekStart', args.weekStart))
+    .unique();
+  const assignments = setWeeklyMealAssignment(existing?.assignments ?? [], {
+    day: args.day,
+    meal: args.meal,
+    recipePublicId: args.recipePublicId
+  });
+  const now = Date.now();
+  const patch = {
+    assignments,
+    updatedAt: now,
+    updatedByUserId: identity.subject
+  };
+
+  if (existing) {
+    await ctx.db.patch(existing._id, patch);
+    return { ...existing, ...patch };
+  }
+
+  const row = {
+    weekStart: args.weekStart,
+    ...patch,
+    createdAt: now
+  };
+  const id = await ctx.db.insert('weeklyMealPlans', row);
+  return { _id: id, ...row };
+}
+
 const recipeArgs = {
   name: v.string(),
   description: v.string(),
@@ -82,4 +134,9 @@ export const createRecipe = mutation({
 export const updateRecipe = mutation({
   args: { publicId: v.string(), ...recipeArgs },
   handler: updateRecipeHandler
+});
+
+export const setWeeklyMealAssignmentMutation = mutation({
+  args: weeklyMealPlanArgs,
+  handler: setWeeklyMealAssignmentHandler
 });

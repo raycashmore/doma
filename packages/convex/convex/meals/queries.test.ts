@@ -1,6 +1,17 @@
 import { describe, expect, it } from 'vitest';
 
-import { readRecipeByPublicId, readRecipes } from './queries';
+import * as mealQueries from './queries';
+
+const { readRecipeByPublicId, readRecipes } = mealQueries;
+
+type FutureAsyncFunction = (...args: never[]) => Promise<unknown>;
+
+function getFutureHandler<TFunction extends FutureAsyncFunction>(name: string): TFunction {
+  const candidate = (mealQueries as Record<string, unknown>)[name];
+  if (typeof candidate === 'function') return candidate as TFunction;
+
+  return (() => Promise.reject(new Error(`${name} is not implemented`))) as TFunction;
+}
 
 const firstRecipe = {
   _id: 'recipe_row_1',
@@ -78,5 +89,59 @@ describe('readRecipeByPublicId', () => {
         publicId: firstRecipe.publicId
       })
     ).resolves.toEqual(firstRecipe);
+  });
+});
+
+describe('readWeeklyMealPlan', () => {
+  const plan = {
+    _id: 'plan_row_1',
+    weekStart: '2026-07-20',
+    assignments: [{ day: 'monday', meal: 'dinner', recipePublicId: 'recipe_first' }],
+    createdAt: 1,
+    updatedAt: 2,
+    updatedByUserId: 'user_123'
+  } as const;
+
+  function createWeeklyPlanCtx(identity: { subject: string } | null) {
+    return {
+      auth: { getUserIdentity: async () => identity },
+      db: {
+        query: (table: string) => {
+          expect(table).toBe('weeklyMealPlans');
+          return {
+            withIndex: (index: string, apply: (q: { eq: (field: string, value: string) => unknown }) => unknown) => {
+              expect(index).toBe('by_week_start');
+              let weekStart = '';
+              apply({
+                eq: (field, value) => {
+                  expect(field).toBe('weekStart');
+                  weekStart = value;
+                  return value;
+                }
+              });
+              return { unique: async () => (plan.weekStart === weekStart ? plan : null) };
+            }
+          };
+        }
+      }
+    };
+  }
+
+  it('requires authentication before reading a shared weekly meal plan', async () => {
+    const readWeeklyMealPlan =
+      getFutureHandler<(ctx: unknown, args: { weekStart: string }) => Promise<unknown>>('readWeeklyMealPlan');
+
+    await expect(readWeeklyMealPlan(createWeeklyPlanCtx(null), { weekStart: plan.weekStart })).rejects.toThrow(
+      'Not authenticated'
+    );
+  });
+
+  it('returns the plan stored for the requested Monday', async () => {
+    const readWeeklyMealPlan =
+      getFutureHandler<(ctx: unknown, args: { weekStart: string }) => Promise<unknown>>('readWeeklyMealPlan');
+
+    await expect(
+      readWeeklyMealPlan(createWeeklyPlanCtx({ subject: 'user_456' }), { weekStart: plan.weekStart })
+    ).resolves.toEqual(plan);
   });
 });

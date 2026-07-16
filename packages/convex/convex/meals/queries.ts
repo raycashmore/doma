@@ -1,6 +1,7 @@
 import { v } from 'convex/values';
 
 import { query, type QueryCtx } from '../_generated/server';
+import { getWeekDates } from './model';
 
 type RecipesQueryCtx = Pick<QueryCtx, 'auth' | 'db'>;
 
@@ -23,6 +24,15 @@ export async function readRecipeByPublicId(ctx: RecipesQueryCtx, { publicId }: {
     .unique();
 }
 
+export async function readWeeklyMealPlan(ctx: RecipesQueryCtx, { weekStart }: { weekStart: string }) {
+  await requireHouseholdUser(ctx);
+  getWeekDates(weekStart);
+  return ctx.db
+    .query('weeklyMealPlans')
+    .withIndex('by_week_start', (q) => q.eq('weekStart', weekStart))
+    .unique();
+}
+
 export const listRecipes = query({
   args: {},
   handler: readRecipes
@@ -31,4 +41,9 @@ export const listRecipes = query({
 export const getRecipeByPublicId = query({
   args: { publicId: v.string() },
   handler: readRecipeByPublicId
+});
+
+export const getWeeklyMealPlan = query({
+  args: { weekStart: v.string() },
+  handler: readWeeklyMealPlan
 });

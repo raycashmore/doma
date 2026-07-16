@@ -10,7 +10,7 @@ Doma is a Vercel Multi-Zones monorepo. `apps/home` owns the apex domain and rewr
 | `apps/budget`                | TanStack Start       | Mounts at `/budget`, port 3001                                               |
 | `apps/schedule`              | Next.js (App Router) | Mounts at `/schedule`, port 3003                                             |
 | `apps/lists`                 | SvelteKit            | Mounts at `/lists`, port 3004; native Svelte shell using shared tokens       |
-| `apps/meals`                 | TanStack Start       | Mounts at `/meals`, port 3005; household cookbook zone                       |
+| `apps/meals`                 | TanStack Start       | Mounts at `/meals`, port 3005; household cookbook and weekday planning zone  |
 | `apps/api-bot`               | Hono on Vercel       | Shared bot gateway for Telegram delivery and chat                            |
 | `apps/api-*`                 | (per-experiment)     | Convention for non-Convex backends                                           |
 | `packages/convex`            | —                    | Shared Convex schema/functions (`@repo/convex`)                              |

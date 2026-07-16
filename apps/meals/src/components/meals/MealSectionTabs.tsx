@@ -3,9 +3,9 @@ import { Link } from '@tanstack/react-router';
 
 import { cn } from '@/lib/utils';
 
-export function MealSectionTabs({ active = 'meals' }: { active?: 'week' | 'meals' }) {
+export function MealSectionTabs({ active = 'meals', className }: { active?: 'week' | 'meals'; className?: string }) {
   return (
-    <div className="flex w-full max-w-64 rounded-full bg-meal-sand p-1 text-xs font-semibold">
+    <div className={cn('flex w-full max-w-64 rounded-full bg-meal-sand p-1 text-xs font-semibold', className)}>
       <Link
         to="/week"
         aria-current={active === 'week' ? 'page' : undefined}

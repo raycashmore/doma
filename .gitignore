@@ -45,6 +45,7 @@ yarn-error.log*
 
 # Local only
 /data
+/design-qa.md
 /docs/superpowers/
 /docs/wip/
 /.superpowers/

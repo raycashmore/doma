@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const iconDirectory = resolve(process.cwd(), 'public/icons');
+const styles = readFileSync(resolve(process.cwd(), 'src/styles.css'), 'utf8');
 const viteConfig = readFileSync(resolve(process.cwd(), 'vite.config.ts'), 'utf8');
 
 const iconFiles = [
@@ -28,5 +29,11 @@ describe('Meals PWA assets', () => {
     expect(viteConfig).toContain('src: `${MEALS_BASE_URL}icons/icon-512.png`');
     expect(viteConfig).toContain('src: `${MEALS_BASE_URL}icons/icon-maskable-192.png`');
     expect(viteConfig).toContain('src: `${MEALS_BASE_URL}icons/icon-maskable-512.png`');
+  });
+
+  it('hides the shared mobile navigation when installed as a standalone app', () => {
+    expect(styles).toMatch(
+      /@media\s*\(display-mode:\s*standalone\)\s*\{[\s\S]*?\.mobile-app-nav\s*\{[\s\S]*?display:\s*none;?[\s\S]*?\}\s*\}/
+    );
   });
 });

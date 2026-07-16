@@ -62,6 +62,9 @@ item owner.
 The cookbook collection, detail, create, and edit screens use the approved
 Pencil frames as their visual source. The collection supports search and
 suitability filters; recipe forms preserve ordered free-form ingredients. The
-`/meals/week` route is reserved for future planning. Local no-auth development
-uses generic persisted fixtures, while production requires Clerk and Convex and
-fails closed when either is missing.
+responsive `/meals/week` route assigns recipes to Monday-to-Friday school lunch
+and dinner slots, persists manual changes, and derives a reviewable shopping
+review from the recipes' exact ingredient lines. Suggestion and Lists handoff
+controls explain their unavailable state until agent integration is added.
+Local no-auth development uses generic persisted fixtures, while production
+requires Clerk and Convex and fails closed when either is missing.

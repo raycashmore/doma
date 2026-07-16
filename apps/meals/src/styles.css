@@ -5,6 +5,12 @@
 
 @source "../../../packages/shell/src/**/*.{ts,tsx}";
 
+@media (display-mode: standalone) {
+  .mobile-app-nav {
+    display: none;
+  }
+}
+
 :root {
   --meal-sand: #f2e4c9;
   --meal-butter: #ffe8a8;
