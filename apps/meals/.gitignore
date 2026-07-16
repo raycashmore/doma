@@ -9,4 +9,3 @@ dist-ssr
 .output
 .vinxi
 convex/_generated
-**/routeTree.gen.ts
