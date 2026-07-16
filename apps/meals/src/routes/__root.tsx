@@ -32,7 +32,7 @@ export const Route = createRootRoute({
 
 function RootDocument() {
   const app = (
-    <AppFrame appId="meals" title="Meals" isDev={IS_DEV} mainClassName="md:pb-7 md:pr-7 md:pl-2">
+    <AppFrame appId="meals" title="Meals" isDev={IS_DEV}>
       {MEALS_RUNTIME.mode === 'misconfigured' ? <ConfigurationError message={MEALS_RUNTIME.message} /> : <Outlet />}
     </AppFrame>
   );
