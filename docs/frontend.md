@@ -50,3 +50,18 @@ first-version layout shape: list picker, central item pane, and item detail
 space.
 
 For visual work without a Clerk session, run `pnpm --filter lists dev:no-auth`.
+
+## Meals
+
+`apps/meals` is a TanStack Start zone mounted at `/meals`. It follows the
+Budget zone's base-path, Clerk, Convex, shared-shell, tokens, and PWA patterns,
+and runs locally on port 3005. The zone owns cookbook UI only; its recipe data
+comes from `packages/convex/convex/meals/`, while Lists remains the shopping
+item owner.
+
+The cookbook collection, detail, create, and edit screens use the approved
+Pencil frames as their visual source. The collection supports search and
+suitability filters; recipe forms preserve ordered free-form ingredients. The
+`/meals/week` route is reserved for future planning. Local no-auth development
+uses generic persisted fixtures, while production requires Clerk and Convex and
+fails closed when either is missing.

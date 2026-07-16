@@ -92,6 +92,38 @@ describe('ItemDetailPanel', () => {
     expect(onSaveNotes).toHaveBeenCalledWith('Updated generic note');
   });
 
+  it('edits multiline text property values', async () => {
+    const setValueDraftText = vi.fn();
+    const onSaveValue = vi.fn();
+    const ingredients = {
+      _id: 'ingredients',
+      listId: 'list',
+      name: 'Ingredients',
+      type: 'text' as const,
+      sortOrder: 0
+    };
+    const { target } = renderPanel({
+      properties: [ingredients],
+      valueEditorPropertyId: ingredients._id,
+      valueDraftText: '500g pasta\n1 jar sauce',
+      setValueDraftText,
+      onSaveValue
+    });
+    await tick();
+    const editor = target.querySelector<HTMLTextAreaElement>('textarea[placeholder="Add ingredients"]');
+
+    expect(editor?.value).toBe('500g pasta\n1 jar sauce');
+
+    editor!.value = '500g pasta\n1 jar sauce\n1 onion';
+    editor!.dispatchEvent(new InputEvent('input', { bubbles: true }));
+
+    expect(setValueDraftText).toHaveBeenCalledWith('500g pasta\n1 jar sauce\n1 onion');
+
+    [...target.querySelectorAll('button')].find((button) => button.textContent?.trim() === 'Save')?.click();
+
+    expect(onSaveValue).toHaveBeenCalledWith(ingredients);
+  });
+
   it('clears an assigned property value without opening its editor', async () => {
     const onClearValue = vi.fn();
     const property: VisibleListProperty = {

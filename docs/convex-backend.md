@@ -71,6 +71,17 @@ Removed stored fields:
 
 All monetary values remain integer cents. Rate fields remain floats.
 
+## Meals cookbook
+
+The `meals/` module owns the shared household cookbook. Its `recipes` table and
+authenticated queries and mutations serve every signed-in household user; it is
+not a Lists model and does not write shopping-list items.
+
+Recipes store a name, short description, preparation time, serving label,
+suitability tags, ordered free-form ingredient lines, and instructions. The
+module preserves ingredient-line order but does not parse quantities, scale
+servings, normalise ingredients, or model pantry state.
+
 ## Schedule ingestion
 
 The `schedule/` module (`packages/convex/convex/schedule/`) ingests a family's

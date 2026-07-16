@@ -24,6 +24,7 @@ Doma gives each problem a focused surface:
 - **Budget** turns raw financial captures into monthly trends and account views.
 - **Schedule** reshapes shared calendars into a readable week for the household.
 - **Lists** supports flexible personal and shared checklists with typed properties.
+- **Meals** is the household cookbook, with recipes kept separate from shopping-list items.
 - **AI Bot** turns calendar details into short, actionable morning briefings, delivered through a provider-neutral notification gateway.
 
 <table>
@@ -78,6 +79,7 @@ one domain. Vercel Multi-Zones lets every app build and deploy independently:
 | Budget      | Finance dashboard and analysis               | TanStack Start + React 19 |
 | Schedule    | Readable weekly household calendar           | Next.js App Router        |
 | Lists       | Personal and shared structured lists         | SvelteKit + Svelte 5      |
+| Meals       | Household cookbook                           | TanStack Start + React 19 |
 | Bot gateway | Notifications, linking, and inbound commands | Hono                      |
 
 The zones share a Clerk session, Convex backend, navigation registry, and design
@@ -88,7 +90,7 @@ runtime and deployment boundary without losing the feel of a single product.
 
 ### One product, independent zones
 
-The apex app rewrites `/budget`, `/schedule`, and `/lists` to separate Vercel
+The apex app rewrites `/budget`, `/schedule`, `/lists`, and `/meals` to separate Vercel
 projects. A broken experiment in one app does not have to block every other app,
 and each surface can evolve or deploy on its own cadence.
 
@@ -156,6 +158,7 @@ Each UI runs on its own port because Vercel rewrites are not active locally:
 - Budget: [localhost:3001](http://localhost:3001)
 - Schedule: [localhost:3003](http://localhost:3003)
 - Lists: [localhost:3004](http://localhost:3004)
+- Meals: [localhost:3005](http://localhost:3005)
 
 Common workspace checks:
 

@@ -1,0 +1,40 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import '@repo/tokens/tokens.css';
+@import '@repo/tokens/theme.css';
+
+@source "../../../packages/shell/src/**/*.{ts,tsx}";
+
+:root {
+  --meal-sand: #f2e4c9;
+  --meal-butter: #ffe8a8;
+  --meal-sage: #d8e9d2;
+  --meal-sky: #d7e3fb;
+  --meal-lavender: #e6ddf7;
+  --meal-peach: #ffdfc7;
+}
+
+@theme inline {
+  --color-meal-sand: var(--meal-sand);
+  --color-meal-butter: var(--meal-butter);
+  --color-meal-sage: var(--meal-sage);
+  --color-meal-sky: var(--meal-sky);
+  --color-meal-lavender: var(--meal-lavender);
+  --color-meal-peach: var(--meal-peach);
+}
+
+body {
+  @apply m-0;
+  font-family: var(--warm-font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
