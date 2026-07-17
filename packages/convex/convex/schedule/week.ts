@@ -43,6 +43,14 @@ export function currentWeekRange(now: Date, tz: string): { timeMin: string; time
   };
 }
 
+export function planningHorizonRange(now: Date, tz: string): { timeMin: string; timeMax: string } {
+  const current = currentWeekRange(now, tz);
+  return {
+    timeMin: current.timeMin,
+    timeMax: new Date(Date.parse(current.timeMax) + 7 * 24 * 60 * 60 * 1000).toISOString()
+  };
+}
+
 /**
  * Epoch ms for local midnight (00:00 in `tz`) of a `YYYY-MM-DD` calendar date.
  *

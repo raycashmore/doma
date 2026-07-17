@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 
 import { runWeeklyMealsAgent } from '../../apps/api-agent/src/agents/weekly-meals/run.ts';
+import type { WeeklyMealsRunTrace } from '../../apps/api-agent/src/agents/weekly-meals/trace.ts';
 import { loadJsonlDataset } from '../shared/dataset.ts';
 import { runEvalCases } from '../shared/grader.ts';
 import { renderScorecard, summarizeEvalResults } from '../shared/report.ts';
@@ -14,6 +15,7 @@ const traces: unknown[] = [];
 const results = await runEvalCases({
   cases,
   execute: async (testCase) => {
+    let capturedTrace: WeeklyMealsRunTrace | undefined;
     const result = await runWeeklyMealsAgent({
       model,
       input: {
@@ -28,14 +30,20 @@ const results = await runEvalCases({
           planUpdatedAt: null,
           slots: testCase.input.openSlots as never
         }),
-        listSavedRecipes: async () => testCase.input.recipes,
+        listSavedRecipes: async () => testCase.input.recipes.map((recipe) => ({ ...recipe, updatedAt: 1 })),
         getWeekBusyness: async () => testCase.input.busyness as never
       },
       saveTrace: (trace) => {
+        capturedTrace = trace;
         traces.push(trace);
       }
     });
-    return result.outcome;
+    if (!capturedTrace) throw new Error('Weekly meals agent did not capture an eval trace');
+    return {
+      outcome: result.outcome,
+      stepCount: capturedTrace.stepCount,
+      stopReason: capturedTrace.stopReason
+    };
   },
   graders: [weeklyMealsSafetyGrader]
 });

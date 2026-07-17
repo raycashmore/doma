@@ -78,6 +78,18 @@ type WeeklyMealAssignmentArgs = WeeklyMealAssignmentChange & {
 
 type ApplyWeeklyMealProposalCtx = Pick<MutationCtx, 'auth' | 'db'>;
 
+function reviewedRecipeVersion(inputSnapshotJson: string, recipePublicId: string) {
+  try {
+    const snapshot = JSON.parse(inputSnapshotJson) as {
+      recipes?: Array<{ publicId?: unknown; updatedAt?: unknown }>;
+    };
+    const recipe = snapshot.recipes?.find((candidate) => candidate.publicId === recipePublicId);
+    return typeof recipe?.updatedAt === 'number' ? recipe.updatedAt : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function applyWeeklyMealProposalHandler(ctx: ApplyWeeklyMealProposalCtx, args: { runId: string }) {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) throw new Error('Not authenticated');
@@ -89,6 +101,7 @@ export async function applyWeeklyMealProposalHandler(ctx: ApplyWeeklyMealProposa
   if (!run || run.userId !== identity.subject) throw new Error('Meal proposal unavailable');
   if (run.appliedAt) throw new Error('Meal proposal has already been applied');
   if (run.expiresAt <= Date.now()) throw new Error('Meal proposal has expired');
+  if (run.validationStatus !== 'valid') throw new Error('Meal proposal unavailable');
   if (run.outcome.kind !== 'proposal') throw new Error('Meal proposal unavailable');
 
   getWeekDates(run.weekStart);
@@ -109,6 +122,9 @@ export async function applyWeeklyMealProposalHandler(ctx: ApplyWeeklyMealProposa
 
     const recipe = await findRecipeByPublicId(ctx, proposal.recipePublicId);
     if (!recipe) throw new Error('Recipe unavailable');
+    if (recipe.updatedAt !== reviewedRecipeVersion(run.inputSnapshotJson, proposal.recipePublicId)) {
+      throw new Error('Meal proposal is stale');
+    }
     const requiredTag = proposal.meal === 'schoolLunch' ? 'School lunch' : 'Dinner';
     if (!recipe.mealSuitabilityTags.includes(requiredTag)) throw new Error('Recipe is not suitable for this meal');
 

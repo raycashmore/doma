@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import type { LanguageModel } from 'ai';
 
 import { createWeeklyMealsAgent, WEEKLY_MEALS_PROMPT_VERSION } from './agent.js';
-import type { MealSlot, SavedRecipe, WeeklyMealsOutcome, WeeklyMealsRunInput } from './schemas.js';
+import type { MealSlot, OpenMealSlots, SavedRecipe, WeeklyMealsOutcome, WeeklyMealsRunInput } from './schemas.js';
 import { mealTypes, weekdays, weeklyMealsRunInputSchema } from './schemas.js';
 import type { WeeklyMealsToolDependencies } from './tools.js';
 import { createWeeklyMealsTools } from './tools.js';
@@ -21,6 +21,25 @@ function modelName(model: LanguageModel) {
 
 function slotKey(slot: MealSlot) {
   return `${slot.day}:${slot.meal}`;
+}
+
+function hasGroundedReason(
+  reason: string,
+  recipe: SavedRecipe,
+  busyness: NonNullable<WeeklyMealsRunTrace['inputSnapshot']['busyness']>,
+  slot: MealSlot
+) {
+  if (/\b(pantry|ingredient|quantity|servings?|yield)\b/i.test(reason)) return false;
+  const normalized = reason.toLowerCase();
+  const dayBusyness = busyness.find(({ day }) => day === slot.day)?.level;
+  return (
+    normalized.includes('saved') ||
+    normalized.includes(recipe.name.toLowerCase()) ||
+    normalized.includes(recipe.preparationTime.toLowerCase()) ||
+    recipe.mealSuitabilityTags.some((tag) => normalized.includes(tag.toLowerCase())) ||
+    (recipe.mealSuitabilityTags.includes('Quick') && normalized.includes('quick')) ||
+    (dayBusyness === 'busy' && normalized.includes('busy'))
+  );
 }
 
 function validateProposal({
@@ -61,6 +80,9 @@ function validateProposal({
     if (/\bleftovers?\b/i.test(assignment.reason)) {
       return { status: 'invalid', reason: 'unsupported_leftovers_claim' };
     }
+    if (!hasGroundedReason(assignment.reason, recipe, snapshot.busyness, assignment)) {
+      return { status: 'invalid', reason: 'ungrounded_reason' };
+    }
   }
   return { status: 'valid' };
 }
@@ -98,9 +120,58 @@ export async function runWeeklyMealsAgent({
     promptVersion: WEEKLY_MEALS_PROMPT_VERSION,
     startedAt
   });
+  const openSlotsStartedAt = now();
+  let preflightOpenSlots: OpenMealSlots;
+  try {
+    preflightOpenSlots = await dependencies.getOpenMealSlots();
+  } catch (error) {
+    partialTrace.toolCalls.push({
+      toolName: 'getOpenMealSlots',
+      status: 'error',
+      durationMs: now() - openSlotsStartedAt,
+      error: error instanceof Error ? error.message : String(error)
+    });
+    const completedAt = now();
+    await saveTrace({
+      ...partialTrace,
+      completedAt,
+      expiresAt: startedAt + WEEKLY_MEALS_TRACE_RETENTION_MS,
+      stepCount: 0,
+      stopReason: 'planning_context_failed',
+      tokenUsage: { input: 0, output: 0 },
+      outcome: unavailableOutcome,
+      validation: { status: 'invalid', reason: 'open_slots_unavailable' }
+    });
+    return { runId, outcome: unavailableOutcome };
+  }
+  if (preflightOpenSlots.slots.length === 0) {
+    partialTrace.inputSnapshot.openMealSlots = preflightOpenSlots;
+    partialTrace.toolCalls.push({
+      toolName: 'getOpenMealSlots',
+      status: 'success',
+      durationMs: now() - openSlotsStartedAt,
+      output: preflightOpenSlots
+    });
+    const outcome: WeeklyMealsOutcome = {
+      kind: 'cannotPropose',
+      reason: 'There are no empty weekday meal slots to fill.'
+    };
+    const completedAt = now();
+    await saveTrace({
+      ...partialTrace,
+      completedAt,
+      expiresAt: startedAt + WEEKLY_MEALS_TRACE_RETENTION_MS,
+      stepCount: 0,
+      stopReason: 'no_open_slots',
+      tokenUsage: { input: 0, output: 0 },
+      outcome,
+      validation: { status: 'valid' }
+    });
+    return { runId, outcome };
+  }
   let stepCount = 0;
   const agentTools = createWeeklyMealsTools({
-    dependencies,
+    dependencies: { ...dependencies, getOpenMealSlots: async () => preflightOpenSlots },
     now,
     trace: {
       record: (toolCall) => partialTrace.toolCalls.push(toolCall),

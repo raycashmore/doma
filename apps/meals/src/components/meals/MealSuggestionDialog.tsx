@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { LoaderCircle, Sparkles, X } from 'lucide-react';
 
-import { MessageResponse } from '../ai-elements/MessageResponse';
+import { MessageResponse } from '../ai-elements/message';
 import { DAY_NAMES, MEAL_NAMES } from './weeklyMealPlannerModel';
 import type { WeeklyMealProposal } from './weeklyMealPlannerModel';
 

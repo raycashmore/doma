@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { currentWeekRange, zonedDateStartMs } from './week';
+import { currentWeekRange, planningHorizonRange, zonedDateStartMs } from './week';
 
 describe('currentWeekRange', () => {
   it('returns Monday 00:00 to next Monday 00:00 in UTC', () => {
@@ -28,6 +28,15 @@ describe('currentWeekRange', () => {
     const { timeMin, timeMax } = currentWeekRange(new Date('2026-05-24T14:00:00Z'), 'Australia/Brisbane');
     expect(timeMin).toBe('2026-05-24T14:00:00.000Z'); // that same Monday 00:00 Brisbane
     expect(timeMax).toBe('2026-05-31T14:00:00.000Z');
+  });
+});
+
+describe('planningHorizonRange', () => {
+  it('covers the current and following calendar weeks for meal planning', () => {
+    expect(planningHorizonRange(new Date('2026-05-31T05:00:00Z'), 'UTC')).toEqual({
+      timeMin: '2026-05-25T00:00:00.000Z',
+      timeMax: '2026-06-08T00:00:00.000Z'
+    });
   });
 });
 

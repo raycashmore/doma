@@ -64,7 +64,9 @@ read-only planning tools, typed outcomes, post-generation validation, and
 privacy-safe traces. Convex remains authoritative: it supplies tool context,
 stores traces for 30 days, and atomically rejects stale or tampered proposals
 when Meals applies a reviewed run. The agent never writes Lists or infers
-leftovers.
+leftovers. Schedule ingestion caches the current and following week so the
+agent's target-week busyness is date-correct while the Schedule UI remains a
+current-week view.
 
 ## PWA
 

@@ -1,6 +1,7 @@
 import { v } from 'convex/values';
 
 import { mutation, type MutationCtx, query, type QueryCtx } from '../_generated/server';
+import { zonedDateStartMs } from '../schedule/week';
 import { getWeekDates, WEEKDAYS, WEEKLY_MEAL_TYPES } from './model';
 import { weeklyMealAgentOutcome } from './schema';
 
@@ -9,24 +10,16 @@ function requireAgentServiceToken(serviceToken: string) {
   if (!expectedToken || serviceToken !== expectedToken) throw new Error('Unauthorized');
 }
 
-function startOfCalendarDay(date: string) {
-  return new Date(`${date}T00:00:00.000Z`).getTime();
-}
-
-function weekdayForInstant(value: number) {
-  const timeZone = process.env.SCHEDULE_TZ ?? 'UTC';
-  return new Intl.DateTimeFormat('en-US', { timeZone, weekday: 'long' }).format(new Date(value)).toLowerCase();
-}
-
 function busyLevel(durationHours: number) {
   return durationHours >= 6 ? ('busy' as const) : durationHours <= 2 ? ('quiet' as const) : ('normal' as const);
 }
 
 export async function readAgentPlanningContext(
   ctx: Pick<QueryCtx, 'db'>,
-  args: { serviceToken: string; weekStart: string }
+  args: { serviceToken: string; weekStart: string; userId: string }
 ) {
   requireAgentServiceToken(args.serviceToken);
+  if (!args.userId) throw new Error('Unauthorized');
   const dates = getWeekDates(args.weekStart);
   const [plan, recipes, events] = await Promise.all([
     ctx.db
@@ -46,30 +39,28 @@ export async function readAgentPlanningContext(
         WEEKLY_MEAL_TYPES.flatMap((meal) => (occupied.has(`${day}:${meal}`) ? [] : [{ day, meal }]))
       )
     },
-    recipes: recipes.map(({ publicId, name, description, preparationTime, mealSuitabilityTags }) => ({
+    recipes: recipes.map(({ publicId, name, description, preparationTime, mealSuitabilityTags, updatedAt }) => ({
       publicId,
       name,
       description,
       preparationTime,
-      mealSuitabilityTags
+      mealSuitabilityTags,
+      updatedAt
     })),
     busyness: WEEKDAYS.map((day, index) => {
-      const start = startOfCalendarDay(dates[index] ?? '');
+      const start = zonedDateStartMs(dates[index] ?? '', process.env.SCHEDULE_TZ ?? 'UTC');
       const end = start + 24 * 60 * 60 * 1000;
-      const exactDurationHours = events.reduce(
+      const durationHours = events.reduce(
         (total, event) => total + Math.max(0, Math.min(event.end, end) - Math.max(event.start, start)) / 3_600_000,
         0
       );
-      const weekdayDurationHours = events
-        .filter((event) => weekdayForInstant(event.start) === day)
-        .reduce((total, event) => total + Math.max(0, event.end - event.start) / 3_600_000, 0);
-      return { day, level: busyLevel(exactDurationHours || weekdayDurationHours) };
+      return { day, level: busyLevel(durationHours) };
     })
   };
 }
 
 export const planningContext = query({
-  args: { serviceToken: v.string(), weekStart: v.string() },
+  args: { serviceToken: v.string(), weekStart: v.string(), userId: v.string() },
   handler: readAgentPlanningContext
 });
 

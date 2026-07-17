@@ -22,7 +22,8 @@ export const savedRecipeSchema = z.object({
   name: z.string(),
   description: z.string(),
   preparationTime: z.string(),
-  mealSuitabilityTags: z.array(z.string())
+  mealSuitabilityTags: z.array(z.string()),
+  updatedAt: z.number()
 });
 
 export const dayBusynessSchema = z.object({

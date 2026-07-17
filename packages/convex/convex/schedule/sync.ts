@@ -9,7 +9,7 @@ import { parseJsonEnv, parseScheduleCalendars, parseScheduleMembers } from './co
 import { normalizePrivateKey } from './credentials';
 import { type GoogleEvent, type ScheduleEventRow, toScheduleEvent } from './mapping';
 import { shouldSkipSync } from './syncPolicy';
-import { currentWeekRange } from './week';
+import { planningHorizonRange } from './week';
 
 // An unforced refresh reuses existing data if the last sync is this recent.
 const FRESH_MS = 60_000; // 1 minute
@@ -52,7 +52,7 @@ async function performSync(ctx: ActionCtx): Promise<{ count: number; lastSyncedA
   const { token } = await auth.getAccessToken();
   if (!token) throw new Error('Failed to obtain Google access token');
 
-  const { timeMin, timeMax } = currentWeekRange(new Date(), tz);
+  const { timeMin, timeMax } = planningHorizonRange(new Date(), tz);
 
   const rows: ScheduleEventRow[] = [];
   // Intentional: a single calendar failure aborts the whole sync rather than

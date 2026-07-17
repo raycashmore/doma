@@ -11,6 +11,7 @@ import { createWeeklyMealsConvex } from './convex/weeklyMeals.js';
 
 export function createApp(config: AgentConfig = getConfig()) {
   const app = new Hono();
+  app.onError((_error, c) => c.json({ error: 'internal_server_error' }, 500));
   app.get('/health', (c) => c.json({ ok: true }));
   app.post('/weekly-meals', async (c) => {
     const auth = await authenticateClerkRequest(c.req.raw, config);
@@ -18,7 +19,7 @@ export function createApp(config: AgentConfig = getConfig()) {
 
     const body = weeklyMealsRunInputSchema.omit({ userId: true }).safeParse(await c.req.json().catch(() => null));
     if (!body.success) return c.json({ error: 'invalid_request' }, 400);
-    const convex = createWeeklyMealsConvex(config, body.data.weekStart);
+    const convex = createWeeklyMealsConvex(config, body.data.weekStart, auth.userId);
     const result = await runWeeklyMealsAgent({
       model: config.weeklyMealsModel,
       input: { userId: auth.userId, ...body.data },

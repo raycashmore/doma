@@ -112,7 +112,8 @@ cron:
   in the configured tz; member derivation + row transform; skip-if-fresh
   decision; private-key newline normalization).
 - `sync.ts` — a `"use node"` module with `performSync` (service-account
-  `google-auth-library` auth → fetch current week `singleEvents=true` → replace),
+  `google-auth-library` auth → fetch current and following week
+  `singleEvents=true` → replace),
   exposed two ways: `run` (internal, for the CLI/ops) and `refresh` (public,
   **Clerk-gated** — the app's entry point; unforced calls skip when data is
   fresh, the button passes `force`).

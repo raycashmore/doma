@@ -10,9 +10,11 @@ type PlanningContext = {
   busyness: NonNullable<WeeklyMealsRunTrace['inputSnapshot']['busyness']>;
 };
 
-const planningContext = makeFunctionReference<'query', { serviceToken: string; weekStart: string }, PlanningContext>(
-  'meals/agentContext:planningContext'
-);
+const planningContext = makeFunctionReference<
+  'query',
+  { serviceToken: string; weekStart: string; userId: string },
+  PlanningContext
+>('meals/agentContext:planningContext');
 
 const recordRun = makeFunctionReference<
   'mutation',
@@ -20,11 +22,15 @@ const recordRun = makeFunctionReference<
   { runId: string }
 >('meals/agentContext:recordRun');
 
-export function createWeeklyMealsConvex(config: AgentConfig, weekStart: string) {
+export function createWeeklyMealsConvex(config: AgentConfig, weekStart: string, userId: string) {
   const client = new ConvexHttpClient(config.convexUrl);
   let contextPromise: Promise<PlanningContext> | undefined;
   const readContext = () =>
-    (contextPromise ??= client.query(planningContext, { serviceToken: config.agentServiceToken, weekStart }));
+    (contextPromise ??= client.query(planningContext, {
+      serviceToken: config.agentServiceToken,
+      weekStart,
+      userId
+    }));
 
   return {
     tools: {

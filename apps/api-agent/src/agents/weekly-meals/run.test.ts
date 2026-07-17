@@ -9,6 +9,38 @@ const usage = {
 };
 
 describe('runWeeklyMealsAgent', () => {
+  it('recognizes a complete week without invoking the model or unnecessary tools', async () => {
+    const doGenerate = vi.fn();
+    const model = new MockLanguageModelV3({ modelId: 'test/weekly-meals', doGenerate });
+    const saveTrace = vi.fn();
+    const listSavedRecipes = vi.fn();
+    const getWeekBusyness = vi.fn();
+
+    const result = await runWeeklyMealsAgent({
+      model,
+      input: { userId: 'user_123', weekStart: '2026-07-20', expectedPlanUpdatedAt: 42 },
+      tools: {
+        getOpenMealSlots: async () => ({ weekStart: '2026-07-20', planUpdatedAt: 42, slots: [] }),
+        listSavedRecipes,
+        getWeekBusyness
+      },
+      saveTrace,
+      createRunId: () => 'run_complete',
+      now: () => 1_700_000_000_000
+    });
+
+    expect(result).toEqual({
+      runId: 'run_complete',
+      outcome: { kind: 'cannotPropose', reason: 'There are no empty weekday meal slots to fill.' }
+    });
+    expect(doGenerate).not.toHaveBeenCalled();
+    expect(listSavedRecipes).not.toHaveBeenCalled();
+    expect(getWeekBusyness).not.toHaveBeenCalled();
+    expect(saveTrace).toHaveBeenCalledWith(
+      expect.objectContaining({ stopReason: 'no_open_slots', stepCount: 0, validation: { status: 'valid' } })
+    );
+  });
+
   it('uses the three read-only tools and stores a grounded typed proposal trace', async () => {
     let generation = 0;
     const model = new MockLanguageModelV3({
@@ -73,7 +105,8 @@ describe('runWeeklyMealsAgent', () => {
             name: 'Vegetable wraps',
             description: 'A quick packed lunch.',
             preparationTime: '15 minutes',
-            mealSuitabilityTags: ['School lunch', 'Quick']
+            mealSuitabilityTags: ['School lunch', 'Quick'],
+            updatedAt: 40
           }
         ],
         getWeekBusyness: async () => [{ day: 'monday', level: 'busy' }]
@@ -117,7 +150,18 @@ describe('runWeeklyMealsAgent', () => {
     );
   });
 
-  it('fails closed when model output makes an unsupported leftovers claim', async () => {
+  it.each([
+    {
+      name: 'an unsupported leftovers claim',
+      reason: 'Use leftovers from Sunday.',
+      validationReason: 'unsupported_leftovers_claim'
+    },
+    {
+      name: 'an ungrounded pantry claim',
+      reason: 'The pantry has every ingredient and enough servings.',
+      validationReason: 'ungrounded_reason'
+    }
+  ])('fails closed when model output makes $name', async ({ reason, validationReason }) => {
     let generation = 0;
     const model = new MockLanguageModelV3({
       modelId: 'test/weekly-meals',
@@ -145,7 +189,7 @@ describe('runWeeklyMealsAgent', () => {
                         day: 'monday',
                         meal: 'dinner',
                         recipePublicId: 'recipe_pasta',
-                        reason: 'Use leftovers from Sunday.'
+                        reason
                       }
                     ]
                   })
@@ -173,7 +217,8 @@ describe('runWeeklyMealsAgent', () => {
             name: 'Vegetable pasta',
             description: 'A saved dinner.',
             preparationTime: '30 minutes',
-            mealSuitabilityTags: ['Dinner']
+            mealSuitabilityTags: ['Dinner'],
+            updatedAt: 40
           }
         ],
         getWeekBusyness: async () => [{ day: 'monday', level: 'normal' }]
@@ -183,7 +228,7 @@ describe('runWeeklyMealsAgent', () => {
 
     expect(result.outcome.kind).toBe('cannotPropose');
     expect(saveTrace).toHaveBeenCalledWith(
-      expect.objectContaining({ validation: { status: 'invalid', reason: 'unsupported_leftovers_claim' } })
+      expect.objectContaining({ validation: { status: 'invalid', reason: validationReason } })
     );
   });
 });

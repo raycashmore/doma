@@ -14,12 +14,14 @@ const recipes = [
   {
     _id: 'recipe_row_lunch',
     publicId: 'recipe_lunch',
-    mealSuitabilityTags: ['School lunch', 'Quick']
+    mealSuitabilityTags: ['School lunch', 'Quick'],
+    updatedAt: 30
   },
   {
     _id: 'recipe_row_dinner',
     publicId: 'recipe_dinner',
-    mealSuitabilityTags: ['Dinner']
+    mealSuitabilityTags: ['Dinner'],
+    updatedAt: 31
   }
 ];
 
@@ -30,6 +32,13 @@ const run = {
   weekStart: '2026-07-20',
   expectedPlanUpdatedAt: 42,
   expiresAt: 2_000,
+  validationStatus: 'valid',
+  inputSnapshotJson: JSON.stringify({
+    recipes: [
+      { publicId: 'recipe_lunch', updatedAt: 30 },
+      { publicId: 'recipe_dinner', updatedAt: 31 }
+    ]
+  }),
   outcome: {
     kind: 'proposal',
     assignments: [
@@ -49,11 +58,26 @@ const run = {
   }
 } as const;
 
-function createCtx(planUpdatedAt = 42) {
+type CtxOptions = {
+  identity?: { subject: string } | null;
+  planUpdatedAt?: number;
+  planAssignments?: Array<{ day: string; meal: string; recipePublicId: string }>;
+  recipeRows?: typeof recipes;
+  runRow?: typeof run | (Omit<typeof run, 'appliedAt'> & { appliedAt: number });
+};
+
+function createCtx(options: CtxOptions = {}) {
+  const {
+    identity = { subject: 'user_123' },
+    planUpdatedAt = 42,
+    planAssignments = [{ day: 'monday', meal: 'dinner', recipePublicId: 'recipe_existing' }],
+    recipeRows = recipes,
+    runRow = run
+  } = options;
   const plan = {
     _id: 'plan_row_1',
     weekStart: '2026-07-20',
-    assignments: [{ day: 'monday', meal: 'dinner', recipePublicId: 'recipe_existing' }],
+    assignments: planAssignments,
     createdAt: 1,
     updatedAt: planUpdatedAt,
     updatedByUserId: 'user_456'
@@ -61,7 +85,7 @@ function createCtx(planUpdatedAt = 42) {
   const patches: Array<{ id: string; patch: Record<string, unknown> }> = [];
   return {
     ctx: {
-      auth: { getUserIdentity: async () => ({ subject: 'user_123' }) },
+      auth: { getUserIdentity: async () => identity },
       db: {
         patch: async (id: string, patch: Record<string, unknown>) => patches.push({ id, patch }),
         insert: vi.fn(),
@@ -74,10 +98,11 @@ function createCtx(planUpdatedAt = 42) {
                 return nextValue;
               }
             });
-            if (table === 'weeklyMealAgentRuns') return { unique: async () => (value === run.runId ? run : null) };
+            if (table === 'weeklyMealAgentRuns')
+              return { unique: async () => (value === runRow.runId ? runRow : null) };
             if (table === 'weeklyMealPlans') return { unique: async () => (value === plan.weekStart ? plan : null) };
             if (table === 'recipes') {
-              return { unique: async () => recipes.find((recipe) => recipe.publicId === value) ?? null };
+              return { unique: async () => recipeRows.find((recipe) => recipe.publicId === value) ?? null };
             }
             throw new Error(`Unexpected table ${table}`);
           }
@@ -123,9 +148,69 @@ describe('applyWeeklyMealProposalHandler', () => {
 
   it('rejects a stale proposal before writing any assignment', async () => {
     vi.spyOn(Date, 'now').mockReturnValue(1_000);
-    const { ctx, patches } = createCtx(43);
+    const { ctx, patches } = createCtx({ planUpdatedAt: 43 });
 
     await expect(applyProposalHandler()(ctx, { runId: run.runId })).rejects.toThrow('Meal proposal is stale');
+    expect(patches).toEqual([]);
+  });
+
+  it.each([
+    {
+      name: 'another user',
+      options: { identity: { subject: 'user_456' } },
+      error: 'Meal proposal unavailable'
+    },
+    {
+      name: 'an already-applied run',
+      options: { runRow: { ...run, appliedAt: 900 } },
+      error: 'Meal proposal has already been applied'
+    },
+    {
+      name: 'an unknown recipe',
+      options: { recipeRows: [] },
+      error: 'Recipe unavailable'
+    },
+    {
+      name: 'a changed recipe',
+      options: {
+        recipeRows: recipes.map((recipe) =>
+          recipe.publicId === 'recipe_lunch' ? { ...recipe, updatedAt: 99 } : recipe
+        )
+      },
+      error: 'Meal proposal is stale'
+    },
+    {
+      name: 'an unsuitable recipe',
+      options: {
+        recipeRows: recipes.map((recipe) =>
+          recipe.publicId === 'recipe_lunch' ? { ...recipe, mealSuitabilityTags: ['Dinner'] } : recipe
+        )
+      },
+      error: 'Recipe is not suitable for this meal'
+    },
+    {
+      name: 'a newly occupied target slot',
+      options: {
+        planAssignments: [
+          { day: 'monday', meal: 'dinner', recipePublicId: 'recipe_existing' },
+          { day: 'monday', meal: 'schoolLunch', recipePublicId: 'recipe_other' }
+        ]
+      },
+      error: 'Meal proposal is stale'
+    }
+  ])('rejects $name without partially writing', async ({ options, error }) => {
+    vi.spyOn(Date, 'now').mockReturnValue(1_000);
+    const { ctx, patches } = createCtx(options);
+
+    await expect(applyProposalHandler()(ctx, { runId: run.runId })).rejects.toThrow(error);
+    expect(patches).toEqual([]);
+  });
+
+  it('rejects an expired proposal without writing', async () => {
+    vi.spyOn(Date, 'now').mockReturnValue(2_000);
+    const { ctx, patches } = createCtx();
+
+    await expect(applyProposalHandler()(ctx, { runId: run.runId })).rejects.toThrow('Meal proposal has expired');
     expect(patches).toEqual([]);
   });
 });
