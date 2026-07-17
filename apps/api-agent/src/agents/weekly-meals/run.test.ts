@@ -1,7 +1,7 @@
 import { MockLanguageModelV3 } from 'ai/test';
 import { describe, expect, it, vi } from 'vitest';
 
-import { runWeeklyMealsAgent } from './run.js';
+import { runWeeklyMealsAgent, validateProposal } from './run.js';
 
 const usage = {
   inputTokens: { total: 10, noCache: 10, cacheRead: undefined, cacheWrite: undefined },
@@ -9,6 +9,49 @@ const usage = {
 };
 
 describe('runWeeklyMealsAgent', () => {
+  it('rejects proposals that omit any open slot', () => {
+    expect(
+      validateProposal({
+        input: { userId: 'user_123', weekStart: '2026-07-20', expectedPlanUpdatedAt: 42 },
+        outcome: {
+          kind: 'proposal',
+          assignments: [
+            {
+              day: 'monday',
+              meal: 'dinner',
+              recipePublicId: 'recipe_pasta',
+              reason: 'A saved dinner recipe.'
+            }
+          ]
+        },
+        snapshot: {
+          openMealSlots: {
+            weekStart: '2026-07-20',
+            planUpdatedAt: 42,
+            slots: [
+              { day: 'monday', meal: 'dinner' },
+              { day: 'tuesday', meal: 'dinner' }
+            ]
+          },
+          recipes: [
+            {
+              publicId: 'recipe_pasta',
+              name: 'Vegetable pasta',
+              description: 'A saved dinner.',
+              preparationTime: '30 minutes',
+              mealSuitabilityTags: ['Dinner'],
+              updatedAt: 40
+            }
+          ],
+          busyness: [
+            { day: 'monday', level: 'normal' },
+            { day: 'tuesday', level: 'normal' }
+          ]
+        }
+      })
+    ).toEqual({ status: 'invalid', reason: 'incomplete_slot_coverage' });
+  });
+
   it('recognizes a complete week without invoking the model or unnecessary tools', async () => {
     const doGenerate = vi.fn();
     const model = new MockLanguageModelV3({ modelId: 'test/weekly-meals', doGenerate });

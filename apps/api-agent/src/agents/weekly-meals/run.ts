@@ -42,7 +42,7 @@ function hasGroundedReason(
   );
 }
 
-function validateProposal({
+export function validateProposal({
   outcome,
   input,
   snapshot
@@ -84,6 +84,7 @@ function validateProposal({
       return { status: 'invalid', reason: 'ungrounded_reason' };
     }
   }
+  if (proposedSlots.size !== openSlots.size) return { status: 'invalid', reason: 'incomplete_slot_coverage' };
   return { status: 'valid' };
 }
 

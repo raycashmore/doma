@@ -20,20 +20,37 @@ import {
 export function WeekRoute() {
   const [weekStart, setWeekStart] = useState(() => getNextWeekStart(new Date()));
   const changeWeek = (weekDelta: number) => setWeekStart((current) => shiftWeekStart(current, weekDelta));
+  const suggestionsAvailable = isMealSuggestionWeek(weekStart, new Date());
 
   if (FIXTURE_MODE) {
-    return <FixtureWeekRoute key={weekStart} weekStart={weekStart} onWeekChange={changeWeek} />;
+    return (
+      <FixtureWeekRoute
+        key={weekStart}
+        weekStart={weekStart}
+        onWeekChange={changeWeek}
+        suggestionsAvailable={suggestionsAvailable}
+      />
+    );
   }
 
-  return <ConvexWeekRoute weekStart={weekStart} onWeekChange={changeWeek} />;
+  return (
+    <ConvexWeekRoute weekStart={weekStart} onWeekChange={changeWeek} suggestionsAvailable={suggestionsAvailable} />
+  );
+}
+
+export function isMealSuggestionWeek(weekStart: string, now: Date) {
+  const nextWeek = getNextWeekStart(now);
+  return weekStart === nextWeek || weekStart === shiftWeekStart(nextWeek, -1);
 }
 
 function FixtureWeekRoute({
   weekStart,
-  onWeekChange
+  onWeekChange,
+  suggestionsAvailable
 }: {
   weekStart: string;
   onWeekChange: (weekDelta: number) => void;
+  suggestionsAvailable: boolean;
 }) {
   const [plan, setPlan] = useState(() => getFixtureWeeklyMealPlan(weekStart));
   const handleAssignmentChange = (change: WeeklyMealAssignmentChange) => {
@@ -46,18 +63,24 @@ function FixtureWeekRoute({
       plan={plan}
       onWeekChange={onWeekChange}
       onAssignmentChange={handleAssignmentChange}
-      onRequestSuggestions={(instruction) => Promise.resolve(createFixtureWeeklyMealProposal(weekStart, instruction))}
-      onApplyProposal={(runId) => setPlan(applyFixtureWeeklyMealProposal(runId))}
+      onRequestSuggestions={
+        suggestionsAvailable
+          ? (instruction) => Promise.resolve(createFixtureWeeklyMealProposal(weekStart, instruction))
+          : undefined
+      }
+      onApplyProposal={suggestionsAvailable ? (runId) => setPlan(applyFixtureWeeklyMealProposal(runId)) : undefined}
     />
   );
 }
 
 function ConvexWeekRoute({
   weekStart,
-  onWeekChange
+  onWeekChange,
+  suggestionsAvailable
 }: {
   weekStart: string;
   onWeekChange: (weekDelta: number) => void;
+  suggestionsAvailable: boolean;
 }) {
   const recipes = useQuery(api.meals.queries.listRecipes, {});
   const plan = useQuery(api.meals.queries.getWeeklyMealPlan, { weekStart });
@@ -77,20 +100,28 @@ function ConvexWeekRoute({
       onAssignmentChange={async (change) => {
         await setAssignment({ weekStart, ...change });
       }}
-      onRequestSuggestions={async (instruction) => {
-        const token = await getToken();
-        if (!token) throw new Error('Not authenticated');
-        const response = await fetch('/api/agent/weekly-meals', {
-          method: 'POST',
-          headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
-          body: JSON.stringify({ weekStart, expectedPlanUpdatedAt: plan?.updatedAt ?? null, instruction })
-        });
-        if (!response.ok) throw new Error('Suggestions unavailable');
-        return (await response.json()) as WeeklyMealProposal;
-      }}
-      onApplyProposal={async (runId) => {
-        await applyProposal({ runId });
-      }}
+      onRequestSuggestions={
+        suggestionsAvailable
+          ? async (instruction) => {
+              const token = await getToken();
+              if (!token) throw new Error('Not authenticated');
+              const response = await fetch('/api/agent/weekly-meals', {
+                method: 'POST',
+                headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+                body: JSON.stringify({ weekStart, expectedPlanUpdatedAt: plan?.updatedAt ?? null, instruction })
+              });
+              if (!response.ok) throw new Error('Suggestions unavailable');
+              return (await response.json()) as WeeklyMealProposal;
+            }
+          : undefined
+      }
+      onApplyProposal={
+        suggestionsAvailable
+          ? async (runId) => {
+              await applyProposal({ runId });
+            }
+          : undefined
+      }
     />
   );
 }

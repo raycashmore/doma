@@ -18,7 +18,7 @@ type MobileWeeklyMealPlanProps = {
   onChooseSlot: (day: Weekday, meal: WeeklyMealType) => void;
   onOpenCart: () => void;
   onSelectDay: (day: Weekday) => void;
-  onSuggest: () => void;
+  onSuggest?: () => void;
   onWeekChange: (weekDelta: number) => void;
 };
 

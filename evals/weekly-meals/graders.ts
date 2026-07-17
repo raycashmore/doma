@@ -49,9 +49,18 @@ export const weeklyMealsSafetyGrader: EvalGrader<
     });
   if (output.kind === 'proposal') {
     const selectedRecipeIds = new Set<string>();
+    const selectedSlots = new Set<string>();
     for (const assignment of output.assignments) {
+      const assignmentSlot = `${assignment.day}:${assignment.meal}`;
+      if (selectedSlots.has(assignmentSlot))
+        failures.push({
+          category: 'coverage',
+          message: `Proposal assigned ${assignmentSlot} more than once`,
+          launchBlocking: true
+        });
+      selectedSlots.add(assignmentSlot);
       selectedRecipeIds.add(assignment.recipePublicId);
-      if (!testCase.expect.allowedSlots.includes(`${assignment.day}:${assignment.meal}`))
+      if (!testCase.expect.allowedSlots.includes(assignmentSlot))
         failures.push({
           category: 'locked-slot',
           message: 'Proposal changed a slot that was not open',
@@ -95,6 +104,13 @@ export const weeklyMealsSafetyGrader: EvalGrader<
           launchBlocking: true
         });
     }
+    const missingSlots = testCase.expect.allowedSlots.filter((slot) => !selectedSlots.has(slot));
+    if (missingSlots.length > 0)
+      failures.push({
+        category: 'coverage',
+        message: `Proposal did not cover open slots: ${missingSlots.join(', ')}`,
+        launchBlocking: true
+      });
     if (testCase.expect.requireVariety && output.assignments.length > 1 && selectedRecipeIds.size < 2)
       failures.push({
         category: 'variety',

@@ -1,9 +1,17 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { deleteExpiredRunsHandler } from './agentCleanup';
 import { readAgentPlanningContext, recordAgentRun } from './agentContext';
 
-afterEach(() => vi.unstubAllEnvs());
+beforeEach(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date('2026-07-18T00:00:00.000Z'));
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllEnvs();
+});
 
 describe('weekly meal agent Convex boundary', () => {
   it('requires the dedicated service token before reading planning context', async () => {
@@ -57,6 +65,19 @@ describe('weekly meal agent Convex boundary', () => {
     expect(result.openMealSlots.slots).not.toContainEqual({ day: 'monday', meal: 'dinner' });
     expect(result.recipes).toEqual([recipe]);
     expect(result.busyness).toContainEqual({ day: 'monday', level: 'busy' });
+  });
+
+  it('rejects planning outside the cached current-and-next-week schedule horizon', async () => {
+    vi.stubEnv('AGENT_SERVICE_TOKEN', 'expected');
+    vi.stubEnv('SCHEDULE_TZ', 'UTC');
+
+    await expect(
+      readAgentPlanningContext({ db: {} } as never, {
+        serviceToken: 'expected',
+        userId: 'user_123',
+        weekStart: '2026-08-03'
+      })
+    ).rejects.toThrow('outside the available schedule horizon');
   });
 
   it('records a trace without persisting its service credential', async () => {

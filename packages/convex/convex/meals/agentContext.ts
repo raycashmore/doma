@@ -1,7 +1,7 @@
 import { v } from 'convex/values';
 
 import { mutation, type MutationCtx, query, type QueryCtx } from '../_generated/server';
-import { zonedDateStartMs } from '../schedule/week';
+import { planningHorizonRange, zonedDateStartMs } from '../schedule/week';
 import { getWeekDates, WEEKDAYS, WEEKLY_MEAL_TYPES } from './model';
 import { weeklyMealAgentOutcome } from './schema';
 
@@ -20,7 +20,13 @@ export async function readAgentPlanningContext(
 ) {
   requireAgentServiceToken(args.serviceToken);
   if (!args.userId) throw new Error('Unauthorized');
+  const scheduleTimezone = process.env.SCHEDULE_TZ ?? 'UTC';
   const dates = getWeekDates(args.weekStart);
+  const planningHorizon = planningHorizonRange(new Date(), scheduleTimezone);
+  const targetWeekStart = zonedDateStartMs(args.weekStart, scheduleTimezone);
+  if (targetWeekStart < Date.parse(planningHorizon.timeMin) || targetWeekStart >= Date.parse(planningHorizon.timeMax)) {
+    throw new Error('Meal planning week is outside the available schedule horizon');
+  }
   const [plan, recipes, events] = await Promise.all([
     ctx.db
       .query('weeklyMealPlans')
@@ -48,7 +54,7 @@ export async function readAgentPlanningContext(
       updatedAt
     })),
     busyness: WEEKDAYS.map((day, index) => {
-      const start = zonedDateStartMs(dates[index] ?? '', process.env.SCHEDULE_TZ ?? 'UTC');
+      const start = zonedDateStartMs(dates[index] ?? '', scheduleTimezone);
       const end = start + 24 * 60 * 60 * 1000;
       const durationHours = events.reduce(
         (total, event) => total + Math.max(0, Math.min(event.end, end) - Math.max(event.start, start)) / 3_600_000,

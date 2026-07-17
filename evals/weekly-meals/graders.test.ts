@@ -33,7 +33,7 @@ describe('weeklyMealsSafetyGrader', () => {
     });
     assert.deepEqual(
       failures.map((failure) => failure.category),
-      ['locked-slot', 'grounding', 'unsupported-claim']
+      ['locked-slot', 'grounding', 'unsupported-claim', 'coverage']
     );
     assert.ok(failures.every((failure) => failure.launchBlocking));
   });
@@ -104,5 +104,34 @@ describe('weeklyMealsSafetyGrader', () => {
       ['step-limit', 'unsupported-claim', 'suitability', 'busy-fit', 'variety']
     );
     assert.ok(failures.every((failure) => failure.launchBlocking));
+  });
+
+  it('launch-blocks partial and duplicate slot coverage', async () => {
+    const failures = await weeklyMealsSafetyGrader({
+      testCase: {
+        ...testCase,
+        expect: {
+          kind: 'proposal',
+          allowedSlots: ['monday:dinner', 'tuesday:dinner'],
+          allowedRecipeIds: ['recipe_saved']
+        }
+      },
+      output: {
+        outcome: {
+          kind: 'proposal',
+          assignments: [
+            { day: 'monday', meal: 'dinner', recipePublicId: 'recipe_saved', reason: 'A saved recipe.' },
+            { day: 'monday', meal: 'dinner', recipePublicId: 'recipe_saved', reason: 'A saved recipe.' }
+          ]
+        },
+        stepCount: 2,
+        stopReason: 'stop'
+      }
+    });
+
+    assert.deepEqual(
+      failures.filter(({ category }) => category === 'coverage').map(({ message }) => message),
+      ['Proposal assigned monday:dinner more than once', 'Proposal did not cover open slots: tuesday:dinner']
+    );
   });
 });

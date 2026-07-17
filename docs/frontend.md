@@ -66,7 +66,8 @@ responsive `/meals/week` route assigns recipes to Monday-to-Friday school lunch
 and dinner slots, persists manual changes, and derives a reviewable shopping
 review from the recipes' exact ingredient lines. The Suggest meals flow accepts
 an optional one-off instruction, shows the agent's grounded reasons for review,
-and batch-fills empty slots only. Lists handoff remains an explicit unavailable
-future action.
+and batch-fills empty slots only. Suggestions are offered for the current and
+following week, matching the schedule cache's bounded planning horizon. Lists
+handoff remains an explicit unavailable future action.
 Local no-auth development uses generic persisted fixtures, while production
 requires Clerk and Convex and fails closed when either is missing.

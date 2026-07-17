@@ -90,6 +90,15 @@ describe('WeekRoute', () => {
     expect(within(shoppingReview).getByText('1 cucumber')).toBeDefined();
   });
 
+  it('offers suggestions only for weeks covered by the schedule planning horizon', async () => {
+    await renderWeek();
+    expect(screen.getByRole('button', { name: 'Suggest meals' })).toBeDefined();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Next week' }));
+
+    expect(screen.queryByRole('button', { name: 'Suggest meals' })).toBeNull();
+  });
+
   it('selects a weekday on mobile and lets the user replace a saved assignment', async () => {
     stubMobileViewport();
     await renderWeek();

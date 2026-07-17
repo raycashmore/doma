@@ -71,11 +71,13 @@ export function WeeklyMealPlanner({
       setAssignmentSaving(false);
     }
   };
-  const openSuggestions = () => {
-    setProposal(null);
-    setSuggestionError('');
-    setSuggestionsOpen(true);
-  };
+  const openSuggestions = onRequestSuggestions
+    ? () => {
+        setProposal(null);
+        setSuggestionError('');
+        setSuggestionsOpen(true);
+      }
+    : undefined;
   const requestSuggestions = async (instruction?: string) => {
     if (!onRequestSuggestions) return;
     setSuggestionState('requesting');

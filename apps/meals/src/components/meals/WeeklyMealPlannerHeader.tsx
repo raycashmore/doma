@@ -7,7 +7,7 @@ type WeeklyMealPlannerHeaderProps = {
   dates: Array<string>;
   isDesktop: boolean;
   onWeekChange: (weekDelta: number) => void;
-  onSuggest: () => void;
+  onSuggest?: () => void;
 };
 
 function WeekNavigation({ onWeekChange }: Pick<WeeklyMealPlannerHeaderProps, 'onWeekChange'>) {
@@ -33,7 +33,7 @@ function WeekNavigation({ onWeekChange }: Pick<WeeklyMealPlannerHeaderProps, 'on
   );
 }
 
-function SuggestButton({ onSuggest }: Pick<WeeklyMealPlannerHeaderProps, 'onSuggest'>) {
+function SuggestButton({ onSuggest }: { onSuggest: () => void }) {
   return (
     <button
       type="button"
@@ -55,7 +55,7 @@ export function WeeklyMealPlannerTabs({
   return (
     <div className="flex items-center justify-between gap-3">
       <MealSectionTabs active="week" className="max-w-none md:max-w-64" />
-      {isDesktop ? <SuggestButton onSuggest={onSuggest} /> : null}
+      {isDesktop && onSuggest ? <SuggestButton onSuggest={onSuggest} /> : null}
     </div>
   );
 }
@@ -68,7 +68,7 @@ export function WeeklyMealPlannerIntro({ dates, isDesktop, onWeekChange, onSugge
           <h2 className="font-warm-display text-[24px] leading-tight md:text-[30px]">Week plan</h2>
           {isDesktop ? <p className="mt-0.5 text-[13px] text-warm-text-secondary">{formatWeekRange(dates)}</p> : null}
         </div>
-        {isDesktop ? null : <SuggestButton onSuggest={onSuggest} />}
+        {isDesktop || !onSuggest ? null : <SuggestButton onSuggest={onSuggest} />}
       </div>
       {isDesktop ? (
         <WeekNavigation onWeekChange={onWeekChange} />
