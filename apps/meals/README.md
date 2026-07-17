@@ -6,8 +6,9 @@ recipes; Lists continues to own shopping-list items.
 The app provides an independently deployable TanStack Start zone, shared
 navigation, Clerk and Convex integration, and the Meals-owned recipe model. Its
 Pencil-based cookbook screens support browsing, searching, filtering, creating,
-viewing, and editing recipes. `/meals/week` is reserved with an explicit
-placeholder for future weekly planning.
+viewing, and editing recipes. `/meals/week` provides the Monday-to-Friday plan,
+with lunch and dinner assignments plus a removable-line review of the selected
+recipes' exact ingredient lines.
 
 ## Local development
 
@@ -37,3 +38,7 @@ mutations. A recipe keeps its name, description, preparation time, serving
 label, suitability tags, ordered ingredient lines, and instructions. Ingredient
 amounts are display content: Meals does not parse, scale, normalise, or model
 pantry state.
+
+The weekly plan stores recipe assignments by week, weekday, and meal type. Its
+shopping review remains a Meals-owned draft: removing a row does not change the
+recipe, and the app does not write to Lists until the agent handoff is added.

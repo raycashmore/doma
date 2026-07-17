@@ -82,6 +82,13 @@ suitability tags, ordered free-form ingredient lines, and instructions. The
 module preserves ingredient-line order but does not parse quantities, scale
 servings, normalise ingredients, or model pantry state.
 
+The `weeklyMealPlans` table stores one authenticated household plan per Monday
+week start. Each assignment references a recipe public id by weekday and meal
+type (`schoolLunch` or `dinner`). Queries return the saved assignments; mutations
+replace or clear one slot without copying ingredient data into the plan. The
+frontend derives its shopping review at read time from the assigned recipes and
+does not write Lists-owned shopping items.
+
 ## Schedule ingestion
 
 The `schedule/` module (`packages/convex/convex/schedule/`) ingests a family's

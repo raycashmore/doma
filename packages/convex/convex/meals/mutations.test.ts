@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createRecipeHandler, updateRecipeHandler } from './mutations';
+import { createRecipeHandler, setWeeklyMealAssignmentHandler, updateRecipeHandler } from './mutations';
 
 type RecipeRow = {
   _id: string;
@@ -132,5 +132,157 @@ describe('updateRecipeHandler', () => {
         }
       }
     ]);
+  });
+});
+
+describe('setWeeklyMealAssignmentHandler', () => {
+  const recipe = {
+    _id: 'recipe_row_1',
+    publicId: 'recipe_existing',
+    createdByUserId: 'user_123',
+    createdAt: 1,
+    updatedAt: 1,
+    ...recipeInput
+  };
+
+  function createWeeklyPlanMutationCtx(
+    identity: { subject: string } | null,
+    existingPlan: Record<string, unknown> | null = null
+  ) {
+    const insertedRows: Array<Record<string, unknown>> = [];
+    const patches: Array<{ id: string; patch: Record<string, unknown> }> = [];
+    return {
+      ctx: {
+        auth: { getUserIdentity: async () => identity },
+        db: {
+          insert: async (table: string, row: Record<string, unknown>) => {
+            expect(table).toBe('weeklyMealPlans');
+            insertedRows.push(row);
+            return 'plan_row_new';
+          },
+          patch: async (id: string, patch: Record<string, unknown>) => patches.push({ id, patch }),
+          query: (table: string) => ({
+            withIndex: (index: string, apply: (q: { eq: (field: string, value: string) => unknown }) => unknown) => {
+              let value = '';
+              apply({
+                eq: (_field, nextValue) => {
+                  value = nextValue;
+                  return nextValue;
+                }
+              });
+              if (table === 'recipes') {
+                expect(index).toBe('by_public_id');
+                return { unique: async () => (recipe.publicId === value ? recipe : null) };
+              }
+              expect(table).toBe('weeklyMealPlans');
+              expect(index).toBe('by_week_start');
+              return { unique: async () => existingPlan };
+            }
+          })
+        }
+      },
+      insertedRows,
+      patches
+    };
+  }
+
+  it('requires an authenticated household user', async () => {
+    await expect(
+      setWeeklyMealAssignmentHandler(createWeeklyPlanMutationCtx(null).ctx as never, {
+        weekStart: '2026-07-20',
+        day: 'monday',
+        meal: 'dinner',
+        recipePublicId: recipe.publicId
+      })
+    ).rejects.toThrow('Not authenticated');
+  });
+
+  it('creates a Meals-owned weekly plan when its first recipe is assigned', async () => {
+    const { ctx, insertedRows } = createWeeklyPlanMutationCtx({ subject: 'user_456' });
+    vi.spyOn(Date, 'now').mockReturnValue(1700000000000);
+
+    await setWeeklyMealAssignmentHandler(ctx as never, {
+      weekStart: '2026-07-20',
+      day: 'monday',
+      meal: 'dinner',
+      recipePublicId: recipe.publicId
+    });
+
+    expect(insertedRows).toEqual([
+      {
+        weekStart: '2026-07-20',
+        assignments: [{ day: 'monday', meal: 'dinner', recipePublicId: recipe.publicId }],
+        createdAt: 1700000000000,
+        updatedAt: 1700000000000,
+        updatedByUserId: 'user_456'
+      }
+    ]);
+  });
+
+  it('rejects an assignment that does not reference a saved recipe', async () => {
+    await expect(
+      setWeeklyMealAssignmentHandler(createWeeklyPlanMutationCtx({ subject: 'user_456' }).ctx as never, {
+        weekStart: '2026-07-20',
+        day: 'monday',
+        meal: 'dinner',
+        recipePublicId: 'recipe_missing'
+      })
+    ).rejects.toThrow('Recipe unavailable');
+  });
+
+  it('updates the selected slot on an existing weekly plan', async () => {
+    const existingPlan = {
+      _id: 'plan_row_1',
+      weekStart: '2026-07-20',
+      assignments: [{ day: 'monday', meal: 'dinner', recipePublicId: 'recipe_old' }],
+      createdAt: 1,
+      updatedAt: 1,
+      updatedByUserId: 'user_123'
+    };
+    const { ctx, patches } = createWeeklyPlanMutationCtx({ subject: 'user_456' }, existingPlan);
+    vi.spyOn(Date, 'now').mockReturnValue(1700000000000);
+
+    await setWeeklyMealAssignmentHandler(ctx as never, {
+      weekStart: '2026-07-20',
+      day: 'monday',
+      meal: 'dinner',
+      recipePublicId: recipe.publicId
+    });
+
+    expect(patches).toEqual([
+      {
+        id: existingPlan._id,
+        patch: {
+          assignments: [{ day: 'monday', meal: 'dinner', recipePublicId: recipe.publicId }],
+          updatedAt: 1700000000000,
+          updatedByUserId: 'user_456'
+        }
+      }
+    ]);
+  });
+
+  it('clears a selected slot without looking up a recipe', async () => {
+    const existingPlan = {
+      _id: 'plan_row_1',
+      weekStart: '2026-07-20',
+      assignments: [
+        { day: 'monday', meal: 'schoolLunch', recipePublicId: recipe.publicId },
+        { day: 'monday', meal: 'dinner', recipePublicId: recipe.publicId }
+      ],
+      createdAt: 1,
+      updatedAt: 1,
+      updatedByUserId: 'user_123'
+    };
+    const { ctx, patches } = createWeeklyPlanMutationCtx({ subject: 'user_456' }, existingPlan);
+    vi.spyOn(Date, 'now').mockReturnValue(1700000000000);
+
+    await setWeeklyMealAssignmentHandler(ctx as never, {
+      weekStart: '2026-07-20',
+      day: 'monday',
+      meal: 'schoolLunch',
+      recipePublicId: null
+    });
+
+    expect(patches[0]?.patch.assignments).toEqual([{ day: 'monday', meal: 'dinner', recipePublicId: recipe.publicId }]);
   });
 });
