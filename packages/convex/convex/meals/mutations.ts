@@ -76,6 +76,65 @@ type WeeklyMealAssignmentArgs = WeeklyMealAssignmentChange & {
   weekStart: string;
 };
 
+type ApplyWeeklyMealProposalCtx = Pick<MutationCtx, 'auth' | 'db'>;
+
+export async function applyWeeklyMealProposalHandler(ctx: ApplyWeeklyMealProposalCtx, args: { runId: string }) {
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity) throw new Error('Not authenticated');
+
+  const run = await ctx.db
+    .query('weeklyMealAgentRuns')
+    .withIndex('by_run_id', (q) => q.eq('runId', args.runId))
+    .unique();
+  if (!run || run.userId !== identity.subject) throw new Error('Meal proposal unavailable');
+  if (run.appliedAt) throw new Error('Meal proposal has already been applied');
+  if (run.expiresAt <= Date.now()) throw new Error('Meal proposal has expired');
+  if (run.outcome.kind !== 'proposal') throw new Error('Meal proposal unavailable');
+
+  getWeekDates(run.weekStart);
+  const existing = await ctx.db
+    .query('weeklyMealPlans')
+    .withIndex('by_week_start', (q) => q.eq('weekStart', run.weekStart))
+    .unique();
+  if ((existing?.updatedAt ?? null) !== run.expectedPlanUpdatedAt) {
+    throw new Error('Meal proposal is stale');
+  }
+
+  let assignments = existing?.assignments ?? [];
+  for (const proposal of run.outcome.assignments) {
+    const occupied = assignments.some(
+      (assignment) => assignment.day === proposal.day && assignment.meal === proposal.meal
+    );
+    if (occupied) throw new Error('Meal proposal is stale');
+
+    const recipe = await findRecipeByPublicId(ctx, proposal.recipePublicId);
+    if (!recipe) throw new Error('Recipe unavailable');
+    const requiredTag = proposal.meal === 'schoolLunch' ? 'School lunch' : 'Dinner';
+    if (!recipe.mealSuitabilityTags.includes(requiredTag)) throw new Error('Recipe is not suitable for this meal');
+
+    assignments = setWeeklyMealAssignment(assignments, {
+      day: proposal.day,
+      meal: proposal.meal,
+      recipePublicId: proposal.recipePublicId
+    });
+  }
+
+  const now = Date.now();
+  const patch = { assignments, updatedAt: now, updatedByUserId: identity.subject };
+  let plan;
+  if (existing) {
+    await ctx.db.patch(existing._id, patch);
+    plan = { ...existing, ...patch };
+  } else {
+    const row = { weekStart: run.weekStart, ...patch, createdAt: now };
+    const id = await ctx.db.insert('weeklyMealPlans', row);
+    plan = { _id: id, ...row };
+  }
+
+  await ctx.db.patch(run._id, { appliedAt: now });
+  return plan;
+}
+
 export async function setWeeklyMealAssignmentHandler(ctx: RecipesMutationCtx, args: WeeklyMealAssignmentArgs) {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) throw new Error('Not authenticated');
@@ -139,4 +198,9 @@ export const updateRecipe = mutation({
 export const setWeeklyMealAssignmentMutation = mutation({
   args: weeklyMealPlanArgs,
   handler: setWeeklyMealAssignmentHandler
+});
+
+export const applyWeeklyMealProposal = mutation({
+  args: { runId: v.string() },
+  handler: applyWeeklyMealProposalHandler
 });

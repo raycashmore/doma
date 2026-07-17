@@ -23,6 +23,7 @@ What you'll create:
 | Vercel project for Budget          | Vercel          | Lives behind a Vercel-assigned URL |
 | Vercel project for Schedule        | Vercel          | Lives behind a Vercel-assigned URL |
 | Vercel project for Bot gateway     | Vercel          | Receives Telegram webhooks + sends |
+| Vercel project for Agent API       | Vercel          | Runs inspectable AI SDK agents     |
 | Vercel project for each future app | Vercel          | One per app                        |
 
 ## Prerequisites
@@ -110,6 +111,11 @@ scope, and redeploy after changes.
 
 For Vercel Preview on the Bot gateway, set the same Clerk server credentials plus the bot gateway variables from [Bot Gateway Environment](#bot-gateway-environment). Use preview Telegram bots and preview Upstash databases where possible.
 
+For Vercel Preview on the Agent API, set the variables from
+[Agent API Environment](#agent-api-environment). Use the same preview Convex
+deployment as Meals and set the matching service token in both Vercel and
+Convex.
+
 If the Vercel Preview environment uses a temporary Convex deployment, seed that
 deployment by passing its current Convex URL:
 
@@ -181,6 +187,14 @@ Or via the dashboard:
 5. Register Telegram's webhook using the commands below. Vercel deploys do not do this for you.
 
 `apps/api-bot/vercel.json` rewrites all incoming paths to its Hono handler, so `/linking/*`, `/notifications/*`, `/telegram/*`, and `/health` are served by the same app.
+
+## Step 5a — Deploy Agent API
+
+Create a separate Vercel project rooted at `apps/api-agent`, using the Other
+framework preset, `pnpm build`, and no output directory. Set the variables in
+[Agent API Environment](#agent-api-environment), deploy it, and attach the
+stable domain used by Home's `/api/agent/*` rewrite. Its `vercel.json` routes
+`/weekly-meals` and `/health` to the Hono handler.
 
 ### Register Telegram webhook
 
@@ -387,6 +401,24 @@ returns `pairing_disabled`.
 
 Do not commit real bot tokens, Telegram IDs, chat IDs, or private message payloads. Notification attempts store metadata only; keep it that way when adding new channels or capabilities.
 
+## Agent API Environment
+
+`apps/api-agent` requires:
+
+| Variable                | Where it lives                         | Notes                                                                                     |
+| ----------------------- | -------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `CLERK_SECRET_KEY`      | Vercel Agent API, `.env.local`         | Verifies Meals bearer tokens                                                              |
+| `CLERK_PUBLISHABLE_KEY` | Vercel Agent API, `.env.local`         | Clerk backend configuration                                                               |
+| `APP_ORIGIN`            | Vercel Agent API, `.env.local`         | Authorized public Home origin                                                             |
+| `CONVEX_URL`            | Vercel Agent API, `.env.local`         | Matching Convex deployment                                                                |
+| `AGENT_SERVICE_TOKEN`   | Vercel Agent API, Convex, `.env.local` | Dedicated service credential; do not reuse the bot token                                  |
+| `WEEKLY_MEALS_AI_MODEL` | Vercel Agent API, `.env.local`         | AI Gateway model id                                                                       |
+| `AI_GATEWAY_API_KEY`    | Local Agent API                        | AI Gateway credential for local runs; Vercel deployments use their injected OIDC identity |
+
+The service persists structured inputs, tool outputs, validation results, and
+token usage for 30 days. It does not persist hidden reasoning or raw calendar
+events.
+
 Forwarded email capture uses Resend's `email.received` webhook at
 `/inbound-email/resend`. Configure that webhook on a publicly reachable Bot
 gateway production URL, not a Vercel preview URL protected by SSO/deployment
@@ -574,10 +606,13 @@ For local development:
 
 ```bash
 pnpm bot
+pnpm agent
 pnpm --filter home dev
+pnpm --filter meals dev
 ```
 
 Home proxies `/api/bot/*` to `http://localhost:3002` by default. Override with `BOT_GATEWAY_DEV_ORIGIN` if the bot gateway runs elsewhere.
+Meals proxies `/api/agent/*` to `http://localhost:3006` by default. Override with `AGENT_SERVICE_DEV_ORIGIN` when needed.
 
 ## Adding a new app later
 

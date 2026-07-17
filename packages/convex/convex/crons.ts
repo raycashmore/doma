@@ -24,6 +24,10 @@ type SpendingInsightDeliveryRunnerRefs = {
   runDueSpendingInsightDelivery: FunctionReference<'action', 'internal', Record<string, never>, unknown>;
 };
 
+type MealAgentCleanupRefs = {
+  deleteExpiredRuns: FunctionReference<'mutation', 'internal', Record<string, never>, unknown>;
+};
+
 const briefingDeliveryRunner: BriefingDeliveryRunnerRefs = (
   internal as unknown as {
     briefing: {
@@ -64,10 +68,15 @@ const insightDeliveryRunner: SpendingInsightDeliveryRunnerRefs = (
   }
 ).insights.deliveryRunner;
 
+const mealAgentCleanup: MealAgentCleanupRefs = (
+  internal as unknown as { meals: { agentCleanup: MealAgentCleanupRefs } }
+).meals.agentCleanup;
+
 crons.interval('morning briefing delivery', { minutes: 10 }, briefingDeliveryRunner.runDueMorningBriefingDelivery);
 crons.interval('forwarded email triage', { hours: 12 }, emailTriage.runDueForwardedEmailTriage);
 crons.interval('monthly spending insight sweep', { hours: 12 }, insightGeneration.runDueSpendingInsightSweep);
 crons.interval('monthly spending insight delivery', { hours: 1 }, insightDeliveryRunner.runDueSpendingInsightDelivery);
+crons.daily('weekly meal agent trace cleanup', { hourUTC: 15, minuteUTC: 0 }, mealAgentCleanup.deleteExpiredRuns);
 crons.daily(
   'forwarded email notice delivery morning',
   { hourUTC: 21, minuteUTC: 0 },

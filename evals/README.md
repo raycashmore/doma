@@ -22,3 +22,12 @@ even when the package-manager preflight has not linked `node_modules/.bin`.
 The demo uses generic fixture text only. Future eval datasets must keep using
 generic labels for members, calendars, Telegram identifiers, schools, events,
 finance accounts, and institutions.
+
+RAY-77 adds a live weekly-meals baseline with launch-blocking deterministic
+graders for locked slots, saved-recipe grounding, and unsupported leftover
+claims. It runs the real agent module against generic fixtures and retains each
+privacy-safe trace in memory for inspection:
+
+```bash
+WEEKLY_MEALS_AI_MODEL=openai/gpt-5.4-mini pnpm evals:weekly-meals
+```

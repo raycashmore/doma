@@ -1,7 +1,11 @@
 import { getNextWeekStart, setWeeklyMealAssignment } from '@repo/convex/meals/model';
+import { listFixtureRecipes } from './fixtureRecipes';
 import type { WeeklyMealAssignment, WeeklyMealAssignmentChange } from '@repo/convex/meals/model';
 
+import type { WeeklyMealProposal } from '@/components/meals/weeklyMealPlannerModel';
+
 const STORAGE_KEY = 'doma.meals.fixture-weekly-plans.v1';
+const proposals = new Map<string, { weekStart: string; assignments: Array<WeeklyMealAssignment> }>();
 
 const INITIAL_ASSIGNMENTS = [
   { day: 'monday', meal: 'schoolLunch', recipePublicId: 'recipe_veggie_wraps' },
@@ -50,4 +54,65 @@ export function setFixtureWeeklyMealAssignment(
   store[args.weekStart] = assignments;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
   return { weekStart: args.weekStart, assignments: cloneAssignments(assignments) };
+}
+
+export function createFixtureWeeklyMealProposal(weekStart: string, instruction?: string): WeeklyMealProposal {
+  const plan = getFixtureWeeklyMealPlan(weekStart);
+  const occupied = new Set(plan.assignments.map(({ day, meal }) => `${day}:${meal}`));
+  const used = new Set(plan.assignments.map(({ recipePublicId }) => recipePublicId));
+  const recipes = listFixtureRecipes();
+  const assignments = (['monday', 'tuesday', 'wednesday', 'thursday', 'friday'] as const).flatMap((day) =>
+    (['schoolLunch', 'dinner'] as const).flatMap((meal) => {
+      if (occupied.has(`${day}:${meal}`)) return [];
+      const tag = meal === 'schoolLunch' ? 'School lunch' : 'Dinner';
+      const candidates = recipes.filter((recipe) => recipe.mealSuitabilityTags.includes(tag));
+      const recipe = candidates.find((candidate) => !used.has(candidate.publicId)) ?? candidates[0];
+      used.add(recipe.publicId);
+      return [
+        {
+          day,
+          meal,
+          recipePublicId: recipe.publicId,
+          reason: instruction
+            ? `Fits the request and uses a saved ${tag.toLowerCase()} recipe.`
+            : `A suitable saved ${tag.toLowerCase()} recipe for this open slot.`
+        }
+      ];
+    })
+  );
+  if (!assignments.length)
+    return {
+      runId: 'fixture_none',
+      outcome: { kind: 'cannotPropose', reason: 'There are no empty meal slots to fill.' }
+    };
+  const runId = `fixture_${weekStart}_${Date.now()}`;
+  proposals.set(runId, {
+    weekStart,
+    assignments: assignments.map((assignment) => ({
+      day: assignment.day,
+      meal: assignment.meal,
+      recipePublicId: assignment.recipePublicId
+    }))
+  });
+  return { runId, outcome: { kind: 'proposal', assignments } };
+}
+
+export function applyFixtureWeeklyMealProposal(runId: string) {
+  const proposal = proposals.get(runId);
+  if (!proposal) throw new Error('Meal proposal unavailable');
+  const plan = getFixtureWeeklyMealPlan(proposal.weekStart);
+  for (const assignment of proposal.assignments) {
+    if (plan.assignments.some((current) => current.day === assignment.day && current.meal === assignment.meal)) {
+      throw new Error('Meal proposal is stale');
+    }
+  }
+  const assignments = proposal.assignments.reduce(
+    (current, assignment) => setWeeklyMealAssignment(current, assignment),
+    plan.assignments
+  );
+  const store = readStore();
+  store[proposal.weekStart] = assignments;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+  proposals.delete(runId);
+  return { weekStart: proposal.weekStart, assignments: cloneAssignments(assignments) };
 }

@@ -14,7 +14,9 @@
     "ci:local": "scripts/ci-local.sh",
     "evals": "node --experimental-strip-types evals/demo.ts",
     "evals:test": "node --experimental-strip-types --test evals/**/*.test.ts",
+    "evals:weekly-meals": "tsx evals/weekly-meals/run.ts",
     "bot": "pnpm --filter api-bot dev",
+    "agent": "pnpm --filter api-agent dev",
     "bot:test": "pnpm --filter api-bot test",
     "convex": "pnpm --filter @repo/convex dev",
     "seed": "pnpm --filter @repo/convex seed",
@@ -23,6 +25,7 @@
     "seed:url:clear": "pnpm --filter @repo/convex seed:clear"
   },
   "devDependencies": {
+    "@types/node": "^22.10.2",
     "prettier": "^3.7.4",
     "prettier-plugin-svelte": "^3.4.0",
     "tsx": "^4.21.0",

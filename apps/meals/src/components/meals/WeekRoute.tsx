@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuth } from '@clerk/clerk-react';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@repo/convex';
 import { getNextWeekStart, shiftWeekStart } from '@repo/convex/meals/model';
@@ -6,9 +7,15 @@ import { getNextWeekStart, shiftWeekStart } from '@repo/convex/meals/model';
 import { WeeklyMealPlanner } from './WeeklyMealPlanner';
 import type { WeeklyMealAssignmentChange } from '@repo/convex/meals/model';
 
+import type { WeeklyMealProposal } from './weeklyMealPlannerModel';
 import { FIXTURE_MODE } from '@/config/runtime';
 import { listFixtureRecipes } from '@/lib/fixtureRecipes';
-import { getFixtureWeeklyMealPlan, setFixtureWeeklyMealAssignment } from '@/lib/fixtureWeeklyMealPlans';
+import {
+  applyFixtureWeeklyMealProposal,
+  createFixtureWeeklyMealProposal,
+  getFixtureWeeklyMealPlan,
+  setFixtureWeeklyMealAssignment
+} from '@/lib/fixtureWeeklyMealPlans';
 
 export function WeekRoute() {
   const [weekStart, setWeekStart] = useState(() => getNextWeekStart(new Date()));
@@ -39,6 +46,8 @@ function FixtureWeekRoute({
       plan={plan}
       onWeekChange={onWeekChange}
       onAssignmentChange={handleAssignmentChange}
+      onRequestSuggestions={(instruction) => Promise.resolve(createFixtureWeeklyMealProposal(weekStart, instruction))}
+      onApplyProposal={(runId) => setPlan(applyFixtureWeeklyMealProposal(runId))}
     />
   );
 }
@@ -53,6 +62,8 @@ function ConvexWeekRoute({
   const recipes = useQuery(api.meals.queries.listRecipes, {});
   const plan = useQuery(api.meals.queries.getWeeklyMealPlan, { weekStart });
   const setAssignment = useMutation(api.meals.mutations.setWeeklyMealAssignmentMutation);
+  const applyProposal = useMutation(api.meals.mutations.applyWeeklyMealProposal);
+  const { getToken } = useAuth();
 
   if (recipes === undefined || plan === undefined) {
     return <WeeklyMealPlanLoading />;
@@ -65,6 +76,20 @@ function ConvexWeekRoute({
       onWeekChange={onWeekChange}
       onAssignmentChange={async (change) => {
         await setAssignment({ weekStart, ...change });
+      }}
+      onRequestSuggestions={async (instruction) => {
+        const token = await getToken();
+        if (!token) throw new Error('Not authenticated');
+        const response = await fetch('/api/agent/weekly-meals', {
+          method: 'POST',
+          headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+          body: JSON.stringify({ weekStart, expectedPlanUpdatedAt: plan?.updatedAt ?? null, instruction })
+        });
+        if (!response.ok) throw new Error('Suggestions unavailable');
+        return (await response.json()) as WeeklyMealProposal;
+      }}
+      onApplyProposal={async (runId) => {
+        await applyProposal({ runId });
       }}
     />
   );

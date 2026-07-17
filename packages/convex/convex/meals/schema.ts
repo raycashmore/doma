@@ -17,7 +17,7 @@ export const recipesTable = defineTable({
   .index('by_public_id', ['publicId'])
   .index('by_updated_at', ['updatedAt']);
 
-const weekday = v.union(
+export const weekday = v.union(
   v.literal('monday'),
   v.literal('tuesday'),
   v.literal('wednesday'),
@@ -25,7 +25,51 @@ const weekday = v.union(
   v.literal('friday')
 );
 
-const weeklyMealType = v.union(v.literal('schoolLunch'), v.literal('dinner'));
+export const weeklyMealType = v.union(v.literal('schoolLunch'), v.literal('dinner'));
+
+export const weeklyMealProposalAssignment = v.object({
+  day: weekday,
+  meal: weeklyMealType,
+  recipePublicId: v.string(),
+  reason: v.string()
+});
+
+export const weeklyMealAgentOutcome = v.union(
+  v.object({
+    kind: v.literal('proposal'),
+    assignments: v.array(weeklyMealProposalAssignment)
+  }),
+  v.object({
+    kind: v.literal('cannotPropose'),
+    reason: v.string()
+  })
+);
+
+export const weeklyMealAgentRunsTable = defineTable({
+  runId: v.string(),
+  userId: v.string(),
+  weekStart: v.string(),
+  expectedPlanUpdatedAt: v.union(v.number(), v.null()),
+  instruction: v.optional(v.string()),
+  model: v.string(),
+  promptVersion: v.string(),
+  startedAt: v.number(),
+  completedAt: v.number(),
+  expiresAt: v.number(),
+  stepCount: v.number(),
+  stopReason: v.string(),
+  inputTokens: v.number(),
+  outputTokens: v.number(),
+  toolCallsJson: v.string(),
+  inputSnapshotJson: v.string(),
+  outcome: weeklyMealAgentOutcome,
+  validationStatus: v.union(v.literal('valid'), v.literal('invalid')),
+  validationReason: v.optional(v.string()),
+  appliedAt: v.optional(v.number())
+})
+  .index('by_run_id', ['runId'])
+  .index('by_user_started_at', ['userId', 'startedAt'])
+  .index('by_expires_at', ['expiresAt']);
 
 export const weeklyMealPlansTable = defineTable({
   weekStart: v.string(),
