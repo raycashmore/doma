@@ -10,6 +10,17 @@ import type { RecipeView } from './types';
 export type WeeklyMealPlanView = {
   weekStart: string;
   assignments: Array<WeeklyMealAssignment>;
+  updatedAt?: number;
+};
+
+export type WeeklyMealProposal = {
+  runId: string;
+  outcome:
+    | {
+        kind: 'proposal';
+        assignments: Array<WeeklyMealAssignment & { reason: string }>;
+      }
+    | { kind: 'cannotPropose'; reason: string };
 };
 
 export type SlotSelection = Pick<WeeklyMealAssignmentChange, 'day' | 'meal'>;
@@ -19,6 +30,8 @@ export type WeeklyMealPlannerProps = {
   plan: WeeklyMealPlanView;
   onWeekChange: (weekDelta: number) => void;
   onAssignmentChange: (change: WeeklyMealAssignmentChange) => void | Promise<void>;
+  onRequestSuggestions?: (instruction?: string) => Promise<WeeklyMealProposal>;
+  onApplyProposal?: (runId: string) => void | Promise<void>;
 };
 
 export type ShoppingRow = {

@@ -64,7 +64,10 @@ Pencil frames as their visual source. The collection supports search and
 suitability filters; recipe forms preserve ordered free-form ingredients. The
 responsive `/meals/week` route assigns recipes to Monday-to-Friday school lunch
 and dinner slots, persists manual changes, and derives a reviewable shopping
-review from the recipes' exact ingredient lines. Suggestion and Lists handoff
-controls explain their unavailable state until agent integration is added.
+review from the recipes' exact ingredient lines. The Suggest meals flow accepts
+an optional one-off instruction, shows the agent's grounded reasons for review,
+and batch-fills empty slots only. Suggestions are offered for the current and
+following week, matching the schedule cache's bounded planning horizon. Lists
+handoff remains an explicit unavailable future action.
 Local no-auth development uses generic persisted fixtures, while production
 requires Clerk and Convex and fails closed when either is missing.

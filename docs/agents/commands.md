@@ -14,9 +14,11 @@ pnpm check-types   # TypeScript type checking
 pnpm test          # Run tests across packages that define them
 pnpm evals         # Run the local eval harness demo
 pnpm evals:test    # Run the local eval harness tests
+pnpm evals:weekly-meals # Run live weekly-meals agent evals (model credentials required)
 pnpm format        # Format with Prettier
 pnpm format:check  # Check formatting without writing (used in CI)
 pnpm bot           # Start the bot gateway on :3002
+pnpm agent         # Start the agent API on :3006
 pnpm bot:test      # Run bot gateway tests
 pnpm convex        # Start Convex dev for @repo/convex
 pnpm seed          # Seed Convex data
@@ -79,5 +81,7 @@ pnpm --filter schedule build    # Verify Schedule route/UI/build changes
 pnpm --filter api-bot dev       # Bot gateway on :3002
 pnpm --filter api-bot test      # Bot gateway Vitest suite
 pnpm --filter api-bot check-types # Bot gateway TypeScript check
+pnpm --filter api-agent dev     # Agent API on :3006
+pnpm --filter api-agent test    # Agent unit tests
 pnpm --filter home build        # Verify Home route/UI/build changes
 ```

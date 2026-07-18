@@ -1,8 +1,8 @@
 import { defineTable } from 'convex/server';
 import { v } from 'convex/values';
 
-// One row per expanded Google Calendar event instance for the current week.
-// The table is fully replaced on every sync, so it only ever holds this week.
+// One row per expanded Google Calendar event instance for the current and next week.
+// The table is fully replaced on every sync.
 export const scheduleEventsTable = defineTable({
   googleEventId: v.string(),
   calendarId: v.string(),

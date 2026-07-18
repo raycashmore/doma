@@ -2,6 +2,7 @@ import { v } from 'convex/values';
 
 import { internalMutation, internalQuery, query, type QueryCtx } from '../_generated/server';
 import { displayMembersFromConfig, parseScheduleMembers } from './config';
+import { currentWeekRange } from './week';
 
 const eventValidator = v.object({
   googleEventId: v.string(),
@@ -24,6 +25,14 @@ async function readLastSyncedAt(ctx: QueryCtx): Promise<number | null> {
     .withIndex('by_key', (q) => q.eq('key', 'default'))
     .unique();
   return meta?.lastSyncedAt ?? null;
+}
+
+async function readCurrentWeekEvents(ctx: QueryCtx) {
+  const { timeMin, timeMax } = currentWeekRange(new Date(), process.env.SCHEDULE_TZ ?? 'UTC');
+  const start = Date.parse(timeMin);
+  const end = Date.parse(timeMax);
+  const events = await ctx.db.query('scheduleEvents').withIndex('by_start').collect();
+  return events.filter((event) => event.end > start && event.start < end);
 }
 
 // Full-replace the table with the freshly-synced week and stamp the sync time.
@@ -66,7 +75,7 @@ export const currentWeek = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error('Not authenticated');
-    const events = await ctx.db.query('scheduleEvents').withIndex('by_start').collect();
+    const events = await readCurrentWeekEvents(ctx);
     return {
       events,
       members: displayMembersFromConfig(parseScheduleMembers()),
@@ -81,7 +90,7 @@ export const currentWeekForBot = query({
     const expectedToken = process.env.BOT_SERVICE_TOKEN;
     if (!expectedToken || serviceToken !== expectedToken) throw new Error('Unauthorized');
 
-    const events = await ctx.db.query('scheduleEvents').withIndex('by_start').collect();
+    const events = await readCurrentWeekEvents(ctx);
     return {
       events,
       members: displayMembersFromConfig(parseScheduleMembers()),

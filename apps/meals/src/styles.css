@@ -3,6 +3,7 @@
 @import '@repo/tokens/tokens.css';
 @import '@repo/tokens/theme.css';
 
+@source "../node_modules/streamdown/dist/*.js";
 @source "../../../packages/shell/src/**/*.{ts,tsx}";
 
 @media (display-mode: standalone) {

@@ -24,7 +24,7 @@ Doma gives each problem a focused surface:
 - **Budget** turns raw financial captures into monthly trends and account views.
 - **Schedule** reshapes shared calendars into a readable week for the household.
 - **Lists** supports flexible personal and shared checklists with typed properties.
-- **Meals** is the household cookbook and weekday meal planner, with recipes kept separate from shopping-list items.
+- **Meals** is the household cookbook and weekday meal planner, with reviewable AI suggestions that fill only empty slots while recipes remain separate from shopping-list items.
 - **AI Bot** turns calendar details into short, actionable morning briefings, delivered through a provider-neutral notification gateway.
 
 <table>
@@ -81,6 +81,7 @@ one domain. Vercel Multi-Zones lets every app build and deploy independently:
 | Lists       | Personal and shared structured lists         | SvelteKit + Svelte 5      |
 | Meals       | Household cookbook and weekday meal planning | TanStack Start + React 19 |
 | Bot gateway | Notifications, linking, and inbound commands | Hono                      |
+| Agent API   | Inspectable AI SDK planning agents           | Hono + Vercel AI SDK      |
 
 The zones share a Clerk session, Convex backend, navigation registry, and design
 tokens. Cross-app navigation uses real page loads, so each surface keeps its own
@@ -159,6 +160,7 @@ Each UI runs on its own port because Vercel rewrites are not active locally:
 - Schedule: [localhost:3003](http://localhost:3003)
 - Lists: [localhost:3004](http://localhost:3004)
 - Meals: [localhost:3005](http://localhost:3005)
+- Agent API: [localhost:3006](http://localhost:3006)
 
 Common workspace checks:
 

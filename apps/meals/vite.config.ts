@@ -12,6 +12,15 @@ import { MEALS_BASE_URL, getMealsBaseUrl } from './src/config/basePath';
 
 export default defineConfig(({ command }) => ({
   base: getMealsBaseUrl(command !== 'build'),
+  server: {
+    proxy: {
+      '/api/agent': {
+        target: process.env.AGENT_SERVICE_DEV_ORIGIN ?? 'http://localhost:3006',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/agent/, '') || '/'
+      }
+    }
+  },
   nitro: {
     baseURL: getMealsBaseUrl(command !== 'build')
   },

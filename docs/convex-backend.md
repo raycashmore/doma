@@ -89,6 +89,13 @@ replace or clear one slot without copying ingredient data into the plan. The
 frontend derives its shopping review at read time from the assigned recipes and
 does not write Lists-owned shopping items.
 
+Weekly meal proposals are recorded in `weeklyMealAgentRuns` as privacy-safe,
+structured traces with a 30-day expiry. Agent tools use a dedicated service
+token to read open slots, saved recipes, and normalized weekday busyness. The
+authenticated apply mutation checks run ownership, expiry, plan version, empty
+slots, and recipe suitability in one transaction before updating the plan; a
+stale proposal writes nothing. A daily Convex cron removes expired traces.
+
 ## Schedule ingestion
 
 The `schedule/` module (`packages/convex/convex/schedule/`) ingests a family's
@@ -105,7 +112,8 @@ cron:
   in the configured tz; member derivation + row transform; skip-if-fresh
   decision; private-key newline normalization).
 - `sync.ts` — a `"use node"` module with `performSync` (service-account
-  `google-auth-library` auth → fetch current week `singleEvents=true` → replace),
+  `google-auth-library` auth → fetch current and following week
+  `singleEvents=true` → replace),
   exposed two ways: `run` (internal, for the CLI/ops) and `refresh` (public,
   **Clerk-gated** — the app's entry point; unforced calls skip when data is
   fresh, the button passes `force`).

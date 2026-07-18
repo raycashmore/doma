@@ -80,6 +80,10 @@ _Avoid_: List item, generated meal, pantry item, shopping item
 A Monday-to-Friday household plan that assigns approved recipes to dinners and school lunches. It accounts for recipe suitability and schedule timing, including intentional leftovers, but does not include weekend meals.
 _Avoid_: Recipe list, grocery list, weekend menu
 
+**Weekly meal plan proposal**:
+A temporary, reviewable set of saved-recipe assignments for empty slots in a **weekly meal plan**. It does not change the weekly meal plan until a **household user** accepts the proposal as one batch, and it never replaces an occupied slot.
+_Avoid_: Replacement plan, generated meal plan, shopping draft
+
 **Active item order**:
 The manual ordering of active **list items**. A new active item is placed after the highest existing order (one past the current maximum), so completing or deleting items may leave gaps in the order numbers without affecting how items read. Gaps are harmless: items show in ascending order, ties broken by creation time. A reorder renumbers the active items densely from the top. Placing a new item by active count rather than highest-order-plus-one is a bug, because it can slot the item into an existing gap instead of the end.
 _Avoid_: Sort index, position field, dense rank

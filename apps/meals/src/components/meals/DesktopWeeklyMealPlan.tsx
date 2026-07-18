@@ -18,7 +18,7 @@ type DesktopWeeklyMealPlanProps = {
   onChooseSlot: (day: Weekday, meal: WeeklyMealType) => void;
   onRemoveShoppingRow: (id: string) => void;
   onSendToLists: () => void;
-  onSuggest: () => void;
+  onSuggest?: () => void;
   onWeekChange: (weekDelta: number) => void;
 };
 

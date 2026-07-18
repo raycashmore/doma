@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuth } from '@clerk/clerk-react';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@repo/convex';
 import { getNextWeekStart, shiftWeekStart } from '@repo/convex/meals/model';
@@ -6,27 +7,50 @@ import { getNextWeekStart, shiftWeekStart } from '@repo/convex/meals/model';
 import { WeeklyMealPlanner } from './WeeklyMealPlanner';
 import type { WeeklyMealAssignmentChange } from '@repo/convex/meals/model';
 
+import type { WeeklyMealProposal } from './weeklyMealPlannerModel';
 import { FIXTURE_MODE } from '@/config/runtime';
 import { listFixtureRecipes } from '@/lib/fixtureRecipes';
-import { getFixtureWeeklyMealPlan, setFixtureWeeklyMealAssignment } from '@/lib/fixtureWeeklyMealPlans';
+import {
+  applyFixtureWeeklyMealProposal,
+  createFixtureWeeklyMealProposal,
+  getFixtureWeeklyMealPlan,
+  setFixtureWeeklyMealAssignment
+} from '@/lib/fixtureWeeklyMealPlans';
 
 export function WeekRoute() {
   const [weekStart, setWeekStart] = useState(() => getNextWeekStart(new Date()));
   const changeWeek = (weekDelta: number) => setWeekStart((current) => shiftWeekStart(current, weekDelta));
+  const suggestionsAvailable = isMealSuggestionWeek(weekStart, new Date());
 
   if (FIXTURE_MODE) {
-    return <FixtureWeekRoute key={weekStart} weekStart={weekStart} onWeekChange={changeWeek} />;
+    return (
+      <FixtureWeekRoute
+        key={weekStart}
+        weekStart={weekStart}
+        onWeekChange={changeWeek}
+        suggestionsAvailable={suggestionsAvailable}
+      />
+    );
   }
 
-  return <ConvexWeekRoute weekStart={weekStart} onWeekChange={changeWeek} />;
+  return (
+    <ConvexWeekRoute weekStart={weekStart} onWeekChange={changeWeek} suggestionsAvailable={suggestionsAvailable} />
+  );
+}
+
+export function isMealSuggestionWeek(weekStart: string, now: Date) {
+  const nextWeek = getNextWeekStart(now);
+  return weekStart === nextWeek || weekStart === shiftWeekStart(nextWeek, -1);
 }
 
 function FixtureWeekRoute({
   weekStart,
-  onWeekChange
+  onWeekChange,
+  suggestionsAvailable
 }: {
   weekStart: string;
   onWeekChange: (weekDelta: number) => void;
+  suggestionsAvailable: boolean;
 }) {
   const [plan, setPlan] = useState(() => getFixtureWeeklyMealPlan(weekStart));
   const handleAssignmentChange = (change: WeeklyMealAssignmentChange) => {
@@ -39,20 +63,30 @@ function FixtureWeekRoute({
       plan={plan}
       onWeekChange={onWeekChange}
       onAssignmentChange={handleAssignmentChange}
+      onRequestSuggestions={
+        suggestionsAvailable
+          ? (instruction) => Promise.resolve(createFixtureWeeklyMealProposal(weekStart, instruction))
+          : undefined
+      }
+      onApplyProposal={suggestionsAvailable ? (runId) => setPlan(applyFixtureWeeklyMealProposal(runId)) : undefined}
     />
   );
 }
 
 function ConvexWeekRoute({
   weekStart,
-  onWeekChange
+  onWeekChange,
+  suggestionsAvailable
 }: {
   weekStart: string;
   onWeekChange: (weekDelta: number) => void;
+  suggestionsAvailable: boolean;
 }) {
   const recipes = useQuery(api.meals.queries.listRecipes, {});
   const plan = useQuery(api.meals.queries.getWeeklyMealPlan, { weekStart });
   const setAssignment = useMutation(api.meals.mutations.setWeeklyMealAssignmentMutation);
+  const applyProposal = useMutation(api.meals.mutations.applyWeeklyMealProposal);
+  const { getToken } = useAuth();
 
   if (recipes === undefined || plan === undefined) {
     return <WeeklyMealPlanLoading />;
@@ -66,6 +100,28 @@ function ConvexWeekRoute({
       onAssignmentChange={async (change) => {
         await setAssignment({ weekStart, ...change });
       }}
+      onRequestSuggestions={
+        suggestionsAvailable
+          ? async (instruction) => {
+              const token = await getToken();
+              if (!token) throw new Error('Not authenticated');
+              const response = await fetch('/api/agent/weekly-meals', {
+                method: 'POST',
+                headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+                body: JSON.stringify({ weekStart, expectedPlanUpdatedAt: plan?.updatedAt ?? null, instruction })
+              });
+              if (!response.ok) throw new Error('Suggestions unavailable');
+              return (await response.json()) as WeeklyMealProposal;
+            }
+          : undefined
+      }
+      onApplyProposal={
+        suggestionsAvailable
+          ? async (runId) => {
+              await applyProposal({ runId });
+            }
+          : undefined
+      }
     />
   );
 }

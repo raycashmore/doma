@@ -90,6 +90,15 @@ describe('WeekRoute', () => {
     expect(within(shoppingReview).getByText('1 cucumber')).toBeDefined();
   });
 
+  it('offers suggestions only for weeks covered by the schedule planning horizon', async () => {
+    await renderWeek();
+    expect(screen.getByRole('button', { name: 'Suggest meals' })).toBeDefined();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Next week' }));
+
+    expect(screen.queryByRole('button', { name: 'Suggest meals' })).toBeNull();
+  });
+
   it('selects a weekday on mobile and lets the user replace a saved assignment', async () => {
     stubMobileViewport();
     await renderWeek();
@@ -254,13 +263,24 @@ describe('WeekRoute', () => {
     expect(screen.getByRole('button', { name: 'Change Monday school lunch' }).textContent).toContain('Veggie wraps');
   });
 
-  it('explains that agent and Lists actions are unavailable instead of performing a fallback', async () => {
+  it('reviews and applies agent suggestions only to empty slots while keeping Lists explicit', async () => {
     await renderWeek();
 
     fireEvent.click(screen.getByRole('button', { name: 'Suggest meals' }));
-    expect(screen.getByRole('status').textContent).toContain(
-      'Meal suggestions will be available when the planning agent is connected.'
-    );
+    const dialog = screen.getByRole('dialog', { name: 'Meal suggestions' });
+    fireEvent.change(within(dialog).getByLabelText('Optional instruction'), { target: { value: 'Keep Friday quick' } });
+    await act(async () => {
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Create suggestions' }));
+      await Promise.resolve();
+    });
+    expect(within(dialog).getByText(/Friday dinner/).textContent).toContain('Chicken tray bake');
+    await act(async () => {
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Fill empty slots' }));
+      await Promise.resolve();
+    });
+    expect(screen.queryByRole('dialog', { name: 'Meal suggestions' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Change Friday dinner' }).textContent).toContain('Chicken tray bake');
+    expect(screen.getByRole('button', { name: 'Change Monday dinner' }).textContent).toContain('Chicken tray bake');
 
     fireEvent.click(screen.getByRole('button', { name: 'Send to Lists' }));
     expect(screen.getByRole('status').textContent).toContain(

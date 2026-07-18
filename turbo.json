@@ -3,6 +3,9 @@
   "ui": "tui",
   "globalEnv": [
     "BOT_GATEWAY_ORIGIN",
+    "AGENT_SERVICE_TOKEN",
+    "AGENT_SERVICE_DEV_ORIGIN",
+    "AI_GATEWAY_API_KEY",
     "BOT_SERVICE_TOKEN",
     "CLERK_JWT_ISSUER_DOMAIN",
     "CONVEX_URL",
@@ -27,7 +30,8 @@
     "SCHEDULE_TZ",
     "SPENDING_INSIGHT_AI_MODEL",
     "SPENDING_INSIGHT_RECIPIENT_USER_IDS",
-    "VITE_CONVEX_URL"
+    "VITE_CONVEX_URL",
+    "WEEKLY_MEALS_AI_MODEL"
   ],
   "tasks": {
     "build": {

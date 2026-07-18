@@ -20,6 +20,10 @@
       "destination": "https://bot.rayandromana.com/:path*"
     },
     {
+      "source": "/api/agent/:path*",
+      "destination": "https://agent.rayandromana.com/:path*"
+    },
+    {
       "source": "/budget",
       "destination": "https://budget.rayandromana.com/budget/"
     },
