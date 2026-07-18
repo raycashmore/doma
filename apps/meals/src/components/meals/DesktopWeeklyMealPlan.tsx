@@ -15,6 +15,8 @@ type DesktopWeeklyMealPlanProps = {
   dates: Array<string>;
   recipesById: Map<string, RecipeView>;
   shoppingRows: Array<ShoppingRow>;
+  sendingToLists: boolean;
+  sendToListsError: string;
   onChooseSlot: (day: Weekday, meal: WeeklyMealType) => void;
   onRemoveShoppingRow: (id: string) => void;
   onSendToLists: () => void;
@@ -27,6 +29,8 @@ export function DesktopWeeklyMealPlan({
   dates,
   recipesById,
   shoppingRows,
+  sendingToLists,
+  sendToListsError,
   onChooseSlot,
   onRemoveShoppingRow,
   onSendToLists,
@@ -86,7 +90,13 @@ export function DesktopWeeklyMealPlan({
           })}
         </div>
       </div>
-      <ShoppingReview rows={shoppingRows} onRemove={onRemoveShoppingRow} onSend={onSendToLists} />
+      <ShoppingReview
+        rows={shoppingRows}
+        sending={sendingToLists}
+        error={sendToListsError}
+        onRemove={onRemoveShoppingRow}
+        onSend={onSendToLists}
+      />
     </div>
   );
 }

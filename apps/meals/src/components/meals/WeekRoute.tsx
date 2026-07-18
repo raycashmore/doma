@@ -5,9 +5,10 @@ import { api } from '@repo/convex';
 import { getNextWeekStart, shiftWeekStart } from '@repo/convex/meals/model';
 
 import { WeeklyMealPlanner } from './WeeklyMealPlanner';
+import { SharedShoppingListUnavailableError } from './weeklyMealPlannerModel';
+import type { WeeklyMealProposal } from './weeklyMealPlannerModel';
 import type { WeeklyMealAssignmentChange } from '@repo/convex/meals/model';
 
-import type { WeeklyMealProposal } from './weeklyMealPlannerModel';
 import { FIXTURE_MODE } from '@/config/runtime';
 import { listFixtureRecipes } from '@/lib/fixtureRecipes';
 import {
@@ -86,6 +87,7 @@ function ConvexWeekRoute({
   const plan = useQuery(api.meals.queries.getWeeklyMealPlan, { weekStart });
   const setAssignment = useMutation(api.meals.mutations.setWeeklyMealAssignmentMutation);
   const applyProposal = useMutation(api.meals.mutations.applyWeeklyMealProposal);
+  const sendItemsToSharedShoppingList = useMutation(api.lists.mutations.sendItemsToSharedShoppingList);
   const { getToken } = useAuth();
 
   if (recipes === undefined || plan === undefined) {
@@ -99,6 +101,11 @@ function ConvexWeekRoute({
       onWeekChange={onWeekChange}
       onAssignmentChange={async (change) => {
         await setAssignment({ weekStart, ...change });
+      }}
+      onSendToLists={async (titles) => {
+        const result = await sendItemsToSharedShoppingList({ titles });
+        if (result.status === 'unavailable') throw new SharedShoppingListUnavailableError();
+        return result.count;
       }}
       onRequestSuggestions={
         suggestionsAvailable

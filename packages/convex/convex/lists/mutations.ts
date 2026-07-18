@@ -92,6 +92,29 @@ export async function createListItemsAndScheduleHandler(
   return items;
 }
 
+export async function sendItemsToSharedShoppingListHandler(
+  ctx: MutationCtx,
+  args: { titles: string[] },
+  createItems: typeof createListItemsAndScheduleHandler = createListItemsAndScheduleHandler
+) {
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity) throw new Error('Not authenticated');
+  if (args.titles.some((title) => !title || title.trim() !== title)) {
+    throw new Error('Shopping cart items must be non-empty and normalized');
+  }
+
+  const sharedLists = await ctx.db
+    .query('lists')
+    .withIndex('by_visibility', (q) => q.eq('visibility', 'shared'))
+    .collect();
+  const matches = sharedLists.filter((list) => list.name === 'Shopping list');
+  const [match] = matches;
+  if (!match || matches.length !== 1) return { status: 'unavailable' as const };
+
+  const items = await createItems(ctx, { listPublicId: match.publicId, titles: args.titles });
+  return { status: 'created' as const, count: items.length };
+}
+
 export function assertCanEditList(
   row: { visibility: 'personal' | 'shared'; createdByUserId: string },
   currentUserId: string
@@ -212,6 +235,13 @@ export const createListItems = mutation({
     titles: v.array(v.string())
   },
   handler: createListItemsAndScheduleHandler
+});
+
+export const sendItemsToSharedShoppingList = mutation({
+  args: {
+    titles: v.array(v.string())
+  },
+  handler: sendItemsToSharedShoppingListHandler
 });
 
 export const renameListItem = mutation({
