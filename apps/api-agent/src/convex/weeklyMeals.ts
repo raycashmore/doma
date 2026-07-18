@@ -57,6 +57,15 @@ export function createWeeklyMealsConvex(config: AgentConfig, weekStart: string, 
         expiresAt: trace.expiresAt,
         stepCount: trace.stepCount,
         stopReason: trace.stopReason,
+        ...(trace.error
+          ? {
+              errorName: trace.error.name,
+              ...(trace.error.message ? { errorMessage: trace.error.message } : {}),
+              ...(trace.error.statusCode === undefined ? {} : { errorStatusCode: trace.error.statusCode }),
+              ...(trace.error.type ? { errorType: trace.error.type } : {}),
+              ...(trace.error.generationId ? { errorGenerationId: trace.error.generationId } : {})
+            }
+          : {}),
         inputTokens: trace.tokenUsage.input,
         outputTokens: trace.tokenUsage.output,
         toolCallsJson: JSON.stringify(trace.toolCalls),

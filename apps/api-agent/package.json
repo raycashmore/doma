@@ -11,6 +11,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@ai-sdk/gateway": "^3.0.0",
     "@clerk/backend": "^2.0.0",
     "@repo/convex": "workspace:*",
     "ai": "^6.0.0",

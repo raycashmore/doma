@@ -84,6 +84,11 @@ const traceArgs = {
   expiresAt: v.number(),
   stepCount: v.number(),
   stopReason: v.string(),
+  errorName: v.optional(v.string()),
+  errorMessage: v.optional(v.string()),
+  errorStatusCode: v.optional(v.number()),
+  errorType: v.optional(v.string()),
+  errorGenerationId: v.optional(v.string()),
   inputTokens: v.number(),
   outputTokens: v.number(),
   toolCallsJson: v.string(),
@@ -107,6 +112,11 @@ type AgentRunArgs = {
   expiresAt: number;
   stepCount: number;
   stopReason: string;
+  errorName?: string;
+  errorMessage?: string;
+  errorStatusCode?: number;
+  errorType?: string;
+  errorGenerationId?: string;
   inputTokens: number;
   outputTokens: number;
   toolCallsJson: string;

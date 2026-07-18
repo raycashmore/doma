@@ -32,6 +32,9 @@ importers:
 
   apps/api-agent:
     dependencies:
+      '@ai-sdk/gateway':
+        specifier: ^3.0.0
+        version: 3.0.151(zod@4.4.3)
       '@clerk/backend':
         specifier: ^2.0.0
         version: 2.33.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0)

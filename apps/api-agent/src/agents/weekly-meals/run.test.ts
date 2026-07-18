@@ -1,3 +1,5 @@
+import { GatewayForbiddenError, GatewayInternalServerError } from '@ai-sdk/gateway';
+import { RetryError } from 'ai';
 import { MockLanguageModelV3 } from 'ai/test';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -82,6 +84,154 @@ describe('runWeeklyMealsAgent', () => {
     expect(saveTrace).toHaveBeenCalledWith(
       expect.objectContaining({ stopReason: 'no_open_slots', stepCount: 0, validation: { status: 'valid' } })
     );
+  });
+
+  it('records privacy-safe gateway failure details in the trace and runtime log', async () => {
+    const gatewayError = new GatewayForbiddenError({
+      message: 'AI Gateway credits are required.',
+      statusCode: 403,
+      generationId: 'generation_123'
+    });
+    const model = new MockLanguageModelV3({
+      modelId: 'openai/gpt-5.4-mini',
+      doGenerate: async () => {
+        throw gatewayError;
+      }
+    });
+    const saveTrace = vi.fn();
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    const result = await runWeeklyMealsAgent({
+      model,
+      input: {
+        userId: 'user_private',
+        weekStart: '2026-07-20',
+        expectedPlanUpdatedAt: null,
+        instruction: 'Private household instruction.'
+      },
+      tools: {
+        getOpenMealSlots: async () => ({
+          weekStart: '2026-07-20',
+          planUpdatedAt: null,
+          slots: [{ day: 'monday', meal: 'dinner' }]
+        }),
+        listSavedRecipes: async () => [],
+        getWeekBusyness: async () => []
+      },
+      saveTrace,
+      createRunId: () => 'run_failed',
+      now: () => 1_700_000_000_000
+    });
+
+    const error = {
+      name: 'GatewayForbiddenError',
+      message: 'AI Gateway credits are required. [generation_123]',
+      statusCode: 403,
+      type: 'forbidden',
+      generationId: 'generation_123'
+    };
+    expect(result.outcome.kind).toBe('cannotPropose');
+    expect(saveTrace).toHaveBeenCalledWith(expect.objectContaining({ stopReason: 'GatewayForbiddenError', error }));
+    const logEntry = {
+      level: 'error',
+      message: 'weekly_meals_agent_failed',
+      runId: 'run_failed',
+      model: 'openai/gpt-5.4-mini',
+      error
+    } as const;
+    expect(consoleError).toHaveBeenCalledWith(JSON.stringify(logEntry));
+    expect(JSON.stringify(consoleError.mock.calls)).not.toContain('user_private');
+    expect(JSON.stringify(consoleError.mock.calls)).not.toContain('Private household instruction.');
+    consoleError.mockRestore();
+  });
+
+  it('does not retain messages from status-bearing non-gateway errors', async () => {
+    const model = new MockLanguageModelV3({
+      modelId: 'openai/gpt-5.4-mini',
+      doGenerate: async () => {
+        throw Object.assign(new Error('Private household instruction.'), {
+          name: 'APICallError',
+          statusCode: 400
+        });
+      }
+    });
+    const saveTrace = vi.fn();
+    const logError = vi.fn();
+
+    await runWeeklyMealsAgent({
+      model,
+      input: { userId: 'user_private', weekStart: '2026-07-20', expectedPlanUpdatedAt: null },
+      tools: {
+        getOpenMealSlots: async () => ({
+          weekStart: '2026-07-20',
+          planUpdatedAt: null,
+          slots: [{ day: 'monday', meal: 'dinner' }]
+        }),
+        listSavedRecipes: async () => [],
+        getWeekBusyness: async () => []
+      },
+      saveTrace,
+      logError,
+      createRunId: () => 'run_non_gateway'
+    });
+
+    expect(saveTrace).toHaveBeenCalledWith(
+      expect.objectContaining({ error: { name: 'APICallError', statusCode: 400 } })
+    );
+    expect(logError).toHaveBeenCalledWith(
+      expect.objectContaining({ error: { name: 'APICallError', statusCode: 400 } })
+    );
+    expect(JSON.stringify(logError.mock.calls)).not.toContain('Private household instruction.');
+  });
+
+  it('unwraps retry errors to retain the final gateway failure', async () => {
+    const gatewayError = new GatewayInternalServerError({
+      message: 'Provider temporarily unavailable.',
+      statusCode: 500,
+      generationId: 'generation_retry'
+    });
+    const retryError = new RetryError({
+      message: 'Failed after retries.',
+      reason: 'maxRetriesExceeded',
+      errors: [gatewayError]
+    });
+    const model = new MockLanguageModelV3({
+      modelId: 'openai/gpt-5.4-mini',
+      doGenerate: async () => {
+        throw retryError;
+      }
+    });
+    const saveTrace = vi.fn();
+    const logError = vi.fn();
+
+    await runWeeklyMealsAgent({
+      model,
+      input: { userId: 'user_private', weekStart: '2026-07-20', expectedPlanUpdatedAt: null },
+      tools: {
+        getOpenMealSlots: async () => ({
+          weekStart: '2026-07-20',
+          planUpdatedAt: null,
+          slots: [{ day: 'monday', meal: 'dinner' }]
+        }),
+        listSavedRecipes: async () => [],
+        getWeekBusyness: async () => []
+      },
+      saveTrace,
+      logError,
+      createRunId: () => 'run_retry'
+    });
+
+    const error = {
+      name: 'GatewayInternalServerError',
+      message: 'Provider temporarily unavailable. [generation_retry]',
+      statusCode: 500,
+      type: 'internal_server_error',
+      generationId: 'generation_retry'
+    };
+    expect(saveTrace).toHaveBeenCalledWith(
+      expect.objectContaining({ stopReason: 'GatewayInternalServerError', error })
+    );
+    expect(logError).toHaveBeenCalledWith(expect.objectContaining({ error }));
   });
 
   it('uses the three read-only tools and stores a grounded typed proposal trace', async () => {
