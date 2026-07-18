@@ -5,7 +5,7 @@ import { type LanguageModel, RetryError } from 'ai';
 
 import { createWeeklyMealsAgent, WEEKLY_MEALS_PROMPT_VERSION } from './agent.js';
 import type { MealSlot, OpenMealSlots, SavedRecipe, WeeklyMealsOutcome, WeeklyMealsRunInput } from './schemas.js';
-import { mealTypes, weekdays, weeklyMealsRunInputSchema } from './schemas.js';
+import { mealTypes, weekdays, weeklyMealsOutcomeFromModel, weeklyMealsRunInputSchema } from './schemas.js';
 import type { WeeklyMealsToolDependencies } from './tools.js';
 import { createWeeklyMealsTools } from './tools.js';
 import type { WeeklyMealsAgentError, WeeklyMealsRunTrace } from './trace.js';
@@ -246,7 +246,7 @@ export async function runWeeklyMealsAgent({
   let agentError: WeeklyMealsAgentError | undefined;
   try {
     const result = await agent.generate({ prompt: planningPrompt(input), timeout: { totalMs: 30_000 } });
-    outcome = result.output;
+    outcome = weeklyMealsOutcomeFromModel(result.output);
     stopReason = result.finishReason;
     tokenUsage = {
       input: result.totalUsage.inputTokens ?? 0,
