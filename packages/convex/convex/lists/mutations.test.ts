@@ -7,7 +7,8 @@ import {
   createUniqueListPublicId,
   deleteListHandler,
   renameListFields,
-  renameListHandler
+  renameListHandler,
+  sendItemsToSharedShoppingListHandler
 } from './mutations';
 
 type TestListRow = {
@@ -120,6 +121,20 @@ function createMutationCtx(
         if (table === 'lists') {
           return {
             withIndex: (index: string, apply: (q: { eq: (field: string, value: string) => unknown }) => unknown) => {
+              if (index === 'by_visibility') {
+                let requestedVisibility = '';
+                apply({
+                  eq: (field, value) => {
+                    expect(field).toBe('visibility');
+                    requestedVisibility = value;
+                    return value;
+                  }
+                });
+                return {
+                  collect: async () => state.rows.filter((row) => row.visibility === requestedVisibility)
+                };
+              }
+
               expect(index).toBe('by_public_id');
               let requestedPublicId = '';
               apply({
@@ -286,6 +301,58 @@ describe('createList', () => {
     expect(insertedRow!.publicId).toEqual(expect.stringMatching(/^list_[a-z0-9]+$/));
     expect(publicIdLookups).toHaveLength(1);
   });
+});
+
+describe('sendItemsToSharedShoppingList', () => {
+  const shoppingList = { ...sharedList, name: 'Shopping' };
+  const titles = ['2 tins beans', '1 lemon', '2 tins beans'];
+
+  it('rejects unauthenticated callers without writing', async () => {
+    const { ctx } = createMutationCtx(null, [shoppingList]);
+    const createItems = vi.fn();
+
+    await expect(sendItemsToSharedShoppingListHandler(ctx as never, { titles }, createItems)).rejects.toThrow(
+      'Not authenticated'
+    );
+    expect(createItems).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['no matching list', []],
+    ['multiple matching lists', [shoppingList, { ...shoppingList, _id: 'list_row_second', publicId: 'list_second' }]]
+  ])('returns unavailable and does not write for %s', async (_label, rows) => {
+    const { ctx } = createMutationCtx({ subject: 'user_123' }, rows);
+    const createItems = vi.fn();
+
+    await expect(sendItemsToSharedShoppingListHandler(ctx as never, { titles }, createItems)).resolves.toEqual({
+      status: 'unavailable'
+    });
+    expect(createItems).not.toHaveBeenCalled();
+  });
+
+  it('writes the exact ordered titles to the single matching shared list', async () => {
+    const { ctx } = createMutationCtx({ subject: 'user_123' }, [shoppingList, personalList]);
+    const createItems = vi.fn().mockResolvedValue(titles.map((title) => ({ title })));
+
+    await expect(sendItemsToSharedShoppingListHandler(ctx as never, { titles }, createItems)).resolves.toEqual({
+      status: 'created',
+      count: 3
+    });
+    expect(createItems).toHaveBeenCalledWith(ctx, { listPublicId: shoppingList.publicId, titles });
+  });
+
+  it.each([[''], ['  '], [' 2 tins beans'], ['2 tins beans ']])(
+    'rejects a non-normalized title without writing: %j',
+    async (title) => {
+      const { ctx } = createMutationCtx({ subject: 'user_123' }, [shoppingList]);
+      const createItems = vi.fn();
+
+      await expect(
+        sendItemsToSharedShoppingListHandler(ctx as never, { titles: ['1 lemon', title] }, createItems)
+      ).rejects.toThrow('Shopping cart items must be non-empty and normalized');
+      expect(createItems).not.toHaveBeenCalled();
+    }
+  );
 });
 
 describe('createUniqueListPublicId', () => {

@@ -6,12 +6,14 @@ import { cn } from '@/lib/utils';
 
 type ShoppingReviewProps = {
   rows: Array<ShoppingRow>;
+  sending: boolean;
+  error: string;
   onRemove: (id: string) => void;
   onSend: () => void;
   onClose?: () => void;
 };
 
-export function ShoppingReview({ rows, onRemove, onSend, onClose }: ShoppingReviewProps) {
+export function ShoppingReview({ rows, sending, error, onRemove, onSend, onClose }: ShoppingReviewProps) {
   return (
     <aside
       aria-label="Shopping review"
@@ -39,7 +41,7 @@ export function ShoppingReview({ rows, onRemove, onSend, onClose }: ShoppingRevi
         )}
       </div>
       <p className="text-[10px] leading-4 text-warm-text-secondary">
-        Exact ingredient lines from this week. Remove anything you do not need before the later Lists handoff.
+        Exact ingredient lines from this week. Remove anything you do not need, then send the cart to Shopping.
       </p>
       <div className="min-h-0 flex-1 overflow-y-auto">
         {rows.length ? (
@@ -67,16 +69,20 @@ export function ShoppingReview({ rows, onRemove, onSend, onClose }: ShoppingRevi
           </div>
         )}
       </div>
+      {error ? (
+        <p role="alert" className="rounded-xl bg-meal-peach px-3 py-2 text-[10px] text-warm-text-primary">
+          {error}
+        </p>
+      ) : null}
       <button
         type="button"
         onClick={onSend}
+        disabled={sending}
         className="flex w-full items-center justify-center gap-2 rounded-full bg-warm-text-primary px-4 py-3 text-xs font-bold text-warm-bg-card-soft"
       >
-        <Send aria-hidden="true" size={15} /> Send to Lists
+        <Send aria-hidden="true" size={15} /> {sending ? 'Sending…' : 'Send to Lists'}
       </button>
-      <p className="text-center text-[9px] text-warm-text-secondary">
-        Explicit approval will be required before anything is added.
-      </p>
+      <p className="text-center text-[9px] text-warm-text-secondary">Only the items shown above will be added.</p>
     </aside>
   );
 }

@@ -7,6 +7,13 @@ import type {
 
 import type { RecipeView } from './types';
 
+export class SharedShoppingListUnavailableError extends Error {
+  constructor() {
+    super('Shared Shopping list unavailable');
+    this.name = 'SharedShoppingListUnavailableError';
+  }
+}
+
 export type WeeklyMealPlanView = {
   weekStart: string;
   assignments: Array<WeeklyMealAssignment>;
@@ -32,6 +39,7 @@ export type WeeklyMealPlannerProps = {
   onAssignmentChange: (change: WeeklyMealAssignmentChange) => void | Promise<void>;
   onRequestSuggestions?: (instruction?: string) => Promise<WeeklyMealProposal>;
   onApplyProposal?: (runId: string) => void | Promise<void>;
+  onSendToLists?: (titles: Array<string>) => Promise<number>;
 };
 
 export type ShoppingRow = {

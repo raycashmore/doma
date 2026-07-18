@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getWeekDates } from '@repo/convex/meals/model';
 
 import { DesktopWeeklyMealPlan } from './DesktopWeeklyMealPlan';
@@ -8,6 +8,7 @@ import { RecipeChooser } from './RecipeChooser';
 import { ShoppingReview } from './ShoppingReview';
 import { WeeklyMealPlannerTabs } from './WeeklyMealPlannerHeader';
 import { useDesktopViewport } from './useDesktopViewport';
+import { SharedShoppingListUnavailableError } from './weeklyMealPlannerModel';
 import type { ShoppingRow, SlotSelection, WeeklyMealPlannerProps, WeeklyMealProposal } from './weeklyMealPlannerModel';
 import type { Weekday, WeeklyMealType } from '@repo/convex/meals/model';
 
@@ -17,7 +18,8 @@ export function WeeklyMealPlanner({
   onWeekChange,
   onAssignmentChange,
   onRequestSuggestions,
-  onApplyProposal
+  onApplyProposal,
+  onSendToLists
 }: WeeklyMealPlannerProps) {
   const isDesktop = useDesktopViewport();
   const dates = getWeekDates(plan.weekStart);
@@ -32,12 +34,16 @@ export function WeeklyMealPlanner({
   const [proposal, setProposal] = useState<WeeklyMealProposal | null>(null);
   const [suggestionState, setSuggestionState] = useState<'idle' | 'requesting' | 'applying'>('idle');
   const [suggestionError, setSuggestionError] = useState('');
+  const [sendingToLists, setSendingToLists] = useState(false);
+  const [sendToListsError, setSendToListsError] = useState('');
+  const sendingToListsRef = useRef(false);
   const recipesById = new Map(recipes.map((recipe) => [recipe.publicId, recipe]));
 
   useEffect(() => {
     setSelectedDay('monday');
     setRemovedRows(new Set());
     setCartOpen(false);
+    setSendToListsError('');
   }, [plan.weekStart]);
 
   const shoppingRows = plan.assignments
@@ -106,10 +112,33 @@ export function WeeklyMealPlanner({
       setSuggestionState('idle');
     }
   };
-  const showFutureStatus = () => setStatus('Review and approval for Lists will be added with the agent integration.');
-  const sendToLists = () => {
-    setCartOpen(false);
-    showFutureStatus();
+  const sendToLists = async () => {
+    if (sendingToListsRef.current) return;
+    if (!onSendToLists) {
+      const message = 'Sending to Lists is unavailable.';
+      setStatus('');
+      setSendToListsError(message);
+      return;
+    }
+
+    sendingToListsRef.current = true;
+    setSendingToLists(true);
+    setSendToListsError('');
+    setStatus('');
+    try {
+      const createdCount = await onSendToLists(shoppingRows.map((row) => row.line));
+      setCartOpen(false);
+      setStatus(`Added ${createdCount} ${createdCount === 1 ? 'item' : 'items'} to Shopping.`);
+    } catch (error) {
+      const message =
+        error instanceof SharedShoppingListUnavailableError
+          ? 'Set up exactly one shared list named Shopping before sending.'
+          : 'Items could not be added to Shopping. Try again.';
+      setSendToListsError(message);
+    } finally {
+      sendingToListsRef.current = false;
+      setSendingToLists(false);
+    }
   };
   const removeShoppingRow = (id: string) => setRemovedRows((current) => new Set(current).add(id));
 
@@ -132,6 +161,8 @@ export function WeeklyMealPlanner({
           dates={dates}
           recipesById={recipesById}
           shoppingRows={shoppingRows}
+          sendingToLists={sendingToLists}
+          sendToListsError={sendToListsError}
           onChooseSlot={chooseSlot}
           onRemoveShoppingRow={removeShoppingRow}
           onSendToLists={sendToLists}
@@ -176,6 +207,8 @@ export function WeeklyMealPlanner({
           />
           <ShoppingReview
             rows={shoppingRows}
+            sending={sendingToLists}
+            error={sendToListsError}
             onRemove={removeShoppingRow}
             onSend={sendToLists}
             onClose={() => setCartOpen(false)}

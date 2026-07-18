@@ -68,6 +68,9 @@ review from the recipes' exact ingredient lines. The Suggest meals flow accepts
 an optional one-off instruction, shows the agent's grounded reasons for review,
 and batch-fills empty slots only. Suggestions are offered for the current and
 following week, matching the schedule cache's bounded planning horizon. Lists
-handoff remains an explicit unavailable future action.
+handoff copies the exact reviewed shopping rows, including repeats, into the
+single shared list named `Shopping` after the user explicitly selects
+**Send to Lists**.
+
 Local no-auth development uses generic persisted fixtures, while production
 requires Clerk and Convex and fails closed when either is missing.

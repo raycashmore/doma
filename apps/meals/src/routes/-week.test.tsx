@@ -10,6 +10,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { WeekRoute, WeeklyMealPlanLoading } from '@/components/meals/WeekRoute';
 import { WeeklyMealPlanner } from '@/components/meals/WeeklyMealPlanner';
+import { SharedShoppingListUnavailableError } from '@/components/meals/weeklyMealPlannerModel';
 import { listFixtureRecipes } from '@/lib/fixtureRecipes';
 
 vi.mock('@/config/runtime', () => ({ FIXTURE_MODE: true }));
@@ -263,7 +264,176 @@ describe('WeekRoute', () => {
     expect(screen.getByRole('button', { name: 'Change Monday school lunch' }).textContent).toContain('Veggie wraps');
   });
 
-  it('reviews and applies agent suggestions only to empty slots while keeping Lists explicit', async () => {
+  it('sends the shopping cart exactly as shown, including repeated rows', async () => {
+    const onSendToLists = vi.fn().mockResolvedValue(5);
+    const recipes = listFixtureRecipes();
+    const repeatedRecipe = {
+      ...recipes[0],
+      publicId: 'recipe_repeated',
+      name: 'Repeated ingredient meal',
+      ingredientLines: ['4 wraps', '1 tomato']
+    };
+
+    const rootRoute = createRootRoute();
+    const plannerRoute = createRoute({
+      getParentRoute: () => rootRoute,
+      path: '/week',
+      component: () => (
+        <WeeklyMealPlanner
+          recipes={[...recipes, repeatedRecipe]}
+          plan={{
+            weekStart: '2026-07-20',
+            assignments: [
+              { day: 'monday', meal: 'schoolLunch', recipePublicId: recipes[0].publicId },
+              { day: 'tuesday', meal: 'schoolLunch', recipePublicId: repeatedRecipe.publicId }
+            ]
+          }}
+          onWeekChange={vi.fn()}
+          onAssignmentChange={vi.fn()}
+          onSendToLists={onSendToLists}
+        />
+      )
+    });
+    const router = createRouter({
+      routeTree: rootRoute.addChildren([plannerRoute]),
+      history: createMemoryHistory({ initialEntries: ['/week'] })
+    });
+    await router.load();
+    render(<RouterProvider router={router} />);
+
+    const shoppingReview = screen.getByLabelText('Shopping review');
+    fireEvent.click(within(shoppingReview).getByRole('button', { name: 'Remove 1 cucumber' }));
+    await act(async () => {
+      fireEvent.click(within(shoppingReview).getByRole('button', { name: 'Send to Lists' }));
+      await Promise.resolve();
+    });
+
+    expect(onSendToLists).toHaveBeenCalledWith(['4 wraps', '1 carrot', '200 g hummus', '4 wraps', '1 tomato']);
+    expect(screen.getByRole('status').textContent).toContain('Added 5 items to Shopping.');
+  });
+
+  it('keeps the mobile shopping cart open when sending fails', async () => {
+    stubMobileViewport();
+    const recipes = listFixtureRecipes();
+    const rootRoute = createRootRoute();
+    const plannerRoute = createRoute({
+      getParentRoute: () => rootRoute,
+      path: '/week',
+      component: () => (
+        <WeeklyMealPlanner
+          recipes={recipes}
+          plan={{
+            weekStart: '2026-07-20',
+            assignments: [{ day: 'monday', meal: 'schoolLunch', recipePublicId: recipes[0].publicId }]
+          }}
+          onWeekChange={vi.fn()}
+          onAssignmentChange={vi.fn()}
+          onSendToLists={() => Promise.reject(new Error('offline'))}
+        />
+      )
+    });
+    const router = createRouter({
+      routeTree: rootRoute.addChildren([plannerRoute]),
+      history: createMemoryHistory({ initialEntries: ['/week'] })
+    });
+    await router.load();
+    render(<RouterProvider router={router} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Review' }));
+    await act(async () => {
+      fireEvent.click(within(screen.getByLabelText('Shopping review')).getByRole('button', { name: 'Send to Lists' }));
+      await Promise.resolve();
+    });
+
+    const failedReview = screen.getByLabelText('Shopping review');
+    expect(within(failedReview).getByRole('alert').textContent).toContain(
+      'Items could not be added to Shopping. Try again.'
+    );
+  });
+
+  it('explains when the shared Shopping list is unavailable', async () => {
+    const recipes = listFixtureRecipes();
+    const rootRoute = createRootRoute();
+    const plannerRoute = createRoute({
+      getParentRoute: () => rootRoute,
+      path: '/week',
+      component: () => (
+        <WeeklyMealPlanner
+          recipes={recipes}
+          plan={{
+            weekStart: '2026-07-20',
+            assignments: [{ day: 'monday', meal: 'schoolLunch', recipePublicId: recipes[0].publicId }]
+          }}
+          onWeekChange={vi.fn()}
+          onAssignmentChange={vi.fn()}
+          onSendToLists={() => Promise.reject(new SharedShoppingListUnavailableError())}
+        />
+      )
+    });
+    const router = createRouter({
+      routeTree: rootRoute.addChildren([plannerRoute]),
+      history: createMemoryHistory({ initialEntries: ['/week'] })
+    });
+    await router.load();
+    render(<RouterProvider router={router} />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Send to Lists' }));
+      await Promise.resolve();
+    });
+
+    expect(within(screen.getByLabelText('Shopping review')).getByRole('alert').textContent).toContain(
+      'Set up exactly one shared list named Shopping before sending.'
+    );
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
+  it('prevents repeated submission while the shopping cart is sending', async () => {
+    let finishSend: (createdCount: number) => void = vi.fn();
+    const pendingSend = new Promise<number>((resolve) => {
+      finishSend = resolve;
+    });
+    const onSendToLists = vi.fn(() => pendingSend);
+    const recipes = listFixtureRecipes();
+    const rootRoute = createRootRoute();
+    const plannerRoute = createRoute({
+      getParentRoute: () => rootRoute,
+      path: '/week',
+      component: () => (
+        <WeeklyMealPlanner
+          recipes={recipes}
+          plan={{
+            weekStart: '2026-07-20',
+            assignments: [{ day: 'monday', meal: 'schoolLunch', recipePublicId: recipes[0].publicId }]
+          }}
+          onWeekChange={vi.fn()}
+          onAssignmentChange={vi.fn()}
+          onSendToLists={onSendToLists}
+        />
+      )
+    });
+    const router = createRouter({
+      routeTree: rootRoute.addChildren([plannerRoute]),
+      history: createMemoryHistory({ initialEntries: ['/week'] })
+    });
+    await router.load();
+    render(<RouterProvider router={router} />);
+
+    const sendButton = screen.getByRole('button', { name: 'Send to Lists' });
+    fireEvent.click(sendButton);
+    fireEvent.click(sendButton);
+    await act(async () => Promise.resolve());
+
+    expect(onSendToLists).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: 'Sending…' }).hasAttribute('disabled')).toBe(true);
+
+    await act(async () => {
+      finishSend(4);
+      await pendingSend;
+    });
+  });
+
+  it('reviews and applies agent suggestions only to empty slots', async () => {
     await renderWeek();
 
     fireEvent.click(screen.getByRole('button', { name: 'Suggest meals' }));
@@ -281,24 +451,20 @@ describe('WeekRoute', () => {
     expect(screen.queryByRole('dialog', { name: 'Meal suggestions' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Change Friday dinner' }).textContent).toContain('Chicken tray bake');
     expect(screen.getByRole('button', { name: 'Change Monday dinner' }).textContent).toContain('Chicken tray bake');
-
-    fireEvent.click(screen.getByRole('button', { name: 'Send to Lists' }));
-    expect(screen.getByRole('status').textContent).toContain(
-      'Review and approval for Lists will be added with the agent integration.'
-    );
   });
 
-  it('closes the mobile cart before explaining the unavailable Lists handoff', async () => {
+  it('keeps the mobile fixture cart open when sending is unavailable', async () => {
     stubMobileViewport();
     await renderWeek();
 
     fireEvent.click(screen.getByRole('button', { name: 'Review' }));
     const shoppingReview = screen.getByLabelText('Shopping review');
-    fireEvent.click(within(shoppingReview).getByRole('button', { name: 'Send to Lists' }));
+    await act(async () => {
+      fireEvent.click(within(shoppingReview).getByRole('button', { name: 'Send to Lists' }));
+      await Promise.resolve();
+    });
 
-    expect(screen.queryByLabelText('Shopping review')).toBeNull();
-    expect(screen.getByRole('status').textContent).toContain(
-      'Review and approval for Lists will be added with the agent integration.'
-    );
+    const failedReview = screen.getByLabelText('Shopping review');
+    expect(within(failedReview).getByRole('alert').textContent).toContain('Sending to Lists is unavailable.');
   });
 });

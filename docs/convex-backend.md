@@ -75,7 +75,7 @@ All monetary values remain integer cents. Rate fields remain floats.
 
 The `meals/` module owns the shared household cookbook. Its `recipes` table and
 authenticated queries and mutations serve every signed-in household user; it is
-not a Lists model and does not write shopping-list items.
+not a Lists model and does not own shopping-list items.
 
 Recipes store a name, short description, preparation time, serving label,
 suitability tags, ordered free-form ingredient lines, and instructions. The
@@ -86,8 +86,11 @@ The `weeklyMealPlans` table stores one authenticated household plan per Monday
 week start. Each assignment references a recipe public id by weekday and meal
 type (`schoolLunch` or `dinner`). Queries return the saved assignments; mutations
 replace or clear one slot without copying ingredient data into the plan. The
-frontend derives its shopping review at read time from the assigned recipes and
-does not write Lists-owned shopping items.
+frontend derives its shopping review at read time from the assigned recipes.
+After explicit review, Meals sends the displayed rows to a Lists-owned,
+authenticated mutation. That mutation atomically resolves exactly one shared
+list named `Shopping` and creates the items, so Lists remains the authority for
+both destination matching and the resulting list items.
 
 Weekly meal proposals are recorded in `weeklyMealAgentRuns` as privacy-safe,
 structured traces with a 30-day expiry. Agent tools use a dedicated service

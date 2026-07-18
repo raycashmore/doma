@@ -41,4 +41,5 @@ pantry state.
 
 The weekly plan stores recipe assignments by week, weekday, and meal type. Its
 shopping review remains a Meals-owned draft: removing a row does not change the
-recipe, and the app does not write to Lists until the agent handoff is added.
+recipe. **Send to Lists** copies the draft exactly as shown into the one shared
+list named `Shopping`; this explicit handoff does not require agent approval.
