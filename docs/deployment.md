@@ -196,6 +196,10 @@ framework preset, `pnpm build`, and no output directory. Set the variables in
 stable domain used by Home's `/api/agent/*` rewrite. Its `vercel.json` routes
 `/weekly-meals` and `/health` to the Hono handler.
 
+Deploy Convex schema and function changes before deploying a new Agent API
+version that sends additional trace fields. The older Convex mutation validator
+will reject fields it does not yet recognize.
+
 ### Register Telegram webhook
 
 Telegram will not send inbound messages to the bot gateway until its webhook URL
@@ -417,7 +421,11 @@ Do not commit real bot tokens, Telegram IDs, chat IDs, or private message payloa
 
 The service persists structured inputs, tool outputs, validation results, and
 token usage for 30 days. It does not persist hidden reasoning or raw calendar
-events.
+events. Model failures emit a privacy-safe `weekly_meals_agent_failed` JSON
+event in the Agent API's Vercel Runtime Logs and store the error name, message,
+HTTP status, Gateway type, and generation ID on the corresponding
+`weeklyMealAgentRuns` row. Logs exclude user IDs, prompts, household
+instructions, tool context, credentials, and error causes.
 
 Forwarded email capture uses Resend's `email.received` webhook at
 `/inbound-email/resend`. Configure that webhook on a publicly reachable Bot

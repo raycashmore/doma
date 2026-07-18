@@ -10,6 +10,14 @@ export type WeeklyMealsToolCallTrace = {
   error?: string;
 };
 
+export type WeeklyMealsAgentError = {
+  name: string;
+  message?: string;
+  statusCode?: number;
+  type?: string;
+  generationId?: string;
+};
+
 export type WeeklyMealsRunTrace = {
   runId: string;
   userId: string;
@@ -23,6 +31,7 @@ export type WeeklyMealsRunTrace = {
   expiresAt: number;
   stepCount: number;
   stopReason: string;
+  error?: WeeklyMealsAgentError;
   tokenUsage: { input: number; output: number };
   toolCalls: WeeklyMealsToolCallTrace[];
   inputSnapshot: {

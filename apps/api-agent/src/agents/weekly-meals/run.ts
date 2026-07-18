@@ -1,13 +1,14 @@
 import { randomUUID } from 'node:crypto';
 
-import type { LanguageModel } from 'ai';
+import { GatewayError } from '@ai-sdk/gateway';
+import { type LanguageModel, RetryError } from 'ai';
 
 import { createWeeklyMealsAgent, WEEKLY_MEALS_PROMPT_VERSION } from './agent.js';
 import type { MealSlot, OpenMealSlots, SavedRecipe, WeeklyMealsOutcome, WeeklyMealsRunInput } from './schemas.js';
 import { mealTypes, weekdays, weeklyMealsRunInputSchema } from './schemas.js';
 import type { WeeklyMealsToolDependencies } from './tools.js';
 import { createWeeklyMealsTools } from './tools.js';
-import type { WeeklyMealsRunTrace } from './trace.js';
+import type { WeeklyMealsAgentError, WeeklyMealsRunTrace } from './trace.js';
 import { createWeeklyMealsTrace, WEEKLY_MEALS_TRACE_RETENTION_MS } from './trace.js';
 
 const unavailableOutcome: WeeklyMealsOutcome = {
@@ -17,6 +18,47 @@ const unavailableOutcome: WeeklyMealsOutcome = {
 
 function modelName(model: LanguageModel) {
   return typeof model === 'string' ? model : model.modelId;
+}
+
+type WeeklyMealsAgentErrorLog = {
+  level: 'error';
+  message: 'weekly_meals_agent_failed';
+  runId: string;
+  model: string;
+  error: WeeklyMealsAgentError;
+};
+
+function gatewayErrorDetails(error: unknown): WeeklyMealsAgentError {
+  const retryLastError = RetryError.isInstance(error) ? error.lastError : undefined;
+  const gatewayError = GatewayError.isInstance(retryLastError)
+    ? retryLastError
+    : GatewayError.isInstance(error)
+      ? error
+      : undefined;
+  if (gatewayError) {
+    return {
+      name: gatewayError.name,
+      message: gatewayError.message.slice(0, 500),
+      statusCode: gatewayError.statusCode,
+      type: gatewayError.type,
+      ...(gatewayError.generationId ? { generationId: gatewayError.generationId } : {})
+    };
+  }
+
+  const name = error instanceof Error ? error.name : 'UnknownError';
+  const statusCode =
+    typeof error === 'object' && error !== null && 'statusCode' in error && typeof error.statusCode === 'number'
+      ? error.statusCode
+      : undefined;
+
+  return {
+    name,
+    ...(statusCode === undefined ? {} : { statusCode })
+  };
+}
+
+function logWeeklyMealsAgentError(entry: WeeklyMealsAgentErrorLog) {
+  console.error(JSON.stringify(entry));
 }
 
 function slotKey(slot: MealSlot) {
@@ -101,6 +143,7 @@ export async function runWeeklyMealsAgent({
   input: rawInput,
   tools: dependencies,
   saveTrace,
+  logError = logWeeklyMealsAgentError,
   createRunId = () => `run_${randomUUID()}`,
   now = Date.now
 }: {
@@ -108,6 +151,7 @@ export async function runWeeklyMealsAgent({
   input: WeeklyMealsRunInput;
   tools: WeeklyMealsToolDependencies;
   saveTrace: (trace: WeeklyMealsRunTrace) => Promise<void> | void;
+  logError?: (entry: WeeklyMealsAgentErrorLog) => void;
   createRunId?: () => string;
   now?: () => number;
 }) {
@@ -199,6 +243,7 @@ export async function runWeeklyMealsAgent({
   let stopReason = 'error';
   let tokenUsage = { input: 0, output: 0 };
   let validation: WeeklyMealsRunTrace['validation'] = { status: 'invalid', reason: 'agent_failed' };
+  let agentError: WeeklyMealsAgentError | undefined;
   try {
     const result = await agent.generate({ prompt: planningPrompt(input), timeout: { totalMs: 30_000 } });
     outcome = result.output;
@@ -210,7 +255,15 @@ export async function runWeeklyMealsAgent({
     validation = validateProposal({ outcome, input, snapshot: partialTrace.inputSnapshot });
     if (validation.status === 'invalid') outcome = unavailableOutcome;
   } catch (error) {
-    stopReason = error instanceof Error ? error.name : 'error';
+    agentError = gatewayErrorDetails(error);
+    stopReason = agentError.name;
+    logError({
+      level: 'error',
+      message: 'weekly_meals_agent_failed',
+      runId,
+      model: modelName(model),
+      error: agentError
+    });
   }
 
   const completedAt = now();
@@ -220,6 +273,7 @@ export async function runWeeklyMealsAgent({
     expiresAt: startedAt + WEEKLY_MEALS_TRACE_RETENTION_MS,
     stepCount,
     stopReason,
+    ...(agentError ? { error: agentError } : {}),
     tokenUsage,
     outcome,
     validation
