@@ -47,6 +47,20 @@ export const weeklyMealsOutcomeSchema = z.discriminatedUnion('kind', [
   })
 ]);
 
+export const weeklyMealsModelOutputSchema = z.object({
+  kind: z.enum(['proposal', 'cannotPropose']),
+  assignments: z.array(proposedAssignmentSchema),
+  reason: z.string().max(320)
+});
+
+export function weeklyMealsOutcomeFromModel(output: z.infer<typeof weeklyMealsModelOutputSchema>): WeeklyMealsOutcome {
+  return weeklyMealsOutcomeSchema.parse(
+    output.kind === 'proposal'
+      ? { kind: 'proposal', assignments: output.assignments }
+      : { kind: 'cannotPropose', reason: output.reason }
+  );
+}
+
 export const weeklyMealsRunInputSchema = z.object({
   userId: z.string().min(1),
   weekStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),

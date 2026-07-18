@@ -266,7 +266,8 @@ describe('runWeeklyMealsAgent', () => {
                     recipePublicId: 'recipe_wraps',
                     reason: 'A saved school-lunch recipe that suits the busy day.'
                   }
-                ]
+                ],
+                reason: ''
               })
             }
           ],
@@ -384,7 +385,8 @@ describe('runWeeklyMealsAgent', () => {
                         recipePublicId: 'recipe_pasta',
                         reason
                       }
-                    ]
+                    ],
+                    reason: ''
                   })
                 }
               ],
