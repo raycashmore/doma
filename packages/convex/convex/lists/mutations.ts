@@ -107,7 +107,7 @@ export async function sendItemsToSharedShoppingListHandler(
     .query('lists')
     .withIndex('by_visibility', (q) => q.eq('visibility', 'shared'))
     .collect();
-  const matches = sharedLists.filter((list) => list.name === 'Shopping');
+  const matches = sharedLists.filter((list) => list.name === 'Shopping list');
   const [match] = matches;
   if (!match || matches.length !== 1) return { status: 'unavailable' as const };
 

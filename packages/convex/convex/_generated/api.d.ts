@@ -48,6 +48,8 @@ import type * as lists_properties from "../lists/properties.js";
 import type * as lists_queries from "../lists/queries.js";
 import type * as lists_testHelpers from "../lists/testHelpers.js";
 import type * as lists_transitions from "../lists/transitions.js";
+import type * as meals_agentCleanup from "../meals/agentCleanup.js";
+import type * as meals_agentContext from "../meals/agentContext.js";
 import type * as meals_model from "../meals/model.js";
 import type * as meals_mutations from "../meals/mutations.js";
 import type * as meals_queries from "../meals/queries.js";
@@ -115,6 +117,8 @@ declare const fullApi: ApiFromModules<{
   "lists/queries": typeof lists_queries;
   "lists/testHelpers": typeof lists_testHelpers;
   "lists/transitions": typeof lists_transitions;
+  "meals/agentCleanup": typeof meals_agentCleanup;
+  "meals/agentContext": typeof meals_agentContext;
   "meals/model": typeof meals_model;
   "meals/mutations": typeof meals_mutations;
   "meals/queries": typeof meals_queries;

@@ -304,7 +304,7 @@ describe('createList', () => {
 });
 
 describe('sendItemsToSharedShoppingList', () => {
-  const shoppingList = { ...sharedList, name: 'Shopping' };
+  const shoppingList = { ...sharedList, name: 'Shopping list' };
   const titles = ['2 tins beans', '1 lemon', '2 tins beans'];
 
   it('rejects unauthenticated callers without writing', async () => {
