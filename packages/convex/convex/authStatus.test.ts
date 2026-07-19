@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { readAuthStatus } from './auth';
+import { readAuthStatus } from './authStatus';
 
 function createAuthCtx(identity: { tokenIdentifier: string; subject: string } | null) {
   return {

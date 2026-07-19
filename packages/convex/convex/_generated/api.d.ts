@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as authStatus from "../authStatus.js";
 import type * as briefing_ai from "../briefing/ai.js";
 import type * as briefing_botBriefing from "../briefing/botBriefing.js";
 import type * as briefing_delivery from "../briefing/delivery.js";
@@ -77,6 +78,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  authStatus: typeof authStatus;
   "briefing/ai": typeof briefing_ai;
   "briefing/botBriefing": typeof briefing_botBriefing;
   "briefing/delivery": typeof briefing_delivery;

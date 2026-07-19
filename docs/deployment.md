@@ -83,9 +83,16 @@ For Vercel Preview on Home, set:
 
 | Name                          | Value                          |
 | ----------------------------- | ------------------------------ |
+| `CONVEX_DEPLOY_KEY`           | Convex preview deploy key      |
 | `VITE_CLERK_PUBLISHABLE_KEY`  | Clerk preview publishable key  |
 | `CLERK_SECRET_KEY`            | Clerk preview secret key       |
 | `VITE_CLERK_FRONTEND_API_URL` | Clerk preview Frontend API URL |
+
+Configure Home's Preview build command to deploy the current Convex functions and inject the generated URL:
+
+```bash
+pnpm --dir ../.. --filter @repo/convex exec convex deploy --cmd-url-env-var-name VITE_CONVEX_URL --cmd 'pnpm --dir ../.. --filter home build'
+```
 
 For Vercel Preview on Schedule, set:
 
@@ -273,11 +280,12 @@ Home owns the apex. Before deploying, point its rewrites at Budget's real URL an
 
    Or via the dashboard with **Root Directory** `apps/home`.
 
-4. **Environment Variables** on the Home project (Home doesn't talk to Convex yet, but wire the Clerk vars so the auth gate works):
+4. **Environment Variables** on the Home project:
 
    | Name                          | Value                            |
    | ----------------------------- | -------------------------------- |
    | `VITE_CLERK_PUBLISHABLE_KEY`  | Clerk production publishable key |
+   | `VITE_CONVEX_URL`             | Convex production deployment URL |
    | `CLERK_SECRET_KEY`            | Clerk production secret key      |
    | `VITE_CLERK_FRONTEND_API_URL` | Clerk Frontend API URL           |
 

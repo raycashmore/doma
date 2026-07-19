@@ -6,7 +6,7 @@
   import StartupPlaceholder from '$lib/shell/StartupPlaceholder.svelte';
 
   const convexAuth = useAuth();
-  const authStatus = useQuery(api.lists.auth.status, () => (convexAuth.isAuthenticated ? {} : 'skip'));
+  const authStatus = useQuery(api.authStatus.status, () => (convexAuth.isAuthenticated ? {} : 'skip'));
   let { children }: { children: Snippet } = $props();
 </script>
 

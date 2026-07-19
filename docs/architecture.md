@@ -6,7 +6,7 @@ Doma is a Vercel Multi-Zones monorepo. `apps/home` owns the apex domain and rewr
 
 | Path                         | Framework            | Notes                                                                        |
 | ---------------------------- | -------------------- | ---------------------------------------------------------------------------- |
-| `apps/home`                  | TanStack Start       | Apex zone, port 3000; owns `vercel.json` rewrites                            |
+| `apps/home`                  | Vue 3 + Vite         | Apex SPA, port 3000; owns `vercel.json` rewrites                             |
 | `apps/budget`                | TanStack Start       | Mounts at `/budget`, port 3001                                               |
 | `apps/schedule`              | Next.js (App Router) | Mounts at `/schedule`, port 3003                                             |
 | `apps/lists`                 | SvelteKit            | Mounts at `/lists`, port 3004; native Svelte shell using shared tokens       |
@@ -30,7 +30,7 @@ Doma is a Vercel Multi-Zones monorepo. `apps/home` owns the apex domain and rewr
 
 ### Cross-origin Clerk session sync in dev
 
-Each dev port is a separate browser origin, so Clerk's session cookie doesn't carry across them. Each app's `AuthGate` adapter feeds Clerk's `buildUrlWithAuth` into the shell's `UrlAuthProvider`; `Sidebar` and `MobileNav` consume it via `useUrlAuth()` to append a short-lived `__clerk_db_jwt` to cross-origin links — clicking the Budget icon while signed in on Home lands you on Budget already authed. The app metadata and URL helpers live in the framework-neutral `@repo/app-registry` package; the React shell attaches icons and auth-link behavior on top. The context lives in `packages/shell/src/auth.tsx` (`UrlAuthContext`); the Clerk wiring lives in each app (Budget uses `@clerk/clerk-react`, Schedule uses `@clerk/nextjs`). In production all zones share the apex cookie and the URL builder is a no-op for same-origin paths.
+Each dev port is a separate browser origin, so Clerk's session cookie doesn't carry across them. Every app feeds Clerk's `buildUrlWithAuth` into its navigation layer to append a short-lived `__clerk_db_jwt` to cross-origin links — clicking the Budget icon while signed in on Home lands you on Budget already authed. The app metadata and URL helpers live in the framework-neutral `@repo/app-registry` package. React apps use `@repo/shell`'s `UrlAuthProvider`; Home's native Vue shell calls the same Clerk builder directly. In production all zones share the apex cookie and the URL builder is a no-op for same-origin paths.
 
 _A Caddy reverse-proxy was explored as an alternative (single origin → one cookie), but TanStack Start + Nitro + Vite's `base` option don't play well together: `/<base>/@react-refresh`, `/<base>/@vite/client`, `/<base>/@id/...` all 404 in dev even with `base` set, breaking the proxy approach. The `clerk.buildUrlWithAuth` route is simpler and doesn't fight the framework._
 
@@ -70,11 +70,11 @@ current-week view.
 
 ## PWA
 
-TanStack Start apps use `vite-plugin-pwa` with `scope` set to their mount path; each is independently installable. The service worker scope must match the rewrite shape — Budget's SW lives at `/budget/sw.js`, registered when the user visits `/budget`. The Next.js `schedule` app will use Serwist (`@serwist/next`) for the same effect — its PWA layer lands in a later phase. See `docs/offline.md` for what's covered (shell) and what isn't (offline data).
+Vite apps use `vite-plugin-pwa` with `scope` set to their mount path; each is independently installable. Home's root-scoped worker excludes API and child-zone navigation from its fallback. The service worker scope must match the rewrite shape — Budget's SW lives at `/budget/sw.js`, registered when the user visits `/budget`. The Next.js `schedule` app will use Serwist (`@serwist/next`) for the same effect — its PWA layer lands in a later phase. See `docs/offline.md` for what's covered (shell) and what isn't (offline data).
 
 ## Auth
 
-Clerk per zone, restricted-mode allowlist. The Clerk cookie is set on the apex domain, so every zone shares the session. React apps own an `AuthGate` adapter (`apps/<app>/src/integrations/auth/AuthGate.tsx`) that wraps their Clerk SDK and composes `@repo/shell`'s `UrlAuthProvider` + `SignInLayout`. Lists uses Clerk's browser SDK from its native Svelte layout instead of importing the React shell package. Gates are a passthrough until the app's Clerk publishable key is set (`VITE_CLERK_PUBLISHABLE_KEY` for Vite/SvelteKit apps, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` for Next.js), then become sign-in gates. See `docs/auth.md`.
+Clerk per zone, restricted-mode allowlist. The Clerk cookie is set on the apex domain, so every zone shares the session. React apps own an `AuthGate` adapter that composes `@repo/shell`; Home uses `@clerk/vue` in its native Vue gate, and Lists uses Clerk's browser SDK in its Svelte layout. Gates are a passthrough only in the apps' explicit local no-auth modes. See `docs/auth.md`.
 
 ## Path aliases
 
@@ -83,5 +83,5 @@ Clerk per zone, restricted-mode allowlist. The Clerk cookie is set on the apex d
 ## Generated Files — Never Edit
 
 - `packages/convex/convex/_generated/` — Convex types and API (regenerated by `pnpm convex`)
-- `apps/<app>/src/routeTree.gen.ts` — TanStack Router route tree (regenerated on dev)
+- `apps/{budget,meals}/src/routeTree.gen.ts` — TanStack Router route tree (regenerated on dev)
 - `apps/schedule/next-env.d.ts` and `apps/schedule/.next/` — generated by Next.js (git-ignored)

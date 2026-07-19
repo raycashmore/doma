@@ -66,6 +66,10 @@
     {
       "source": "/meals/:path*",
       "destination": "https://meals.rayandromana.com/meals/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
