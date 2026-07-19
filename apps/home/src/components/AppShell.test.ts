@@ -7,7 +7,7 @@ describe('AppShell', () => {
   afterEach(cleanup);
 
   it('renders every enabled Doma zone and the current Home content', () => {
-    render(AppShell, {
+    const { container } = render(AppShell, {
       props: { isDev: false, canSignOut: false, buildUrlWithAuth: (url: string) => url },
       slots: { default: '<main><h2>Household overview</h2></main>' }
     });
@@ -19,6 +19,12 @@ describe('AppShell', () => {
     for (const homeLink of screen.getAllByRole('link', { name: 'Home' })) {
       expect(homeLink.getAttribute('aria-current')).toBe('page');
     }
+    expect(container.querySelector('.desktop-sidebar .lucide-house')).not.toBeNull();
+    expect(container.querySelector('.desktop-sidebar .lucide-piggy-bank')).not.toBeNull();
+    expect(container.querySelector('.desktop-sidebar .lucide-calendar')).not.toBeNull();
+    expect(container.querySelector('.desktop-sidebar .lucide-list-checks')).not.toBeNull();
+    expect(container.querySelector('.desktop-sidebar .lucide-chef-hat')).not.toBeNull();
+    expect(container.querySelector('.desktop-sidebar .brand-mark')).toBeNull();
     expect(screen.getByRole('heading', { name: 'Household overview' })).not.toBeNull();
   });
 
@@ -30,7 +36,7 @@ describe('AppShell', () => {
     expect(screen.getAllByRole('link', { name: 'Notification settings' })[0]?.getAttribute('href')).toBe(
       '/settings/notifications'
     );
-    await screen.getAllByRole('button', { name: 'Sign out' })[0]?.click();
+    await screen.getAllByRole('button', { name: 'Log out' })[0]?.click();
     expect(emitted()).toHaveProperty('signOut');
   });
 

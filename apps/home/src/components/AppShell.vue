@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CalendarDays, ChartNoAxesCombined, House, ListChecks, LogOut, Settings, Utensils } from '@lucide/vue';
+import { Calendar, ChefHat, Home, Landmark, ListChecks, LogOut, PiggyBank, Settings } from '@lucide/vue';
 import { type AppId, APPS, getActiveAppId, getAppHref } from '@repo/app-registry';
 import { type Component, computed, provide } from 'vue';
 
@@ -16,12 +16,12 @@ defineEmits<{ signOut: [] }>();
 provide(homeUrlBuilderKey, props.buildUrlWithAuth);
 
 const iconByApp = {
-  home: House,
-  budget: ChartNoAxesCombined,
-  mortgage: ChartNoAxesCombined,
-  schedule: CalendarDays,
+  home: Home,
+  budget: PiggyBank,
+  mortgage: Landmark,
+  schedule: Calendar,
   lists: ListChecks,
-  meals: Utensils
+  meals: ChefHat
 } satisfies Record<AppId, Component>;
 
 const enabledApps = computed(() =>
@@ -31,6 +31,8 @@ const enabledApps = computed(() =>
     icon: iconByApp[app.id]
   }))
 );
+const homeApp = computed(() => enabledApps.value.find((app) => app.id === 'home'));
+const desktopApps = computed(() => enabledApps.value.filter((app) => app.id !== 'home'));
 
 const currentPath = typeof globalThis.window === 'undefined' ? '/' : globalThis.window.location.pathname;
 const activeAppId = getActiveAppId(currentPath);
@@ -43,33 +45,41 @@ function buildAppHref(app: (typeof APPS)[number]) {
 
 <template>
   <div class="home-shell">
-    <aside class="desktop-sidebar" aria-label="Doma applications">
-      <a class="brand-mark" href="/" aria-label="Doma Home">D</a>
-      <nav class="desktop-nav">
-        <a
-          v-for="app in enabledApps"
-          :key="app.id"
-          :href="app.href"
-          class="nav-link"
-          :class="{ active: activeAppId === app.id }"
-          :aria-label="app.label"
-          :aria-current="activeAppId === app.id ? 'page' : undefined"
-        >
-          <component :is="app.icon" :size="20" aria-hidden="true" />
-          <span>{{ app.label }}</span>
-        </a>
-      </nav>
-      <div class="sidebar-actions">
-        <a class="nav-link" href="/settings/notifications" aria-label="Notification settings">
-          <Settings :size="20" aria-hidden="true" />
-          <span>Settings</span>
-        </a>
-        <button v-if="canSignOut" class="nav-button" type="button" aria-label="Sign out" @click="$emit('signOut')">
-          <LogOut :size="19" aria-hidden="true" />
-          <span>Sign out</span>
-        </button>
-      </div>
-    </aside>
+    <nav class="desktop-sidebar" aria-label="App navigation">
+      <a
+        v-if="homeApp"
+        :href="homeApp.href"
+        class="sidebar-home-link"
+        :class="{ active: activeAppId === homeApp.id }"
+        aria-label="Home"
+        :aria-current="activeAppId === homeApp.id ? 'page' : undefined"
+      >
+        <component :is="homeApp.icon" :size="22" aria-hidden="true" />
+      </a>
+
+      <ul class="desktop-nav">
+        <li v-for="app in desktopApps" :key="app.id">
+          <a
+            :href="app.href"
+            class="nav-link"
+            :class="{ active: activeAppId === app.id }"
+            :aria-label="app.label"
+            :aria-current="activeAppId === app.id ? 'page' : undefined"
+          >
+            <component :is="app.icon" :size="20" aria-hidden="true" />
+          </a>
+        </li>
+      </ul>
+
+      <a class="nav-link" href="/settings/notifications" aria-label="Notification settings">
+        <Settings :size="20" aria-hidden="true" />
+      </a>
+
+      <button v-if="canSignOut" class="nav-button" type="button" aria-label="Log out" @click="$emit('signOut')">
+        <span class="logout-icon"><LogOut :size="18" aria-hidden="true" /></span>
+        <span>Log Out</span>
+      </button>
+    </nav>
 
     <div class="shell-main">
       <header class="mobile-header">
