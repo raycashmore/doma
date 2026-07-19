@@ -11,6 +11,7 @@
   --home-source-card: #f2ede5;
   --home-urgent-card: #f5cdc4;
   --home-insight-card: #dce8d8;
+  --home-note-card: #f2e7cb;
 }
 
 * {
@@ -336,6 +337,84 @@ h3 {
   background: var(--home-insight-card);
 }
 
+.manual-note-card {
+  background: var(--home-note-card);
+}
+
+.note-editor-backdrop {
+  position: fixed;
+  z-index: 50;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: #211b16a3;
+}
+
+.note-editor {
+  width: min(100%, 560px);
+  padding: 24px;
+  border-radius: 24px;
+  background: var(--warm-bg-card);
+  box-shadow: 0 24px 80px #211b1652;
+}
+
+.note-editor-header,
+.note-editor-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.icon-button {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: var(--warm-bg-card-soft);
+  color: inherit;
+}
+
+.note-editor-form {
+  display: grid;
+  gap: 16px;
+  margin-top: 22px;
+}
+
+.note-editor-form label {
+  display: grid;
+  gap: 7px;
+  color: var(--warm-text-secondary);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.note-editor-form input,
+.note-editor-form textarea {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid var(--warm-border);
+  border-radius: 12px;
+  background: var(--warm-bg-card-soft);
+  color: var(--warm-text-primary);
+  font: inherit;
+}
+
+.note-editor-form textarea {
+  resize: vertical;
+}
+
+.form-error {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--warm-section-spend);
+  color: var(--warm-text-primary);
+  font-size: 13px;
+}
+
 .source-icon {
   width: 38px;
   height: 38px;
@@ -473,7 +552,10 @@ h3 {
 .card-link {
   position: absolute;
   inset: 0;
+  border: 0;
   border-radius: inherit;
+  background: transparent;
+  cursor: pointer;
 }
 
 .card-link:focus-visible {
@@ -876,6 +958,18 @@ h3 {
     min-height: 0;
     padding: 16px 14px;
     border-radius: 18px;
+  }
+
+  .note-editor-backdrop {
+    place-items: end center;
+    padding: 0;
+  }
+
+  .note-editor {
+    width: 100%;
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+    border-radius: 24px 24px 0 0;
   }
 
   .board-card h3 {

@@ -11,6 +11,7 @@ import { v } from 'convex/values';
 
 import { briefingDeliveryAttemptsTable, briefingsTable } from './briefing/schema';
 import { capturedEmailsTable, emailNoticeDeliveryAttemptsTable, emailNoticesTable } from './email/schema';
+import { manualNotesTable } from './home/schema';
 import { spendingInsightDeliveryAttemptsTable, spendingInsightsTable } from './insights/schema';
 import { recipesTable, weeklyMealAgentRunsTable, weeklyMealPlansTable } from './meals/schema';
 import { scheduleEventsTable, scheduleReminderAttemptsTable, scheduleSyncMetaTable } from './schedule/schema';
@@ -186,6 +187,11 @@ export default defineSchema({
   capturedEmails: capturedEmailsTable,
   emailNotices: emailNoticesTable,
   emailNoticeDeliveryAttempts: emailNoticeDeliveryAttemptsTable,
+
+  // ============================================================
+  // HOME — Shared household noticeboard content
+  // ============================================================
+  manualNotes: manualNotesTable,
 
   // ============================================================
   // MEALS — Shared household cookbook recipes

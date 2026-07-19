@@ -18,7 +18,7 @@ export async function readActiveBoard(ctx: ActiveBoardQueryCtx, options: ActiveB
 
   const localDate = calendarDateInTimeZone(options.now, options.timeZone);
   const { weekStart, weekday } = weekFactsForCalendarDate(localDate);
-  const [{ start: dayStart, end: dayEnd }, briefing, events, mealPlan, emailNotices, spendingInsights] =
+  const [{ start: dayStart, end: dayEnd }, briefing, events, mealPlan, emailNotices, spendingInsights, manualNotes] =
     await Promise.all([
       Promise.resolve(localDateRangeMs({ localDate, timeZone: options.timeZone })),
       ctx.db
@@ -33,7 +33,8 @@ export async function readActiveBoard(ctx: ActiveBoardQueryCtx, options: ActiveB
         .withIndex('by_week_start', (q) => q.eq('weekStart', weekStart))
         .unique(),
       ctx.db.query('emailNotices').collect(),
-      ctx.db.query('spendingInsights').collect()
+      ctx.db.query('spendingInsights').collect(),
+      ctx.db.query('manualNotes').collect()
     ]);
 
   const eventBySourceId = new Map(events.map((event) => [sourceIdForEvent(event), event]));
@@ -148,6 +149,41 @@ export async function readActiveBoard(ctx: ActiveBoardQueryCtx, options: ActiveB
         }
       ]
     : [];
+  const manualNoteItems = manualNotes
+    .map((note) => {
+      const dueState = !note.dueDate
+        ? ('none' as const)
+        : note.dueDate < localDate
+          ? ('overdue' as const)
+          : note.dueDate === localDate
+            ? ('dueToday' as const)
+            : ('upcoming' as const);
+      return {
+        kind: 'manualNote' as const,
+        id: `manualNote:${note._id}`,
+        noteId: note._id,
+        sourceKind: 'manualNote' as const,
+        sourceApp: 'home' as const,
+        display: dueState === 'overdue' ? ('wide' as const) : ('standard' as const),
+        priority:
+          dueState === 'overdue' ? ('high' as const) : dueState === 'dueToday' ? ('medium' as const) : ('low' as const),
+        title: note.title,
+        detail: note.detail,
+        dueDate: note.dueDate,
+        dueState,
+        authorUserId: note.authorUserId,
+        createdAt: note.createdAt,
+        updatedAt: note.updatedAt
+      };
+    })
+    .sort((left, right) => {
+      const rank = { overdue: 0, dueToday: 1, upcoming: 2, none: 3 };
+      return (
+        rank[left.dueState] - rank[right.dueState] ||
+        (left.dueDate ?? '').localeCompare(right.dueDate ?? '') ||
+        right.updatedAt - left.updatedAt
+      );
+    });
 
   return {
     localDate,
@@ -173,6 +209,7 @@ export async function readActiveBoard(ctx: ActiveBoardQueryCtx, options: ActiveB
         schoolLunch: mealName('schoolLunch'),
         dinner: mealName('dinner')
       },
+      ...manualNoteItems,
       ...emailNoticeItems,
       ...spendingInsightItems
     ]

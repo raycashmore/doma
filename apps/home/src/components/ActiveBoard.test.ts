@@ -40,6 +40,22 @@ const completeBoard = {
       dinner: 'Not planned'
     },
     {
+      kind: 'manualNote' as const,
+      id: 'manualNote:manual_note_1',
+      noteId: 'manual_note_1' as never,
+      sourceKind: 'manualNote' as const,
+      sourceApp: 'home' as const,
+      display: 'wide' as const,
+      priority: 'high' as const,
+      title: 'Return library books',
+      detail: 'Leave them by the door.',
+      dueDate: '2026-07-13',
+      dueState: 'overdue' as const,
+      authorUserId: 'household-user-1',
+      createdAt: 1,
+      updatedAt: 2
+    },
+    {
       kind: 'sourceNotice' as const,
       id: 'emailNotice:emailNotices_urgent',
       sourceKind: 'forwardedEmail' as const,
@@ -150,15 +166,28 @@ describe('ActiveBoard', () => {
     });
 
     const cards = screen.getAllByRole('article');
-    expect(within(cards[2]!).getByRole('heading', { name: 'Permission form due' })).not.toBeNull();
-    expect(within(cards[2]!).getByText('High priority')).not.toBeNull();
-    expect(within(cards[2]!).getByRole('link', { name: 'Open notice details' }).getAttribute('href')).toBe(
+    expect(within(cards[3]!).getByRole('heading', { name: 'Permission form due' })).not.toBeNull();
+    expect(within(cards[3]!).getByText('High priority')).not.toBeNull();
+    expect(within(cards[3]!).getByRole('link', { name: 'Open notice details' }).getAttribute('href')).toBe(
       '/notices/emailNotices_urgent'
     );
-    expect(within(cards[3]!).getByRole('heading', { name: 'Library opening hours changed' })).not.toBeNull();
-    expect(within(cards[3]!).getByText('Quiet notice')).not.toBeNull();
-    expect(within(cards[4]!).getByRole('heading', { name: 'June spending settled' })).not.toBeNull();
-    expect(within(cards[4]!).getByRole('link', { name: 'Open Budget' })).not.toBeNull();
+    expect(within(cards[4]!).getByRole('heading', { name: 'Library opening hours changed' })).not.toBeNull();
+    expect(within(cards[4]!).getByText('Quiet notice')).not.toBeNull();
+    expect(within(cards[5]!).getByRole('heading', { name: 'June spending settled' })).not.toBeNull();
+    expect(within(cards[5]!).getByRole('link', { name: 'Open Budget' })).not.toBeNull();
+  });
+
+  it('renders overdue shared notes and opens them for collaborative editing', async () => {
+    const { emitted } = render(ActiveBoard, {
+      props: { data: completeBoard, isPending: false, error: null }
+    });
+
+    const card = screen.getByRole('heading', { name: 'Return library books' }).closest('article');
+    expect(card).not.toBeNull();
+    expect(within(card!).getByText('Overdue · 2026-07-13')).not.toBeNull();
+    await within(card!).getByRole('button', { name: 'Edit note: Return library books' }).click();
+    const editEvents = emitted().editNote as unknown[][];
+    expect(editEvents[0]?.[0]).toMatchObject({ noteId: 'manual_note_1', dueState: 'overdue' });
   });
 
   it('shows an intentional empty state when there are no source notices', () => {

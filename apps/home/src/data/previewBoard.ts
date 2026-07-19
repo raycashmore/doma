@@ -2,6 +2,7 @@ import type { api } from '@repo/convex';
 import type { FunctionReturnType } from 'convex/server';
 
 type ActiveBoardData = FunctionReturnType<typeof api.home.activeBoard.activeBoard>;
+type ManualNoteId = Extract<ActiveBoardData['items'][number], { kind: 'manualNote' }>['noteId'];
 
 export const PREVIEW_BOARD = {
   localDate: '2026-07-13',
@@ -34,6 +35,22 @@ export const PREVIEW_BOARD = {
       destination: '/meals',
       schoolLunch: 'Pasta salad',
       dinner: 'Not planned'
+    },
+    {
+      kind: 'manualNote',
+      id: 'manualNote:preview-library-books',
+      noteId: 'preview-library-books' as ManualNoteId,
+      sourceKind: 'manualNote',
+      sourceApp: 'home',
+      display: 'standard',
+      priority: 'medium',
+      title: 'Return library books',
+      detail: 'Leave them by the door.',
+      dueDate: '2026-07-13',
+      dueState: 'dueToday',
+      authorUserId: 'household-user-1',
+      createdAt: Date.parse('2026-07-12T02:00:00.000Z'),
+      updatedAt: Date.parse('2026-07-12T02:00:00.000Z')
     },
     {
       kind: 'sourceNotice',

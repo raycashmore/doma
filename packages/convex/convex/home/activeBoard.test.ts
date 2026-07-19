@@ -344,6 +344,33 @@ describe('readActiveBoard', () => {
     ]);
   });
 
+  it('surfaces shared notes live with household-local due states and keeps overdue notes active', async () => {
+    const ctx = createActiveBoardCtx({
+      briefing: null,
+      events: [],
+      plan: null,
+      recipes: [],
+      manualNotes: [
+        manualNote('overdue', '2026-07-13'),
+        manualNote('today', '2026-07-14'),
+        manualNote('upcoming', '2026-07-16'),
+        manualNote('undated')
+      ]
+    });
+
+    const result = await readActiveBoard(ctx as never, {
+      now: new Date('2026-07-13T22:00:00.000Z'),
+      timeZone: 'Australia/Sydney'
+    });
+
+    expect(result.items.slice(2)).toEqual([
+      expect.objectContaining({ id: 'manualNote:overdue', dueState: 'overdue', priority: 'high' }),
+      expect.objectContaining({ id: 'manualNote:today', dueState: 'dueToday', priority: 'medium' }),
+      expect.objectContaining({ id: 'manualNote:upcoming', dueState: 'upcoming', priority: 'low' }),
+      expect.objectContaining({ id: 'manualNote:undated', dueState: 'none', priority: 'low' })
+    ]);
+  });
+
   it('removes a generated line when any of its source events has been superseded', async () => {
     const currentEvent = scheduleEvent({ googleEventId: 'still-current' });
     const briefing = morningBriefing({
@@ -450,6 +477,7 @@ type ActiveBoardRows = {
   recipes: { publicId: string; name: string }[];
   emailNotices?: Record<string, unknown>[];
   spendingInsights?: Record<string, unknown>[];
+  manualNotes?: Record<string, unknown>[];
 };
 
 function createActiveBoardCtx(rows: ActiveBoardRows) {
@@ -460,6 +488,7 @@ function createActiveBoardCtx(rows: ActiveBoardRows) {
         collect: async () => {
           if (table === 'emailNotices') return rows.emailNotices ?? [];
           if (table === 'spendingInsights') return rows.spendingInsights ?? [];
+          if (table === 'manualNotes') return rows.manualNotes ?? [];
           return [];
         },
         withIndex: (_index: string, apply?: (query: { eq: (_field: string, value: string) => string }) => unknown) => {
@@ -483,6 +512,18 @@ function createActiveBoardCtx(rows: ActiveBoardRows) {
         }
       })
     }
+  };
+}
+
+function manualNote(id: string, dueDate?: string) {
+  return {
+    _id: id,
+    title: `Note ${id}`,
+    detail: `Detail ${id}`,
+    ...(dueDate ? { dueDate } : {}),
+    authorUserId: 'household-user-1',
+    createdAt: 1,
+    updatedAt: 1
   };
 }
 
