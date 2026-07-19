@@ -4,6 +4,7 @@ import { computed, nextTick, ref } from 'vue';
 
 import ActiveBoard from '@/components/ActiveBoard.vue';
 import ArchiveConfirmation from '@/components/ArchiveConfirmation.vue';
+import HomeConnectionStatus from '@/components/HomeConnectionStatus.vue';
 import ManualNoteEditor from '@/components/ManualNoteEditor.vue';
 import { useActiveBoard } from '@/composables/useActiveBoard';
 import { type ArchiveableBoardItem, useBoardArchive } from '@/composables/useBoardArchive';
@@ -128,6 +129,7 @@ async function finishArchive() {
       <p v-if="HOME_RUNTIME.mode === 'demo'" class="connection-status">
         Local preview · authentication and live data are disabled
       </p>
+      <HomeConnectionStatus v-else :is-pending="boardPending" :has-error="boardError !== null" />
       <ActiveBoard
         :data="boardData"
         :is-pending="boardPending"

@@ -21,6 +21,7 @@ quick access from a home screen.
 
 Doma gives each problem a focused surface:
 
+- **Home** turns household signals into an actionable noticeboard with shared notes and source-aware cards.
 - **Budget** turns raw financial captures into monthly trends and account views.
 - **Schedule** reshapes shared calendars into a readable week for the household.
 - **Lists** supports flexible personal and shared checklists with typed properties.
@@ -133,16 +134,16 @@ history.
 
 ## Technology
 
-| Area     | Tools                                                 | Why they are here                                              |
-| -------- | ----------------------------------------------------- | -------------------------------------------------------------- |
-| Monorepo | Turborepo, pnpm                                       | Fast workspace orchestration and clear app boundaries          |
-| Frontend | React 19, TanStack Start, Next.js, SvelteKit          | A practical comparison of modern full-stack UI approaches      |
-| Data     | Convex                                                | Reactive shared data with typed server functions               |
-| Identity | Clerk                                                 | One household session across independently deployed zones      |
-| Styling  | Tailwind CSS v4, shared design tokens, shadcn/ui      | Consistent visual language without coupling every app to React |
-| Services | Hono, Upstash Redis                                   | Small provider-facing APIs and webhook state                   |
-| Quality  | TypeScript, Vitest, Testing Library, ESLint, Prettier | Fast feedback across a mixed-framework workspace               |
-| Delivery | Vercel Multi-Zones, GitHub Actions                    | Independent deployments behind one domain                      |
+| Area     | Tools                                                     | Why they are here                                              |
+| -------- | --------------------------------------------------------- | -------------------------------------------------------------- |
+| Monorepo | Turborepo, pnpm                                           | Fast workspace orchestration and clear app boundaries          |
+| Frontend | Vue 3, Vite, React 19, TanStack Start, Next.js, SvelteKit | A practical comparison of modern full-stack UI approaches      |
+| Data     | Convex                                                    | Reactive shared data with typed server functions               |
+| Identity | Clerk                                                     | One household session across independently deployed zones      |
+| Styling  | Tailwind CSS v4, shared design tokens, shadcn/ui          | Consistent visual language without coupling every app to React |
+| Services | Hono, Upstash Redis                                       | Small provider-facing APIs and webhook state                   |
+| Quality  | TypeScript, Vitest, Testing Library, ESLint, Prettier     | Fast feedback across a mixed-framework workspace               |
+| Delivery | Vercel Multi-Zones, GitHub Actions                        | Independent deployments behind one domain                      |
 
 ## Run it locally
 

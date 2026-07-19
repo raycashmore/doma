@@ -31,7 +31,9 @@ React zones configure Convex in their root route. Home retains `convex-vue` behi
 
 ## Home
 
-`apps/home` owns the apex Vue shell, household noticeboard, notification settings, Vercel child-zone rewrites, and root service-worker boundary. Its active board loads a household-timezone Today summary and independently resolved school lunch and dinner values from `api.home.activeBoard.activeBoard`; local no-auth mode uses generic fixtures. Routes live in `src/router.ts`; auth and Convex integration live under `src/integrations/`. See `apps/home/README.md` for the adapter decision and local commands.
+`apps/home` owns the apex Vue shell, household noticeboard, notification settings, Vercel child-zone rewrites, and root service-worker boundary. Its active board derives a deterministic responsive Bento layout from household-timezone Today and Meals summaries, active forwarded-email notices, spending insights, and shared manual notes. Source payloads stay with their owning module; Home stores manual notes and payload-free archive occurrences only. Source cards navigate to the owning Doma app or a Home detail route, and live queries update the board across clients. Local no-auth mode uses generic fixtures.
+
+Home forms and confirmation dialogs expose pending and recoverable error states, trap focus, and restore focus to their triggers. The shell reports offline, connecting, query-error, and connected states without implying offline writes. Routes live in `src/router.ts`; auth and Convex integration live under `src/integrations/`. See `apps/home/README.md` for the adapter decision, PWA boundary, verification coverage, and local commands.
 
 ## Schedule
 

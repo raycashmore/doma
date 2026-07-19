@@ -1,12 +1,13 @@
 # Testing & CI
 
-## Test Setup
+## Test setup
 
-- **Runner:** Vitest with jsdom environment
-- **Location:** `apps/budget/src/**/*.{test,spec}.{ts,tsx}`
-- **Libraries:** `@testing-library/react` and `@testing-library/dom`
-- **Workspace run:** `pnpm --filter budget test`
-- **Caching:** Tests are not cached in Turbo (`"cache": false`)
+- **Runner:** Vitest for workspace unit, component, and integration tests; framework-native checks where an app requires them.
+- **Libraries:** Testing Library adapters match each UI framework (`@testing-library/vue`, `@testing-library/react`, and DOM helpers).
+- **Workspace run:** `pnpm test`; target one package with `pnpm --filter <package> test`.
+- **Caching:** Tests are not cached in Turbo (`"cache": false`).
+
+Home tests cover derived board ordering and empty/error/loading states, notice expiry and supersession, manual-note and archive mutation states, keyboard/focus behavior, Clerk–Convex auth lifecycle, Telegram pairing, production rewrite order, and the root service-worker boundary. Browser verification uses `pnpm --filter home dev:no-auth` for privacy-safe desktop/mobile layout, navigation, focus, overflow, and console checks. Authenticated write and cross-client behavior stays in deterministic integration tests unless a safe signed-in browser session is explicitly available.
 
 ## CI Pipeline
 
@@ -20,3 +21,5 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on push to `main` and PRs:
 6. Build (`pnpm build`)
 
 All steps must pass. The pipeline cancels in-progress runs when a new commit is pushed to the same branch.
+
+Before a PR, run `pnpm ci:checks` and complete the repository's pre-PR documentation audit. Browser verification is additional evidence for user-visible work; it does not replace the automated gates.

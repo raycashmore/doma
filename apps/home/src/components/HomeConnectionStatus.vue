@@ -1,13 +1,25 @@
 <script setup lang="ts">
-import { useHomeConnection } from '@/composables/useHomeConnection';
+import { useConvexConnectionStatus } from '@/composables/useConvexConnectionStatus';
+import { useOnlineStatus } from '@/composables/useOnlineStatus';
 
-const connection = useHomeConnection();
+defineProps<{
+  isPending: boolean;
+  hasError: boolean;
+}>();
+
+const isOnline = useOnlineStatus();
+const connectionStatus = useConvexConnectionStatus();
 </script>
 
 <template>
-  <p v-if="connection.isPending.value" class="connection-status" role="status">Connecting to household data…</p>
-  <p v-else-if="connection.error.value" class="connection-status error-text" role="alert">
-    Household data is unavailable. Refresh to reconnect.
+  <p v-if="!isOnline" class="connection-status error-text" role="status">
+    Offline · reconnect to refresh household data
   </p>
-  <p v-else class="connection-status connected">Live household data connected</p>
+  <p v-else-if="isPending || connectionStatus === 'connecting'" class="connection-status" role="status">
+    Connecting to household data…
+  </p>
+  <p v-else-if="connectionStatus === 'reconnecting'" class="connection-status error-text" role="status">
+    Reconnecting to household data…
+  </p>
+  <p v-else-if="!hasError" class="connection-status connected" role="status">Live household data connected</p>
 </template>

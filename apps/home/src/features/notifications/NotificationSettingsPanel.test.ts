@@ -42,4 +42,29 @@ describe('NotificationSettingsPanel', () => {
       'https://t.me/example_bot?start=generic'
     );
   });
+
+  it('refreshes link status and exposes a recoverable loading error', async () => {
+    const fetch = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('Connection interrupted'))
+      .mockResolvedValueOnce(Response.json({ pairingEnabled: true, linked: false }));
+    vi.stubGlobal('fetch', fetch);
+
+    render(NotificationSettingsPanel, { props: { getToken: async () => 'session-token' } });
+
+    expect((await screen.findByRole('alert')).textContent).toContain('Connection interrupted');
+    await fireEvent.click(screen.getByRole('button', { name: 'Refresh status' }));
+
+    expect(await screen.findByRole('button', { name: 'Create code' })).not.toBeNull();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('explains that pairing is production-only when the API disables it', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json({ pairingEnabled: false, linked: false })));
+
+    render(NotificationSettingsPanel, { props: { getToken: async () => 'session-token' } });
+
+    expect(await screen.findByText('Unavailable outside production')).not.toBeNull();
+    expect(screen.getByText(/disabled outside the production Doma app/i)).not.toBeNull();
+  });
 });

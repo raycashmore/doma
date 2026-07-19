@@ -58,6 +58,10 @@ Non-Convex backend experiments live at `apps/api-<name>` (e.g. `apps/api-recipes
 
 Convex remains the primary backend — most data and business logic belong there. `apps/api-*` is for experiments that don't fit Convex's model (long-running jobs, webhook receivers, framework playgrounds).
 
+### Home noticeboard composition
+
+Home is a read model over existing domain owners. The `home/activeBoard` query resolves Today, Meals, forwarded-email notices, spending insights, and manual notes for the signed-in user, then filters expired, superseded, and archived occurrences. It does not copy source payloads into a Home-owned projection. `manualNotes` is the only Home-authored content table; `boardArchives` contains only an occurrence id, source kind, archiving user id, and archive timestamp. This keeps ownership explicit while Convex subscriptions provide cross-client updates.
+
 `apps/api-agent` is the first durable instance of that convention. Its
 `agents/weekly-meals/` module owns a bounded AI SDK `ToolLoopAgent`, strict
 read-only planning tools, typed outcomes, post-generation validation, and
@@ -70,7 +74,7 @@ current-week view.
 
 ## PWA
 
-Vite apps use `vite-plugin-pwa` with `scope` set to their mount path; each is independently installable. Home's root-scoped worker excludes API and child-zone navigation from its fallback. The service worker scope must match the rewrite shape — Budget's SW lives at `/budget/sw.js`, registered when the user visits `/budget`. The Next.js `schedule` app will use Serwist (`@serwist/next`) for the same effect — its PWA layer lands in a later phase. See `docs/offline.md` for what's covered (shell) and what isn't (offline data).
+Vite apps use `vite-plugin-pwa` with `scope` set to their mount path; each is independently installable. Home's root-scoped worker precaches the Home shell but excludes `/api`, `/budget`, `/schedule`, `/lists`, and `/meals` navigations from its fallback. Those exclusions mirror the rewrites that precede Home's final SPA fallback in `apps/home/vercel.json`. Convex traffic is network-only. The service worker scope must match the rewrite shape — Budget's SW lives at `/budget/sw.js`, registered when the user visits `/budget`. The Next.js `schedule` app will use Serwist (`@serwist/next`) for the same effect — its PWA layer lands in a later phase. See `docs/offline.md` for what's covered (shell) and what isn't (offline data).
 
 ## Auth
 

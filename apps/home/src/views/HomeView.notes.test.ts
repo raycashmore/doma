@@ -22,6 +22,9 @@ vi.mock('@/composables/useManualNotes', () => ({
 vi.mock('@/composables/useBoardArchive', () => ({
   useBoardArchive: () => ({ isPending: { value: false }, archive })
 }));
+vi.mock('@/composables/useConvexConnectionStatus', () => ({
+  useConvexConnectionStatus: () => ({ value: 'connected' })
+}));
 
 import HomeView from './HomeView.vue';
 
