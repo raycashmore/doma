@@ -38,6 +38,45 @@ const completeBoard = {
       destination: '/meals',
       schoolLunch: 'Pasta salad',
       dinner: 'Not planned'
+    },
+    {
+      kind: 'sourceNotice' as const,
+      id: 'emailNotice:emailNotices_urgent',
+      sourceKind: 'forwardedEmail' as const,
+      sourceApp: 'home' as const,
+      display: 'wide' as const,
+      priority: 'high' as const,
+      title: 'Permission form due',
+      detail: 'Return the form before Friday.',
+      facts: [{ label: 'due', value: 'Friday' }],
+      occurredAt: Date.parse('2026-07-11T02:00:00.000Z'),
+      destination: '/notices/emailNotices_urgent'
+    },
+    {
+      kind: 'sourceNotice' as const,
+      id: 'emailNotice:emailNotices_quiet',
+      sourceKind: 'forwardedEmail' as const,
+      sourceApp: 'home' as const,
+      display: 'compact' as const,
+      priority: 'low' as const,
+      title: 'Library opening hours changed',
+      detail: 'The household collection window has moved.',
+      facts: [],
+      occurredAt: Date.parse('2026-07-10T02:00:00.000Z'),
+      destination: '/notices/emailNotices_quiet'
+    },
+    {
+      kind: 'sourceNotice' as const,
+      id: 'spendingInsight:2026-06',
+      sourceKind: 'monthlySpendingInsight' as const,
+      sourceApp: 'budget' as const,
+      display: 'standard' as const,
+      priority: 'medium' as const,
+      title: 'June spending settled',
+      detail: 'Groceries drifted upward while dining out fell.',
+      occurredAt: Date.parse('2026-07-01T02:00:00.000Z'),
+      period: '2026-06',
+      destination: '/budget'
     }
   ]
 };
@@ -100,6 +139,38 @@ describe('ActiveBoard', () => {
     expect(screen.getByRole('link', { name: 'Open Meals' }).getAttribute('href')).toBe(
       'http://localhost:3005/?__clerk_db_jwt=test-token'
     );
+    expect(screen.getByRole('link', { name: 'Open Budget' }).getAttribute('href')).toBe(
+      'http://localhost:3001/?__clerk_db_jwt=test-token'
+    );
+  });
+
+  it('renders urgent, quiet, and spending source cards after Today and Meals', () => {
+    render(ActiveBoard, {
+      props: { data: completeBoard, isPending: false, error: null }
+    });
+
+    const cards = screen.getAllByRole('article');
+    expect(within(cards[2]!).getByRole('heading', { name: 'Permission form due' })).not.toBeNull();
+    expect(within(cards[2]!).getByText('High priority')).not.toBeNull();
+    expect(within(cards[2]!).getByRole('link', { name: 'Open notice details' }).getAttribute('href')).toBe(
+      '/notices/emailNotices_urgent'
+    );
+    expect(within(cards[3]!).getByRole('heading', { name: 'Library opening hours changed' })).not.toBeNull();
+    expect(within(cards[3]!).getByText('Quiet notice')).not.toBeNull();
+    expect(within(cards[4]!).getByRole('heading', { name: 'June spending settled' })).not.toBeNull();
+    expect(within(cards[4]!).getByRole('link', { name: 'Open Budget' })).not.toBeNull();
+  });
+
+  it('shows an intentional empty state when there are no source notices', () => {
+    render(ActiveBoard, {
+      props: {
+        data: { ...completeBoard, items: completeBoard.items.slice(0, 2) },
+        isPending: false,
+        error: null
+      }
+    });
+
+    expect(screen.getByText('Nothing else needs attention right now.')).not.toBeNull();
   });
 
   it('distinguishes an empty briefing from missing meal assignments', () => {

@@ -218,6 +218,132 @@ describe('readActiveBoard', () => {
     });
   });
 
+  it('surfaces canonical email notices and only the latest current monthly spending insight', async () => {
+    const ctx = createActiveBoardCtx({
+      briefing: null,
+      events: [],
+      plan: null,
+      recipes: [],
+      emailNotices: [
+        {
+          _id: 'emailNotices_quiet',
+          capturedEmailId: 'capturedEmails_quiet',
+          category: 'admin',
+          priority: 'low',
+          title: 'Library opening hours changed',
+          body: 'The household collection window has moved.',
+          extractedFacts: [],
+          telegramWorthy: false,
+          createdAt: Date.parse('2026-07-10T02:00:00.000Z'),
+          updatedAt: Date.parse('2026-07-10T02:00:00.000Z')
+        },
+        {
+          _id: 'emailNotices_urgent',
+          capturedEmailId: 'capturedEmails_urgent',
+          category: 'school',
+          priority: 'high',
+          title: 'Permission form due',
+          body: 'Return the form before Friday.',
+          extractedFacts: [{ label: 'due', value: 'Friday' }],
+          telegramWorthy: true,
+          createdAt: Date.parse('2026-07-11T02:00:00.000Z'),
+          updatedAt: Date.parse('2026-07-11T02:00:00.000Z')
+        },
+        {
+          _id: 'emailNotices_archived',
+          capturedEmailId: 'capturedEmails_archived',
+          category: 'other',
+          priority: 'medium',
+          title: 'Superseded notice',
+          body: 'This occurrence is no longer current.',
+          extractedFacts: [],
+          telegramWorthy: true,
+          createdAt: Date.parse('2026-07-12T02:00:00.000Z'),
+          updatedAt: Date.parse('2026-07-12T02:00:00.000Z'),
+          archivedAt: Date.parse('2026-07-12T03:00:00.000Z')
+        },
+        {
+          _id: 'emailNotices_expired',
+          capturedEmailId: 'capturedEmails_expired',
+          category: 'admin',
+          priority: 'medium',
+          title: 'Expired notice',
+          body: 'This occurrence has passed its relevance window.',
+          extractedFacts: [],
+          telegramWorthy: false,
+          createdAt: Date.parse('2026-07-01T02:00:00.000Z'),
+          updatedAt: Date.parse('2026-07-01T02:00:00.000Z'),
+          expiresAt: Date.parse('2026-07-13T21:00:00.000Z')
+        },
+        {
+          _id: 'emailNotices_superseded',
+          capturedEmailId: 'capturedEmails_superseded',
+          category: 'school',
+          priority: 'high',
+          title: 'Superseded notice',
+          body: 'A newer canonical occurrence replaced this one.',
+          extractedFacts: [],
+          telegramWorthy: true,
+          createdAt: Date.parse('2026-07-09T02:00:00.000Z'),
+          updatedAt: Date.parse('2026-07-09T02:00:00.000Z'),
+          supersededAt: Date.parse('2026-07-10T02:00:00.000Z')
+        }
+      ],
+      spendingInsights: [
+        spendingInsight('2026-05'),
+        spendingInsight('2026-06', { headline: 'June spending settled' }),
+        spendingInsight('2026-08', { headline: 'Future data must not surface' })
+      ]
+    });
+
+    const result = await readActiveBoard(ctx as never, {
+      now: new Date('2026-07-13T22:00:00.000Z'),
+      timeZone: 'Australia/Sydney'
+    });
+
+    expect(result.items.slice(2)).toEqual([
+      {
+        kind: 'sourceNotice',
+        id: 'emailNotice:emailNotices_urgent',
+        sourceKind: 'forwardedEmail',
+        sourceApp: 'home',
+        display: 'wide',
+        priority: 'high',
+        title: 'Permission form due',
+        detail: 'Return the form before Friday.',
+        facts: [{ label: 'due', value: 'Friday' }],
+        occurredAt: Date.parse('2026-07-11T02:00:00.000Z'),
+        destination: '/notices/emailNotices_urgent'
+      },
+      {
+        kind: 'sourceNotice',
+        id: 'emailNotice:emailNotices_quiet',
+        sourceKind: 'forwardedEmail',
+        sourceApp: 'home',
+        display: 'compact',
+        priority: 'low',
+        title: 'Library opening hours changed',
+        detail: 'The household collection window has moved.',
+        facts: [],
+        occurredAt: Date.parse('2026-07-10T02:00:00.000Z'),
+        destination: '/notices/emailNotices_quiet'
+      },
+      {
+        kind: 'sourceNotice',
+        id: 'spendingInsight:2026-06',
+        sourceKind: 'monthlySpendingInsight',
+        sourceApp: 'budget',
+        display: 'standard',
+        priority: 'medium',
+        title: 'June spending settled',
+        detail: 'Groceries drifted upward while dining out fell.',
+        occurredAt: 1_700_000_000_000,
+        period: '2026-06',
+        destination: '/budget'
+      }
+    ]);
+  });
+
   it('removes a generated line when any of its source events has been superseded', async () => {
     const currentEvent = scheduleEvent({ googleEventId: 'still-current' });
     const briefing = morningBriefing({
@@ -322,6 +448,8 @@ type ActiveBoardRows = {
   events: Record<string, unknown>[];
   plan: Record<string, unknown> | null;
   recipes: { publicId: string; name: string }[];
+  emailNotices?: Record<string, unknown>[];
+  spendingInsights?: Record<string, unknown>[];
 };
 
 function createActiveBoardCtx(rows: ActiveBoardRows) {
@@ -329,6 +457,11 @@ function createActiveBoardCtx(rows: ActiveBoardRows) {
     auth: { getUserIdentity: async () => ({ subject: 'user_123' }) },
     db: {
       query: (table: string) => ({
+        collect: async () => {
+          if (table === 'emailNotices') return rows.emailNotices ?? [];
+          if (table === 'spendingInsights') return rows.spendingInsights ?? [];
+          return [];
+        },
         withIndex: (_index: string, apply?: (query: { eq: (_field: string, value: string) => string }) => unknown) => {
           let value = '';
           apply?.({
@@ -350,5 +483,17 @@ function createActiveBoardCtx(rows: ActiveBoardRows) {
         }
       })
     }
+  };
+}
+
+function spendingInsight(monthKey: string, overrides: Record<string, unknown> = {}) {
+  return {
+    monthKey,
+    headline: `Headline for ${monthKey}`,
+    observations: ['Groceries drifted upward while dining out fell.'],
+    prediction: 'Expect card spend to settle near the trailing average.',
+    generatedAt: 1_700_000_000_000,
+    model: 'test-model',
+    ...overrides
   };
 }

@@ -1,6 +1,9 @@
+import { v } from 'convex/values';
+
 import { query, type QueryCtx } from '../_generated/server';
 import { localDateRangeMs, morningBriefingKey, sourceIdForEvent } from '../briefing/morning';
 import { calendarDateInTimeZone, weekFactsForCalendarDate } from '../calendarDate';
+import { pickLatestSpendingInsight } from '../insights/latest';
 
 type ActiveBoardQueryCtx = Pick<QueryCtx, 'auth' | 'db'>;
 
@@ -15,20 +18,23 @@ export async function readActiveBoard(ctx: ActiveBoardQueryCtx, options: ActiveB
 
   const localDate = calendarDateInTimeZone(options.now, options.timeZone);
   const { weekStart, weekday } = weekFactsForCalendarDate(localDate);
-  const [{ start: dayStart, end: dayEnd }, briefing, events, mealPlan] = await Promise.all([
-    Promise.resolve(localDateRangeMs({ localDate, timeZone: options.timeZone })),
-    ctx.db
-      .query('briefings')
-      .withIndex('by_briefing_key', (q) =>
-        q.eq('briefingKey', morningBriefingKey({ briefingKind: 'morning', localDate }))
-      )
-      .unique(),
-    ctx.db.query('scheduleEvents').withIndex('by_start').collect(),
-    ctx.db
-      .query('weeklyMealPlans')
-      .withIndex('by_week_start', (q) => q.eq('weekStart', weekStart))
-      .unique()
-  ]);
+  const [{ start: dayStart, end: dayEnd }, briefing, events, mealPlan, emailNotices, spendingInsights] =
+    await Promise.all([
+      Promise.resolve(localDateRangeMs({ localDate, timeZone: options.timeZone })),
+      ctx.db
+        .query('briefings')
+        .withIndex('by_briefing_key', (q) =>
+          q.eq('briefingKey', morningBriefingKey({ briefingKind: 'morning', localDate }))
+        )
+        .unique(),
+      ctx.db.query('scheduleEvents').withIndex('by_start').collect(),
+      ctx.db
+        .query('weeklyMealPlans')
+        .withIndex('by_week_start', (q) => q.eq('weekStart', weekStart))
+        .unique(),
+      ctx.db.query('emailNotices').collect(),
+      ctx.db.query('spendingInsights').collect()
+    ]);
 
   const eventBySourceId = new Map(events.map((event) => [sourceIdForEvent(event), event]));
   const isCurrentBriefingLine = (line: { sourceIds: string[] }) =>
@@ -95,6 +101,54 @@ export async function readActiveBoard(ctx: ActiveBoardQueryCtx, options: ActiveB
     return (assignment && recipeNames.get(assignment.recipePublicId)) || 'Not planned';
   };
 
+  const emailNoticeItems = emailNotices
+    .filter(
+      (notice) =>
+        notice.archivedAt === undefined &&
+        notice.supersededAt === undefined &&
+        (notice.expiresAt === undefined || notice.expiresAt > options.now.getTime())
+    )
+    .sort((left, right) => right.createdAt - left.createdAt)
+    .map((notice) => ({
+      kind: 'sourceNotice' as const,
+      id: `emailNotice:${notice._id}`,
+      sourceKind: 'forwardedEmail' as const,
+      sourceApp: 'home' as const,
+      display:
+        notice.priority === 'high'
+          ? ('wide' as const)
+          : notice.priority === 'low'
+            ? ('compact' as const)
+            : ('standard' as const),
+      priority: notice.priority,
+      title: notice.title,
+      detail: notice.body,
+      facts: notice.extractedFacts,
+      occurredAt: notice.createdAt,
+      destination: `/notices/${notice._id}`
+    }));
+  const currentMonthKey = localDate.slice(0, 7);
+  const latestSpendingInsight = pickLatestSpendingInsight(
+    spendingInsights.filter((insight) => insight.monthKey <= currentMonthKey)
+  );
+  const spendingInsightItems = latestSpendingInsight
+    ? [
+        {
+          kind: 'sourceNotice' as const,
+          id: `spendingInsight:${latestSpendingInsight.monthKey}`,
+          sourceKind: 'monthlySpendingInsight' as const,
+          sourceApp: 'budget' as const,
+          display: 'standard' as const,
+          priority: 'medium' as const,
+          title: latestSpendingInsight.headline,
+          detail: latestSpendingInsight.observations[0] ?? latestSpendingInsight.prediction,
+          occurredAt: latestSpendingInsight.generatedAt,
+          period: latestSpendingInsight.monthKey,
+          destination: '/budget'
+        }
+      ]
+    : [];
+
   return {
     localDate,
     timeZone: options.timeZone,
@@ -118,13 +172,15 @@ export async function readActiveBoard(ctx: ActiveBoardQueryCtx, options: ActiveB
         destination: '/meals',
         schoolLunch: mealName('schoolLunch'),
         dinner: mealName('dinner')
-      }
+      },
+      ...emailNoticeItems,
+      ...spendingInsightItems
     ]
   };
 }
 
 export const activeBoard = query({
-  args: {},
+  args: { refreshToken: v.number() },
   handler: async (ctx) =>
     readActiveBoard(ctx, {
       now: new Date(),

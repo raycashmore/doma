@@ -1,5 +1,5 @@
 import { useConvexQuery } from 'convex-vue';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ref } from 'vue';
 
 import { useActiveBoard } from './useActiveBoard';
@@ -9,7 +9,11 @@ vi.mock('convex-vue', () => ({
 }));
 
 describe('useActiveBoard', () => {
-  beforeEach(() => vi.mocked(useConvexQuery).mockReset());
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.mocked(useConvexQuery).mockReset();
+  });
+  afterEach(() => vi.useRealTimers());
 
   it('exposes the active board as a live Home-local query', () => {
     vi.mocked(useConvexQuery).mockReturnValue({
@@ -22,6 +26,11 @@ describe('useActiveBoard', () => {
     const board = useActiveBoard();
 
     expect(useConvexQuery).toHaveBeenCalledOnce();
+    const args = vi.mocked(useConvexQuery).mock.calls[0]?.[1];
+    expect(typeof args === 'function' ? args() : args).toEqual({ refreshToken: 0 });
+
+    vi.advanceTimersByTime(30_000);
+    expect(typeof args === 'function' ? args() : args).toEqual({ refreshToken: 1 });
     expect(board.data.value?.localDate).toBe('2026-07-14');
   });
 });

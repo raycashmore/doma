@@ -1,52 +1,14 @@
 <script setup lang="ts">
 import { CalendarDays, Plus } from '@lucide/vue';
-import type { api } from '@repo/convex';
-import type { FunctionReturnType } from 'convex/server';
 import { computed } from 'vue';
 
 import ActiveBoard from '@/components/ActiveBoard.vue';
 import { useActiveBoard } from '@/composables/useActiveBoard';
 import { HOME_RUNTIME } from '@/config/runtime';
-
-type ActiveBoardData = FunctionReturnType<typeof api.home.activeBoard.activeBoard>;
-
-const previewBoard = {
-  localDate: '2026-07-13',
-  timeZone: 'Australia/Sydney',
-  items: [
-    {
-      kind: 'today',
-      id: 'today:2026-07-13',
-      destination: '/schedule',
-      briefingStatus: 'available',
-      headline: 'Today',
-      generatedAt: Date.parse('2026-07-12T21:35:00.000Z'),
-      morning: [{ text: 'Bring library bag', who: ['memberA'], sourceIds: ['requirements:bag:1'] }],
-      laterToday: [
-        {
-          id: 'requirements-calendar:sport-kit:1',
-          title: 'Bring sports bag',
-          start: Date.parse('2026-07-13T06:00:00.000Z'),
-          end: Date.parse('2026-07-13T06:30:00.000Z'),
-          allDay: false,
-          who: ['memberB'],
-          destination: 'https://calendar.example.test/event/sport-kit'
-        }
-      ],
-      watchouts: [{ text: 'Signed form due tomorrow', who: [], sourceIds: ['requirements:form:2'] }]
-    },
-    {
-      kind: 'meals',
-      id: 'meals:2026-07-13',
-      destination: '/meals',
-      schoolLunch: 'Pasta salad',
-      dinner: 'Not planned'
-    }
-  ]
-} satisfies ActiveBoardData;
+import { PREVIEW_BOARD } from '@/data/previewBoard';
 
 const liveBoard = HOME_RUNTIME.mode === 'authenticated' ? useActiveBoard() : null;
-const boardData = computed(() => liveBoard?.data.value ?? (HOME_RUNTIME.mode === 'demo' ? previewBoard : undefined));
+const boardData = computed(() => liveBoard?.data.value ?? (HOME_RUNTIME.mode === 'demo' ? PREVIEW_BOARD : undefined));
 const boardPending = computed(() => liveBoard?.isPending.value ?? false);
 const boardError = computed(() => liveBoard?.error.value ?? null);
 

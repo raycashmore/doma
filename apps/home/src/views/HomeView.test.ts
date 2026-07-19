@@ -14,5 +14,7 @@ describe('HomeView', () => {
     expect(screen.getByText('Mon, 13 Jul')).not.toBeNull();
     expect(screen.getByText('School lunch · Pasta salad')).not.toBeNull();
     expect(screen.getByText('Dinner · Not planned')).not.toBeNull();
+    expect(screen.getByRole('heading', { name: 'Permission form due' })).not.toBeNull();
+    expect(screen.getByRole('heading', { name: 'June spending settled' })).not.toBeNull();
   });
 });

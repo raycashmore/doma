@@ -67,7 +67,9 @@ export const emailNoticesTable = defineTable({
   telegramWorthy: v.boolean(),
   createdAt: v.number(),
   updatedAt: v.number(),
-  archivedAt: v.optional(v.number())
+  archivedAt: v.optional(v.number()),
+  expiresAt: v.optional(v.number()),
+  supersededAt: v.optional(v.number())
 })
   .index('by_created_at', ['createdAt'])
   .index('by_telegram_worthy', ['telegramWorthy', 'createdAt']);

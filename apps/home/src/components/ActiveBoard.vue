@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Sun, TriangleAlert, Utensils } from '@lucide/vue';
+import { Mail, Sun, TrendingUp, TriangleAlert, Utensils } from '@lucide/vue';
 import { APPS, getAppHref } from '@repo/app-registry';
 import type { api } from '@repo/convex';
 import type { FunctionReturnType } from 'convex/server';
@@ -10,6 +10,7 @@ import { HOME_IS_DEV } from '../config/runtime';
 
 type ActiveBoardData = FunctionReturnType<typeof api.home.activeBoard.activeBoard>;
 type TodayItem = Extract<ActiveBoardData['items'][number], { kind: 'today' }>;
+type SourceNotice = Extract<ActiveBoardData['items'][number], { kind: 'sourceNotice' }>;
 
 const props = defineProps<{
   data: ActiveBoardData | undefined;
@@ -21,6 +22,9 @@ defineEmits<{ retry: [] }>();
 
 const today = computed(() => props.data?.items.find((item) => item.kind === 'today'));
 const meals = computed(() => props.data?.items.find((item) => item.kind === 'meals'));
+const sourceNotices = computed(
+  () => props.data?.items.filter((item): item is SourceNotice => item.kind === 'sourceNotice') ?? []
+);
 const buildUrlWithAuth = inject(homeUrlBuilderKey, (url) => url);
 
 function briefingLine(line: TodayItem['morning'][number]) {
@@ -58,6 +62,15 @@ function cardDestination(destination: string) {
 
   const href = getAppHref(app, HOME_IS_DEV);
   return href.startsWith('http') ? buildUrlWithAuth(href) : href;
+}
+
+function sourceLabel(item: SourceNotice) {
+  if (item.sourceKind === 'monthlySpendingInsight') return `Monthly spending insight · ${item.period}`;
+  return item.priority === 'high' ? 'High priority' : item.priority === 'low' ? 'Quiet notice' : 'Forwarded email';
+}
+
+function sourceLinkLabel(item: SourceNotice) {
+  return item.sourceApp === 'budget' ? 'Open Budget' : 'Open notice details';
 }
 </script>
 
@@ -118,5 +131,30 @@ function cardDestination(destination: string) {
       <p class="card-detail">From this week’s meal plan</p>
       <a class="card-link" :href="cardDestination(meals.destination)" aria-label="Open Meals" />
     </article>
+
+    <article
+      v-for="item in sourceNotices"
+      :key="item.id"
+      class="board-card source-card"
+      :class="[`source-card-${item.display}`, `source-card-${item.priority}`, `source-card-${item.sourceKind}`]"
+      :aria-labelledby="`${item.id}-title`"
+    >
+      <div class="source-icon" aria-hidden="true">
+        <TrendingUp v-if="item.sourceKind === 'monthlySpendingInsight'" :size="20" />
+        <Mail v-else :size="20" />
+      </div>
+      <p class="card-kicker">{{ sourceLabel(item) }}</p>
+      <h3 :id="`${item.id}-title`">{{ item.title }}</h3>
+      <p class="source-detail">{{ item.detail }}</p>
+      <dl v-if="item.sourceKind === 'forwardedEmail' && item.facts.length > 0" class="source-facts">
+        <div v-for="fact in item.facts" :key="`${fact.label}:${fact.value}`">
+          <dt>{{ fact.label }}</dt>
+          <dd>{{ fact.value }}</dd>
+        </div>
+      </dl>
+      <a class="card-link" :href="cardDestination(item.destination)" :aria-label="sourceLinkLabel(item)" />
+    </article>
+
+    <p v-if="sourceNotices.length === 0" class="board-empty">Nothing else needs attention right now.</p>
   </div>
 </template>
