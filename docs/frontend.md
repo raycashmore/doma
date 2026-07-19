@@ -31,7 +31,7 @@ React zones configure Convex in their root route. Home retains `convex-vue` behi
 
 ## Home
 
-`apps/home` owns the apex Vue shell, notification settings, Vercel child-zone rewrites, and root service-worker boundary. Routes live in `src/router.ts`; auth and Convex integration live under `src/integrations/`. See `apps/home/README.md` for the adapter decision and local commands.
+`apps/home` owns the apex Vue shell, household noticeboard, notification settings, Vercel child-zone rewrites, and root service-worker boundary. Its active board loads a household-timezone Today summary and independently resolved school lunch and dinner values from `api.home.activeBoard.activeBoard`; local no-auth mode uses generic fixtures. Routes live in `src/router.ts`; auth and Convex integration live under `src/integrations/`. See `apps/home/README.md` for the adapter decision and local commands.
 
 ## Schedule
 

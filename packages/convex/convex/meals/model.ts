@@ -1,3 +1,5 @@
+import { calendarDateInTimeZone } from '../calendarDate';
+
 export type RecipeInput = {
   name: string;
   description: string;
@@ -55,18 +57,7 @@ export function shiftWeekStart(weekStart: string, weekDelta: number): string {
 }
 
 export function getNextWeekStart(now: Date, timeZone = DEFAULT_MEALS_TIME_ZONE): string {
-  const calendarParts = new Intl.DateTimeFormat('en-AU', {
-    timeZone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  })
-    .formatToParts(now)
-    .reduce<Record<string, string>>((parts, part) => {
-      if (part.type !== 'literal') parts[part.type] = part.value;
-      return parts;
-    }, {});
-  const date = parseCalendarDate(`${calendarParts.year}-${calendarParts.month}-${calendarParts.day}`);
+  const date = parseCalendarDate(calendarDateInTimeZone(now, timeZone));
   const daysUntilMonday = (8 - date.getUTCDay()) % 7 || 7;
   date.setUTCDate(date.getUTCDate() + daysUntilMonday);
   return formatCalendarDate(date);

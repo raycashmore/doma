@@ -6,6 +6,8 @@
   font-family: var(--warm-font-body);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+  --home-today-card: #ffe8a8;
+  --home-meals-card: #d7e3fb;
 }
 
 * {
@@ -251,28 +253,196 @@ h3 {
   background: var(--warm-positive);
 }
 
-.coming-soon-card {
-  width: min(100%, 720px);
-  min-height: 230px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  gap: 10px;
-  padding: 28px;
-  border-radius: 24px;
-  background: #ffe8a8;
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
-.coming-soon-card h3 {
-  max-width: 500px;
-  font-size: clamp(25px, 4vw, 38px);
+.active-board {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  align-items: stretch;
+}
+
+.board-card {
+  position: relative;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: 24px;
+  color: var(--warm-text-primary);
+}
+
+.today-card {
+  grid-column: 1 / span 2;
+  min-height: 344px;
+  gap: 16px;
+  padding: 28px;
+  background: var(--home-today-card);
+}
+
+.meals-card {
+  grid-column: 1;
+  grid-row: 2;
+  min-height: 416px;
+  gap: 10px;
+  padding: 22px;
+  background: var(--home-meals-card);
+}
+
+.board-card h3 {
+  padding-right: 36px;
+  font-size: clamp(27px, 4vw, 38px);
   line-height: 1.05;
 }
 
-.coming-soon-card p:last-child {
-  max-width: 560px;
+.card-kicker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   color: var(--warm-text-secondary);
-  line-height: 1.55;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+.today-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.today-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 550;
+  line-height: 1.4;
+}
+
+.today-line > span {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-radius: 50%;
+}
+
+.morning-line > span {
+  background: var(--warm-accent-soft);
+}
+
+.afternoon-line > span {
+  background: #d9893a;
+}
+
+.watchout-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--warm-section-spend);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.briefing-empty {
+  max-width: 420px;
+  color: var(--warm-text-secondary);
+  line-height: 1.5;
+}
+
+.meal-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: var(--warm-font-display);
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.card-detail {
+  margin-top: auto;
+  color: var(--warm-text-secondary);
+  font-size: 13px;
+}
+
+.card-link {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.card-link:focus-visible {
+  outline: 3px solid var(--warm-accent-soft);
+  outline-offset: 3px;
+}
+
+.board-skeleton {
+  overflow: hidden;
+  background: var(--warm-bg-card-soft);
+}
+
+.board-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #ffffff55;
+  animation: board-skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+.board-error {
+  min-height: 230px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 24px;
+  border-radius: 22px;
+  background: var(--warm-section-spend);
+}
+
+.board-error h3 {
+  font-size: 22px;
+}
+
+.board-error p {
+  margin-top: 6px;
+  color: var(--warm-text-secondary);
+}
+
+.board-error .secondary-button {
+  border-color: var(--warm-text-primary);
+  color: var(--warm-text-primary);
+}
+
+@keyframes board-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.18;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .board-skeleton::after {
+    animation: none;
+  }
 }
 
 .settings-page {
@@ -531,9 +701,65 @@ h3 {
     font-size: 0;
   }
 
-  .coming-soon-card {
-    min-height: 250px;
-    padding: 22px;
+  .active-board {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .today-card {
+    grid-column: auto;
+    min-height: 0;
+    gap: 8px;
+    padding: 16px 14px;
+    border-radius: 22px;
+  }
+
+  .meals-card {
+    grid-column: auto;
+    grid-row: auto;
+    min-height: 0;
+    gap: 5px;
+    padding: 14px;
+    border-radius: 18px;
+  }
+
+  .board-card h3 {
+    font-size: 22px;
+  }
+
+  .card-kicker {
+    font-size: 9px;
+  }
+
+  .today-lines {
+    gap: 7px;
+  }
+
+  .today-line {
+    gap: 9px;
+    font-size: 11px;
+  }
+
+  .watchout-line {
+    gap: 8px;
+    padding: 9px 12px;
+    font-size: 11px;
+  }
+
+  .meal-summary {
+    font-size: 14px;
+  }
+
+  .card-detail {
+    display: none;
+  }
+
+  .board-error {
+    grid-template-columns: auto 1fr;
+  }
+
+  .board-error .secondary-button {
+    grid-column: 1 / -1;
   }
 
   .settings-page {

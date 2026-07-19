@@ -1,14 +1,73 @@
 <script setup lang="ts">
 import { CalendarDays, Plus } from '@lucide/vue';
+import type { api } from '@repo/convex';
+import type { FunctionReturnType } from 'convex/server';
+import { computed } from 'vue';
 
-import HomeConnectionStatus from '@/components/HomeConnectionStatus.vue';
+import ActiveBoard from '@/components/ActiveBoard.vue';
+import { useActiveBoard } from '@/composables/useActiveBoard';
 import { HOME_RUNTIME } from '@/config/runtime';
 
-const today = new Intl.DateTimeFormat(undefined, {
-  weekday: 'short',
-  day: 'numeric',
-  month: 'short'
-}).format(new Date());
+type ActiveBoardData = FunctionReturnType<typeof api.home.activeBoard.activeBoard>;
+
+const previewBoard = {
+  localDate: '2026-07-13',
+  timeZone: 'Australia/Sydney',
+  items: [
+    {
+      kind: 'today',
+      id: 'today:2026-07-13',
+      destination: '/schedule',
+      briefingStatus: 'available',
+      headline: 'Today',
+      generatedAt: Date.parse('2026-07-12T21:35:00.000Z'),
+      morning: [{ text: 'Bring library bag', who: ['memberA'], sourceIds: ['requirements:bag:1'] }],
+      laterToday: [
+        {
+          id: 'requirements-calendar:sport-kit:1',
+          title: 'Bring sports bag',
+          start: Date.parse('2026-07-13T06:00:00.000Z'),
+          end: Date.parse('2026-07-13T06:30:00.000Z'),
+          allDay: false,
+          who: ['memberB'],
+          destination: 'https://calendar.example.test/event/sport-kit'
+        }
+      ],
+      watchouts: [{ text: 'Signed form due tomorrow', who: [], sourceIds: ['requirements:form:2'] }]
+    },
+    {
+      kind: 'meals',
+      id: 'meals:2026-07-13',
+      destination: '/meals',
+      schoolLunch: 'Pasta salad',
+      dinner: 'Not planned'
+    }
+  ]
+} satisfies ActiveBoardData;
+
+const liveBoard = HOME_RUNTIME.mode === 'authenticated' ? useActiveBoard() : null;
+const boardData = computed(() => liveBoard?.data.value ?? (HOME_RUNTIME.mode === 'demo' ? previewBoard : undefined));
+const boardPending = computed(() => liveBoard?.isPending.value ?? false);
+const boardError = computed(() => liveBoard?.error.value ?? null);
+
+const today = computed(() => {
+  if (!boardData.value) return 'Today';
+
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC'
+  })
+    .formatToParts(new Date(`${boardData.value.localDate}T00:00:00.000Z`))
+    .reduce<Record<string, string>>((result, part) => ({ ...result, [part.type]: part.value }), {});
+
+  return `${parts.weekday}, ${parts.day} ${parts.month}`;
+});
+
+function retryBoard() {
+  globalThis.window.location.reload();
+}
 </script>
 
 <template>
@@ -29,14 +88,10 @@ const today = new Intl.DateTimeFormat(undefined, {
         </button>
       </div>
 
-      <HomeConnectionStatus v-if="HOME_RUNTIME.mode === 'authenticated'" />
-      <p v-else class="connection-status">Local preview · authentication and live data are disabled</p>
-
-      <div class="coming-soon-card">
-        <p class="eyebrow">The board is ready</p>
-        <h3>Today’s household view comes next</h3>
-        <p>The Vue shell, secure live-data seam, navigation, and notification settings are in place.</p>
-      </div>
+      <p v-if="HOME_RUNTIME.mode === 'demo'" class="connection-status">
+        Local preview · authentication and live data are disabled
+      </p>
+      <ActiveBoard :data="boardData" :is-pending="boardPending" :error="boardError" @retry="retryBoard" />
     </section>
   </main>
 </template>

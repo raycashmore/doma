@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { CalendarDays, ChartNoAxesCombined, House, ListChecks, LogOut, Settings, Utensils } from '@lucide/vue';
 import { type AppId, APPS, getActiveAppId, getAppHref } from '@repo/app-registry';
-import { type Component, computed } from 'vue';
+import { type Component, computed, provide } from 'vue';
+
+import { homeUrlBuilderKey } from '../config/navigation';
 
 const props = defineProps<{
   isDev: boolean;
@@ -10,6 +12,8 @@ const props = defineProps<{
 }>();
 
 defineEmits<{ signOut: [] }>();
+
+provide(homeUrlBuilderKey, props.buildUrlWithAuth);
 
 const iconByApp = {
   home: House,

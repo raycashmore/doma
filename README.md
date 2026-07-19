@@ -75,7 +75,7 @@ one domain. Vercel Multi-Zones lets every app build and deploy independently:
 
 | Surface     | Role                                         | Framework                 |
 | ----------- | -------------------------------------------- | ------------------------- |
-| Home        | Apex zone, navigation, and settings          | TanStack Start + React 19 |
+| Home        | Apex noticeboard, navigation, and settings   | Vue 3 SPA                 |
 | Budget      | Finance dashboard and analysis               | TanStack Start + React 19 |
 | Schedule    | Readable weekly household calendar           | Next.js App Router        |
 | Lists       | Personal and shared structured lists         | SvelteKit + Svelte 5      |
