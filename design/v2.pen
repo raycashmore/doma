@@ -23427,14 +23427,34 @@
           "height": "fill_container",
           "cornerRadius": 0,
           "descendants": {
+            "d0WsGR/ESpfC/JNG53": {
+              "fill": "$text-tertiary",
+              "icon": "utensils"
+            },
+            "d0WsGR/dKJzW": {
+              "fill": "$warm-accent"
+            },
+            "d0WsGR/dKJzW/JNG53": {
+              "fill": "$warm-bg",
+              "icon": "house"
+            },
             "w5oJrt/rSg9k": {
               "content": "Home"
             },
             "w5oJrt/AkVxm": {
               "content": "Mon, 13 Jul"
             },
+            "w5oJrt/j2Npd7": {
+              "enabled": false
+            },
             "w5oJrt/j2Npd7/x7P29": {
               "icon": "plus"
+            },
+            "w5oJrt/uZeHo": {
+              "enabled": false
+            },
+            "w5oJrt/HzfsS": {
+              "enabled": false
             },
             "w5oJrt/HzfsS/x7P29": {
               "icon": "ellipsis"
@@ -23445,11 +23465,15 @@
               "name": "Family Noticeboard Content",
               "clip": true,
               "width": "fill_container",
-              "height": 832,
+              "height": "fill_container",
               "fill": "$warm-bg-card",
+              "cornerRadius": 28,
+              "stroke": "$warm-border",
+              "strokeWidth": 1,
+              "strokeAlignment": "inner",
               "layout": "vertical",
-              "gap": 20,
-              "padding": 28,
+              "gap": 18,
+              "padding": 24,
               "children": [
                 {
                   "type": "frame",
@@ -23468,21 +23492,10 @@
                       "children": [
                         {
                           "type": "text",
-                          "id": "JNjre",
-                          "name": "Board Label",
-                          "fill": "$warm-text-tertiary",
-                          "content": "FAMILY NOTICEBOARD",
-                          "fontFamily": "$warm-font-body",
-                          "fontSize": 11,
-                          "fontWeight": "700",
-                          "letterSpacing": 1.2
-                        },
-                        {
-                          "type": "text",
                           "id": "yVG5O",
                           "name": "Board Headline",
                           "fill": "$warm-text",
-                          "content": "What matters today",
+                          "content": "Noticeboard",
                           "fontFamily": "$warm-font-display",
                           "fontSize": 30,
                           "fontWeight": "700"
@@ -23548,7 +23561,7 @@
                           "id": "zXegs",
                           "name": "Today Brief",
                           "width": "fill_container",
-                          "height": 380,
+                          "height": 344,
                           "fill": "$warm-card-butter",
                           "cornerRadius": 24,
                           "layout": "vertical",
@@ -23590,7 +23603,7 @@
                               "id": "NHow8",
                               "name": "Briefing Headline",
                               "fill": "$warm-text",
-                              "content": "A full day in two acts",
+                              "content": "Today",
                               "lineHeight": 1.05,
                               "fontFamily": "$warm-font-display",
                               "fontSize": 38,
@@ -23701,31 +23714,31 @@
                             {
                               "type": "frame",
                               "id": "eFbfD",
-                              "name": "Afternoon Note",
+                              "name": "Today's Meals",
                               "width": "fill_container",
                               "height": "fill_container",
-                              "fill": "$warm-card-sky",
+                              "fill": "#D7E3FB",
                               "cornerRadius": 22,
                               "layout": "vertical",
-                              "gap": 12,
+                              "gap": 10,
                               "padding": 22,
                               "children": [
                                 {
                                   "type": "icon",
                                   "id": "ndvwS",
-                                  "name": "Afternoon Icon",
+                                  "name": "Meals Icon",
                                   "width": 22,
                                   "height": 22,
-                                  "icon": "clock-3",
+                                  "icon": "utensils",
                                   "library": "lucide",
                                   "fill": "$warm-text"
                                 },
                                 {
                                   "type": "text",
                                   "id": "gg3zD",
-                                  "name": "Afternoon Label",
+                                  "name": "Meals Label",
                                   "fill": "$warm-text-secondary",
-                                  "content": "LATER TODAY",
+                                  "content": "TODAY'S MEALS",
                                   "fontFamily": "$warm-font-body",
                                   "fontSize": 11,
                                   "fontWeight": "700",
@@ -23734,22 +23747,22 @@
                                 {
                                   "type": "text",
                                   "id": "CyHHm",
-                                  "name": "Afternoon Title",
+                                  "name": "Meals Summary",
                                   "fill": "$warm-text",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
-                                  "content": "A bag by the door makes the afternoon easier.",
-                                  "lineHeight": 1.12,
+                                  "content": "School lunch · Pasta salad\nDinner · Not planned",
+                                  "lineHeight": 1.14,
                                   "fontFamily": "$warm-font-display",
-                                  "fontSize": 24,
+                                  "fontSize": 22,
                                   "fontWeight": "700"
                                 },
                                 {
                                   "type": "text",
                                   "id": "x1Rt2p",
-                                  "name": "Afternoon Detail",
+                                  "name": "Meals Detail",
                                   "fill": "$warm-text-secondary",
-                                  "content": "Schedule timing and readiness, together.",
+                                  "content": "From this week's meal plan",
                                   "fontFamily": "$warm-font-body",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -23759,7 +23772,7 @@
                             {
                               "type": "frame",
                               "id": "m6v7n7",
-                              "name": "Board Reminder",
+                              "name": "Manual Household Note",
                               "width": "fill_container",
                               "height": "fill_container",
                               "fill": "$warm-card-sage",
@@ -23783,7 +23796,7 @@
                                   "id": "Vv4zV",
                                   "name": "Reminder Label",
                                   "fill": "$warm-text-secondary",
-                                  "content": "ON THE BOARD",
+                                  "content": "MANUAL NOTE",
                                   "fontFamily": "$warm-font-body",
                                   "fontSize": 11,
                                   "fontWeight": "700",
@@ -23796,7 +23809,7 @@
                                   "fill": "$warm-text",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
-                                  "content": "Keep the useful bits visible, not buried in a feed.",
+                                  "content": "Put the sports bag by the door.",
                                   "lineHeight": 1.12,
                                   "fontFamily": "$warm-font-display",
                                   "fontSize": 24,
@@ -23807,7 +23820,7 @@
                                   "id": "N1PhX4",
                                   "name": "Reminder Detail",
                                   "fill": "$warm-text-secondary",
-                                  "content": "A home for small, mixed signals.",
+                                  "content": "Due today · shared household note",
                                   "fontFamily": "$warm-font-body",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -23832,7 +23845,7 @@
                           "id": "x7cf1",
                           "name": "High Priority Email Notice",
                           "width": "fill_container",
-                          "height": 332,
+                          "height": 260,
                           "fill": "$warm-card-peach",
                           "cornerRadius": 22,
                           "layout": "vertical",
@@ -23968,10 +23981,13 @@
                         {
                           "type": "frame",
                           "id": "ftfpX",
-                          "name": "Quiet Email Notice",
-                          "width": "fill_container",
-                          "height": "fill_container",
-                          "fill": "$warm-card-lavender",
+                          "layoutPosition": "absolute",
+                          "x": 0,
+                          "y": 277,
+                          "name": "Monthly Spending Insight",
+                          "width": 360,
+                          "height": 499,
+                          "fill": "#E6DDF7",
                           "cornerRadius": 22,
                           "layout": "vertical",
                           "gap": 12,
@@ -23987,19 +24003,19 @@
                                 {
                                   "type": "icon",
                                   "id": "MfV89",
-                                  "name": "Quiet Email Icon",
+                                  "name": "Spending Insight Icon",
                                   "width": 18,
                                   "height": 18,
-                                  "icon": "inbox",
+                                  "icon": "trending-down",
                                   "library": "lucide",
                                   "fill": "$warm-text"
                                 },
                                 {
                                   "type": "text",
                                   "id": "Pa5yU",
-                                  "name": "Quiet Email Label",
+                                  "name": "Spending Insight Label",
                                   "fill": "$warm-text-secondary",
-                                  "content": "ADMIN NOTICE",
+                                  "content": "SPENDING INSIGHT",
                                   "fontFamily": "$warm-font-body",
                                   "fontSize": 11,
                                   "fontWeight": "700",
@@ -24010,11 +24026,11 @@
                             {
                               "type": "text",
                               "id": "QVk7v",
-                              "name": "Quiet Email Title",
+                              "name": "Spending Insight Title",
                               "fill": "$warm-text",
                               "textGrowth": "fixed-width",
                               "width": "fill_container",
-                              "content": "Checklist attached for the week ahead",
+                              "content": "Tracking lower than last month",
                               "lineHeight": 1.1,
                               "fontFamily": "$warm-font-display",
                               "fontSize": 25,
@@ -24023,39 +24039,36 @@
                             {
                               "type": "text",
                               "id": "EK0J8",
-                              "name": "Quiet Email Detail",
+                              "name": "Spending Insight Detail",
                               "fill": "$warm-text-secondary",
-                              "content": "Board-visible · no chat interruption",
+                              "content": "Latest monthly insight · open Budget",
                               "fontFamily": "$warm-font-body",
                               "fontSize": 13,
                               "fontWeight": "normal"
                             },
                             {
                               "type": "frame",
-                              "id": "eQJM7",
-                              "name": "Attachment Fact",
-                              "gap": 8,
-                              "alignItems": "center",
+                              "id": "Y7peo",
+                              "name": "Frame 1",
+                              "gap": 4,
                               "children": [
                                 {
                                   "type": "icon",
-                                  "id": "ESxjk",
-                                  "name": "Attachment Icon",
-                                  "width": 15,
-                                  "height": 15,
-                                  "icon": "paperclip",
+                                  "id": "UaiNo",
+                                  "width": 12,
+                                  "height": 12,
+                                  "icon": "trending-up",
                                   "library": "lucide",
-                                  "fill": "$warm-text-secondary"
+                                  "fill": "$warm-success"
                                 },
                                 {
                                   "type": "text",
-                                  "id": "zfN3C",
-                                  "name": "Attachment Text",
-                                  "fill": "$warm-text-secondary",
-                                  "content": "1 attachment",
+                                  "id": "VZ6kd",
+                                  "fill": "$warm-success",
+                                  "content": "+8.2% vs May",
                                   "fontFamily": "$warm-font-body",
-                                  "fontSize": 12,
-                                  "fontWeight": "600"
+                                  "fontSize": 11,
+                                  "fontWeight": "normal"
                                 }
                               ]
                             }
@@ -24074,7 +24087,7 @@
     {
       "type": "frame",
       "id": "q0BHp",
-      "x": 1196,
+      "x": 2732,
       "y": 3537,
       "name": "Home · Family Noticeboard · Pinned",
       "clip": true,
@@ -25083,7 +25096,7 @@
     {
       "type": "frame",
       "id": "Yqmwu",
-      "x": 2732,
+      "x": 4268,
       "y": 3537,
       "name": "Home · Traditional List View",
       "clip": true,
@@ -39201,6 +39214,744 @@
                   "fontFamily": "$warm-font-body",
                   "fontSize": 12,
                   "fontWeight": "700"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "fayaG",
+      "x": 1221,
+      "y": 3537,
+      "name": "Home · Family Noticeboard · Mobile",
+      "clip": true,
+      "width": 390,
+      "height": 782,
+      "fill": "$bg-dark",
+      "cornerRadius": 40,
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "y1Ol5w",
+          "name": "Home Mobile Status Bar",
+          "width": "fill_container",
+          "height": 62,
+          "padding": [
+            20,
+            28,
+            0,
+            28
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "CxWTq",
+              "name": "Home Mobile Time",
+              "fill": "$text-on-dark",
+              "content": "9:41",
+              "fontFamily": "Inter",
+              "fontSize": 15,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "CBsK0",
+              "name": "Home Mobile Status Icons",
+              "gap": 6,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "tO358",
+                  "name": "Home Mobile signal Status",
+                  "width": 15,
+                  "height": 15,
+                  "icon": "signal",
+                  "library": "lucide",
+                  "fill": "$text-on-dark"
+                },
+                {
+                  "type": "icon",
+                  "id": "Upbh0",
+                  "name": "Home Mobile wifi Status",
+                  "width": 15,
+                  "height": 15,
+                  "icon": "wifi",
+                  "library": "lucide",
+                  "fill": "$text-on-dark"
+                },
+                {
+                  "type": "icon",
+                  "id": "SYQig",
+                  "name": "Home Mobile battery-full Status",
+                  "width": 15,
+                  "height": 15,
+                  "icon": "battery-full",
+                  "library": "lucide",
+                  "fill": "$text-on-dark"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "J7Xy8F",
+          "name": "Home Mobile Header",
+          "width": "fill_container",
+          "padding": [
+            4,
+            20,
+            16,
+            20
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "ftuTT",
+              "name": "Home Mobile Header Title",
+              "gap": 8,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "CC5EF",
+                  "name": "Home Mobile Badge",
+                  "width": 34,
+                  "height": 34,
+                  "fill": "$warm-accent",
+                  "cornerRadius": 11,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "mM8xz",
+                      "name": "Home Mobile Badge Icon",
+                      "width": 16,
+                      "height": 16,
+                      "icon": "house",
+                      "library": "lucide",
+                      "fill": "$warm-bg"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "Std6h",
+                  "name": "Home Mobile Title",
+                  "fill": "$text-on-dark",
+                  "content": "Home",
+                  "fontFamily": "$warm-font-display",
+                  "fontSize": 24,
+                  "fontWeight": "700"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "dwPgI",
+              "name": "Home Mobile Header Actions",
+              "gap": 8,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "DZ63y",
+                  "name": "Mobile Today Pill",
+                  "fill": "$bg-dark-muted",
+                  "cornerRadius": 999,
+                  "gap": 5,
+                  "padding": [
+                    8,
+                    12
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "fukl0",
+                      "name": "Mobile Today Icon",
+                      "width": 13,
+                      "height": 13,
+                      "icon": "calendar-days",
+                      "library": "lucide",
+                      "fill": "$text-on-dark"
+                    },
+                    {
+                      "type": "text",
+                      "id": "biNHg",
+                      "name": "Mobile Today Label",
+                      "fill": "$text-on-dark",
+                      "content": "Today",
+                      "fontFamily": "$warm-font-body",
+                      "fontSize": 10,
+                      "fontWeight": "700"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "misAw",
+          "name": "Mobile Noticeboard Content",
+          "clip": true,
+          "width": "fill_container",
+          "height": "fill_container",
+          "fill": "$warm-bg-card",
+          "cornerRadius": [
+            24,
+            24,
+            0,
+            0
+          ],
+          "layout": "vertical",
+          "gap": 16,
+          "padding": [
+            18,
+            20,
+            24,
+            20
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "JcXgZ",
+              "name": "Mobile Board Intro",
+              "width": "fill_container",
+              "height": 50,
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "LkvZD",
+                  "name": "Mobile Board Intro Copy",
+                  "layout": "vertical",
+                  "gap": 3,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "HVOw2",
+                      "name": "Mobile Board Headline",
+                      "fill": "$warm-text",
+                      "content": "Noticeboard",
+                      "fontFamily": "$warm-font-display",
+                      "fontSize": 22,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "v6mmS",
+                  "name": "Mobile Add Note Button",
+                  "width": 32,
+                  "height": 32,
+                  "fill": "$warm-text",
+                  "cornerRadius": 999,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "oV20v",
+                      "name": "Mobile Add Note Icon",
+                      "width": 15,
+                      "height": 15,
+                      "icon": "plus",
+                      "library": "lucide",
+                      "fill": "$warm-bg"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "yW3f9",
+              "name": "Mobile Today Brief",
+              "width": "fill_container",
+              "height": 160,
+              "fill": "$warm-card-butter",
+              "cornerRadius": 22,
+              "layout": "vertical",
+              "gap": 8,
+              "padding": [
+                16,
+                14
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "qlbdH",
+                  "name": "Mobile Briefing Meta",
+                  "width": "fill_container",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "jahz6",
+                      "name": "Mobile Briefing Sun",
+                      "width": 15,
+                      "height": 15,
+                      "icon": "sun",
+                      "library": "lucide",
+                      "fill": "$warm-text"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Kk2LG",
+                      "name": "Mobile Briefing Label",
+                      "fill": "$warm-text-secondary",
+                      "content": "MORNING BRIEFING · 7:35 AM",
+                      "fontFamily": "$warm-font-body",
+                      "fontSize": 9,
+                      "fontWeight": "700",
+                      "letterSpacing": 1
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "dlSrQ",
+                  "name": "Mobile Briefing Headline",
+                  "fill": "$warm-text",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Today",
+                  "lineHeight": 1.02,
+                  "fontFamily": "$warm-font-display",
+                  "fontSize": 22,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "frame",
+                  "id": "ZaGkw",
+                  "name": "Mobile Morning Line",
+                  "width": "fill_container",
+                  "gap": 9,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "I5SQAf",
+                      "name": "Mobile Morning Line Dot",
+                      "fill": "$warm-accent",
+                      "width": 8,
+                      "height": 8
+                    },
+                    {
+                      "type": "text",
+                      "id": "I7fBj",
+                      "name": "Mobile Morning Line Text",
+                      "fill": "$warm-text",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Morning · memberA — bring library bag",
+                      "fontFamily": "$warm-font-body",
+                      "fontSize": 10,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "fgsP0",
+                  "name": "Mobile Afternoon Line",
+                  "width": "fill_container",
+                  "gap": 9,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "ellipse",
+                      "id": "C9gZNP",
+                      "name": "Mobile Afternoon Line Dot",
+                      "fill": "$warm-warning",
+                      "width": 8,
+                      "height": 8
+                    },
+                    {
+                      "type": "text",
+                      "id": "f2fvDF",
+                      "name": "Mobile Afternoon Line Text",
+                      "fill": "$warm-text",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Afternoon · memberB — sport kit for 4:00 pm",
+                      "fontFamily": "$warm-font-body",
+                      "fontSize": 10,
+                      "fontWeight": "500"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "JC0te",
+                  "name": "Mobile Watchout",
+                  "width": "fill_container",
+                  "fill": "$warm-card-peach",
+                  "cornerRadius": 14,
+                  "gap": 8,
+                  "padding": [
+                    9,
+                    12
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "u3fGIF",
+                      "name": "Mobile Watchout Icon",
+                      "width": 16,
+                      "height": 16,
+                      "icon": "triangle-alert",
+                      "library": "lucide",
+                      "fill": "$warm-accent-deep"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Le7fY",
+                      "name": "Mobile Watchout Text",
+                      "fill": "$warm-text",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Watchout · signed form due tomorrow",
+                      "fontFamily": "$warm-font-body",
+                      "fontSize": 10,
+                      "fontWeight": "700"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "W8HJZ5",
+              "name": "Mobile Small Notice Row",
+              "width": "fill_container",
+              "height": 192,
+              "layout": "vertical",
+              "gap": 12,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "IUDJB",
+                  "name": "Mobile Today's Meals",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "fill": "$warm-card-sky",
+                  "cornerRadius": 18,
+                  "layout": "vertical",
+                  "gap": 5,
+                  "padding": [
+                    12,
+                    14
+                  ],
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "JtREL",
+                      "name": "Mobile Meals Icon",
+                      "width": 14,
+                      "height": 14,
+                      "icon": "utensils",
+                      "library": "lucide",
+                      "fill": "$warm-text"
+                    },
+                    {
+                      "type": "text",
+                      "id": "oUEOx",
+                      "name": "Mobile Meals Label",
+                      "fill": "$warm-text-secondary",
+                      "content": "TODAY'S MEALS",
+                      "fontFamily": "$warm-font-body",
+                      "fontSize": 8,
+                      "fontWeight": "700",
+                      "letterSpacing": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "HylWl",
+                      "name": "Mobile Meals Summary",
+                      "fill": "$warm-text",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "School lunch · Pasta salad\nDinner · Not planned",
+                      "lineHeight": 1.02,
+                      "fontFamily": "$warm-font-display",
+                      "fontSize": 13,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "CJCE1",
+                  "name": "Mobile Manual Household Note",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "fill": "$warm-card-sage",
+                  "cornerRadius": 18,
+                  "layout": "vertical",
+                  "gap": 5,
+                  "padding": [
+                    12,
+                    14
+                  ],
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "WJuvz",
+                      "name": "Mobile Board Reminder Icon",
+                      "width": 14,
+                      "height": 14,
+                      "icon": "pin",
+                      "library": "lucide",
+                      "fill": "$warm-text"
+                    },
+                    {
+                      "type": "text",
+                      "id": "tjyHu",
+                      "name": "Mobile Board Reminder Label",
+                      "fill": "$warm-text-secondary",
+                      "content": "MANUAL NOTE",
+                      "fontFamily": "$warm-font-body",
+                      "fontSize": 8,
+                      "fontWeight": "700",
+                      "letterSpacing": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "Vogi9",
+                      "name": "Mobile Board Reminder Title",
+                      "fill": "$warm-text",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Sports bag by the door",
+                      "lineHeight": 1.04,
+                      "fontFamily": "$warm-font-display",
+                      "fontSize": 13,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "text",
+                      "id": "IOyE7",
+                      "name": "Mobile Board Reminder Detail",
+                      "fill": "$warm-text-secondary",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Due today · shared note",
+                      "lineHeight": 1.2,
+                      "fontFamily": "$warm-font-body",
+                      "fontSize": 8,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "c5xFkX",
+              "name": "Mobile High Priority Email Notice",
+              "width": "fill_container",
+              "height": 124,
+              "fill": "$warm-card-peach",
+              "cornerRadius": 22,
+              "layout": "vertical",
+              "gap": 8,
+              "padding": 14,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "v7HUk",
+                  "name": "Mobile Email Notice Meta",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "xnZ0r",
+                      "name": "Mobile Email Source",
+                      "gap": 7,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "icon",
+                          "id": "D6uX6L",
+                          "name": "Mobile Email Icon",
+                          "width": 15,
+                          "height": 15,
+                          "icon": "mail",
+                          "library": "lucide",
+                          "fill": "$warm-text"
+                        },
+                        {
+                          "type": "text",
+                          "id": "ktSPB",
+                          "name": "Mobile Email Source Label",
+                          "fill": "$warm-text-secondary",
+                          "content": "FORWARDED EMAIL",
+                          "fontFamily": "$warm-font-body",
+                          "fontSize": 8,
+                          "fontWeight": "700",
+                          "letterSpacing": 0.8
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "vkQNI",
+                      "name": "Mobile Priority Chip",
+                      "fill": "$warm-accent",
+                      "cornerRadius": 999,
+                      "padding": [
+                        4,
+                        8
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "PirTR",
+                          "name": "Mobile Priority Label",
+                          "fill": "$warm-bg",
+                          "content": "HIGH",
+                          "fontFamily": "$warm-font-body",
+                          "fontSize": 8,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "P8i7I",
+                  "name": "Mobile Email Notice Title",
+                  "fill": "$warm-text",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Permission form needs a reply",
+                  "lineHeight": 1.04,
+                  "fontFamily": "$warm-font-display",
+                  "fontSize": 18,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "frame",
+                  "id": "eAbRs",
+                  "name": "Mobile Email Fact",
+                  "fill": "$warm-bg-card",
+                  "cornerRadius": 14,
+                  "gap": 7,
+                  "padding": [
+                    8,
+                    10
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "zOUYU",
+                      "name": "Mobile Email Fact Icon",
+                      "width": 15,
+                      "height": 15,
+                      "icon": "calendar-days",
+                      "library": "lucide",
+                      "fill": "$warm-accent-deep"
+                    },
+                    {
+                      "type": "text",
+                      "id": "RfCbS",
+                      "name": "Mobile Email Fact Text",
+                      "fill": "$warm-text",
+                      "content": "Due · Wed, 15 Jul",
+                      "fontFamily": "$warm-font-body",
+                      "fontSize": 10,
+                      "fontWeight": "700"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "Xf1HO",
+              "name": "Mobile Monthly Spending Insight",
+              "width": "fill_container",
+              "height": 104,
+              "fill": "$warm-card-lavender",
+              "cornerRadius": 22,
+              "layout": "vertical",
+              "gap": 6,
+              "padding": 14,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "H2ecKs",
+                  "name": "Mobile Quiet Email Meta",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "sPzFW",
+                      "name": "Mobile Spending Insight Icon",
+                      "width": 16,
+                      "height": 16,
+                      "icon": "trending-down",
+                      "library": "lucide",
+                      "fill": "$warm-text"
+                    },
+                    {
+                      "type": "text",
+                      "id": "fgH3l",
+                      "name": "Mobile Spending Insight Label",
+                      "fill": "$warm-text-secondary",
+                      "content": "SPENDING INSIGHT",
+                      "fontFamily": "$warm-font-body",
+                      "fontSize": 8,
+                      "fontWeight": "700",
+                      "letterSpacing": 1
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "Ncazz",
+                  "name": "Mobile Spending Insight Title",
+                  "fill": "$warm-text",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Spending is tracking lower",
+                  "lineHeight": 1.04,
+                  "fontFamily": "$warm-font-display",
+                  "fontSize": 15,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "ngA0e",
+                  "name": "Mobile Spending Insight Detail",
+                  "fill": "$warm-text-secondary",
+                  "content": "Latest monthly insight · open Budget",
+                  "fontFamily": "$warm-font-body",
+                  "fontSize": 9,
+                  "fontWeight": "normal"
                 }
               ]
             }
