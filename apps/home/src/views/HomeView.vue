@@ -3,14 +3,17 @@ import { CalendarDays, Plus } from '@lucide/vue';
 import { computed, nextTick, ref } from 'vue';
 
 import ActiveBoard from '@/components/ActiveBoard.vue';
+import ArchiveConfirmation from '@/components/ArchiveConfirmation.vue';
 import ManualNoteEditor from '@/components/ManualNoteEditor.vue';
 import { useActiveBoard } from '@/composables/useActiveBoard';
+import { type ArchiveableBoardItem, useBoardArchive } from '@/composables/useBoardArchive';
 import { type ManualNoteInput, type ManualNoteItem, useManualNotes } from '@/composables/useManualNotes';
 import { HOME_RUNTIME } from '@/config/runtime';
 import { PREVIEW_BOARD } from '@/data/previewBoard';
 
 const liveBoard = HOME_RUNTIME.mode === 'authenticated' ? useActiveBoard() : null;
 const liveNotes = HOME_RUNTIME.mode === 'authenticated' ? useManualNotes() : null;
+const liveArchive = HOME_RUNTIME.mode === 'authenticated' ? useBoardArchive() : null;
 const boardData = computed(() => liveBoard?.data.value ?? (HOME_RUNTIME.mode === 'demo' ? PREVIEW_BOARD : undefined));
 const boardPending = computed(() => liveBoard?.isPending.value ?? false);
 const boardError = computed(() => liveBoard?.error.value ?? null);
@@ -19,6 +22,8 @@ const noteEditorOpen = ref(false);
 const selectedNote = ref<ManualNoteItem | null>(null);
 const editorTrigger = ref<globalThis.HTMLElement | null>(null);
 const noteSavePending = computed(() => liveNotes?.isPending() ?? false);
+const selectedArchive = ref<{ item: ArchiveableBoardItem; title: string } | null>(null);
+const archiveTriggerId = ref('');
 
 const today = computed(() => {
   if (!boardData.value) return 'Today';
@@ -60,6 +65,40 @@ async function saveNote(input: ManualNoteInput) {
   if (!liveNotes) throw new Error('Shared notes are unavailable');
   return liveNotes.save(selectedNote.value, input);
 }
+
+function archiveTitle(item: ArchiveableBoardItem) {
+  if (item.kind === 'today') return item.headline;
+  if (item.kind === 'meals') return 'Today’s Meals';
+  return item.title;
+}
+
+function openArchive(item: ArchiveableBoardItem) {
+  archiveTriggerId.value = item.id;
+  selectedArchive.value = { item, title: archiveTitle(item) };
+}
+
+async function cancelArchive() {
+  const triggerId = archiveTriggerId.value;
+  selectedArchive.value = null;
+  archiveTriggerId.value = '';
+  await nextTick();
+  const triggers = globalThis.document.querySelectorAll<globalThis.HTMLButtonElement>('[data-archive-id]');
+  Array.from(triggers)
+    .find((trigger) => trigger.dataset.archiveId === triggerId)
+    ?.focus();
+}
+
+async function archiveSelectedItem() {
+  if (!liveArchive || !selectedArchive.value) throw new Error('Archive is unavailable');
+  return liveArchive.archive(selectedArchive.value.item);
+}
+
+async function finishArchive() {
+  selectedArchive.value = null;
+  archiveTriggerId.value = '';
+  await nextTick();
+  addNoteButton.value?.focus();
+}
 </script>
 
 <template>
@@ -95,6 +134,7 @@ async function saveNote(input: ManualNoteInput) {
         :error="boardError"
         @retry="retryBoard"
         @edit-note="openNoteEditor"
+        @archive="openArchive"
       />
     </section>
 
@@ -105,6 +145,15 @@ async function saveNote(input: ManualNoteInput) {
       :is-pending="noteSavePending"
       @close="closeNoteEditor"
       @saved="closeNoteEditor"
+    />
+
+    <ArchiveConfirmation
+      v-if="selectedArchive && liveArchive"
+      :item="{ id: selectedArchive.item.id, title: selectedArchive.title }"
+      :archive="archiveSelectedItem"
+      :is-pending="liveArchive.isPending.value"
+      @cancel="cancelArchive"
+      @archived="finishArchive"
     />
   </main>
 </template>

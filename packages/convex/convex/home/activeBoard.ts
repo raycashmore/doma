@@ -10,6 +10,7 @@ type ActiveBoardQueryCtx = Pick<QueryCtx, 'auth' | 'db'>;
 type ActiveBoardOptions = {
   now: Date;
   timeZone: string;
+  includeArchived?: boolean;
 };
 
 export async function readActiveBoard(ctx: ActiveBoardQueryCtx, options: ActiveBoardOptions) {
@@ -18,24 +19,33 @@ export async function readActiveBoard(ctx: ActiveBoardQueryCtx, options: ActiveB
 
   const localDate = calendarDateInTimeZone(options.now, options.timeZone);
   const { weekStart, weekday } = weekFactsForCalendarDate(localDate);
-  const [{ start: dayStart, end: dayEnd }, briefing, events, mealPlan, emailNotices, spendingInsights, manualNotes] =
-    await Promise.all([
-      Promise.resolve(localDateRangeMs({ localDate, timeZone: options.timeZone })),
-      ctx.db
-        .query('briefings')
-        .withIndex('by_briefing_key', (q) =>
-          q.eq('briefingKey', morningBriefingKey({ briefingKind: 'morning', localDate }))
-        )
-        .unique(),
-      ctx.db.query('scheduleEvents').withIndex('by_start').collect(),
-      ctx.db
-        .query('weeklyMealPlans')
-        .withIndex('by_week_start', (q) => q.eq('weekStart', weekStart))
-        .unique(),
-      ctx.db.query('emailNotices').collect(),
-      ctx.db.query('spendingInsights').collect(),
-      ctx.db.query('manualNotes').collect()
-    ]);
+  const [
+    { start: dayStart, end: dayEnd },
+    briefing,
+    events,
+    mealPlan,
+    emailNotices,
+    spendingInsights,
+    manualNotes,
+    boardArchives
+  ] = await Promise.all([
+    Promise.resolve(localDateRangeMs({ localDate, timeZone: options.timeZone })),
+    ctx.db
+      .query('briefings')
+      .withIndex('by_briefing_key', (q) =>
+        q.eq('briefingKey', morningBriefingKey({ briefingKind: 'morning', localDate }))
+      )
+      .unique(),
+    ctx.db.query('scheduleEvents').withIndex('by_start').collect(),
+    ctx.db
+      .query('weeklyMealPlans')
+      .withIndex('by_week_start', (q) => q.eq('weekStart', weekStart))
+      .unique(),
+    ctx.db.query('emailNotices').collect(),
+    ctx.db.query('spendingInsights').collect(),
+    ctx.db.query('manualNotes').collect(),
+    ctx.db.query('boardArchives').collect()
+  ]);
 
   const eventBySourceId = new Map(events.map((event) => [sourceIdForEvent(event), event]));
   const isCurrentBriefingLine = (line: { sourceIds: string[] }) =>
@@ -185,34 +195,41 @@ export async function readActiveBoard(ctx: ActiveBoardQueryCtx, options: ActiveB
       );
     });
 
+  const items = [
+    {
+      kind: 'today' as const,
+      id: `today:${localDate}`,
+      sourceKind: 'today' as const,
+      sourceApp: 'schedule' as const,
+      destination: '/schedule',
+      briefingStatus,
+      headline: briefing?.briefing.headline || 'Today',
+      generatedAt: briefing?.generatedAt ?? null,
+      morning:
+        briefingStatus === 'available' && briefing ? briefing.briefing.morning.filter(isCurrentBriefingLine) : [],
+      laterToday,
+      watchouts:
+        briefingStatus === 'available' && briefing ? briefing.briefing.watchouts.filter(isCurrentBriefingLine) : []
+    },
+    {
+      kind: 'meals' as const,
+      id: `meals:${localDate}`,
+      sourceKind: 'meals' as const,
+      sourceApp: 'meals' as const,
+      destination: '/meals',
+      schoolLunch: mealName('schoolLunch'),
+      dinner: mealName('dinner')
+    },
+    ...manualNoteItems,
+    ...emailNoticeItems,
+    ...spendingInsightItems
+  ];
+  const archivedIds = new Set(boardArchives.map((archive) => archive.occurrenceId));
+
   return {
     localDate,
     timeZone: options.timeZone,
-    items: [
-      {
-        kind: 'today' as const,
-        id: `today:${localDate}`,
-        destination: '/schedule',
-        briefingStatus,
-        headline: briefing?.briefing.headline || 'Today',
-        generatedAt: briefing?.generatedAt ?? null,
-        morning:
-          briefingStatus === 'available' && briefing ? briefing.briefing.morning.filter(isCurrentBriefingLine) : [],
-        laterToday,
-        watchouts:
-          briefingStatus === 'available' && briefing ? briefing.briefing.watchouts.filter(isCurrentBriefingLine) : []
-      },
-      {
-        kind: 'meals' as const,
-        id: `meals:${localDate}`,
-        destination: '/meals',
-        schoolLunch: mealName('schoolLunch'),
-        dinner: mealName('dinner')
-      },
-      ...manualNoteItems,
-      ...emailNoticeItems,
-      ...spendingInsightItems
-    ]
+    items: options.includeArchived ? items : items.filter((item) => !archivedIds.has(item.id))
   };
 }
 

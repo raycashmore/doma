@@ -1,7 +1,10 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/vue';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-const { save } = vi.hoisted(() => ({ save: vi.fn().mockResolvedValue(undefined) }));
+const { save, archive } = vi.hoisted(() => ({
+  save: vi.fn().mockResolvedValue(undefined),
+  archive: vi.fn().mockResolvedValue(undefined)
+}));
 
 vi.mock('@/config/runtime', () => ({
   HOME_IS_DEV: false,
@@ -16,12 +19,16 @@ vi.mock('@/composables/useActiveBoard', async () => {
 vi.mock('@/composables/useManualNotes', () => ({
   useManualNotes: () => ({ isPending: () => false, save })
 }));
+vi.mock('@/composables/useBoardArchive', () => ({
+  useBoardArchive: () => ({ isPending: { value: false }, archive })
+}));
 
 import HomeView from './HomeView.vue';
 
 afterEach(() => {
   cleanup();
   save.mockClear();
+  archive.mockClear();
 });
 
 describe('HomeView shared note workflow', () => {
@@ -51,5 +58,32 @@ describe('HomeView shared note workflow', () => {
 
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     expect(globalThis.document.activeElement).toBe(editButton);
+  });
+
+  it('requires confirmation and restores focus to the overflow trigger on cancel', async () => {
+    render(HomeView);
+    const overflow = screen.getByRole('button', { name: 'More actions for Today' });
+
+    overflow.focus();
+    await overflow.click();
+    await screen.getByRole('menuitem', { name: 'Archive' }).click();
+    expect(screen.getByRole('dialog', { name: 'Archive Today?' })).not.toBeNull();
+    await screen.getByRole('button', { name: 'Cancel' }).click();
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(globalThis.document.activeElement).toBe(overflow);
+    expect(archive).not.toHaveBeenCalled();
+  });
+
+  it('archives the selected occurrence and moves focus to a stable action after success', async () => {
+    render(HomeView);
+    const addButton = screen.getByRole('button', { name: 'Add note' });
+    await screen.getByRole('button', { name: 'More actions for Return library books' }).click();
+    await screen.getByRole('menuitem', { name: 'Archive' }).click();
+    await screen.getByRole('button', { name: 'Archive item' }).click();
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(archive).toHaveBeenCalledWith(expect.objectContaining({ id: 'manualNote:preview-library-books' }));
+    expect(globalThis.document.activeElement).toBe(addButton);
   });
 });

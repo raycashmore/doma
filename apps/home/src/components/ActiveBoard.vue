@@ -7,11 +7,13 @@ import { computed, inject } from 'vue';
 
 import { homeUrlBuilderKey } from '../config/navigation';
 import { HOME_IS_DEV } from '../config/runtime';
+import CardOverflowMenu from './CardOverflowMenu.vue';
 
 type ActiveBoardData = FunctionReturnType<typeof api.home.activeBoard.activeBoard>;
 type TodayItem = Extract<ActiveBoardData['items'][number], { kind: 'today' }>;
 type SourceNotice = Extract<ActiveBoardData['items'][number], { kind: 'sourceNotice' }>;
 type ManualNote = Extract<ActiveBoardData['items'][number], { kind: 'manualNote' }>;
+type BoardItem = ActiveBoardData['items'][number];
 
 const props = defineProps<{
   data: ActiveBoardData | undefined;
@@ -19,7 +21,7 @@ const props = defineProps<{
   error: unknown;
 }>();
 
-defineEmits<{ retry: []; editNote: [note: ManualNote] }>();
+defineEmits<{ retry: []; editNote: [note: ManualNote]; archive: [item: BoardItem] }>();
 
 const today = computed(() => props.data?.items.find((item) => item.kind === 'today'));
 const meals = computed(() => props.data?.items.find((item) => item.kind === 'meals'));
@@ -103,8 +105,8 @@ function dueLabel(note: ManualNote) {
     </button>
   </div>
 
-  <div v-else-if="data && today && meals" class="active-board">
-    <article class="board-card today-card" :aria-labelledby="`${today.id}-title`">
+  <div v-else-if="data" class="active-board">
+    <article v-if="today" class="board-card today-card" :aria-labelledby="`${today.id}-title`">
       <div class="card-kicker">
         <Sun :size="16" aria-hidden="true" />
         <span>MORNING BRIEFING · {{ briefingTime(today.generatedAt) }}</span>
@@ -128,10 +130,11 @@ function dueLabel(note: ManualNote) {
         <TriangleAlert :size="17" aria-hidden="true" />Watchout · {{ line.text }}
       </p>
 
+      <CardOverflowMenu :item-id="today.id" :label="today.headline" @archive="$emit('archive', today)" />
       <a class="card-link" :href="cardDestination(today.destination)" aria-label="Open Schedule" />
     </article>
 
-    <article class="board-card meals-card" :aria-labelledby="`${meals.id}-title`">
+    <article v-if="meals" class="board-card meals-card" :aria-labelledby="`${meals.id}-title`">
       <Utensils :size="22" aria-hidden="true" />
       <p class="card-kicker">TODAY'S MEALS</p>
       <h3 :id="`${meals.id}-title`" class="sr-only">Today’s Meals</h3>
@@ -140,6 +143,7 @@ function dueLabel(note: ManualNote) {
         <p>Dinner · {{ meals.dinner }}</p>
       </div>
       <p class="card-detail">From this week’s meal plan</p>
+      <CardOverflowMenu :item-id="meals.id" label="Today’s Meals" @archive="$emit('archive', meals)" />
       <a class="card-link" :href="cardDestination(meals.destination)" aria-label="Open Meals" />
     </article>
 
@@ -154,6 +158,7 @@ function dueLabel(note: ManualNote) {
       <p class="card-kicker">{{ dueLabel(note) }}</p>
       <h3 :id="`${note.id}-title`">{{ note.title }}</h3>
       <p v-if="note.detail" class="source-detail">{{ note.detail }}</p>
+      <CardOverflowMenu :item-id="note.id" :label="note.title" @archive="$emit('archive', note)" />
       <button
         class="card-link"
         type="button"
@@ -182,6 +187,7 @@ function dueLabel(note: ManualNote) {
           <dd>{{ fact.value }}</dd>
         </div>
       </dl>
+      <CardOverflowMenu :item-id="item.id" :label="item.title" @archive="$emit('archive', item)" />
       <a class="card-link" :href="cardDestination(item.destination)" :aria-label="sourceLinkLabel(item)" />
     </article>
 

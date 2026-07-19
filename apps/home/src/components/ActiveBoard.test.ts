@@ -1,4 +1,4 @@
-import { cleanup, render, screen, within } from '@testing-library/vue';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/vue';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { homeUrlBuilderKey } from '../config/navigation';
@@ -13,6 +13,8 @@ const completeBoard = {
     {
       kind: 'today' as const,
       id: 'today:2026-07-14',
+      sourceKind: 'today' as const,
+      sourceApp: 'schedule' as const,
       destination: '/schedule',
       briefingStatus: 'available' as const,
       headline: 'Tuesday ready',
@@ -35,6 +37,8 @@ const completeBoard = {
     {
       kind: 'meals' as const,
       id: 'meals:2026-07-14',
+      sourceKind: 'meals' as const,
+      sourceApp: 'meals' as const,
       destination: '/meals',
       schoolLunch: 'Pasta salad',
       dinner: 'Not planned'
@@ -190,6 +194,22 @@ describe('ActiveBoard', () => {
     expect(editEvents[0]?.[0]).toMatchObject({ noteId: 'manual_note_1', dueState: 'overdue' });
   });
 
+  it('exposes archive from an accessible overflow menu on every active card', async () => {
+    const { emitted } = render(ActiveBoard, {
+      props: { data: completeBoard, isPending: false, error: null }
+    });
+
+    const overflowButtons = screen.getAllByRole('button', { name: /^More actions for / });
+    expect(overflowButtons).toHaveLength(completeBoard.items.length);
+
+    await overflowButtons[0]!.click();
+    const archiveItem = screen.getByRole('menuitem', { name: 'Archive' });
+    await waitFor(() => expect(globalThis.document.activeElement).toBe(archiveItem));
+    await archiveItem.click();
+    const archiveEvents = emitted().archive as unknown[][];
+    expect(archiveEvents[0]?.[0]).toMatchObject({ id: 'today:2026-07-14', sourceKind: 'today' });
+  });
+
   it('shows an intentional empty state when there are no source notices', () => {
     render(ActiveBoard, {
       props: {
@@ -202,6 +222,20 @@ describe('ActiveBoard', () => {
     expect(screen.getByText('Nothing else needs attention right now.')).not.toBeNull();
   });
 
+  it('keeps remaining cards visible when Today or Meals has been archived', () => {
+    render(ActiveBoard, {
+      props: {
+        data: { ...completeBoard, items: completeBoard.items.filter((item) => item.kind !== 'today') },
+        isPending: false,
+        error: null
+      }
+    });
+
+    expect(screen.queryByRole('heading', { name: 'Tuesday ready' })).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Today’s Meals' })).not.toBeNull();
+    expect(screen.getByRole('heading', { name: 'Return library books' })).not.toBeNull();
+  });
+
   it('distinguishes an empty briefing from missing meal assignments', () => {
     render(ActiveBoard, {
       props: {
@@ -212,6 +246,8 @@ describe('ActiveBoard', () => {
             {
               kind: 'today',
               id: 'today:2026-07-19',
+              sourceKind: 'today',
+              sourceApp: 'schedule',
               destination: '/schedule',
               briefingStatus: 'missing',
               headline: 'Today',
@@ -223,6 +259,8 @@ describe('ActiveBoard', () => {
             {
               kind: 'meals',
               id: 'meals:2026-07-19',
+              sourceKind: 'meals',
+              sourceApp: 'meals',
               destination: '/meals',
               schoolLunch: 'Not planned',
               dinner: 'Not planned'

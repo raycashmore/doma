@@ -125,6 +125,8 @@ describe('readActiveBoard', () => {
         {
           kind: 'today',
           id: 'today:2026-07-14',
+          sourceKind: 'today',
+          sourceApp: 'schedule',
           destination: '/schedule',
           briefingStatus: 'available',
           headline: 'Tuesday ready',
@@ -146,6 +148,8 @@ describe('readActiveBoard', () => {
         {
           kind: 'meals',
           id: 'meals:2026-07-14',
+          sourceKind: 'meals',
+          sourceApp: 'meals',
           destination: '/meals',
           schoolLunch: 'Pasta salad',
           dinner: 'Not planned'
@@ -166,6 +170,8 @@ describe('readActiveBoard', () => {
       {
         kind: 'today',
         id: 'today:2026-07-19',
+        sourceKind: 'today',
+        sourceApp: 'schedule',
         destination: '/schedule',
         briefingStatus: 'missing',
         headline: 'Today',
@@ -177,6 +183,8 @@ describe('readActiveBoard', () => {
       {
         kind: 'meals',
         id: 'meals:2026-07-19',
+        sourceKind: 'meals',
+        sourceApp: 'meals',
         destination: '/meals',
         schoolLunch: 'Not planned',
         dinner: 'Not planned'
@@ -371,6 +379,53 @@ describe('readActiveBoard', () => {
     ]);
   });
 
+  it('suppresses archived occurrences of every card kind without suppressing a new source occurrence', async () => {
+    const ctx = createActiveBoardCtx({
+      briefing: null,
+      events: [],
+      plan: null,
+      recipes: [],
+      manualNotes: [manualNote('overdue', '2026-07-13')],
+      emailNotices: [
+        {
+          _id: 'email_old',
+          priority: 'low',
+          title: 'Old occurrence',
+          body: 'Archived',
+          extractedFacts: [],
+          createdAt: 1,
+          updatedAt: 1
+        },
+        {
+          _id: 'email_new',
+          priority: 'low',
+          title: 'New occurrence',
+          body: 'Still active',
+          extractedFacts: [],
+          createdAt: 2,
+          updatedAt: 2
+        }
+      ],
+      spendingInsights: [spendingInsight('2026-06')],
+      boardArchives: [
+        boardArchive('today:2026-07-14', 'today'),
+        boardArchive('meals:2026-07-14', 'meals'),
+        boardArchive('manualNote:overdue', 'manualNote'),
+        boardArchive('emailNotice:email_old', 'forwardedEmail'),
+        boardArchive('spendingInsight:2026-06', 'monthlySpendingInsight')
+      ]
+    });
+
+    const result = await readActiveBoard(ctx as never, {
+      now: new Date('2026-07-13T22:00:00.000Z'),
+      timeZone: 'Australia/Sydney'
+    });
+
+    expect(result.items).toEqual([
+      expect.objectContaining({ id: 'emailNotice:email_new', sourceKind: 'forwardedEmail' })
+    ]);
+  });
+
   it('removes a generated line when any of its source events has been superseded', async () => {
     const currentEvent = scheduleEvent({ googleEventId: 'still-current' });
     const briefing = morningBriefing({
@@ -478,6 +533,7 @@ type ActiveBoardRows = {
   emailNotices?: Record<string, unknown>[];
   spendingInsights?: Record<string, unknown>[];
   manualNotes?: Record<string, unknown>[];
+  boardArchives?: Record<string, unknown>[];
 };
 
 function createActiveBoardCtx(rows: ActiveBoardRows) {
@@ -489,6 +545,7 @@ function createActiveBoardCtx(rows: ActiveBoardRows) {
           if (table === 'emailNotices') return rows.emailNotices ?? [];
           if (table === 'spendingInsights') return rows.spendingInsights ?? [];
           if (table === 'manualNotes') return rows.manualNotes ?? [];
+          if (table === 'boardArchives') return rows.boardArchives ?? [];
           return [];
         },
         withIndex: (_index: string, apply?: (query: { eq: (_field: string, value: string) => string }) => unknown) => {
@@ -513,6 +570,10 @@ function createActiveBoardCtx(rows: ActiveBoardRows) {
       })
     }
   };
+}
+
+function boardArchive(occurrenceId: string, sourceKind: string) {
+  return { occurrenceId, sourceKind, archivedByUserId: 'household-user-1', archivedAt: 2 };
 }
 
 function manualNote(id: string, dueDate?: string) {

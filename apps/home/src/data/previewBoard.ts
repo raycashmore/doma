@@ -11,6 +11,8 @@ export const PREVIEW_BOARD = {
     {
       kind: 'today',
       id: 'today:2026-07-13',
+      sourceKind: 'today',
+      sourceApp: 'schedule',
       destination: '/schedule',
       briefingStatus: 'available',
       headline: 'Today',
@@ -32,6 +34,8 @@ export const PREVIEW_BOARD = {
     {
       kind: 'meals',
       id: 'meals:2026-07-13',
+      sourceKind: 'meals',
+      sourceApp: 'meals',
       destination: '/meals',
       schoolLunch: 'Pasta salad',
       dinner: 'Not planned'

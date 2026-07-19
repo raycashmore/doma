@@ -563,6 +563,94 @@ h3 {
   outline-offset: 3px;
 }
 
+.card-overflow {
+  position: absolute;
+  z-index: 3;
+  top: 16px;
+  right: 16px;
+}
+
+.card-overflow-trigger {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: #ffffff8c;
+  color: var(--warm-text-primary);
+  cursor: pointer;
+}
+
+.card-overflow-menu {
+  position: absolute;
+  top: 42px;
+  right: 0;
+  min-width: 136px;
+  padding: 6px;
+  border: 1px solid var(--warm-border);
+  border-radius: 12px;
+  background: var(--warm-bg-card);
+  box-shadow: 0 12px 32px #211b1633;
+}
+
+.card-overflow-menu button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--warm-text-primary);
+  cursor: pointer;
+  font-weight: 700;
+  text-align: left;
+}
+
+.card-overflow-menu button:hover {
+  background: var(--warm-bg-card-soft);
+}
+
+.archive-confirmation {
+  width: min(100%, 440px);
+  display: grid;
+  gap: 16px;
+  padding: 24px;
+  border-radius: 24px;
+  background: var(--warm-bg-card);
+  box-shadow: 0 24px 80px #211b1652;
+}
+
+.archive-confirmation > p:not(.form-error) {
+  color: var(--warm-text-secondary);
+  line-height: 1.5;
+}
+
+.archive-confirmation-icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--warm-section-spend);
+}
+
+.archive-button {
+  min-height: 40px;
+  padding: 9px 15px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--warm-section-spend);
+  color: var(--warm-text-primary);
+  font-weight: 800;
+}
+
+.archive-button:disabled {
+  opacity: 0.55;
+}
+
 .board-skeleton {
   overflow: hidden;
   background: var(--warm-bg-card-soft);
