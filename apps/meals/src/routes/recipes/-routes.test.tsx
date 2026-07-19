@@ -2,10 +2,16 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ComponentType, ReactNode } from 'react';
 
-const mocks = vi.hoisted(() => ({
+type RecipeRouteMocks = {
+  recipeMutation: ReturnType<typeof vi.fn>;
+  navigate: ReturnType<typeof vi.fn>;
+  queryResult: unknown;
+};
+
+const mocks = vi.hoisted<RecipeRouteMocks>(() => ({
   recipeMutation: vi.fn(),
   navigate: vi.fn(),
-  queryResult: undefined as unknown
+  queryResult: undefined
 }));
 
 vi.mock('@tanstack/react-router', () => ({

@@ -47,7 +47,7 @@ export function BudgetChartBars({
             rx={4}
             style={onBarClick ? { cursor: 'pointer' } : undefined}
             onClick={() => onBarClick?.(d.date)}
-            onMouseMove={(e) => onMouseMove(e as React.MouseEvent<SVGRectElement>, d)}
+            onMouseMove={(e) => onMouseMove(e, d)}
             onMouseLeave={onMouseLeave}
           />
         );
@@ -69,7 +69,7 @@ export function BudgetChartBars({
             rx={3}
             style={onBarClick ? { cursor: 'pointer' } : undefined}
             onClick={() => onBarClick?.(d.date)}
-            onMouseMove={(e) => onMouseMove(e as React.MouseEvent<SVGRectElement>, d)}
+            onMouseMove={(e) => onMouseMove(e, d)}
             onMouseLeave={onMouseLeave}
           />
         );
@@ -92,7 +92,7 @@ export function BudgetChartBars({
             rx={3}
             style={onBarClick ? { cursor: 'pointer' } : undefined}
             onClick={() => onBarClick?.(d.date)}
-            onMouseMove={(e) => onMouseMove(e as React.MouseEvent<SVGRectElement>, d)}
+            onMouseMove={(e) => onMouseMove(e, d)}
             onMouseLeave={onMouseLeave}
           />
         );
