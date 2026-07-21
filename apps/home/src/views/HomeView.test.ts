@@ -1,13 +1,25 @@
 import { cleanup, render, screen } from '@testing-library/vue';
 import { afterEach, describe, expect, it } from 'vitest';
+import { createMemoryHistory, createRouter } from 'vue-router';
 
 import HomeView from './HomeView.vue';
+
+function renderHomeView() {
+  const router = createRouter({
+    history: createMemoryHistory(),
+    routes: [
+      { path: '/', component: { template: '<main />' } },
+      { path: '/notices/:noticeId', component: { template: '<main />' } }
+    ]
+  });
+  return render(HomeView, { global: { plugins: [router] } });
+}
 
 afterEach(cleanup);
 
 describe('HomeView', () => {
   it('shows the generic Today and Meals board in local demo mode', () => {
-    render(HomeView);
+    renderHomeView();
 
     expect(screen.getByRole('heading', { name: 'Noticeboard' })).not.toBeNull();
     expect(screen.getByRole('heading', { name: 'Today' })).not.toBeNull();

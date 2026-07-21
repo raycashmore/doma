@@ -1,10 +1,29 @@
+import type { RenderOptions } from '@testing-library/vue';
 import { cleanup, render, screen, waitFor, within } from '@testing-library/vue';
 import { afterEach, describe, expect, it } from 'vitest';
+import { createMemoryHistory, createRouter } from 'vue-router';
 
 import { homeUrlBuilderKey } from '../config/navigation';
 import ActiveBoard from './ActiveBoard.vue';
 
 afterEach(cleanup);
+
+function createTestRouter() {
+  return createRouter({
+    history: createMemoryHistory(),
+    routes: [
+      { path: '/', component: { template: '<main />' } },
+      { path: '/notices/:noticeId', component: { template: '<main />' } }
+    ]
+  });
+}
+
+function renderBoard(options: RenderOptions<typeof ActiveBoard>, router = createTestRouter()) {
+  return render(ActiveBoard, {
+    ...options,
+    global: { ...options.global, plugins: [router] }
+  });
+}
 
 const completeBoard = {
   localDate: '2026-07-14',
@@ -103,7 +122,7 @@ const completeBoard = {
 
 describe('ActiveBoard', () => {
   it('shows card-shaped placeholders while the board query is loading', () => {
-    render(ActiveBoard, {
+    renderBoard({
       props: { data: undefined, isPending: true, error: null }
     });
 
@@ -112,7 +131,7 @@ describe('ActiveBoard', () => {
   });
 
   it('explains query failures and offers a retry action', async () => {
-    const { emitted } = render(ActiveBoard, {
+    const { emitted } = renderBoard({
       props: { data: undefined, isPending: false, error: new Error('Connection failed') }
     });
 
@@ -122,7 +141,7 @@ describe('ActiveBoard', () => {
   });
 
   it('renders Today before Today’s Meals with canonical destinations', () => {
-    render(ActiveBoard, {
+    renderBoard({
       props: { data: completeBoard, isPending: false, error: null }
     });
 
@@ -144,7 +163,7 @@ describe('ActiveBoard', () => {
   });
 
   it('preserves the authenticated cross-origin handoff for local app links', () => {
-    render(ActiveBoard, {
+    renderBoard({
       props: { data: completeBoard, isPending: false, error: null },
       global: {
         provide: {
@@ -165,7 +184,7 @@ describe('ActiveBoard', () => {
   });
 
   it('renders urgent, quiet, and spending source cards after Today and Meals', () => {
-    render(ActiveBoard, {
+    renderBoard({
       props: { data: completeBoard, isPending: false, error: null }
     });
 
@@ -181,8 +200,19 @@ describe('ActiveBoard', () => {
     expect(within(cards[5]!).getByRole('link', { name: 'Open Budget' })).not.toBeNull();
   });
 
+  it('opens Home notice details without reloading the document', async () => {
+    const router = createTestRouter();
+    await router.push('/');
+
+    renderBoard({ props: { data: completeBoard, isPending: false, error: null } }, router);
+
+    await screen.getAllByRole('link', { name: 'Open notice details' })[0]?.click();
+
+    await waitFor(() => expect(router.currentRoute.value.fullPath).toBe('/notices/emailNotices_urgent'));
+  });
+
   it('renders overdue shared notes and opens them for collaborative editing', async () => {
-    const { emitted } = render(ActiveBoard, {
+    const { emitted } = renderBoard({
       props: { data: completeBoard, isPending: false, error: null }
     });
 
@@ -195,7 +225,7 @@ describe('ActiveBoard', () => {
   });
 
   it('exposes archive from an accessible overflow menu on every active card', async () => {
-    const { emitted } = render(ActiveBoard, {
+    const { emitted } = renderBoard({
       props: { data: completeBoard, isPending: false, error: null }
     });
 
@@ -211,7 +241,7 @@ describe('ActiveBoard', () => {
   });
 
   it('shows an intentional empty state when there are no source notices', () => {
-    render(ActiveBoard, {
+    renderBoard({
       props: {
         data: { ...completeBoard, items: completeBoard.items.slice(0, 2) },
         isPending: false,
@@ -223,7 +253,7 @@ describe('ActiveBoard', () => {
   });
 
   it('keeps remaining cards visible when Today or Meals has been archived', () => {
-    render(ActiveBoard, {
+    renderBoard({
       props: {
         data: { ...completeBoard, items: completeBoard.items.filter((item) => item.kind !== 'today') },
         isPending: false,
@@ -237,7 +267,7 @@ describe('ActiveBoard', () => {
   });
 
   it('distinguishes an empty briefing from missing meal assignments', () => {
-    render(ActiveBoard, {
+    renderBoard({
       props: {
         data: {
           localDate: '2026-07-19',
@@ -278,7 +308,7 @@ describe('ActiveBoard', () => {
   });
 
   it('shows a calm state when today’s stored briefing has no items', () => {
-    render(ActiveBoard, {
+    renderBoard({
       props: {
         data: {
           ...completeBoard,
@@ -308,7 +338,7 @@ describe('ActiveBoard', () => {
     ['Not planned', 'Vegetable bake'],
     ['Not planned', 'Not planned']
   ])('shows lunch %s and dinner %s independently', (schoolLunch, dinner) => {
-    render(ActiveBoard, {
+    renderBoard({
       props: {
         data: {
           ...completeBoard,

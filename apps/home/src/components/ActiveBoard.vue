@@ -4,6 +4,7 @@ import { APPS, getAppHref } from '@repo/app-registry';
 import type { api } from '@repo/convex';
 import type { FunctionReturnType } from 'convex/server';
 import { computed, inject } from 'vue';
+import { RouterLink } from 'vue-router';
 
 import { homeUrlBuilderKey } from '../config/navigation';
 import { HOME_IS_DEV } from '../config/runtime';
@@ -188,7 +189,13 @@ function dueLabel(note: ManualNote) {
         </div>
       </dl>
       <CardOverflowMenu :item-id="item.id" :label="item.title" @archive="$emit('archive', item)" />
-      <a class="card-link" :href="cardDestination(item.destination)" :aria-label="sourceLinkLabel(item)" />
+      <RouterLink
+        v-if="item.sourceApp === 'home'"
+        class="card-link"
+        :to="item.destination"
+        :aria-label="sourceLinkLabel(item)"
+      />
+      <a v-else class="card-link" :href="cardDestination(item.destination)" :aria-label="sourceLinkLabel(item)" />
     </article>
 
     <p v-if="sourceNotices.length === 0 && manualNotes.length === 0" class="board-empty">

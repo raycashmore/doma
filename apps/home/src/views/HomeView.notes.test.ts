@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/vue';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createMemoryHistory, createRouter } from 'vue-router';
 
 const { save, archive } = vi.hoisted(() => ({
   save: vi.fn().mockResolvedValue(undefined),
@@ -28,6 +29,17 @@ vi.mock('@/composables/useConvexConnectionStatus', () => ({
 
 import HomeView from './HomeView.vue';
 
+function renderHomeView() {
+  const router = createRouter({
+    history: createMemoryHistory(),
+    routes: [
+      { path: '/', component: { template: '<main />' } },
+      { path: '/notices/:noticeId', component: { template: '<main />' } }
+    ]
+  });
+  return render(HomeView, { global: { plugins: [router] } });
+}
+
 afterEach(() => {
   cleanup();
   save.mockClear();
@@ -36,7 +48,7 @@ afterEach(() => {
 
 describe('HomeView shared note workflow', () => {
   it('closes after a successful add and restores focus to Add note', async () => {
-    render(HomeView);
+    renderHomeView();
     const addButton = screen.getByRole('button', { name: 'Add note' });
 
     addButton.focus();
@@ -51,7 +63,7 @@ describe('HomeView shared note workflow', () => {
   });
 
   it('restores focus to the exact note card after editing is cancelled', async () => {
-    render(HomeView);
+    renderHomeView();
     const editButton = screen.getByRole('button', { name: 'Edit note: Return library books' });
 
     editButton.focus();
@@ -64,7 +76,7 @@ describe('HomeView shared note workflow', () => {
   });
 
   it('requires confirmation and restores focus to the overflow trigger on cancel', async () => {
-    render(HomeView);
+    renderHomeView();
     const overflow = screen.getByRole('button', { name: 'More actions for Today' });
 
     overflow.focus();
@@ -79,7 +91,7 @@ describe('HomeView shared note workflow', () => {
   });
 
   it('archives the selected occurrence and moves focus to a stable action after success', async () => {
-    render(HomeView);
+    renderHomeView();
     const addButton = screen.getByRole('button', { name: 'Add note' });
     await screen.getByRole('button', { name: 'More actions for Return library books' }).click();
     await screen.getByRole('menuitem', { name: 'Archive' }).click();
