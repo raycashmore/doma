@@ -1,6 +1,6 @@
 # Offline data
 
-This monorepo's PWA support today is **shell-only**: each app is installable and its static assets are precached so it boots offline. Convex API calls always go to the network (explicit `NetworkOnly` rule in `apps/budget/vite.config.ts`); there is no offline-write or local-cache layer.
+This monorepo's PWA support today is **shell-only**: installable Vite apps precache their static assets so they boot offline. Convex API calls always go to the network (explicit `NetworkOnly` rules in Home and Budget); there is no offline-write or local-cache layer.
 
 ## Why deferred
 
@@ -28,8 +28,10 @@ When the first offline-needing app is built, choose the layer in that PR — not
 ## What the PWA shell _does_ give you
 
 - The app launches from the home screen (Add to Home Screen on iOS, Install on Chrome).
-- The static shell loads offline; users see the loading state instead of a connection error.
+- The static shell loads offline. Home explicitly reports that the browser is offline and does not imply that its live board is current; write attempts still require the network and surface recoverable errors.
 - Service-worker auto-update means new versions ship without users hitting cache-busted blank screens.
+
+Home owns the root service worker, so its navigation allowlist is deliberately narrow. It serves the Home shell for `/`, notice details, settings, and other Home SPA paths, but never intercepts `/api`, `/budget`, `/schedule`, `/lists`, or `/meals`. Those requests remain owned by the Vercel API and child-zone rewrites.
 
 ## Follow-ups for the PWA shell itself
 

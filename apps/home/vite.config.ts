@@ -1,15 +1,17 @@
-import { URL, fileURLToPath } from 'node:url';
+import { fileURLToPath, URL } from 'node:url';
+
+import vue from '@vitejs/plugin-vue';
 import { defineConfig } from 'vite';
-import { devtools } from '@tanstack/devtools-vite';
-import { tanstackStart } from '@tanstack/react-start/plugin/vite';
-import viteReact from '@vitejs/plugin-react';
-import viteTsConfigPaths from 'vite-tsconfig-paths';
-import tailwindcss from '@tailwindcss/vite';
-import { nitro } from 'nitro/vite';
 import { VitePWA } from 'vite-plugin-pwa';
+
+import { HOME_NAVIGATION_DENYLIST } from './src/config/pwa';
 
 export default defineConfig({
   base: '/',
+  build: {
+    outDir: '.output/public',
+    emptyOutDir: true
+  },
   server: {
     proxy: {
       '/api/bot': {
@@ -26,16 +28,7 @@ export default defineConfig({
     }
   },
   plugins: [
-    devtools({ eventBusConfig: { port: 42070 } }),
-    nitro(),
-    viteTsConfigPaths({ projects: ['./tsconfig.json'] }),
-    tailwindcss(),
-    tanstackStart(),
-    viteReact({
-      babel: {
-        plugins: ['babel-plugin-react-compiler']
-      }
-    }),
+    vue(),
     VitePWA({
       injectRegister: false,
       registerType: 'autoUpdate',
@@ -48,50 +41,22 @@ export default defineConfig({
         start_url: '/',
         scope: '/',
         display: 'standalone',
-        background_color: '#ffffff',
-        theme_color: '#f97316',
+        background_color: '#2d2d2d',
+        theme_color: '#2d2d2d',
         icons: [
-          {
-            src: '/icons/icon.svg',
-            sizes: 'any',
-            type: 'image/svg+xml',
-            purpose: 'any'
-          },
-          {
-            src: '/icons/icon-192.png',
-            sizes: '192x192',
-            type: 'image/png',
-            purpose: 'any'
-          },
-          {
-            src: '/icons/icon-512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any'
-          },
-          {
-            src: '/icons/icon-maskable-192.png',
-            sizes: '192x192',
-            type: 'image/png',
-            purpose: 'maskable'
-          },
-          {
-            src: '/icons/icon-maskable-512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'maskable'
-          }
+          { src: '/icons/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: '/icons/icon-maskable-192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
+          { src: '/icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
         ]
       },
       workbox: {
-        // Exclude webmanifest from globbing: vite-plugin-pwa already adds the
-        // manifest to the precache from its `manifest` config, so globbing the
-        // emitted `manifest.webmanifest` too produces a duplicate precache entry
-        // with a conflicting revision (add-to-cache-list-conflicting-entries).
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+        navigateFallbackDenylist: HOME_NAVIGATION_DENYLIST,
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/.*\.convex\.cloud\/.*/,
+            urlPattern: /^https:\/\/.*\.convex\.cloud\/.*$/,
             handler: 'NetworkOnly'
           }
         ]

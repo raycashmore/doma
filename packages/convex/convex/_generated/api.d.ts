@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as authStatus from "../authStatus.js";
 import type * as briefing_ai from "../briefing/ai.js";
 import type * as briefing_botBriefing from "../briefing/botBriefing.js";
 import type * as briefing_delivery from "../briefing/delivery.js";
@@ -19,6 +20,7 @@ import type * as briefing_morning from "../briefing/morning.js";
 import type * as briefing_weather from "../briefing/weather.js";
 import type * as budgetDisplayMonth from "../budgetDisplayMonth.js";
 import type * as budgetSummary from "../budgetSummary.js";
+import type * as calendarDate from "../calendarDate.js";
 import type * as crons from "../crons.js";
 import type * as email_capture from "../email/capture.js";
 import type * as email_delivery from "../email/delivery.js";
@@ -26,6 +28,9 @@ import type * as email_deliveryRunner from "../email/deliveryRunner.js";
 import type * as email_deliveryStore from "../email/deliveryStore.js";
 import type * as email_triage from "../email/triage.js";
 import type * as helpers from "../helpers.js";
+import type * as home_activeBoard from "../home/activeBoard.js";
+import type * as home_archives from "../home/archives.js";
+import type * as home_manualNotes from "../home/manualNotes.js";
 import type * as insights_ai from "../insights/ai.js";
 import type * as insights_assembly from "../insights/assembly.js";
 import type * as insights_delivery from "../insights/delivery.js";
@@ -77,6 +82,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  authStatus: typeof authStatus;
   "briefing/ai": typeof briefing_ai;
   "briefing/botBriefing": typeof briefing_botBriefing;
   "briefing/delivery": typeof briefing_delivery;
@@ -88,6 +94,7 @@ declare const fullApi: ApiFromModules<{
   "briefing/weather": typeof briefing_weather;
   budgetDisplayMonth: typeof budgetDisplayMonth;
   budgetSummary: typeof budgetSummary;
+  calendarDate: typeof calendarDate;
   crons: typeof crons;
   "email/capture": typeof email_capture;
   "email/delivery": typeof email_delivery;
@@ -95,6 +102,9 @@ declare const fullApi: ApiFromModules<{
   "email/deliveryStore": typeof email_deliveryStore;
   "email/triage": typeof email_triage;
   helpers: typeof helpers;
+  "home/activeBoard": typeof home_activeBoard;
+  "home/archives": typeof home_archives;
+  "home/manualNotes": typeof home_manualNotes;
   "insights/ai": typeof insights_ai;
   "insights/assembly": typeof insights_assembly;
   "insights/delivery": typeof insights_delivery;

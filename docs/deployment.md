@@ -83,9 +83,16 @@ For Vercel Preview on Home, set:
 
 | Name                          | Value                          |
 | ----------------------------- | ------------------------------ |
+| `CONVEX_DEPLOY_KEY`           | Convex preview deploy key      |
 | `VITE_CLERK_PUBLISHABLE_KEY`  | Clerk preview publishable key  |
 | `CLERK_SECRET_KEY`            | Clerk preview secret key       |
 | `VITE_CLERK_FRONTEND_API_URL` | Clerk preview Frontend API URL |
+
+Configure Home's Preview build command to deploy the current Convex functions and inject the generated URL:
+
+```bash
+pnpm --dir ../.. --filter @repo/convex exec convex deploy --cmd-url-env-var-name VITE_CONVEX_URL --cmd 'pnpm --dir ../.. --filter home build'
+```
 
 For Vercel Preview on Schedule, set:
 
@@ -237,7 +244,7 @@ Telegram's record of the last failed delivery attempt.
 
 ## Step 6 — Deploy Home
 
-Home owns the apex. Before deploying, point its rewrites at Budget's real URL and the Bot gateway's real URL.
+Home owns the apex. Before deploying, confirm its API and child-zone rewrites point at the stable Bot, Agent, Budget, Schedule, Lists, and Meals destinations. All specific rewrites must remain before the final `/(.*)` Home SPA fallback.
 
 1. Edit `apps/home/vercel.json` only if the stable Budget or Bot gateway aliases change. Prefer stable destinations such as `https://doma-budget.vercel.app` and `https://doma-api-bot.vercel.app`:
 
@@ -273,13 +280,16 @@ Home owns the apex. Before deploying, point its rewrites at Budget's real URL an
 
    Or via the dashboard with **Root Directory** `apps/home`.
 
-4. **Environment Variables** on the Home project (Home doesn't talk to Convex yet, but wire the Clerk vars so the auth gate works):
+4. **Environment Variables** on the Home project:
 
    | Name                          | Value                            |
    | ----------------------------- | -------------------------------- |
    | `VITE_CLERK_PUBLISHABLE_KEY`  | Clerk production publishable key |
+   | `VITE_CONVEX_URL`             | Convex production deployment URL |
    | `CLERK_SECRET_KEY`            | Clerk production secret key      |
    | `VITE_CLERK_FRONTEND_API_URL` | Clerk Frontend API URL           |
+
+5. After deployment, verify direct loads for `/`, `/settings/notifications`, a Home notice-detail URL, `/budget`, `/schedule`, `/lists`, and `/meals`. Confirm `/api/bot/*` and `/api/agent/*` reach their services rather than `index.html`. In an installed/previously visited Home PWA, confirm the Home shell opens offline while child-zone and API requests are not intercepted.
 
 ## Step 7 — Configure domains and DNS
 
@@ -356,15 +366,18 @@ Vercel Preview checks:
 Production checks:
 
 1. Open `https://doma.example.com/` — Home renders, you see Clerk's sign-in.
-2. Sign in with an allowlisted user. Home dashboard appears.
+2. Sign in with an allowlisted user. Home noticeboard appears with Today and Meals summaries; source cards navigate to their owning surface.
 3. Click the Budget icon in the sidebar — URL becomes `https://doma.example.com/budget`.
 4. Budget renders. No second sign-in (cookie shared on apex).
 5. Budget's chart loads with data — Convex queries are authenticated end-to-end.
-6. Open DevTools → Network. Refreshing `/budget` should show a 200 response served via Home's project; the underlying response comes from Budget's project (you'll see headers like `x-vercel-id` mentioning the Budget project, but the URL stays under the apex).
-7. Open `https://doma.example.com/settings/notifications` and create a Telegram pairing QR code.
-8. Open DevTools → Network. The pairing request should go to `https://doma.example.com/api/bot/linking/pairing-token` and return `201`.
-9. Check Telegram webhook status with `getWebhookInfo`; the `url` must point at the deployed bot gateway.
-10. Open the Telegram deep link or scan the QR code, send `/start`, and confirm the bot acknowledges the link.
+6. Add and edit a generic manual note, archive one occurrence after confirmation, and confirm a second signed-in client updates without refresh. Verify pending/error affordances and that keyboard focus returns to the invoking control.
+7. Open notification settings. Verify Telegram status refresh, pairing, and unlinking in production; non-production deployments must explain that pairing is unavailable.
+8. Sign out and confirm Home data is protected. Sign back in and leave the tab open through a token refresh/reconnect cycle.
+9. Open DevTools → Network. Refreshing `/budget` should show a 200 response served via Home's project; the underlying response comes from Budget's project (you'll see headers like `x-vercel-id` mentioning the Budget project, but the URL stays under the apex).
+10. Open `https://doma.example.com/settings/notifications` and create a Telegram pairing QR code.
+11. Open DevTools → Network. The pairing request should go to `https://doma.example.com/api/bot/linking/pairing-token` and return `201`.
+12. Check Telegram webhook status with `getWebhookInfo`; the `url` must point at the deployed bot gateway.
+13. Open the Telegram deep link or scan the QR code, send `/start`, and confirm the bot acknowledges the link.
 
 ## Bot Gateway Environment
 

@@ -1,21 +1,23 @@
 # Frontend
 
-## Framework
+## Frameworks
 
-TanStack Start with React 19. File-based routing via TanStack Router — routes live in `src/routes/`, root layout in `__root.tsx`.
+The frontend is intentionally multi-framework. Home is a client-side Vue 3 SPA with Vue Router. Budget and Meals use TanStack Start with React 19, Schedule uses Next.js, and Lists uses SvelteKit. Shared cross-framework UI contracts belong in `@repo/app-registry` and `@repo/tokens`; `@repo/shell` and `@repo/ui` remain React-only.
 
-## Styling
+## React-zone styling
 
 - **Tailwind CSS v4** via `@tailwindcss/vite` plugin (NOT PostCSS — do not add `postcss.config.js`)
 - **Shadcn UI:** new-york style, zinc base color, components at `@/components/ui/`
 - **Class merging:** Use `cn()` from `@/lib/utils` (clsx + tailwind-merge)
 - **Icons:** Lucide React (`lucide-react`)
 
+Home uses plain CSS backed by `@repo/tokens` and Lucide Vue (`@lucide/vue`). It does not import Tailwind, shadcn, or React UI packages.
+
 ## React Compiler
 
 Enabled via `babel-plugin-react-compiler`. Skip manual `useMemo`/`useCallback` — the compiler handles memoization automatically.
 
-## Component Locations
+## React component locations
 
 | Path               | Purpose                     |
 | ------------------ | --------------------------- |
@@ -25,7 +27,13 @@ Enabled via `babel-plugin-react-compiler`. Skip manual `useMemo`/`useCallback` �
 
 ## Convex Integration
 
-`ConvexProvider` wraps the app in `__root.tsx`, configured in `src/integrations/convex/`.
+React zones configure Convex in their root route. Home retains `convex-vue` behind Home-local composables and configures its underlying client with Clerk's `convex` JWT template. Lists uses its native Svelte integration.
+
+## Home
+
+`apps/home` owns the apex Vue shell, household noticeboard, notification settings, Vercel child-zone rewrites, and root service-worker boundary. Its active board derives a deterministic responsive Bento layout from household-timezone Today and Meals summaries, active forwarded-email notices, spending insights, and shared manual notes. Source payloads stay with their owning module; Home stores manual notes and payload-free archive occurrences only. Source cards navigate to the owning Doma app or a Home detail route, and live queries update the board across clients. Local no-auth mode uses generic fixtures.
+
+Home forms and confirmation dialogs expose pending and recoverable error states, trap focus, and restore focus to their triggers. The shell reports offline, connecting, query-error, and connected states without implying offline writes. Routes live in `src/router.ts`; auth and Convex integration live under `src/integrations/`. See `apps/home/README.md` for the adapter decision, PWA boundary, verification coverage, and local commands.
 
 ## Schedule
 
