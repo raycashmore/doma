@@ -120,24 +120,35 @@ export async function readActiveBoard(ctx: ActiveBoardQueryCtx, options: ActiveB
         (notice.expiresAt === undefined || notice.expiresAt > options.now.getTime())
     )
     .sort((left, right) => right.createdAt - left.createdAt)
-    .map((notice) => ({
-      kind: 'sourceNotice' as const,
-      id: `emailNotice:${notice._id}`,
-      sourceKind: 'forwardedEmail' as const,
-      sourceApp: 'home' as const,
-      display:
-        notice.priority === 'high'
-          ? ('wide' as const)
-          : notice.priority === 'low'
-            ? ('compact' as const)
-            : ('standard' as const),
-      priority: notice.priority,
-      title: notice.title,
-      detail: notice.body,
-      facts: notice.extractedFacts,
-      occurredAt: notice.createdAt,
-      destination: `/notices/${notice._id}`
-    }));
+    .map((notice) => {
+      const dueDate = notice.obligation?.dueOn;
+      const dueState = !dueDate
+        ? ('none' as const)
+        : dueDate < localDate
+          ? ('overdue' as const)
+          : dueDate === localDate
+            ? ('dueToday' as const)
+            : ('upcoming' as const);
+      return {
+        kind: 'sourceNotice' as const,
+        id: `emailNotice:${notice._id}`,
+        sourceKind: 'forwardedEmail' as const,
+        sourceApp: 'home' as const,
+        display:
+          notice.priority === 'high'
+            ? ('wide' as const)
+            : notice.priority === 'low'
+              ? ('compact' as const)
+              : ('standard' as const),
+        priority: notice.priority,
+        title: notice.title,
+        detail: notice.body,
+        facts: notice.extractedFacts,
+        ...(dueDate ? { dueDate, dueState, obligationAction: notice.obligation?.action } : {}),
+        occurredAt: notice.createdAt,
+        destination: `/notices/${notice._id}`
+      };
+    });
   const currentMonthKey = localDate.slice(0, 7);
   const latestSpendingInsight = pickLatestSpendingInsight(
     spendingInsights.filter((insight) => insight.monthKey <= currentMonthKey)

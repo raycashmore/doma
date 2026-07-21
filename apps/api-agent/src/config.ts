@@ -6,6 +6,7 @@ const configSchema = z.object({
   CLERK_PUBLISHABLE_KEY: z.string().min(1),
   CLERK_SECRET_KEY: z.string().min(1),
   CONVEX_URL: z.string().url(),
+  FORWARDED_EMAIL_TRIAGE_AI_MODEL: z.string().min(1).default('openai/gpt-5.4-mini'),
   WEEKLY_MEALS_AI_MODEL: z.string().min(1).default('openai/gpt-5.4-mini')
 });
 
@@ -15,6 +16,7 @@ export type AgentConfig = {
   clerkPublishableKey: string;
   clerkSecretKey: string;
   convexUrl: string;
+  emailTriageModel: string;
   weeklyMealsModel: string;
 };
 
@@ -27,6 +29,7 @@ export function parseConfig(env: Record<string, unknown>): AgentConfig {
     clerkPublishableKey: result.data.CLERK_PUBLISHABLE_KEY,
     clerkSecretKey: result.data.CLERK_SECRET_KEY,
     convexUrl: result.data.CONVEX_URL,
+    emailTriageModel: result.data.FORWARDED_EMAIL_TRIAGE_AI_MODEL,
     weeklyMealsModel: result.data.WEEKLY_MEALS_AI_MODEL
   };
 }

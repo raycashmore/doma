@@ -44,6 +44,14 @@ _Avoid_: Tip, recommendation feed, spending report
 A once-per-morning household readiness summary focused on what needs attention before the day gets moving. It is distinct from event reminders because it highlights daily actions, risks, and context rather than notifying about each upcoming event.
 _Avoid_: Morning schedule briefing, schedule reminder, calendar notification, event alert
 
+**Email obligation**:
+An explicit action extracted from a forwarded household email with a calendar due date and recorded date-confidence evidence. It remains part of the canonical Home-visible email notice; it is not a separate task owned by the agent.
+_Avoid_: Email summary, inferred todo, agent task
+
+**Email reminder candidate**:
+A deterministic day-before notification candidate created only for a high-priority **email obligation** with a high-confidence future due date. It is scheduled for 7pm Australia/Sydney on the preceding day and is suppressed when the canonical Home occurrence is archived.
+_Avoid_: Telegram-worthy notice, immediate email relay, generic notification
+
 **Daily requirements calendar**:
 A curated calendar source for day-specific household requirements such as special events, clothing expectations, items to bring, preparation notes, and timing constraints. Its event descriptions are treated as the source of detailed readiness information, distinct from ordinary family schedule events.
 _Avoid_: Family calendar, school calendar, event reminder feed

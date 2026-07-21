@@ -44,6 +44,15 @@ const notice = computed(() =>
       <p class="card-kicker">{{ notice.priority === 'high' ? 'High priority' : 'Forwarded email' }}</p>
       <h1 :id="`${notice.id}-title`">{{ notice.title }}</h1>
       <p class="notice-detail-body">{{ notice.detail }}</p>
+      <p v-if="'dueDate' in notice" class="notice-detail-due">
+        {{
+          notice.dueState === 'overdue'
+            ? 'Overdue'
+            : notice.dueState === 'dueToday'
+              ? 'Due today'
+              : `Due ${notice.dueDate}`
+        }}
+      </p>
       <dl v-if="notice.facts.length > 0" class="source-facts">
         <div v-for="fact in notice.facts" :key="`${fact.label}:${fact.value}`">
           <dt>{{ fact.label }}</dt>

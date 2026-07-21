@@ -73,7 +73,9 @@ function cardDestination(destination: string) {
 
 function sourceLabel(item: SourceNotice) {
   if (item.sourceKind === 'monthlySpendingInsight') return `Monthly spending insight · ${item.period}`;
-  return item.priority === 'high' ? 'High priority' : item.priority === 'low' ? 'Quiet notice' : 'Forwarded email';
+  const fallback =
+    item.priority === 'high' ? 'High priority' : item.priority === 'low' ? 'Quiet notice' : 'Forwarded email';
+  return 'dueState' in item && item.dueState ? dueStateLabel(item.dueState, item.dueDate, fallback) : fallback;
 }
 
 function sourceLinkLabel(item: SourceNotice) {
@@ -81,10 +83,18 @@ function sourceLinkLabel(item: SourceNotice) {
 }
 
 function dueLabel(note: ManualNote) {
-  if (note.dueState === 'overdue') return `Overdue · ${note.dueDate}`;
-  if (note.dueState === 'dueToday') return 'Due today';
-  if (note.dueState === 'upcoming') return `Due ${note.dueDate}`;
-  return 'Shared note';
+  return dueStateLabel(note.dueState, note.dueDate, 'Shared note');
+}
+
+function dueStateLabel(
+  dueState: 'none' | 'overdue' | 'dueToday' | 'upcoming',
+  dueDate: string | undefined,
+  fallback: string
+) {
+  if (dueState === 'overdue') return `Overdue · ${dueDate}`;
+  if (dueState === 'dueToday') return 'Due today';
+  if (dueState === 'upcoming') return `Due ${dueDate}`;
+  return fallback;
 }
 </script>
 

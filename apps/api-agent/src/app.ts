@@ -1,18 +1,41 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
 import { Hono } from 'hono';
+import { z } from 'zod';
 
+import { runEmailTriageAgent } from './agents/email-triage/run.js';
 import { runWeeklyMealsAgent } from './agents/weekly-meals/run.js';
 import { weeklyMealsRunInputSchema } from './agents/weekly-meals/schemas.js';
 import { authenticateClerkRequest } from './auth/clerk.js';
+import { authenticateServiceRequest } from './auth/service.js';
 import type { AgentConfig } from './config.js';
 import { getConfig } from './config.js';
+import { createEmailTriageConvex } from './convex/emailTriage.js';
 import { createWeeklyMealsConvex } from './convex/weeklyMeals.js';
+
+const emailTriageRequestSchema = z.object({ capturedEmailId: z.string().min(1) });
 
 export function createApp(config: AgentConfig = getConfig()) {
   const app = new Hono();
   app.onError((_error, c) => c.json({ error: 'internal_server_error' }, 500));
   app.get('/health', (c) => c.json({ ok: true }));
+  app.post('/internal/email-triage', async (c) => {
+    if (!authenticateServiceRequest(c.req.raw, config.agentServiceToken)) {
+      return c.json({ error: 'unauthorized' }, 401);
+    }
+    const body = emailTriageRequestSchema.safeParse(await c.req.json().catch(() => null));
+    if (!body.success) return c.json({ error: 'invalid_request' }, 400);
+
+    const convex = createEmailTriageConvex(config, body.data.capturedEmailId);
+    const input = await convex.loadInput();
+    if (!input) return c.json({ error: 'captured_email_unavailable' }, 404);
+    const result = await runEmailTriageAgent({
+      model: config.emailTriageModel,
+      input,
+      saveTrace: convex.saveTrace
+    });
+    return c.json(result);
+  });
   app.post('/weekly-meals', async (c) => {
     const auth = await authenticateClerkRequest(c.req.raw, config);
     if (!auth) return c.json({ error: 'unauthorized' }, 401);

@@ -9,7 +9,8 @@ const cronMocks = vi.hoisted(() => ({
   scheduleReminderDelivery: Symbol('scheduleReminderDelivery'),
   spendingInsightSweep: Symbol('spendingInsightSweep'),
   spendingInsightDelivery: Symbol('spendingInsightDelivery'),
-  mealAgentCleanup: Symbol('mealAgentCleanup')
+  mealAgentCleanup: Symbol('mealAgentCleanup'),
+  emailAgentCleanup: Symbol('emailAgentCleanup')
 }));
 
 vi.mock('convex/server', () => ({
@@ -31,8 +32,9 @@ vi.mock('./_generated/api', () => ({
         runDueForwardedEmailTriage: cronMocks.emailTriage
       },
       deliveryRunner: {
-        runDueEmailNoticeDelivery: cronMocks.emailNoticeDelivery
-      }
+        runDueEmailReminderDelivery: cronMocks.emailNoticeDelivery
+      },
+      agentCleanup: { deleteExpiredRuns: cronMocks.emailAgentCleanup }
     },
     schedule: {
       reminderRunner: {
@@ -55,8 +57,8 @@ describe('Convex cron registration', () => {
   it('registers proactive notification delivery without restoring event-level schedule reminders', async () => {
     await import('./crons');
 
-    expect(cronMocks.interval).toHaveBeenCalledTimes(4);
-    expect(cronMocks.daily).toHaveBeenCalledTimes(5);
+    expect(cronMocks.interval).toHaveBeenCalledTimes(6);
+    expect(cronMocks.daily).toHaveBeenCalledTimes(1);
     expect(cronMocks.interval).toHaveBeenCalledWith(
       'morning briefing delivery',
       { minutes: 10 },
@@ -67,7 +69,7 @@ describe('Convex cron registration', () => {
       { hourUTC: 15, minuteUTC: 0 },
       cronMocks.mealAgentCleanup
     );
-    expect(cronMocks.interval).toHaveBeenCalledWith('forwarded email triage', { hours: 12 }, cronMocks.emailTriage);
+    expect(cronMocks.interval).toHaveBeenCalledWith('forwarded email triage', { minutes: 15 }, cronMocks.emailTriage);
     expect(cronMocks.interval).toHaveBeenCalledWith(
       'monthly spending insight sweep',
       { hours: 12 },
@@ -78,24 +80,14 @@ describe('Convex cron registration', () => {
       { hours: 1 },
       cronMocks.spendingInsightDelivery
     );
-    expect(cronMocks.daily).toHaveBeenCalledWith(
-      'forwarded email notice delivery morning',
-      { hourUTC: 21, minuteUTC: 0 },
-      cronMocks.emailNoticeDelivery
+    expect(cronMocks.interval).toHaveBeenCalledWith(
+      'email triage agent trace cleanup',
+      { hours: 1 },
+      cronMocks.emailAgentCleanup
     );
-    expect(cronMocks.daily).toHaveBeenCalledWith(
-      'forwarded email notice delivery midday',
-      { hourUTC: 1, minuteUTC: 0 },
-      cronMocks.emailNoticeDelivery
-    );
-    expect(cronMocks.daily).toHaveBeenCalledWith(
-      'forwarded email notice delivery afternoon',
-      { hourUTC: 5, minuteUTC: 0 },
-      cronMocks.emailNoticeDelivery
-    );
-    expect(cronMocks.daily).toHaveBeenCalledWith(
-      'forwarded email notice delivery evening',
-      { hourUTC: 9, minuteUTC: 0 },
+    expect(cronMocks.interval).toHaveBeenCalledWith(
+      'forwarded email reminder delivery',
+      { minutes: 15 },
       cronMocks.emailNoticeDelivery
     );
   });

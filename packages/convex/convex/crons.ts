@@ -9,7 +9,7 @@ type BriefingDeliveryRunnerRefs = {
 };
 
 type EmailDeliveryRunnerRefs = {
-  runDueEmailNoticeDelivery: FunctionReference<'action', 'internal', Record<string, never>, unknown>;
+  runDueEmailReminderDelivery: FunctionReference<'action', 'internal', Record<string, never>, unknown>;
 };
 
 type EmailTriageRefs = {
@@ -25,6 +25,10 @@ type SpendingInsightDeliveryRunnerRefs = {
 };
 
 type MealAgentCleanupRefs = {
+  deleteExpiredRuns: FunctionReference<'mutation', 'internal', Record<string, never>, unknown>;
+};
+
+type EmailAgentCleanupRefs = {
   deleteExpiredRuns: FunctionReference<'mutation', 'internal', Record<string, never>, unknown>;
 };
 
@@ -72,30 +76,16 @@ const mealAgentCleanup: MealAgentCleanupRefs = (
   internal as unknown as { meals: { agentCleanup: MealAgentCleanupRefs } }
 ).meals.agentCleanup;
 
+const emailAgentCleanup: EmailAgentCleanupRefs = (
+  internal as unknown as { email: { agentCleanup: EmailAgentCleanupRefs } }
+).email.agentCleanup;
+
 crons.interval('morning briefing delivery', { minutes: 10 }, briefingDeliveryRunner.runDueMorningBriefingDelivery);
-crons.interval('forwarded email triage', { hours: 12 }, emailTriage.runDueForwardedEmailTriage);
+crons.interval('forwarded email triage', { minutes: 15 }, emailTriage.runDueForwardedEmailTriage);
 crons.interval('monthly spending insight sweep', { hours: 12 }, insightGeneration.runDueSpendingInsightSweep);
 crons.interval('monthly spending insight delivery', { hours: 1 }, insightDeliveryRunner.runDueSpendingInsightDelivery);
 crons.daily('weekly meal agent trace cleanup', { hourUTC: 15, minuteUTC: 0 }, mealAgentCleanup.deleteExpiredRuns);
-crons.daily(
-  'forwarded email notice delivery morning',
-  { hourUTC: 21, minuteUTC: 0 },
-  emailDeliveryRunner.runDueEmailNoticeDelivery
-);
-crons.daily(
-  'forwarded email notice delivery midday',
-  { hourUTC: 1, minuteUTC: 0 },
-  emailDeliveryRunner.runDueEmailNoticeDelivery
-);
-crons.daily(
-  'forwarded email notice delivery afternoon',
-  { hourUTC: 5, minuteUTC: 0 },
-  emailDeliveryRunner.runDueEmailNoticeDelivery
-);
-crons.daily(
-  'forwarded email notice delivery evening',
-  { hourUTC: 9, minuteUTC: 0 },
-  emailDeliveryRunner.runDueEmailNoticeDelivery
-);
+crons.interval('email triage agent trace cleanup', { hours: 1 }, emailAgentCleanup.deleteExpiredRuns);
+crons.interval('forwarded email reminder delivery', { minutes: 15 }, emailDeliveryRunner.runDueEmailReminderDelivery);
 
 export default crons;

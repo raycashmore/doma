@@ -1,0 +1,150 @@
+import { GatewayForbiddenError } from '@ai-sdk/gateway';
+import { MockLanguageModelV3 } from 'ai/test';
+import { describe, expect, it, vi } from 'vitest';
+
+import { runEmailTriageAgent } from './run.js';
+
+const usage = {
+  inputTokens: { total: 12, noCache: 12, cacheRead: undefined, cacheWrite: undefined },
+  outputTokens: { total: 8, text: 8, reasoning: undefined }
+};
+
+const input = {
+  capturedEmailId: 'capturedEmails_123',
+  subject: 'Private subject',
+  fromEmail: 'private-sender@example.com',
+  receivedAt: Date.parse('2026-07-21T08:00:00.000Z'),
+  textBody: 'Private household email body.',
+  hasAttachments: false,
+  attachmentMetadata: []
+};
+
+function modelReturning(output: unknown) {
+  return new MockLanguageModelV3({
+    modelId: 'test/email-triage',
+    doGenerate: async () => ({
+      content: [{ type: 'text', text: JSON.stringify(output) }],
+      finishReason: { unified: 'stop', raw: undefined },
+      usage,
+      warnings: []
+    })
+  });
+}
+
+describe('runEmailTriageAgent', () => {
+  it('returns a typed Home notice and stores a privacy-safe trace', async () => {
+    const saveTrace = vi.fn();
+    const result = await runEmailTriageAgent({
+      model: modelReturning({
+        outcome: 'notice',
+        category: 'school',
+        priority: 'high',
+        title: 'Return permission form',
+        body: 'The form is due next week.',
+        extractedFacts: [{ label: 'Due', value: '2026-07-31' }],
+        reason: '',
+        obligation: {
+          action: 'Return the permission form',
+          dueOn: '2026-07-31',
+          dueDateConfidence: 'high',
+          dueDateEvidence: 'due Friday 31 July'
+        }
+      }),
+      input,
+      saveTrace,
+      createRunId: () => 'email_run_123',
+      now: () => 1_700_000_000_000
+    });
+
+    expect(result).toEqual({
+      runId: 'email_run_123',
+      status: 'completed',
+      outcome: expect.objectContaining({ kind: 'notice', title: 'Return permission form' })
+    });
+    expect(saveTrace).toHaveBeenCalledWith(
+      expect.objectContaining({
+        runId: 'email_run_123',
+        capturedEmailId: 'capturedEmails_123',
+        model: 'test/email-triage',
+        outcomeKind: 'notice',
+        hasObligation: true,
+        validation: { status: 'valid' },
+        tokenUsage: { input: 12, output: 8 },
+        expiresAt: 1_702_592_000_000
+      })
+    );
+    const serializedTrace = JSON.stringify(saveTrace.mock.calls);
+    expect(serializedTrace).not.toContain('Private subject');
+    expect(serializedTrace).not.toContain('private-sender@example.com');
+    expect(serializedTrace).not.toContain('Private household email body.');
+    expect(serializedTrace).not.toContain('Return permission form');
+  });
+
+  it('fails closed when the structured result contains an impossible due date', async () => {
+    const saveTrace = vi.fn();
+    const result = await runEmailTriageAgent({
+      model: modelReturning({
+        outcome: 'notice',
+        category: 'admin',
+        priority: 'high',
+        title: 'Submit form',
+        body: 'The form needs attention.',
+        extractedFacts: [],
+        reason: '',
+        obligation: {
+          action: 'Submit the form',
+          dueOn: '2026-02-30',
+          dueDateConfidence: 'high',
+          dueDateEvidence: '30 February'
+        }
+      }),
+      input,
+      saveTrace,
+      logError: vi.fn(),
+      createRunId: () => 'email_run_invalid'
+    });
+
+    expect(result).toEqual({ runId: 'email_run_invalid', status: 'failed', reason: 'invalid_ai_output' });
+    expect(saveTrace).toHaveBeenCalledWith(
+      expect.objectContaining({ validation: { status: 'invalid', reason: 'invalid_ai_output' } })
+    );
+  });
+
+  it('records safe gateway diagnostics without retaining the private request', async () => {
+    const model = new MockLanguageModelV3({
+      modelId: 'openai/gpt-5.4-mini',
+      doGenerate: async () => {
+        throw new GatewayForbiddenError({
+          message: 'Provider echoed Private household email body.',
+          statusCode: 403,
+          generationId: 'generation_email_123'
+        });
+      }
+    });
+    const saveTrace = vi.fn();
+    const logError = vi.fn();
+
+    const result = await runEmailTriageAgent({
+      model,
+      input,
+      saveTrace,
+      logError,
+      createRunId: () => 'email_run_failed'
+    });
+
+    expect(result).toEqual({ runId: 'email_run_failed', status: 'failed', reason: 'provider_failure' });
+    expect(saveTrace).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: expect.objectContaining({
+          name: 'GatewayForbiddenError',
+          statusCode: 403,
+          generationId: 'generation_email_123'
+        })
+      })
+    );
+    expect(JSON.stringify([saveTrace.mock.calls, logError.mock.calls])).not.toContain('Private household email body.');
+    expect(saveTrace).toHaveBeenCalledWith(
+      expect.objectContaining({ error: expect.not.objectContaining({ message: expect.anything() }) })
+    );
+  });
+});

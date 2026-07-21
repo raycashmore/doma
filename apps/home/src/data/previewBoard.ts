@@ -66,6 +66,9 @@ export const PREVIEW_BOARD = {
       title: 'Permission form due',
       detail: 'Return the form before Friday.',
       facts: [{ label: 'due', value: 'Friday' }],
+      dueDate: '2026-07-17',
+      dueState: 'upcoming',
+      obligationAction: 'Return the permission form',
       occurredAt: Date.parse('2026-07-11T02:00:00.000Z'),
       destination: '/notices/preview-permission-form'
     },

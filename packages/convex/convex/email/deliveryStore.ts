@@ -1,136 +1,145 @@
 import { v } from 'convex/values';
 
 import { internalMutation, internalQuery } from '../_generated/server';
-import { type EmailNoticeDeliveryAttemptStatus, emailNoticeDeliveryPendingLeaseMs } from './delivery';
+import { zonedCalendarDateTimeMs } from '../calendarDate';
+import { type EmailReminderDeliveryAttemptStatus, emailReminderDeliveryPendingLeaseMs } from './delivery';
+import { forwardedEmailTimeZone } from './reminders';
 
-type StoredEmailNoticeDeliveryAttempt<TId extends string = string> = {
+type StoredAttempt<TId extends string = string> = {
   _id: TId;
-  noticeId: string;
+  reminderId: string;
   recipientUserId: string;
   attemptedAt: number;
-  status: EmailNoticeDeliveryAttemptStatus;
+  status: EmailReminderDeliveryAttemptStatus;
 };
 
-type EmailNoticeDeliveryAttemptWrite = {
-  noticeId: string;
-  recipientUserId: string;
-  attemptedAt: number;
-  status: EmailNoticeDeliveryAttemptStatus;
-  providerErrorCode?: string;
-};
+type AttemptWrite = Omit<StoredAttempt, '_id'> & { providerErrorCode?: string };
 
-type AttemptWriteDecision<TId extends string = string> =
-  | { operation: 'insert'; claimed: true }
-  | { operation: 'patch'; claimed: true; id: TId }
-  | { operation: 'skip'; claimed: false; id: TId };
-
-function isActivePendingAttempt<TId extends string>(attempt: StoredEmailNoticeDeliveryAttempt<TId>, nowMs: number) {
-  return attempt.status === 'pending' && nowMs - attempt.attemptedAt < emailNoticeDeliveryPendingLeaseMs;
+export function isEmailReminderDeliverable({
+  nowMs,
+  reminder,
+  notice,
+  isArchivedOnHome
+}: {
+  nowMs: number;
+  reminder: { dueOn: string };
+  notice: { archivedAt?: number; supersededAt?: number } | null;
+  isArchivedOnHome: boolean;
+}) {
+  return Boolean(
+    notice &&
+    notice.archivedAt === undefined &&
+    notice.supersededAt === undefined &&
+    !isArchivedOnHome &&
+    nowMs < zonedCalendarDateTimeMs(reminder.dueOn, 0, 0, forwardedEmailTimeZone)
+  );
 }
 
-export function selectEmailNoticeDeliveryAttemptWrite<TId extends string>({
+export function selectEmailReminderDeliveryAttemptWrite<TId extends string>({
   existingAttempts,
   attempt
 }: {
-  existingAttempts: StoredEmailNoticeDeliveryAttempt<TId>[];
-  attempt: EmailNoticeDeliveryAttemptWrite;
-}): AttemptWriteDecision<TId> {
-  const sentOrSkippedAttempt = existingAttempts.find(
-    (existingAttempt) => existingAttempt.status === 'sent' || existingAttempt.status === 'skipped'
-  );
-  const pendingAttempt = existingAttempts.find((existingAttempt) => existingAttempt.status === 'pending');
-
-  if (attempt.status === 'pending') {
-    const activePendingAttempt =
-      pendingAttempt && isActivePendingAttempt(pendingAttempt, attempt.attemptedAt) ? pendingAttempt : undefined;
-    const claimedAttempt = sentOrSkippedAttempt ?? activePendingAttempt;
-
-    if (claimedAttempt) {
-      return { operation: 'skip', claimed: false, id: claimedAttempt._id };
-    }
-
-    const retryableAttempt = pendingAttempt ?? existingAttempts[0];
-    if (retryableAttempt) {
-      return { operation: 'patch', claimed: true, id: retryableAttempt._id };
-    }
-
-    return { operation: 'insert', claimed: true };
+  existingAttempts: StoredAttempt<TId>[];
+  attempt: AttemptWrite;
+}) {
+  const terminal = existingAttempts.find((item) => item.status === 'sent' || item.status === 'skipped');
+  const pending = existingAttempts.find((item) => item.status === 'pending');
+  if (terminal) return { operation: 'skip' as const, claimed: false as const, id: terminal._id };
+  if (
+    attempt.status === 'pending' &&
+    pending &&
+    attempt.attemptedAt - pending.attemptedAt < emailReminderDeliveryPendingLeaseMs
+  ) {
+    return { operation: 'skip' as const, claimed: false as const, id: pending._id };
   }
-
-  if (sentOrSkippedAttempt) {
-    return { operation: 'skip', claimed: false, id: sentOrSkippedAttempt._id };
-  }
-
-  const retryableAttempt = pendingAttempt ?? existingAttempts[0];
-  if (retryableAttempt) {
-    return { operation: 'patch', claimed: true, id: retryableAttempt._id };
-  }
-
-  return { operation: 'insert', claimed: true };
+  const retryable = pending ?? existingAttempts[0];
+  return retryable
+    ? { operation: 'patch' as const, claimed: true as const, id: retryable._id }
+    : { operation: 'insert' as const, claimed: true as const };
 }
 
-export const emailNoticeDeliveryRunInputs = internalQuery({
-  args: {},
-  handler: async (ctx) => {
-    const notices = await ctx.db
-      .query('emailNotices')
-      .withIndex('by_telegram_worthy', (q) => q.eq('telegramWorthy', true))
+export const emailReminderDeliveryRunInputs = internalQuery({
+  args: { nowMs: v.number() },
+  handler: async (ctx, { nowMs }) => {
+    const due = await ctx.db
+      .query('emailReminderCandidates')
+      .withIndex('by_reminder_at', (q) => q.gte('reminderAt', nowMs - 48 * 60 * 60 * 1000).lte('reminderAt', nowMs))
       .collect();
-    const activeNotices = notices
-      .filter((notice) => notice.archivedAt === undefined)
-      .sort((left, right) => left.createdAt - right.createdAt);
-    const activeNoticeIds = new Set(activeNotices.map((notice) => notice._id));
-    const attempts = (await ctx.db.query('emailNoticeDeliveryAttempts').collect()).filter((attempt) =>
-      activeNoticeIds.has(attempt.noticeId)
+    const reminders = [];
+    for (const reminder of due) {
+      const notice = await ctx.db.get(reminder.noticeId);
+      const archives = await ctx.db
+        .query('boardArchives')
+        .withIndex('by_occurrence_id', (q) => q.eq('occurrenceId', `emailNotice:${reminder.noticeId}`))
+        .collect();
+      if (
+        !isEmailReminderDeliverable({
+          nowMs,
+          reminder,
+          notice,
+          isArchivedOnHome: archives.some((archive) => archive.sourceKind === 'forwardedEmail')
+        })
+      ) {
+        continue;
+      }
+      reminders.push({
+        id: reminder._id,
+        noticeId: reminder.noticeId,
+        capturedEmailId: reminder.capturedEmailId,
+        action: reminder.action,
+        dueOn: reminder.dueOn,
+        reminderAt: reminder.reminderAt
+      });
+    }
+    const activeIds = new Set(reminders.map((reminder) => reminder.id));
+    const attempts = (await ctx.db.query('emailReminderDeliveryAttempts').collect()).filter((attempt) =>
+      activeIds.has(attempt.reminderId)
     );
-
-    return {
-      notices: activeNotices.map((notice) => ({
-        id: notice._id,
-        capturedEmailId: notice.capturedEmailId,
-        category: notice.category,
-        priority: notice.priority,
-        title: notice.title,
-        body: notice.body,
-        extractedFacts: notice.extractedFacts,
-        telegramWorthy: notice.telegramWorthy,
-        createdAt: notice.createdAt
-      })),
-      attempts
-    };
+    return { reminders, attempts };
   }
 });
 
-export const recordEmailNoticeDeliveryAttempt = internalMutation({
+export const recordEmailReminderDeliveryAttempt = internalMutation({
   args: {
-    noticeId: v.id('emailNotices'),
+    reminderId: v.id('emailReminderCandidates'),
     recipientUserId: v.string(),
     attemptedAt: v.number(),
     status: v.union(v.literal('pending'), v.literal('sent'), v.literal('skipped'), v.literal('failed')),
     providerErrorCode: v.optional(v.string())
   },
   handler: async (ctx, attempt) => {
+    if (attempt.status === 'pending') {
+      const reminder = await ctx.db.get(attempt.reminderId);
+      if (!reminder) return { claimed: false as const };
+      const notice = await ctx.db.get(reminder.noticeId);
+      const archives = await ctx.db
+        .query('boardArchives')
+        .withIndex('by_occurrence_id', (q) => q.eq('occurrenceId', `emailNotice:${reminder.noticeId}`))
+        .collect();
+      if (
+        !isEmailReminderDeliverable({
+          nowMs: attempt.attemptedAt,
+          reminder,
+          notice,
+          isArchivedOnHome: archives.some((archive) => archive.sourceKind === 'forwardedEmail')
+        })
+      ) {
+        return { claimed: false as const };
+      }
+    }
     const existingAttempts = await ctx.db
-      .query('emailNoticeDeliveryAttempts')
-      .withIndex('by_notice_recipient', (q) =>
-        q.eq('noticeId', attempt.noticeId).eq('recipientUserId', attempt.recipientUserId)
+      .query('emailReminderDeliveryAttempts')
+      .withIndex('by_reminder_recipient', (q) =>
+        q.eq('reminderId', attempt.reminderId).eq('recipientUserId', attempt.recipientUserId)
       )
       .collect();
-    const decision = selectEmailNoticeDeliveryAttemptWrite({
-      existingAttempts,
-      attempt
-    });
-
-    if (decision.operation === 'skip') {
-      return { claimed: false as const, inserted: false as const, id: decision.id };
-    }
-
+    const decision = selectEmailReminderDeliveryAttemptWrite({ existingAttempts, attempt });
+    if (decision.operation === 'skip') return { claimed: false as const, id: decision.id };
     if (decision.operation === 'patch') {
       await ctx.db.patch(decision.id, attempt);
-      return { claimed: true as const, inserted: false as const, id: decision.id };
+      return { claimed: true as const, id: decision.id };
     }
-
-    const id = await ctx.db.insert('emailNoticeDeliveryAttempts', attempt);
-    return { claimed: true as const, inserted: true as const, id };
+    const id = await ctx.db.insert('emailReminderDeliveryAttempts', attempt);
+    return { claimed: true as const, id };
   }
 });

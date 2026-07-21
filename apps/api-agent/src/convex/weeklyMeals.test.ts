@@ -19,6 +19,7 @@ const config = {
   clerkPublishableKey: 'clerk_publishable',
   clerkSecretKey: 'clerk_secret',
   convexUrl: 'https://example.convex.cloud',
+  emailTriageModel: 'openai/gpt-5.4-mini',
   weeklyMealsModel: 'openai/gpt-5.4-mini'
 } satisfies AgentConfig;
 

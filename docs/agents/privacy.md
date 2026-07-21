@@ -23,3 +23,8 @@ recipient user IDs, AI model credentials, and generated briefing text as
 private. Committed examples should use generic labels such as `memberA`,
 `requirements-calendar`, `user_123`, `bot.example.com`, and neutral requirement
 text like "Bring sports bag."
+
+For forwarded-email work, treat sender addresses, subjects, bodies,
+attachments, extracted facts, and due-date evidence as private source data.
+Use generic messages in committed tests and evals. Agent traces may retain
+typed outcome metadata and token usage, but must not copy raw email content.

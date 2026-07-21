@@ -186,21 +186,24 @@ calendar setup lives in
 
 ## Forwarded email notices
 
-The `email/` module stores forwarded email source material in `capturedEmails`,
-turns useful messages into current `emailNotices`, and records
-`emailNoticeDeliveryAttempts` per notice and recipient. Triage and delivery are
-separate boundaries: triage creates a board-visible notice or no-notice outcome,
-while `email/deliveryRunner:deliverTelegramWorthyEmailNoticesForBot` sends only
-notices marked `telegramWorthy` through the Bot gateway's provider-neutral
-notification endpoint. Convex runs due triage from cron every 12 hours and
-notice delivery from cron four times per day at fixed UTC times selected for
-Sydney daytime/evening delivery. The triage cron is interval-based, not pinned
-to fixed local wall-clock times.
+The `email/` module stores forwarded email source material in `capturedEmails`
+and remains authoritative for current `emailNotices`. Convex claims pending
+captures, then the Vercel Agent API performs typed AI SDK inference and records
+a privacy-safe 30-day trace. A notice may include an extracted obligation, but
+only high-priority obligations with a high-confidence future date create an
+`emailReminderCandidates` row. Inference never sends a notification.
+
+Reminder delivery is deterministic. A 15-minute Convex sweep sends eligible
+candidates at 7pm Australia/Sydney on the day before `dueOn`, through the Bot
+gateway with topic `email.reminder`. It records attempts per candidate and
+recipient, retries failed or stale claims only before the due date begins, and
+suppresses delivery when the canonical notice is archived or superseded. A
+payload-free `boardArchives` row for `emailNotice:<noticeId>` also cancels the
+pending reminder, so Home remains the user-facing control surface.
 
 Forwarded email delivery uses `FORWARDED_EMAIL_NOTICE_RECIPIENT_USER_IDS`, not
 the morning briefing recipient configuration. Re-running delivery skips
-recipients with a sent or skipped attempt for the same notice, while failed or
-stale pending attempts remain inspectable and retryable.
+recipients with a sent or skipped attempt for the same reminder candidate.
 
 ## Helper Functions (`helpers.ts`)
 
