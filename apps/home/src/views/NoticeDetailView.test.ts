@@ -23,6 +23,7 @@ describe('NoticeDetailView', () => {
     expect(screen.getByRole('heading', { name: 'Permission form due' })).not.toBeNull();
     expect(screen.getByText('Return the form before Friday.')).not.toBeNull();
     expect(screen.getByText('due')).not.toBeNull();
+    expect(screen.getByText('Due 2026-07-17')).not.toBeNull();
     expect(screen.queryByRole('textbox')).toBeNull();
     expect(screen.getByRole('link', { name: 'Back to noticeboard' }).getAttribute('href')).toBe('/');
   });

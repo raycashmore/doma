@@ -254,6 +254,12 @@ describe('readActiveBoard', () => {
           body: 'Return the form before Friday.',
           extractedFacts: [{ label: 'due', value: 'Friday' }],
           telegramWorthy: true,
+          obligation: {
+            action: 'Return the permission form',
+            dueOn: '2026-07-17',
+            dueDateConfidence: 'high',
+            dueDateEvidence: 'The form is due Friday.'
+          },
           createdAt: Date.parse('2026-07-11T02:00:00.000Z'),
           updatedAt: Date.parse('2026-07-11T02:00:00.000Z')
         },
@@ -320,6 +326,9 @@ describe('readActiveBoard', () => {
         title: 'Permission form due',
         detail: 'Return the form before Friday.',
         facts: [{ label: 'due', value: 'Friday' }],
+        dueDate: '2026-07-17',
+        dueState: 'upcoming',
+        obligationAction: 'Return the permission form',
         occurredAt: Date.parse('2026-07-11T02:00:00.000Z'),
         destination: '/notices/emailNotices_urgent'
       },

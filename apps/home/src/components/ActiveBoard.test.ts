@@ -88,6 +88,9 @@ const completeBoard = {
       title: 'Permission form due',
       detail: 'Return the form before Friday.',
       facts: [{ label: 'due', value: 'Friday' }],
+      dueDate: '2026-07-17',
+      dueState: 'upcoming' as const,
+      obligationAction: 'Return the permission form',
       occurredAt: Date.parse('2026-07-11T02:00:00.000Z'),
       destination: '/notices/emailNotices_urgent'
     },
@@ -190,7 +193,7 @@ describe('ActiveBoard', () => {
 
     const cards = screen.getAllByRole('article');
     expect(within(cards[3]!).getByRole('heading', { name: 'Permission form due' })).not.toBeNull();
-    expect(within(cards[3]!).getByText('High priority')).not.toBeNull();
+    expect(within(cards[3]!).getByText('Due 2026-07-17')).not.toBeNull();
     expect(within(cards[3]!).getByRole('link', { name: 'Open notice details' }).getAttribute('href')).toBe(
       '/notices/emailNotices_urgent'
     );

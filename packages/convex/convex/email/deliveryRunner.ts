@@ -2,151 +2,80 @@ import type { FunctionReference } from 'convex/server';
 import { v } from 'convex/values';
 
 import { internal } from '../_generated/api';
-import { action, internalAction } from '../_generated/server';
+import { action, type ActionCtx, internalAction } from '../_generated/server';
 import {
   createBotGatewayNotificationSender,
   parseBotGatewayOrigin,
   parseRecipientUserIds
 } from '../schedule/reminders';
-import type { EmailNoticeDeliveryAttempt, EmailNoticeForDelivery } from './delivery';
-import { runEmailNoticeDeliveryCycle } from './delivery';
+import {
+  type EmailReminderDeliveryAttempt,
+  type EmailReminderForDelivery,
+  runEmailReminderDeliveryCycle
+} from './delivery';
 
-type EmailNoticeDeliveryAttemptRecord = {
-  noticeId: string;
-  recipientUserId: string;
-  attemptedAt: number;
-  status: 'pending' | 'sent' | 'skipped' | 'failed';
-  providerErrorCode?: string;
-};
-
-type EmailNoticeDeliveryStoreRefs = {
-  emailNoticeDeliveryRunInputs: FunctionReference<
+type DeliveryStoreRefs = {
+  emailReminderDeliveryRunInputs: FunctionReference<
     'query',
     'internal',
-    Record<string, never>,
-    {
-      notices: EmailNoticeForDelivery[];
-      attempts: EmailNoticeDeliveryAttempt[];
-    }
+    { nowMs: number },
+    { reminders: EmailReminderForDelivery[]; attempts: EmailReminderDeliveryAttempt[] }
   >;
-  recordEmailNoticeDeliveryAttempt: FunctionReference<
+  recordEmailReminderDeliveryAttempt: FunctionReference<
     'mutation',
     'internal',
-    EmailNoticeDeliveryAttemptRecord,
+    {
+      reminderId: string;
+      recipientUserId: string;
+      attemptedAt: number;
+      status: 'pending' | 'sent' | 'skipped' | 'failed';
+      providerErrorCode?: string;
+    },
     { claimed?: boolean } | unknown
   >;
 };
 
-const deliveryStore: EmailNoticeDeliveryStoreRefs = (
-  internal as unknown as {
-    email: {
-      deliveryStore: EmailNoticeDeliveryStoreRefs;
-    };
-  }
-).email.deliveryStore;
+const store: DeliveryStoreRefs = (internal as unknown as { email: { deliveryStore: DeliveryStoreRefs } }).email
+  .deliveryStore;
 
 function assertAuthorizedServiceToken(serviceToken: string) {
   const expectedToken = process.env.BOT_SERVICE_TOKEN;
-  if (!expectedToken || serviceToken !== expectedToken) {
-    throw new Error('Unauthorized');
-  }
+  if (!expectedToken || serviceToken !== expectedToken) throw new Error('Unauthorized');
 }
 
-export function emailNoticeRecipientUserIdsFromEnv(env: { FORWARDED_EMAIL_NOTICE_RECIPIENT_USER_IDS?: string }) {
+export function emailReminderRecipientUserIdsFromEnv(env: { FORWARDED_EMAIL_NOTICE_RECIPIENT_USER_IDS?: string }) {
   return parseRecipientUserIds(env.FORWARDED_EMAIL_NOTICE_RECIPIENT_USER_IDS);
 }
 
-export const deliverTelegramWorthyEmailNoticesForBot = action({
-  args: {
-    serviceToken: v.string(),
-    deliveredAt: v.optional(v.number())
-  },
+async function deliverDueEmailReminders(ctx: Pick<ActionCtx, 'runQuery' | 'runMutation'>, nowMs: number) {
+  const botServiceToken = process.env.BOT_SERVICE_TOKEN;
+  if (!botServiceToken) throw new Error('BOT_SERVICE_TOKEN env var is required for email reminder delivery');
+  const recipientUserIds = emailReminderRecipientUserIdsFromEnv({
+    FORWARDED_EMAIL_NOTICE_RECIPIENT_USER_IDS: process.env.FORWARDED_EMAIL_NOTICE_RECIPIENT_USER_IDS
+  });
+  const inputs = await ctx.runQuery(store.emailReminderDeliveryRunInputs, { nowMs });
+  return await runEmailReminderDeliveryCycle({
+    nowMs,
+    reminders: inputs.reminders,
+    attempts: inputs.attempts,
+    recipientUserIds,
+    sendNotification: createBotGatewayNotificationSender({
+      botGatewayOrigin: parseBotGatewayOrigin(),
+      serviceToken: botServiceToken
+    }),
+    recordDeliveryAttempt: (attempt) => ctx.runMutation(store.recordEmailReminderDeliveryAttempt, attempt)
+  });
+}
+
+export const deliverDueEmailRemindersForBot = action({
+  args: { serviceToken: v.string(), deliveredAt: v.optional(v.number()) },
   handler: async (ctx, { serviceToken, deliveredAt }) => {
     assertAuthorizedServiceToken(serviceToken);
-
-    const botServiceToken = process.env.BOT_SERVICE_TOKEN;
-    if (!botServiceToken) throw new Error('BOT_SERVICE_TOKEN env var is required for email notice delivery');
-
-    const nowMs = deliveredAt ?? Date.now();
-    const recipientUserIds = emailNoticeRecipientUserIdsFromEnv({
-      FORWARDED_EMAIL_NOTICE_RECIPIENT_USER_IDS: process.env.FORWARDED_EMAIL_NOTICE_RECIPIENT_USER_IDS
-    });
-    const inputs = await ctx.runQuery(deliveryStore.emailNoticeDeliveryRunInputs, {});
-
-    console.info('[email.delivery] Starting notice delivery run', {
-      noticeCount: inputs.notices.length,
-      attemptCount: inputs.attempts.length,
-      recipientCount: recipientUserIds.length
-    });
-
-    if (recipientUserIds.length === 0 || inputs.notices.length === 0) {
-      return {
-        processed: 0,
-        sent: 0,
-        skipped: 0,
-        failed: 0
-      };
-    }
-
-    const result = await runEmailNoticeDeliveryCycle({
-      nowMs,
-      notices: inputs.notices,
-      attempts: inputs.attempts,
-      recipientUserIds,
-      sendNotification: createBotGatewayNotificationSender({
-        botGatewayOrigin: parseBotGatewayOrigin(),
-        serviceToken: botServiceToken
-      }),
-      recordDeliveryAttempt: (attempt) => ctx.runMutation(deliveryStore.recordEmailNoticeDeliveryAttempt, attempt)
-    });
-
-    console.info('[email.delivery] Completed notice delivery run', result);
-
-    return result;
+    return await deliverDueEmailReminders(ctx, deliveredAt ?? Date.now());
   }
 });
 
-export const runDueEmailNoticeDelivery = internalAction({
+export const runDueEmailReminderDelivery = internalAction({
   args: {},
-  handler: async (ctx) => {
-    const botServiceToken = process.env.BOT_SERVICE_TOKEN;
-    if (!botServiceToken) throw new Error('BOT_SERVICE_TOKEN env var is required for email notice delivery');
-
-    const nowMs = Date.now();
-    const recipientUserIds = emailNoticeRecipientUserIdsFromEnv({
-      FORWARDED_EMAIL_NOTICE_RECIPIENT_USER_IDS: process.env.FORWARDED_EMAIL_NOTICE_RECIPIENT_USER_IDS
-    });
-    const inputs = await ctx.runQuery(deliveryStore.emailNoticeDeliveryRunInputs, {});
-
-    console.info('[email.delivery] Starting scheduled notice delivery run', {
-      noticeCount: inputs.notices.length,
-      attemptCount: inputs.attempts.length,
-      recipientCount: recipientUserIds.length
-    });
-
-    if (recipientUserIds.length === 0 || inputs.notices.length === 0) {
-      return {
-        processed: 0,
-        sent: 0,
-        skipped: 0,
-        failed: 0
-      };
-    }
-
-    const result = await runEmailNoticeDeliveryCycle({
-      nowMs,
-      notices: inputs.notices,
-      attempts: inputs.attempts,
-      recipientUserIds,
-      sendNotification: createBotGatewayNotificationSender({
-        botGatewayOrigin: parseBotGatewayOrigin(),
-        serviceToken: botServiceToken
-      }),
-      recordDeliveryAttempt: (attempt) => ctx.runMutation(deliveryStore.recordEmailNoticeDeliveryAttempt, attempt)
-    });
-
-    console.info('[email.delivery] Completed scheduled notice delivery run', result);
-
-    return result;
-  }
+  handler: (ctx) => deliverDueEmailReminders(ctx, Date.now())
 });

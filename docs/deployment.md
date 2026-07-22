@@ -383,32 +383,32 @@ Production checks:
 
 `apps/api-bot` requires these environment variables in local, preview, staging, and production:
 
-| Variable                                    | Where it lives                                | Notes                                                                                                                                                               |
-| ------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `CLERK_SECRET_KEY`                          | Vercel Bot gateway, `.env.local`              | Used to verify Clerk bearer tokens                                                                                                                                  |
-| `CLERK_PUBLISHABLE_KEY`                     | Vercel Bot gateway, `.env.local`              | Clerk backend configuration                                                                                                                                         |
-| `BOT_SERVICE_TOKEN`                         | Vercel Bot gateway, Schedule, Convex, callers | Shared bearer token for service-to-service sends, schedule bot reads, and forwarded email capture                                                                   |
-| `CONVEX_URL`                                | Vercel Bot gateway, `.env.local`              | Required for forwarded email capture and the insights capability; Convex deployment URL for gateway service clients                                                 |
-| `FORWARDED_EMAIL_ALLOWED_SENDERS`           | Vercel Bot gateway, `.env.local`              | Comma-separated sender allowlist for Resend forwarded email capture                                                                                                 |
-| `RESEND_API_KEY`                            | Vercel Bot gateway, `.env.local`              | Resend API key used to fetch received email bodies after `email.received` webhooks                                                                                  |
-| `RESEND_WEBHOOK_SECRET`                     | Vercel Bot gateway, Resend                    | Resend webhook signing secret used to verify `/inbound-email/resend` requests                                                                                       |
-| `FORWARDED_EMAIL_TRIAGE_AI_MODEL`           | Convex, `.env.local`                          | OpenAI model used by Convex to triage captured forwarded emails into notices                                                                                        |
-| `FORWARDED_EMAIL_NOTICE_RECIPIENT_USER_IDS` | Convex, `.env.local`                          | Comma-separated Clerk user IDs that should receive Telegram-worthy forwarded email notices                                                                          |
-| `SPENDING_INSIGHT_RECIPIENT_USER_IDS`       | Convex, `.env.local`                          | Comma-separated Clerk user IDs that should receive monthly spending insight messages                                                                                |
-| `SCHEDULE_CAPABILITY_URL`                   | Vercel Bot gateway, `.env.local`              | Schedule API route for `/schedule`, for example `https://schedule.example.com/schedule/api/bot/schedule`                                                            |
-| `LISTS_CAPABILITY_URL`                      | Vercel Bot gateway, `.env.local`              | Lists API route for free-text capture, for example `https://lists.example.com/lists/api/bot/lists`                                                                  |
-| `LISTS_CAPABILITY_TIMEOUT_MS`               | Vercel Bot gateway, `.env.local`              | Optional; per-request timeout for the lists capability (default 15000)                                                                                              |
-| `INSIGHTS_CAPABILITY_TIMEOUT_MS`            | Vercel Bot gateway, `.env.local`              | Optional; per-question timeout for the insights capability (default 15000)                                                                                          |
-| `SPENDING_INSIGHT_AI_MODEL`                 | Convex, `.env.local`                          | OpenAI model used by Convex to generate monthly spending insights and answer bot questions about them                                                               |
-| `OPENAI_API_KEY`                            | Vercel Bot gateway, Convex, `.env.local`      | Enables the LLM intent router on the gateway; also used by Convex for AI item parsing, briefing generation, forwarded email triage, and spending insight generation |
-| `INTENT_ROUTER_AI_MODEL`                    | Vercel Bot gateway, `.env.local`              | Model the intent router uses; required with `OPENAI_API_KEY` to enable free-text routing                                                                            |
-| `INTENT_ROUTER_AI_TIMEOUT_MS`               | Vercel Bot gateway, `.env.local`              | Optional; per-request timeout for the intent router AI call (default 10000)                                                                                         |
-| `TELEGRAM_BOT_TOKEN`                        | Vercel Bot gateway, `.env.local`              | Bot token from BotFather                                                                                                                                            |
-| `TELEGRAM_WEBHOOK_SECRET`                   | Vercel Bot gateway, Telegram                  | Sent as Telegram's webhook secret token                                                                                                                             |
-| `TELEGRAM_BOT_USERNAME`                     | Vercel Bot gateway, `.env.local`              | Bot username, ending in `bot`, without `@`                                                                                                                          |
-| `UPSTASH_REDIS_REST_URL`                    | Vercel Bot gateway, `.env.local`              | HTTPS Upstash REST URL                                                                                                                                              |
-| `UPSTASH_REDIS_REST_TOKEN`                  | Vercel Bot gateway, `.env.local`              | Upstash REST token                                                                                                                                                  |
-| `APP_ORIGIN`                                | Vercel Bot gateway, `.env.local`              | Public Home origin, for example `https://doma.example.com`                                                                                                          |
+| Variable                                    | Where it lives                                | Notes                                                                                                                                       |
+| ------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CLERK_SECRET_KEY`                          | Vercel Bot gateway, `.env.local`              | Used to verify Clerk bearer tokens                                                                                                          |
+| `CLERK_PUBLISHABLE_KEY`                     | Vercel Bot gateway, `.env.local`              | Clerk backend configuration                                                                                                                 |
+| `BOT_SERVICE_TOKEN`                         | Vercel Bot gateway, Schedule, Convex, callers | Shared bearer token for service-to-service sends, schedule bot reads, and forwarded email capture                                           |
+| `CONVEX_URL`                                | Vercel Bot gateway, `.env.local`              | Required for forwarded email capture and the insights capability; Convex deployment URL for gateway service clients                         |
+| `FORWARDED_EMAIL_ALLOWED_SENDERS`           | Vercel Bot gateway, `.env.local`              | Comma-separated sender allowlist for Resend forwarded email capture                                                                         |
+| `RESEND_API_KEY`                            | Vercel Bot gateway, `.env.local`              | Resend API key used to fetch received email bodies after `email.received` webhooks                                                          |
+| `RESEND_WEBHOOK_SECRET`                     | Vercel Bot gateway, Resend                    | Resend webhook signing secret used to verify `/inbound-email/resend` requests                                                               |
+| `AGENT_SERVICE_ORIGIN`                      | Convex, `.env.local`                          | Public origin of the matching Vercel Agent API used for forwarded-email triage                                                              |
+| `FORWARDED_EMAIL_NOTICE_RECIPIENT_USER_IDS` | Convex, `.env.local`                          | Comma-separated Clerk user IDs that should receive due forwarded-email reminders                                                            |
+| `SPENDING_INSIGHT_RECIPIENT_USER_IDS`       | Convex, `.env.local`                          | Comma-separated Clerk user IDs that should receive monthly spending insight messages                                                        |
+| `SCHEDULE_CAPABILITY_URL`                   | Vercel Bot gateway, `.env.local`              | Schedule API route for `/schedule`, for example `https://schedule.example.com/schedule/api/bot/schedule`                                    |
+| `LISTS_CAPABILITY_URL`                      | Vercel Bot gateway, `.env.local`              | Lists API route for free-text capture, for example `https://lists.example.com/lists/api/bot/lists`                                          |
+| `LISTS_CAPABILITY_TIMEOUT_MS`               | Vercel Bot gateway, `.env.local`              | Optional; per-request timeout for the lists capability (default 15000)                                                                      |
+| `INSIGHTS_CAPABILITY_TIMEOUT_MS`            | Vercel Bot gateway, `.env.local`              | Optional; per-question timeout for the insights capability (default 15000)                                                                  |
+| `SPENDING_INSIGHT_AI_MODEL`                 | Convex, `.env.local`                          | OpenAI model used by Convex to generate monthly spending insights and answer bot questions about them                                       |
+| `OPENAI_API_KEY`                            | Vercel Bot gateway, Convex, `.env.local`      | Enables the LLM intent router on the gateway; also used by Convex for AI item parsing, briefing generation, and spending insight generation |
+| `INTENT_ROUTER_AI_MODEL`                    | Vercel Bot gateway, `.env.local`              | Model the intent router uses; required with `OPENAI_API_KEY` to enable free-text routing                                                    |
+| `INTENT_ROUTER_AI_TIMEOUT_MS`               | Vercel Bot gateway, `.env.local`              | Optional; per-request timeout for the intent router AI call (default 10000)                                                                 |
+| `TELEGRAM_BOT_TOKEN`                        | Vercel Bot gateway, `.env.local`              | Bot token from BotFather                                                                                                                    |
+| `TELEGRAM_WEBHOOK_SECRET`                   | Vercel Bot gateway, Telegram                  | Sent as Telegram's webhook secret token                                                                                                     |
+| `TELEGRAM_BOT_USERNAME`                     | Vercel Bot gateway, `.env.local`              | Bot username, ending in `bot`, without `@`                                                                                                  |
+| `UPSTASH_REDIS_REST_URL`                    | Vercel Bot gateway, `.env.local`              | HTTPS Upstash REST URL                                                                                                                      |
+| `UPSTASH_REDIS_REST_TOKEN`                  | Vercel Bot gateway, `.env.local`              | Upstash REST token                                                                                                                          |
+| `APP_ORIGIN`                                | Vercel Bot gateway, `.env.local`              | Public Home origin, for example `https://doma.example.com`                                                                                  |
 
 `VERCEL_ENV` is read from Vercel's system environment variables and should not
 be set by hand in the dashboard. Pairing links are created only when
@@ -422,23 +422,23 @@ Do not commit real bot tokens, Telegram IDs, chat IDs, or private message payloa
 
 `apps/api-agent` requires:
 
-| Variable                | Where it lives                         | Notes                                                                                     |
-| ----------------------- | -------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `CLERK_SECRET_KEY`      | Vercel Agent API, `.env.local`         | Verifies Meals bearer tokens                                                              |
-| `CLERK_PUBLISHABLE_KEY` | Vercel Agent API, `.env.local`         | Clerk backend configuration                                                               |
-| `APP_ORIGIN`            | Vercel Agent API, `.env.local`         | Authorized public Home origin                                                             |
-| `CONVEX_URL`            | Vercel Agent API, `.env.local`         | Matching Convex deployment                                                                |
-| `AGENT_SERVICE_TOKEN`   | Vercel Agent API, Convex, `.env.local` | Dedicated service credential; do not reuse the bot token                                  |
-| `WEEKLY_MEALS_AI_MODEL` | Vercel Agent API, `.env.local`         | AI Gateway model id                                                                       |
-| `AI_GATEWAY_API_KEY`    | Local Agent API                        | AI Gateway credential for local runs; Vercel deployments use their injected OIDC identity |
+| Variable                          | Where it lives                         | Notes                                                                                     |
+| --------------------------------- | -------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `CLERK_SECRET_KEY`                | Vercel Agent API, `.env.local`         | Verifies Meals bearer tokens                                                              |
+| `CLERK_PUBLISHABLE_KEY`           | Vercel Agent API, `.env.local`         | Clerk backend configuration                                                               |
+| `APP_ORIGIN`                      | Vercel Agent API, `.env.local`         | Authorized public Home origin                                                             |
+| `CONVEX_URL`                      | Vercel Agent API, `.env.local`         | Matching Convex deployment                                                                |
+| `AGENT_SERVICE_TOKEN`             | Vercel Agent API, Convex, `.env.local` | Dedicated service credential; do not reuse the bot token                                  |
+| `WEEKLY_MEALS_AI_MODEL`           | Vercel Agent API, `.env.local`         | AI Gateway model id for weekly meal proposals                                             |
+| `FORWARDED_EMAIL_TRIAGE_AI_MODEL` | Vercel Agent API, `.env.local`         | AI Gateway model id for forwarded-email triage                                            |
+| `AI_GATEWAY_API_KEY`              | Local Agent API                        | AI Gateway credential for local runs; Vercel deployments use their injected OIDC identity |
 
-The service persists structured inputs, tool outputs, validation results, and
-token usage for 30 days. It does not persist hidden reasoning or raw calendar
-events. Model failures emit a privacy-safe `weekly_meals_agent_failed` JSON
-event in the Agent API's Vercel Runtime Logs and store the error name, message,
-HTTP status, Gateway type, and generation ID on the corresponding
-`weeklyMealAgentRuns` row. Logs exclude user IDs, prompts, household
-instructions, tool context, credentials, and error causes.
+The service persists privacy-safe agent traces and token usage for 30 days. It
+does not persist hidden reasoning, raw calendar events, or forwarded-email
+sender, subject, or body in trace rows. Model failures emit structured events
+in the Agent API's Vercel Runtime Logs. Logs exclude user IDs, prompts,
+household instructions, email content, tool context, credentials, and error
+causes.
 
 Forwarded email capture uses Resend's `email.received` webhook at
 `/inbound-email/resend`. Configure that webhook on a publicly reachable Bot
@@ -449,15 +449,14 @@ protection. The Bot gateway verifies `RESEND_WEBHOOK_SECRET`, checks
 Bot gateway and the target Convex deployment before enabling forwarded email
 capture.
 
-Forwarded email triage runs in Convex cron every 12 hours after capture, and can
+Forwarded email triage runs in Convex cron every 15 minutes after capture, and can
 also be triggered manually through
 `email/triage:processNextPendingCapturedEmailForBot`. It requires
-`OPENAI_API_KEY` and `FORWARDED_EMAIL_TRIAGE_AI_MODEL` in the target Convex
-deployment, plus `BOT_SERVICE_TOKEN` for the manual bot-triggered action. The
-triage action claims the oldest pending captured email, stores either a current
-notice or a no-notice outcome, and records inspectable failure state. Telegram
-delivery is a separate step. The 12-hour schedule is an interval, not a fixed
-local wall-clock time.
+`AGENT_SERVICE_ORIGIN` and `AGENT_SERVICE_TOKEN` in Convex, plus
+`FORWARDED_EMAIL_TRIAGE_AI_MODEL` in the Agent API. The triage action claims the
+oldest pending captured email, delegates typed inference to the Agent API, then
+stores either a current notice or a no-notice outcome. Only a high-priority,
+high-confidence future obligation creates a reminder candidate.
 
 Monthly spending insight generation runs in Convex cron every 12 hours (also an
 interval, not a wall-clock time). Each sweep finds the latest calendar month
@@ -490,16 +489,16 @@ enabled or limited independently. Delivery attempts are recorded per month and r
 `spendingInsightDeliveryAttempts`; failed sends are retried by later runs, and
 sent or skipped deliveries are never repeated.
 
-Forwarded email notice delivery runs in Convex through
-`email/deliveryRunner:deliverTelegramWorthyEmailNoticesForBot`. It requires
+Forwarded email reminder delivery runs in Convex through
+`email/deliveryRunner:deliverDueEmailRemindersForBot`. It requires
 `BOT_SERVICE_TOKEN`, `BOT_GATEWAY_ORIGIN`, and
 `FORWARDED_EMAIL_NOTICE_RECIPIENT_USER_IDS` in the target Convex deployment.
-Convex also checks for due notice delivery four times per day, scheduled at
-21:00, 01:00, 05:00, and 09:00 UTC. In Sydney this is roughly morning, midday,
-afternoon, and evening, shifting by one local hour during daylight saving.
-Delivery sends only current notices marked `telegramWorthy` through the Bot
-gateway's provider-neutral `/notifications/send` endpoint with topic
-`email.notice`, and records delivery attempts per notice and recipient. It uses
+Convex checks every 15 minutes and sends at or after 7pm Australia/Sydney on the
+day before the extracted due date, handling daylight saving from the local
+calendar date. Delivery rechecks that the canonical notice is still active and
+that Home has not archived its occurrence, then uses the Bot gateway's
+provider-neutral `/notifications/send` endpoint with topic `email.reminder`.
+Attempts are recorded per reminder candidate and recipient. It uses
 the notice-specific recipient list, not `MORNING_BRIEFING_RECIPIENT_USER_IDS`,
 so forwarded email experiments can be limited independently from scheduled
 briefings.

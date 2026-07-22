@@ -72,6 +72,12 @@ leftovers. Schedule ingestion caches the current and following week so the
 agent's target-week busyness is date-correct while the Schedule UI remains a
 current-week view.
 
+Forwarded-email inference also lives in `apps/api-agent`. Convex exposes only a
+currently claimed capture through a dedicated service-token boundary, stores
+the typed outcome and trace, and owns the deterministic reminder policy. Home
+continues to render the canonical `emailNotices` rows; the agent does not own a
+second noticeboard projection.
+
 ## PWA
 
 Vite apps use `vite-plugin-pwa` with `scope` set to their mount path; each is independently installable. Home's root-scoped worker precaches the Home shell but excludes `/api`, `/budget`, `/schedule`, `/lists`, and `/meals` navigations from its fallback. Those exclusions mirror the rewrites that precede Home's final SPA fallback in `apps/home/vercel.json`. Convex traffic is network-only. The service worker scope must match the rewrite shape — Budget's SW lives at `/budget/sw.js`, registered when the user visits `/budget`. The Next.js `schedule` app will use Serwist (`@serwist/next`) for the same effect — its PWA layer lands in a later phase. See `docs/offline.md` for what's covered (shell) and what isn't (offline data).
