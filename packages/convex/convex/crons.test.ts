@@ -4,6 +4,7 @@ const cronMocks = vi.hoisted(() => ({
   daily: vi.fn(),
   interval: vi.fn(),
   morningBriefingDelivery: Symbol('morningBriefingDelivery'),
+  morningBriefingScheduleReconciliation: Symbol('morningBriefingScheduleReconciliation'),
   emailTriage: Symbol('emailTriage'),
   emailNoticeDelivery: Symbol('emailNoticeDelivery'),
   scheduleReminderDelivery: Symbol('scheduleReminderDelivery'),
@@ -25,6 +26,9 @@ vi.mock('./_generated/api', () => ({
     briefing: {
       deliveryRunner: {
         runDueMorningBriefingDelivery: cronMocks.morningBriefingDelivery
+      },
+      deliveryScheduleStore: {
+        reconcileMorningBriefingDeliverySchedule: cronMocks.morningBriefingScheduleReconciliation
       }
     },
     email: {
@@ -60,9 +64,9 @@ describe('Convex cron registration', () => {
     expect(cronMocks.interval).toHaveBeenCalledTimes(6);
     expect(cronMocks.daily).toHaveBeenCalledTimes(1);
     expect(cronMocks.interval).toHaveBeenCalledWith(
-      'morning briefing delivery',
-      { minutes: 10 },
-      cronMocks.morningBriefingDelivery
+      'morning briefing delivery schedule reconciliation',
+      { hours: 24 },
+      cronMocks.morningBriefingScheduleReconciliation
     );
     expect(cronMocks.daily).toHaveBeenCalledWith(
       'weekly meal agent trace cleanup',

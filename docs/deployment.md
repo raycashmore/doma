@@ -551,9 +551,10 @@ stored latest insight plus the trailing months of data that produced it, using
 the capability replies with a generic failure message, and when no insight is
 stored yet it says so instead of inventing commentary.
 
-Morning briefing delivery runs from Convex cron, not Vercel Cron. This keeps
+Morning briefing delivery runs from Convex scheduled functions, not Vercel Cron. This keeps
 the Bot gateway deployable on Vercel Hobby, where frequent cron schedules are
-rejected. Convex checks the delivery cycle every 10 minutes, sends during the
+rejected. A 24-hour Convex reconciler schedules the next 48 hours of eligible local retry slots;
+the delivery action runs only during the
 local morning retry window `07:35 <= time < 08:30` every day and afternoon retry
 window `14:30 <= time < 15:00` on weekdays only, forces a schedule sync before generation when possible,
 falls back to cached schedule data when needed, calls the Bot gateway's

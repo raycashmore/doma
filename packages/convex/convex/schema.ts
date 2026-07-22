@@ -9,7 +9,7 @@
 import { defineSchema, defineTable } from 'convex/server';
 import { v } from 'convex/values';
 
-import { briefingDeliveryAttemptsTable, briefingsTable } from './briefing/schema';
+import { briefingDeliveryAttemptsTable, briefingDeliveryScheduleSlotsTable, briefingsTable } from './briefing/schema';
 import {
   capturedEmailsTable,
   emailNoticeDeliveryAttemptsTable,
@@ -187,6 +187,7 @@ export default defineSchema({
   // ============================================================
   briefings: briefingsTable,
   briefingDeliveryAttempts: briefingDeliveryAttemptsTable,
+  briefingDeliveryScheduleSlots: briefingDeliveryScheduleSlotsTable,
 
   // ============================================================
   // FORWARDED EMAIL TRIAGE — Captured source material

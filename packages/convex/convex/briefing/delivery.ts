@@ -90,7 +90,7 @@ function localParts(nowMs: number, timeZone: string) {
   };
 }
 
-function deliverySlotForTime(nowMs: number, timeZone: string): BriefingDeliverySlot | null {
+export function deliverySlotForTime(nowMs: number, timeZone: string): BriefingDeliverySlot | null {
   const { isWeekend, minuteOfDay } = localParts(nowMs, timeZone);
   const morningStart = retryWindowStart.hour * 60 + retryWindowStart.minute;
   const morningEnd = retryWindowEnd.hour * 60 + retryWindowEnd.minute;

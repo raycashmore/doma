@@ -169,7 +169,7 @@ Docs and tests must use generic member, calendar, and event labels. Generated
 briefing text can contain private household schedule details, so do not copy it
 into committed fixtures.
 
-Scheduled delivery runs from Convex cron during the local
+Scheduled delivery is scheduled by a 24-hour Convex reconciler during the local
 `07:35 <= time < 08:30` morning retry window every day and the
 `14:30 <= time < 15:00` afternoon retry window on weekdays only. The runner forces schedule sync
 before generation when possible, reuses an existing stored briefing for morning

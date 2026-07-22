@@ -4,8 +4,8 @@ import { internal } from './_generated/api';
 
 const crons = cronJobs();
 
-type BriefingDeliveryRunnerRefs = {
-  runDueMorningBriefingDelivery: FunctionReference<'action', 'internal', Record<string, never>, unknown>;
+type BriefingDeliveryScheduleStoreRefs = {
+  reconcileMorningBriefingDeliverySchedule: FunctionReference<'mutation', 'internal', Record<string, never>, unknown>;
 };
 
 type EmailDeliveryRunnerRefs = {
@@ -32,13 +32,9 @@ type EmailAgentCleanupRefs = {
   deleteExpiredRuns: FunctionReference<'mutation', 'internal', Record<string, never>, unknown>;
 };
 
-const briefingDeliveryRunner: BriefingDeliveryRunnerRefs = (
-  internal as unknown as {
-    briefing: {
-      deliveryRunner: BriefingDeliveryRunnerRefs;
-    };
-  }
-).briefing.deliveryRunner;
+const briefingDeliveryScheduleStore: BriefingDeliveryScheduleStoreRefs = (
+  internal as unknown as { briefing: { deliveryScheduleStore: BriefingDeliveryScheduleStoreRefs } }
+).briefing.deliveryScheduleStore;
 
 const emailDeliveryRunner: EmailDeliveryRunnerRefs = (
   internal as unknown as {
@@ -80,7 +76,11 @@ const emailAgentCleanup: EmailAgentCleanupRefs = (
   internal as unknown as { email: { agentCleanup: EmailAgentCleanupRefs } }
 ).email.agentCleanup;
 
-crons.interval('morning briefing delivery', { minutes: 10 }, briefingDeliveryRunner.runDueMorningBriefingDelivery);
+crons.interval(
+  'morning briefing delivery schedule reconciliation',
+  { hours: 24 },
+  briefingDeliveryScheduleStore.reconcileMorningBriefingDeliverySchedule
+);
 crons.interval('forwarded email triage', { minutes: 15 }, emailTriage.runDueForwardedEmailTriage);
 crons.interval('monthly spending insight sweep', { hours: 12 }, insightGeneration.runDueSpendingInsightSweep);
 crons.interval('monthly spending insight delivery', { hours: 1 }, insightDeliveryRunner.runDueSpendingInsightDelivery);
