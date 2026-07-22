@@ -48,3 +48,14 @@ export const briefingDeliveryAttemptsTable = defineTable({
   .index('by_briefing_key', ['briefingKey'])
   .index('by_briefing_recipient', ['briefingKey', 'recipientUserId'])
   .index('by_attempted_at', ['attemptedAt']);
+
+export const briefingDeliveryScheduleSlotsTable = defineTable({
+  key: v.string(),
+  localDate: v.string(),
+  slot: v.union(v.literal('morning'), v.literal('afternoon')),
+  scheduledAt: v.number(),
+  status: v.union(v.literal('scheduled'), v.literal('completed'), v.literal('failed')),
+  completedAt: v.optional(v.number())
+})
+  .index('by_key', ['key'])
+  .index('by_scheduled_at', ['scheduledAt']);

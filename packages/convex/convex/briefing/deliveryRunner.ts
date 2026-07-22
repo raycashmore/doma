@@ -1,4 +1,5 @@
 import type { FunctionReference } from 'convex/server';
+import { v } from 'convex/values';
 
 import { internal } from '../_generated/api';
 import { internalAction } from '../_generated/server';
@@ -9,7 +10,12 @@ import {
   parseRecipientUserIds
 } from '../schedule/reminders';
 import { botMorningBriefingFromStoreResult } from './botBriefing';
-import { type BotMorningBriefing, type BriefingDeliveryAttempt, runMorningBriefingDeliveryCycle } from './delivery';
+import {
+  type BotMorningBriefing,
+  type BriefingDeliveryAttempt,
+  type MorningBriefingDeliveryCounts,
+  runMorningBriefingDeliveryCycle
+} from './delivery';
 import { serializeError } from './errors';
 import { morningBriefingWeatherFromEnv } from './generation';
 
@@ -53,6 +59,15 @@ type ScheduleSyncRefs = {
   run: FunctionReference<'action', 'internal', Record<string, never>, { count: number; lastSyncedAt: number }>;
 };
 
+type BriefingDeliveryScheduleStoreRefs = {
+  completeBriefingDeliveryScheduleSlot: FunctionReference<
+    'mutation',
+    'internal',
+    { key: string; completedAt: number; outcome: 'completed' | 'failed' },
+    unknown
+  >;
+};
+
 const deliveryStore: BriefingDeliveryStoreRefs = (
   internal as unknown as {
     briefing: {
@@ -76,6 +91,30 @@ const scheduleSync: ScheduleSyncRefs = (
     };
   }
 ).schedule.sync;
+
+const deliveryScheduleStore: BriefingDeliveryScheduleStoreRefs = (
+  internal as unknown as { briefing: { deliveryScheduleStore: BriefingDeliveryScheduleStoreRefs } }
+).briefing.deliveryScheduleStore;
+
+const dueMorningDelivery: FunctionReference<
+  'action',
+  'internal',
+  Record<string, never>,
+  MorningBriefingDeliveryCounts
+> = (
+  internal as unknown as {
+    briefing: {
+      deliveryRunner: {
+        runDueMorningBriefingDelivery: FunctionReference<
+          'action',
+          'internal',
+          Record<string, never>,
+          MorningBriefingDeliveryCounts
+        >;
+      };
+    };
+  }
+).briefing.deliveryRunner.runDueMorningBriefingDelivery;
 
 function formatLocalDate(ms: number, timeZone: string) {
   const parts = new Intl.DateTimeFormat('en-AU', {
@@ -186,6 +225,33 @@ export const runDueMorningBriefingDelivery = internalAction({
         localDate,
         timeZone,
         ...serializeError(error)
+      });
+      throw error;
+    }
+  }
+});
+
+export const runScheduledMorningBriefingDelivery = internalAction({
+  args: {
+    scheduleSlotKey: v.string(),
+    localDate: v.string(),
+    slot: v.union(v.literal('morning'), v.literal('afternoon')),
+    scheduledAt: v.number()
+  },
+  handler: async (ctx, args) => {
+    try {
+      const result = await ctx.runAction(dueMorningDelivery, {});
+      await ctx.runMutation(deliveryScheduleStore.completeBriefingDeliveryScheduleSlot, {
+        key: args.scheduleSlotKey,
+        completedAt: Date.now(),
+        outcome: 'completed'
+      });
+      return result;
+    } catch (error) {
+      await ctx.runMutation(deliveryScheduleStore.completeBriefingDeliveryScheduleSlot, {
+        key: args.scheduleSlotKey,
+        completedAt: Date.now(),
+        outcome: 'failed'
       });
       throw error;
     }
