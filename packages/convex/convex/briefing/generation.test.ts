@@ -155,14 +155,31 @@ describe('renderMorningBriefingDeliveryPreview', () => {
 
   it('renders the morning slot from the structured briefing', () => {
     expect(renderMorningBriefingDeliveryPreview({ briefing, members, slot: 'morning' })).toMatchObject({
-      message: `Library bag and dancing shoes.
-
-This morning:
-- Child A: Pack library bag
-
-Watchouts
-- Homework folder is due back.`,
+      message: `This morning:
+- Child A: Pack library bag`,
       shouldSend: true
+    });
+  });
+
+  it('does not let a weather headline create a morning preview by itself', () => {
+    expect(
+      renderMorningBriefingDeliveryPreview({
+        briefing: {
+          ...briefing,
+          briefing: {
+            ...briefing.briefing,
+            headline: 'Cold and humid this morning.',
+            morning: [],
+            afternoon: [],
+            watchouts: []
+          }
+        },
+        members,
+        slot: 'morning'
+      })
+    ).toMatchObject({
+      message: '',
+      shouldSend: false
     });
   });
 
@@ -219,7 +236,7 @@ Weather:
 });
 
 describe('renderBotMorningBriefingForReplay', () => {
-  it('rebuilds replay text from clean structured content when stored message text is dirty', () => {
+  it('rebuilds replay text as morning calendar details only', () => {
     const briefing = {
       briefingKey: 'morning:2026-06-12',
       localDate,
@@ -244,10 +261,7 @@ describe('renderBotMorningBriefingForReplay', () => {
     } satisfies BotMorningBriefing;
 
     expect(renderBotMorningBriefingForReplay({ briefing, members })).toMatchObject({
-      message: `Today:
-A tidy split today: library and Crazy Hair & Sock Day.
-
-This morning:
+      message: `This morning:
 - Child A: School run needs library bag and Crazy Hair & Sock Day.`
     });
   });

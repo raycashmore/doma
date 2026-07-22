@@ -626,7 +626,7 @@ Watchouts
     expect(result.briefing.morning[0]?.text).toBe('Bring sports bag');
   });
 
-  it('falls back to deterministic quiet output when AI suppresses an empty weekday', async () => {
+  it('honours AI suppression when weekday calendar events are not meaningful', async () => {
     const provider: MorningBriefingAiProvider = async () => ({
       shouldSend: false,
       headline: 'Nothing today.',
@@ -640,13 +640,13 @@ Watchouts
       localDate, // 2026-06-12 is a Friday
       timeZone,
       calendarConfigs: [requirementsCalendar],
-      events: [],
+      events: [requirementEvent()],
       provider,
       members
     });
 
-    expect(result.generationStatus).toBe('deterministic');
-    expect(result.message).toBe('Today:\nNormal day. No special requirements found.');
+    expect(result.generationStatus).toBe('ai');
+    expect(result.message).toBe('');
   });
 
   it('allows AI to suppress an empty weekend briefing', async () => {
@@ -685,7 +685,8 @@ describe('morningBriefingSystemPrompt', () => {
     expect(morningBriefingSystemPrompt).toContain('Morning and afternoon readiness');
     expect(morningBriefingSystemPrompt).toContain('pre-noon');
     expect(morningBriefingSystemPrompt).toContain('supplied weather');
-    expect(morningBriefingSystemPrompt).toContain('high humidity for allergy control');
+    expect(morningBriefingSystemPrompt).toContain('Weather must only decorate');
+    expect(morningBriefingSystemPrompt).toContain('Never send a briefing because of weather alone');
   });
 
   it('instructs the model to keep generated prose plain text', () => {

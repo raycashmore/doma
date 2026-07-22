@@ -581,8 +581,9 @@ Morning briefing operations:
 
 - A scheduled delivery outside `07:35 <= time < 08:30` in
   `MORNING_BRIEFING_TZ`, or outside the weekday-only `14:30 <= time < 15:00`
-  afternoon window, no-ops. Weekend morning delivery sends the complete daily
-  summary, including afternoon items.
+  afternoon window, no-ops. Morning delivery sends only the `This morning:`
+  calendar details and skips the notification when that section is empty,
+  including on weekends.
 - If no `MORNING_BRIEFING_RECIPIENT_USER_IDS` are configured, the scheduled run
   no-ops. `/briefing` can still be used on demand by a linked Telegram user.
 - Convex generates one briefing per local date and reuses it for morning

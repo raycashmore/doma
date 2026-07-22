@@ -148,7 +148,7 @@ Watchouts
 });
 
 describe('formatBriefingDeliveryMessage', () => {
-  it('renders the morning delivery as the summary and morning details only', () => {
+  it('renders the morning delivery as morning calendar details only', () => {
     const message = formatBriefingDeliveryMessage(
       {
         shouldSend: true,
@@ -162,15 +162,29 @@ describe('formatBriefingDeliveryMessage', () => {
       { slot: 'morning' }
     );
 
-    expect(message).toBe(`Library bag and sport clothes.
-
-This morning:
-- Child A: pack library bag
-
-Watchouts
-- Homework folder is due back.`);
+    expect(message).toBe(`This morning:
+- Child A: pack library bag`);
     expect(message).not.toContain('Today:');
+    expect(message).not.toContain('Library bag and sport clothes.');
+    expect(message).not.toContain('Homework folder is due back.');
     expect(message).not.toContain('dancing');
+  });
+
+  it('returns an empty morning delivery when there is no morning calendar content', () => {
+    const message = formatBriefingDeliveryMessage(
+      {
+        shouldSend: true,
+        headline: 'Cold and humid this morning.',
+        morning: [],
+        afternoon: [],
+        watchouts: [],
+        sourceIdsIgnored: []
+      },
+      members,
+      { slot: 'morning' }
+    );
+
+    expect(message).toBe('');
   });
 
   it('renders afternoon details with relevant afternoon weather readiness', () => {
@@ -239,9 +253,7 @@ Weather:
       { slot: 'morning' }
     );
 
-    expect(message).toBe(`A tidy split today: <b>library</b> and Crazy Hair &amp; Sock Day.
-
-This morning:
+    expect(message).toBe(`This morning:
 - Child A: School run needs <b>library</b> bag and Crazy Hair &amp; Sock Day.`);
   });
 

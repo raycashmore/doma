@@ -2,7 +2,6 @@ import type { ScheduleDisplayMember } from '../schedule/config';
 import {
   type BriefingDeliverySlot,
   formatBriefingDeliveryMessage,
-  formatMorningBriefing,
   isPlainBriefingText,
   isValidMorningBriefingForMembers,
   type MorningBriefing,
@@ -137,29 +136,6 @@ function withStaleScheduleNote(message: string) {
   return `${message}\nNote: schedule data may be stale because the latest calendar sync failed.`;
 }
 
-function deliveryMessage({
-  briefing,
-  members,
-  slot,
-  isWeekend,
-  weather
-}: {
-  briefing: BotMorningBriefing;
-  members: ScheduleDisplayMember[];
-  slot: BriefingDeliverySlot;
-  isWeekend: boolean;
-  weather?: MorningBriefingWeatherContext;
-}) {
-  const message =
-    isWeekend && slot === 'morning' && briefing.briefing
-      ? formatMorningBriefing(briefing.briefing, members)
-      : briefing.briefing
-        ? formatBriefingDeliveryMessage(briefing.briefing, members, { slot, weather })
-        : briefing.message;
-
-  return message;
-}
-
 function isDeliverableBriefing(briefing: BotMorningBriefing, members: ScheduleDisplayMember[]) {
   return briefing.briefing
     ? isValidMorningBriefingForMembers(briefing.briefing, members)
@@ -207,7 +183,7 @@ export async function runMorningBriefingDeliveryCycle({
     return emptyCounts();
   }
 
-  const { isWeekend, localDate } = localParts(nowMs, timeZone);
+  const { localDate } = localParts(nowMs, timeZone);
   const baseBriefingKey = morningBriefingKey({ briefingKind: 'morning', localDate });
   const key = deliveryKey(baseBriefingKey, deliverySlot);
   const completedRecipients = completedRecipientIds(
@@ -244,9 +220,11 @@ export async function runMorningBriefingDeliveryCycle({
   }
   const counts = emptyCounts({ syncFailed, staleCache, generated });
   const weather = deliverySlot === 'afternoon' && loadWeather ? await loadWeather({ localDate, timeZone }) : undefined;
-  const baseMessage = deliveryMessage({ briefing, members, slot: deliverySlot, isWeekend, weather });
-  const message = staleCache ? withStaleScheduleNote(baseMessage) : baseMessage;
-  const shouldSend = briefing.shouldSend && message.trim().length > 0;
+  const baseMessage = briefing.briefing
+    ? formatBriefingDeliveryMessage(briefing.briefing, members, { slot: deliverySlot, weather })
+    : briefing.message;
+  const shouldSend = briefing.shouldSend && baseMessage.trim().length > 0;
+  const message = shouldSend && staleCache ? withStaleScheduleNote(baseMessage) : baseMessage;
 
   for (const recipientUserId of pendingRecipientUserIds) {
     const claimResult = await recordDeliveryAttempt({

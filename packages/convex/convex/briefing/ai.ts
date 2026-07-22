@@ -69,8 +69,9 @@ export const morningBriefingSystemPrompt = [
   'Put an obligation in "watchouts" instead of a block line ONLY when it is a genuine issue: a schedule clash, unusual or off-pattern timing, or a high-stakes forgotten-item risk (passport, medication, signed form — not everyday water bottles).',
   'An obligation is either a block line or a watchout, never both. Keep run-of-the-mill handoffs and pickups as ordinary block lines.',
   'Keep low-priority ordinary events out unless they change readiness or coordination.',
-  'Use supplied weather only when it changes readiness. Never invent weather, locations, or private details beyond supplied weather and schedule sources.',
-  'If supplied weather mentions high humidity for allergy control, include one brief, calm mention in the headline or relevant block.',
+  'Weather must only decorate a calendar-derived obligation when it changes readiness; it must never create an obligation, headline, or watchout by itself.',
+  'Never send a briefing because of weather alone, including high humidity for allergy control. If no calendar source is worth mentioning, set shouldSend to false and leave every block empty.',
+  'Never invent weather, locations, or private details beyond supplied weather and schedule sources.',
   'Use generic, concise wording from the supplied sources and do not invent private details.',
   'Set shouldSend to false only when there is genuinely nothing worth sending.',
   'Return only the requested structured object. Use the supplied sourceId values exactly.'
@@ -200,10 +201,6 @@ export async function createAiMorningBriefing({
       sourceIds: fallback.sourceIds
     };
   }
-  if (isEmptyBriefing(briefing) && isWeekday(localDate, timeZone)) {
-    return createDeterministicMorningBriefing({ localDate, timeZone, calendarConfigs, events, members });
-  }
-
   return {
     briefingKind: 'morning',
     localDate,
@@ -232,17 +229,6 @@ function openAiMessageContent(body: unknown) {
   const firstChoice = body.choices[0];
   if (!isRecord(firstChoice) || !isRecord(firstChoice.message)) return null;
   return typeof firstChoice.message.content === 'string' ? firstChoice.message.content : null;
-}
-
-function isEmptyBriefing(briefing: MorningBriefing) {
-  return !briefing.shouldSend || [...briefing.morning, ...briefing.afternoon, ...briefing.watchouts].length === 0;
-}
-
-function isWeekday(localDate: string, timeZone: string) {
-  const weekday = new Intl.DateTimeFormat('en-AU', { timeZone, weekday: 'short' }).format(
-    new Date(`${localDate}T12:00:00Z`)
-  );
-  return weekday !== 'Sat' && weekday !== 'Sun';
 }
 
 function toAiSource(event: MorningBriefingEvent, timeZone: string): MorningBriefingAiSource {

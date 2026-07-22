@@ -111,9 +111,7 @@ export function formatBriefingDeliveryMessage(
 
   const lines: string[] = [];
   if (slot === 'morning') {
-    lines.push(normalizeBriefingText(briefing.headline).replace(/^Today:\s*/i, ''));
     appendBlock(lines, 'This morning:', briefing.morning, members);
-    appendWatchouts(lines, briefing.watchouts);
   } else {
     appendBlock(lines, 'This afternoon:', briefing.afternoon, members);
     if (briefing.afternoon.length > 0) {

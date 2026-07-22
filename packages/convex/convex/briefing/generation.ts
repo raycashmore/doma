@@ -21,7 +21,6 @@ import {
   createDeterministicMorningBriefing,
   type DeterministicMorningBriefing,
   formatBriefingDeliveryMessage,
-  formatMorningBriefing,
   isPlainBriefingText,
   isValidMorningBriefingForMembers,
   morningBriefingKey
@@ -262,7 +261,9 @@ export function renderBotMorningBriefingForReplay({
   if (briefing.briefing && !isValidMorningBriefingForMembers(briefing.briefing, members)) return null;
   if (!briefing.briefing && !isPlainBriefingText(briefing.message)) return null;
 
-  const message = briefing.briefing ? formatMorningBriefing(briefing.briefing, members) : briefing.message;
+  const message = briefing.briefing
+    ? formatBriefingDeliveryMessage(briefing.briefing, members, { slot: 'morning' })
+    : briefing.message;
   const shouldSend = briefing.shouldSend && message.trim().length > 0;
 
   return {

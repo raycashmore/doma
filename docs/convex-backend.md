@@ -144,13 +144,13 @@ delivery and `/briefing` replay stay idempotent.
 
 Morning briefing messages render as compact readiness summaries, not raw event
 feeds. Busy days lead with the shape of the day, then include morning,
-afternoon, and watchout sections when relevant. Scheduled delivery splits that
-stored briefing into a morning notification with the summary and morning details
-only, and an afternoon notification with afternoon details.
-On weekends, the morning notification renders the full daily summary instead,
-and the afternoon delivery slot does not run. AI-generated
-briefings can use optional Open-Meteo weather context to make the headline or
-block lines more practical, such as noting a cold start or wet pickup. Afternoon
+afternoon, and watchout sections when relevant. The morning notification and
+`/briefing` replay contain only the `This morning:` calendar details; the
+afternoon notification contains afternoon details. A morning notification is
+skipped when that section is empty, including on weekends; the afternoon
+delivery slot does not run on weekends. AI-generated briefings can use optional
+Open-Meteo weather context to make calendar-derived block lines more practical,
+such as noting a cold start or wet pickup. Afternoon
 delivery can refresh the same weather context and add relevant afternoon
 readiness notes when the afternoon message already has briefing content. Weather
 decorates a briefing that schedule requirements already justify; it does not

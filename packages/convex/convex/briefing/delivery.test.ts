@@ -105,9 +105,7 @@ describe('runMorningBriefingDeliveryCycle', () => {
     expect(sendNotification).toHaveBeenCalledWith({
       recipientUserId: 'user_123',
       topic: 'briefing.morning',
-      message: `Library bag and dancing pickup.
-
-This morning:
+      message: `This morning:
 - Child A: Bring library bag.`,
       metadata: {
         briefingKey: briefing.briefingKey,
@@ -120,9 +118,7 @@ This morning:
     expect(sendNotification).toHaveBeenCalledWith({
       recipientUserId: 'user_456',
       topic: 'briefing.morning',
-      message: `Library bag and dancing pickup.
-
-This morning:
+      message: `This morning:
 - Child A: Bring library bag.`,
       metadata: {
         briefingKey: briefing.briefingKey,
@@ -184,7 +180,7 @@ This morning:
     expect(recordDeliveryAttempt).not.toHaveBeenCalled();
   });
 
-  it('sends the full daily summary in the morning on weekends', async () => {
+  it('sends only the morning calendar details on weekends', async () => {
     const weekendDueAtMs = Date.parse('2026-06-12T21:35:00.000Z'); // 7:35am Saturday in Sydney
     const weekendBriefing: BotMorningBriefing = {
       ...briefing,
@@ -217,14 +213,8 @@ This morning:
     expect(sendNotification).toHaveBeenCalledWith({
       recipientUserId: 'user_123',
       topic: 'briefing.morning',
-      message: `Today:
-Library bag and dancing pickup.
-
-This morning:
-- Child A: Bring library bag.
-
-This afternoon:
-- Child A: Bring dancing shoes.`,
+      message: `This morning:
+- Child A: Bring library bag.`,
       metadata: {
         briefingKey: weekendBriefing.briefingKey,
         deliveryKey: `${weekendBriefing.briefingKey}:morning`,
@@ -340,9 +330,7 @@ This afternoon:
     expect(sendNotification).toHaveBeenCalledWith({
       recipientUserId: 'user_retry',
       topic: 'briefing.morning',
-      message: `Library bag and dancing pickup.
-
-This morning:
+      message: `This morning:
 - Child A: Bring library bag.`,
       metadata: {
         briefingKey: briefing.briefingKey,
@@ -418,9 +406,7 @@ This morning:
     expect(sendNotification).toHaveBeenCalledWith({
       recipientUserId: 'user_123',
       topic: 'briefing.morning',
-      message: `Library bag and dancing pickup.
-
-This morning:
+      message: `This morning:
 - Child A: Bring library bag.
 Note: schedule data may be stale because the latest calendar sync failed.`,
       metadata: {
@@ -463,9 +449,7 @@ Note: schedule data may be stale because the latest calendar sync failed.`,
     expect(sendNotification).toHaveBeenCalledWith({
       recipientUserId: 'user_123',
       topic: 'briefing.morning',
-      message: `Library bag and dancing pickup.
-
-This morning:
+      message: `This morning:
 - Child A: Bring library bag.`,
       metadata: {
         briefingKey: briefing.briefingKey,
@@ -555,6 +539,49 @@ This morning:
       attemptedAt: dueAtMs,
       status: 'skipped'
     });
+  });
+
+  it('does not let a stale-schedule note create a morning notification by itself', async () => {
+    const staleLastSyncedAt = dueAtMs - 13 * 60 * 60_000;
+    const weatherOnlyBriefing: BotMorningBriefing = {
+      ...briefing,
+      message: 'Cold and humid this morning.',
+      briefing: {
+        ...briefing.briefing!,
+        headline: 'Cold and humid this morning.',
+        morning: [],
+        afternoon: [],
+        watchouts: []
+      }
+    };
+    const syncSchedule = vi.fn(async () => ({ ok: false as const, lastSyncedAt: staleLastSyncedAt }));
+    const loadBriefing = vi.fn(async () => weatherOnlyBriefing);
+    const generateBriefing = vi.fn();
+    const sendNotification = vi.fn(async () => ({ status: 'sent' as const }));
+    const recordDeliveryAttempt = vi.fn(async () => ({ claimed: true as const }));
+
+    await expect(
+      runMorningBriefingDeliveryCycle({
+        nowMs: dueAtMs,
+        timeZone,
+        members,
+        recipientUserIds: ['user_123'],
+        attempts: [],
+        lastSyncedAt: staleLastSyncedAt,
+        syncSchedule,
+        loadBriefing,
+        generateBriefing,
+        sendNotification,
+        recordDeliveryAttempt
+      })
+    ).resolves.toMatchObject({
+      processed: 1,
+      sent: 0,
+      skipped: 1,
+      staleCache: true
+    });
+
+    expect(sendNotification).not.toHaveBeenCalled();
   });
 
   it('skips the afternoon slot when weather is ready but the briefing has no afternoon content', async () => {
