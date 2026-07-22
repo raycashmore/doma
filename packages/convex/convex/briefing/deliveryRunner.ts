@@ -13,6 +13,7 @@ import { botMorningBriefingFromStoreResult } from './botBriefing';
 import {
   type BotMorningBriefing,
   type BriefingDeliveryAttempt,
+  deliverySlotForTime,
   type MorningBriefingDeliveryCounts,
   runMorningBriefingDeliveryCycle
 } from './delivery';
@@ -63,7 +64,7 @@ type BriefingDeliveryScheduleStoreRefs = {
   completeBriefingDeliveryScheduleSlot: FunctionReference<
     'mutation',
     'internal',
-    { key: string; completedAt: number; outcome: 'completed' | 'failed' },
+    { key: string; completedAt: number; outcome: 'completed' | 'failed' | 'expired' },
     unknown
   >;
 };
@@ -239,18 +240,29 @@ export const runScheduledMorningBriefingDelivery = internalAction({
     scheduledAt: v.number()
   },
   handler: async (ctx, args) => {
+    const nowMs = Date.now();
+    const timeZone = process.env.MORNING_BRIEFING_TZ ?? process.env.SCHEDULE_TZ ?? 'Australia/Sydney';
+    const localDate = formatLocalDate(nowMs, timeZone);
+    if (localDate !== args.localDate || deliverySlotForTime(nowMs, timeZone) !== args.slot) {
+      await ctx.runMutation(deliveryScheduleStore.completeBriefingDeliveryScheduleSlot, {
+        key: args.scheduleSlotKey,
+        completedAt: nowMs,
+        outcome: 'expired'
+      });
+      return { expired: true as const };
+    }
     try {
       const result = await ctx.runAction(dueMorningDelivery, {});
       await ctx.runMutation(deliveryScheduleStore.completeBriefingDeliveryScheduleSlot, {
         key: args.scheduleSlotKey,
-        completedAt: Date.now(),
+        completedAt: nowMs,
         outcome: 'completed'
       });
       return result;
     } catch (error) {
       await ctx.runMutation(deliveryScheduleStore.completeBriefingDeliveryScheduleSlot, {
         key: args.scheduleSlotKey,
-        completedAt: Date.now(),
+        completedAt: nowMs,
         outcome: 'failed'
       });
       throw error;

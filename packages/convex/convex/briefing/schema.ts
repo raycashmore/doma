@@ -54,7 +54,7 @@ export const briefingDeliveryScheduleSlotsTable = defineTable({
   localDate: v.string(),
   slot: v.union(v.literal('morning'), v.literal('afternoon')),
   scheduledAt: v.number(),
-  status: v.union(v.literal('scheduled'), v.literal('completed'), v.literal('failed')),
+  status: v.union(v.literal('scheduled'), v.literal('completed'), v.literal('failed'), v.literal('expired')),
   completedAt: v.optional(v.number())
 })
   .index('by_key', ['key'])

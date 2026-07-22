@@ -27,7 +27,7 @@ type DeliveryScheduleRow = {
   localDate: string;
   slot: 'morning' | 'afternoon';
   scheduledAt: number;
-  status: 'scheduled' | 'completed' | 'failed';
+  status: 'scheduled' | 'completed' | 'failed' | 'expired';
   completedAt?: number;
 };
 
@@ -123,7 +123,7 @@ describe('briefing delivery schedule store', () => {
         completeBriefingDeliveryScheduleSlot: {
           handler: (
             ctx: ReturnType<typeof createContext>['ctx'],
-            args: { key: string; completedAt: number; outcome: 'completed' | 'failed' }
+            args: { key: string; completedAt: number; outcome: 'completed' | 'failed' | 'expired' }
           ) => Promise<unknown>;
         };
       };

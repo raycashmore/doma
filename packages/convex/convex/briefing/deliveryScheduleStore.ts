@@ -56,7 +56,7 @@ export const completeBriefingDeliveryScheduleSlot = internalMutation({
   args: {
     key: v.string(),
     completedAt: v.number(),
-    outcome: v.union(v.literal('completed'), v.literal('failed'))
+    outcome: v.union(v.literal('completed'), v.literal('failed'), v.literal('expired'))
   },
   handler: async (ctx, { key, completedAt, outcome }) => {
     const row = await ctx.db
