@@ -43,6 +43,7 @@ export type ScheduleEventRow = {
 };
 
 const ownerTagPattern = /@doma-owner\(([^\r\n)]*)\)/gi;
+const titleOwnerPrefixPattern = /^\s*(.+?)(?:\s*:\s*|\s+-\s+)(?=\S)/;
 
 function decodeHtmlEntity(entity: string): string {
   const namedEntities: Record<string, string> = {
@@ -78,14 +79,31 @@ export function sanitizeEventDescription(description: string): string {
     .trim();
 }
 
-// Per-person calendars are authoritative. A shared-calendar event is assigned
-// only when its description has one unambiguous, explicit owner tag.
+function resolveMemberReference(reference: string, members: MemberConfig[]): string | undefined {
+  const normalizedReference = reference.trim().toLocaleLowerCase();
+  const matches = members.filter(
+    (member) =>
+      member.id.toLocaleLowerCase() === normalizedReference ||
+      member.tokens.some((token) => token.trim().toLocaleLowerCase() === normalizedReference)
+  );
+  return matches.length === 1 ? matches[0]?.id : undefined;
+}
+
+// Per-person calendars are authoritative. Shared-calendar events use an
+// unambiguous structured title prefix, then fall back to an explicit owner tag.
 export function deriveWho(
   description: string | undefined,
   calendar: CalendarConfig,
-  members: MemberConfig[]
+  members: MemberConfig[],
+  title = ''
 ): string[] {
   if (calendar.who !== 'shared') return [calendar.who];
+
+  const titleReference = titleOwnerPrefixPattern.exec(title)?.[1];
+  if (titleReference) {
+    const memberId = resolveMemberReference(titleReference, members);
+    if (memberId) return [memberId];
+  }
 
   const matches = [...(description ?? '').matchAll(ownerTagPattern)];
   const ownerTag = matches[0];
@@ -94,14 +112,15 @@ export function deriveWho(
 
   const ownerIds = ownerTagContents
     .split(',')
-    .map((id) => id.trim())
-    .filter(Boolean);
-  const memberIds = new Set(members.map((member) => member.id));
+    .map((reference) => resolveMemberReference(reference, members))
+    .filter((id): id is string => Boolean(id));
+  const ownerReferences = ownerTagContents.split(',').map((reference) => reference.trim());
 
   if (
     ownerIds.length === 0 ||
+    ownerIds.length !== ownerReferences.length ||
     new Set(ownerIds).size !== ownerIds.length ||
-    ownerIds.some((ownerId) => !memberIds.has(ownerId))
+    ownerReferences.some((reference) => !reference)
   ) {
     return [];
   }
@@ -139,7 +158,7 @@ export function toScheduleEvent(
     end,
     allDay,
     title,
-    who: deriveWho(description, calendar, members),
+    who: deriveWho(description, calendar, members, title),
     recurring: Boolean(ev.recurringEventId),
     htmlLink: ev.htmlLink
   };

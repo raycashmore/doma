@@ -3,32 +3,53 @@ import { describe, expect, it } from 'vitest';
 import { type CalendarConfig, deriveWho, type GoogleEvent, type MemberConfig, toScheduleEvent } from './mapping';
 
 const members: MemberConfig[] = [
-  { id: 'memberA', tokens: ['Aria', 'mum'] },
-  { id: 'memberB', tokens: ['Boyd', 'dad'] },
-  { id: 'memberC', tokens: ['Cleo'] }
+  { id: 'memberA', tokens: ['Person One', 'parent'] },
+  { id: 'memberB', tokens: ['Person Two'] },
+  { id: 'memberC', tokens: ['Person Three', 'Person-Three'] }
 ];
 const personal: CalendarConfig = { calendarId: 'cal-a@group', who: 'memberA' };
 const shared: CalendarConfig = { calendarId: 'cal-shared@group', who: 'shared' };
 
 describe('deriveWho', () => {
   it('maps a per-person calendar to that member', () => {
-    expect(deriveWho(undefined, personal, members)).toEqual(['memberA']);
+    expect(deriveWho(undefined, personal, members, 'School')).toEqual(['memberA']);
   });
 
   it('leaves shared events unassigned when they have no owner tag', () => {
-    expect(deriveWho(undefined, shared, members)).toEqual([]);
+    expect(deriveWho(undefined, shared, members, 'Family dinner')).toEqual([]);
   });
 
-  it('does not infer shared event ownership from names in an event title', () => {
-    expect(deriveWho(undefined, shared, members)).toEqual([]);
+  it.each(['Person Three: School', 'person three - School', 'Person-Three: School', 'Person-Three - School'])(
+    'uses a configured name in a structured shared-event title prefix: %s',
+    (title) => {
+      expect(deriveWho(undefined, shared, members, title)).toEqual(['memberC']);
+    }
+  );
+
+  it('does not infer shared event ownership from a name elsewhere in the title', () => {
+    expect(deriveWho(undefined, shared, members, 'Going to School with Person Three')).toEqual([]);
   });
 
-  it('uses an explicit owner tag in a shared event description', () => {
-    expect(deriveWho('@doma-owner(memberC)', shared, members)).toEqual(['memberC']);
+  it('does not treat a hyphen within an ordinary title word as an ownership delimiter', () => {
+    expect(deriveWho(undefined, shared, members, 'parent-teacher meeting')).toEqual([]);
+  });
+
+  it('uses an embedded owner tag with a configured name as a fallback', () => {
+    expect(
+      deriveWho('Bring a bag.\nNotes: @doma-owner(person three)\nPickup at 3pm.', shared, members, 'School')
+    ).toEqual(['memberC']);
+  });
+
+  it('keeps accepting generic member ids in owner tags', () => {
+    expect(deriveWho('@doma-owner(memberC)', shared, members, 'School')).toEqual(['memberC']);
+  });
+
+  it('prefers a structured title prefix over the description fallback', () => {
+    expect(deriveWho('@doma-owner(memberC)', shared, members, 'Person One: School')).toEqual(['memberA']);
   });
 
   it('rejects an owner tag with an unknown member id', () => {
-    expect(deriveWho('@doma-owner(not-a-member)', shared, members)).toEqual([]);
+    expect(deriveWho('@doma-owner(not-a-member)', shared, members, 'School')).toEqual([]);
   });
 });
 
@@ -83,16 +104,29 @@ describe('toScheduleEvent', () => {
   it('uses a shared-event owner tag without including it in the saved description', () => {
     const event: GoogleEvent = {
       id: 'evt-owned',
-      summary: 'Dinner with Aria’s group',
-      description: '@doma-owner(memberB)\nMeet at 7pm',
+      summary: 'Dinner with Person One’s group',
+      description: 'Meet at 7pm\nNotes: @doma-owner(person two)\nBring dessert',
       htmlLink: 'https://calendar.google.com/evt-owned',
       start: { dateTime: '2026-05-26T16:00:00Z' },
       end: { dateTime: '2026-05-26T17:00:00Z' }
     };
 
     expect(toScheduleEvent(event, shared, members, 'UTC')).toMatchObject({
-      description: 'Meet at 7pm',
+      description: 'Meet at 7pm\nNotes:\nBring dessert',
       who: ['memberB']
+    });
+  });
+
+  it('derives shared-event ownership from a structured title prefix', () => {
+    const event: GoogleEvent = {
+      ...base,
+      summary: 'Person Three - Swim',
+      description: undefined
+    };
+
+    expect(toScheduleEvent(event, shared, members, 'UTC')).toMatchObject({
+      title: 'Person Three - Swim',
+      who: ['memberC']
     });
   });
 
