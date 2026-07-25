@@ -106,15 +106,8 @@ async function finishArchive() {
   <main class="home-page">
     <header class="page-header">
       <h1>Home</h1>
-      <span class="date-chip"><CalendarDays :size="16" aria-hidden="true" /> {{ today }}</span>
-    </header>
-
-    <section class="noticeboard-shell" aria-labelledby="noticeboard-title">
-      <div class="noticeboard-intro">
-        <div>
-          <p class="eyebrow">Household</p>
-          <h2 id="noticeboard-title">Noticeboard</h2>
-        </div>
+      <div class="page-header-actions">
+        <span class="date-chip"><CalendarDays :size="16" aria-hidden="true" /> {{ today }}</span>
         <button
           ref="addNoteButton"
           class="add-note-preview"
@@ -125,11 +118,18 @@ async function finishArchive() {
           <Plus :size="17" aria-hidden="true" /> Add note
         </button>
       </div>
+    </header>
 
-      <p v-if="HOME_RUNTIME.mode === 'demo'" class="connection-status">
-        Local preview · authentication and live data are disabled
-      </p>
-      <HomeConnectionStatus v-else :is-pending="boardPending" :has-error="boardError !== null" />
+    <section class="noticeboard-shell" aria-labelledby="noticeboard-title">
+      <div class="noticeboard-intro">
+        <h2 id="noticeboard-title">Noticeboard</h2>
+      </div>
+
+      <HomeConnectionStatus
+        v-if="HOME_RUNTIME.mode !== 'demo'"
+        :is-pending="boardPending"
+        :has-error="boardError !== null"
+      />
       <ActiveBoard
         :data="boardData"
         :is-pending="boardPending"

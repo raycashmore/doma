@@ -62,9 +62,13 @@ p {
 }
 
 h1,
-h2,
-h3 {
+h2 {
   font-family: var(--warm-font-display);
+  color: var(--warm-text-primary);
+}
+
+h3 {
+  font-family: var(--warm-font-body);
   color: var(--warm-text-primary);
 }
 
@@ -170,44 +174,53 @@ h3 {
 .home-page,
 .settings-page {
   width: 100%;
-  max-width: 1340px;
   margin: 0 auto;
 }
 
+.home-page {
+  position: relative;
+}
+
 .page-header {
-  min-height: 58px;
+  min-height: 64px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 4px 0 16px;
+  padding: 2px 2px 16px;
 }
 
 .page-header h1 {
   color: var(--warm-text-on-dark);
-  font-size: clamp(30px, 4vw, 38px);
+  font-size: clamp(30px, 2vw, 32px);
+  line-height: 1;
+}
+
+.page-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .date-chip {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 16px;
-  border-radius: 999px;
-  background: var(--warm-bg-dark-muted);
+  min-height: 40px;
+  padding: 8px 0;
   color: var(--warm-text-on-dark);
   font-size: 13px;
   font-weight: 700;
 }
 
 .noticeboard-shell {
-  min-height: calc(100vh - 112px);
+  min-height: calc(100vh - 120px);
   padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
   border: 1px solid var(--warm-border);
-  border-radius: 28px;
+  border-radius: 24px;
   background: var(--warm-bg-card);
   color: var(--warm-text-primary);
 }
@@ -221,7 +234,8 @@ h3 {
 
 .noticeboard-intro h2,
 .settings-heading h2 {
-  font-size: clamp(24px, 3vw, 30px);
+  font-size: clamp(26px, 2.2vw, 32px);
+  line-height: 1.1;
 }
 
 .eyebrow {
@@ -252,6 +266,23 @@ h3 {
   color: var(--warm-bg-card-soft);
 }
 
+.add-note-preview {
+  cursor: pointer;
+  transition:
+    background 160ms ease,
+    color 160ms ease;
+}
+
+.add-note-preview svg {
+  display: block;
+  flex: 0 0 auto;
+}
+
+.add-note-preview:hover:not(:disabled) {
+  background: var(--warm-accent);
+  color: var(--warm-text-on-dark);
+}
+
 .add-note-preview:disabled {
   cursor: not-allowed;
   opacity: 0.5;
@@ -259,11 +290,10 @@ h3 {
 
 .connection-status {
   width: fit-content;
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: var(--warm-bg-card-soft);
+  padding: 0;
+  background: transparent;
   color: var(--warm-text-secondary);
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .connection-status.connected::before {
@@ -289,46 +319,60 @@ h3 {
 }
 
 .active-board {
+  flex: 1;
   min-height: 0;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
   align-items: stretch;
+  align-content: stretch;
 }
 
 .board-card {
   position: relative;
-  min-width: 0;
+  min-width: min(300px, 100%);
   display: flex;
   flex-direction: column;
-  border-radius: 24px;
+  border-radius: 20px;
   color: var(--warm-text-primary);
+  box-shadow: inset 0 0 0 1px #3d2e2208;
+  transition: box-shadow 160ms ease;
+}
+
+.board-card:has(.card-link:hover) {
+  box-shadow: inset 0 0 0 1px #3d2e2224;
 }
 
 .today-card {
-  grid-column: 1 / span 2;
-  min-height: 344px;
-  gap: 16px;
+  flex: 2 1 520px;
+  min-height: 300px;
+  gap: 14px;
   padding: 28px;
   background: var(--home-today-card);
 }
 
 .meals-card {
-  min-height: 344px;
-  gap: 10px;
-  padding: 22px;
+  flex: 1 1 280px;
+  min-height: 300px;
+  gap: 12px;
+  padding: 24px;
   background: var(--home-meals-card);
 }
 
 .source-card {
-  min-height: 240px;
+  flex: 1 1 300px;
+  min-height: 260px;
   gap: 12px;
-  padding: 22px;
+  padding: 24px;
   background: var(--home-source-card);
 }
 
 .source-card-wide {
-  grid-column: span 2;
+  flex: 1.35 1 390px;
+}
+
+.source-card-compact {
+  min-height: 220px;
 }
 
 .source-card-high {
@@ -336,6 +380,7 @@ h3 {
 }
 
 .source-card-monthlySpendingInsight {
+  flex: 2 1 600px;
   background: var(--home-insight-card);
 }
 
@@ -418,38 +463,40 @@ h3 {
 }
 
 .source-icon {
-  width: 38px;
-  height: 38px;
+  width: 24px;
+  height: 24px;
   display: grid;
   place-items: center;
-  border-radius: 12px;
-  background: #ffffff66;
+  color: var(--warm-text-primary);
 }
 
 .source-card h3 {
-  font-size: clamp(22px, 3vw, 30px);
+  font-size: clamp(19px, 1.6vw, 24px);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
 }
 
 .source-detail {
   max-width: 54ch;
   color: var(--warm-text-secondary);
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.45;
 }
 
 .source-facts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  display: grid;
+  gap: 6px;
   margin: auto 0 0;
 }
 
 .source-facts div {
-  display: flex;
-  gap: 5px;
-  padding: 7px 9px;
-  border-radius: 10px;
-  background: #ffffff66;
+  display: grid;
+  grid-template-columns: minmax(64px, auto) minmax(0, 1fr);
+  gap: 8px;
+  padding: 0;
+  background: transparent;
   font-size: 12px;
+  line-height: 1.35;
 }
 
 .source-facts dt {
@@ -463,7 +510,7 @@ h3 {
 }
 
 .board-empty {
-  grid-column: 1 / -1;
+  flex: 1 1 100%;
   padding: 22px;
   border-radius: 18px;
   background: var(--warm-bg-card-soft);
@@ -473,8 +520,13 @@ h3 {
 
 .board-card h3 {
   padding-right: 36px;
-  font-size: clamp(27px, 4vw, 38px);
-  line-height: 1.05;
+}
+
+.today-card h3 {
+  font-family: var(--warm-font-display);
+  font-size: clamp(26px, 2.2vw, 34px);
+  line-height: 1.16;
+  letter-spacing: -0.025em;
 }
 
 .card-kicker {
@@ -482,15 +534,18 @@ h3 {
   align-items: center;
   gap: 8px;
   color: var(--warm-text-secondary);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .today-lines {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 1px solid #7c67552e;
 }
 
 .today-line {
@@ -522,9 +577,9 @@ h3 {
   align-items: center;
   gap: 10px;
   margin-top: auto;
-  padding: 10px 12px;
-  border-radius: 14px;
-  background: var(--warm-section-spend);
+  padding: 0;
+  background: transparent;
+  color: var(--warm-accent);
   font-size: 13px;
   font-weight: 750;
 }
@@ -539,10 +594,10 @@ h3 {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-family: var(--warm-font-display);
-  font-size: 19px;
+  font-family: var(--warm-font-body);
+  font-size: 18px;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.35;
 }
 
 .card-detail {
@@ -579,9 +634,15 @@ h3 {
   place-items: center;
   border: 0;
   border-radius: 50%;
-  background: #ffffff8c;
+  background: transparent;
   color: var(--warm-text-primary);
   cursor: pointer;
+  transition: background 160ms ease;
+}
+
+.card-overflow-trigger:hover,
+.card-overflow-trigger[aria-expanded='true'] {
+  background: #ffffff70;
 }
 
 .card-overflow-menu {
@@ -901,6 +962,24 @@ h3 {
   line-height: 1.6;
 }
 
+@media (max-width: 1120px) and (min-width: 761px) {
+  .today-card {
+    flex-basis: 420px;
+  }
+
+  .meals-card {
+    flex-basis: 220px;
+  }
+
+  .source-card-wide {
+    flex-basis: 340px;
+  }
+
+  .source-card-monthlySpendingInsight {
+    flex-basis: 480px;
+  }
+}
+
 @media (max-width: 760px) {
   .home-shell {
     display: block;
@@ -995,7 +1074,22 @@ h3 {
   }
 
   .page-header {
+    position: absolute;
+    z-index: 2;
+    top: 20px;
+    right: 20px;
+    min-height: 0;
+    display: block;
+    padding: 0;
+  }
+
+  .page-header h1,
+  .page-header .date-chip {
     display: none;
+  }
+
+  .page-header-actions {
+    display: block;
   }
 
   .notice-detail-page {
@@ -1013,14 +1107,20 @@ h3 {
     font-size: 23px;
   }
 
+  .noticeboard-intro {
+    min-height: 40px;
+  }
+
   .add-note-preview {
-    width: 36px;
-    min-height: 36px;
+    width: 40px;
+    min-height: 40px;
+    gap: 0;
     padding: 0;
     font-size: 0;
   }
 
   .active-board {
+    display: grid;
     grid-template-columns: 1fr;
     gap: 12px;
   }
