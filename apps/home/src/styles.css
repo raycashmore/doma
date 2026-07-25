@@ -225,14 +225,6 @@ h3 {
   color: var(--warm-text-primary);
 }
 
-.noticeboard-intro {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-}
-
-.noticeboard-intro h2,
 .settings-heading h2 {
   font-size: clamp(26px, 2.2vw, 32px);
   line-height: 1.1;
@@ -1002,6 +994,22 @@ h3 {
     padding: 12px 20px;
   }
 
+  .home-shell:has(.home-page) .mobile-header {
+    position: absolute;
+    z-index: 3;
+    inset: 0 0 auto;
+    justify-content: flex-end;
+    pointer-events: none;
+  }
+
+  .home-shell:has(.home-page) .mobile-brand {
+    display: none;
+  }
+
+  .home-shell:has(.home-page) .mobile-actions {
+    pointer-events: auto;
+  }
+
   .mobile-brand {
     display: flex;
     align-items: center;
@@ -1074,22 +1082,20 @@ h3 {
   }
 
   .page-header {
-    position: absolute;
-    z-index: 2;
-    top: 20px;
-    right: 20px;
-    min-height: 0;
-    display: block;
-    padding: 0;
+    min-height: 72px;
+    padding: 12px 68px 12px 20px;
   }
 
-  .page-header h1,
+  .home-shell:has(.mobile-actions > button) .page-header {
+    padding-right: 116px;
+  }
+
   .page-header .date-chip {
     display: none;
   }
 
   .page-header-actions {
-    display: block;
+    display: flex;
   }
 
   .notice-detail-page {
@@ -1103,12 +1109,8 @@ h3 {
     border-radius: 24px 24px 0 0;
   }
 
-  .noticeboard-intro h2 {
-    font-size: 23px;
-  }
-
-  .noticeboard-intro {
-    min-height: 40px;
+  .page-header h1 {
+    font-size: 25px;
   }
 
   .add-note-preview {

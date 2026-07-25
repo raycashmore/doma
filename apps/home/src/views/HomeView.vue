@@ -105,7 +105,7 @@ async function finishArchive() {
 <template>
   <main class="home-page">
     <header class="page-header">
-      <h1>Home</h1>
+      <h1 id="noticeboard-title">Noticeboard</h1>
       <div class="page-header-actions">
         <span class="date-chip"><CalendarDays :size="16" aria-hidden="true" /> {{ today }}</span>
         <button
@@ -121,10 +121,6 @@ async function finishArchive() {
     </header>
 
     <section class="noticeboard-shell" aria-labelledby="noticeboard-title">
-      <div class="noticeboard-intro">
-        <h2 id="noticeboard-title">Noticeboard</h2>
-      </div>
-
       <HomeConnectionStatus
         v-if="HOME_RUNTIME.mode !== 'demo'"
         :is-pending="boardPending"
