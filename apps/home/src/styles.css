@@ -938,20 +938,8 @@ h3 {
   gap: 64px;
 }
 
-.sign-in-copy {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 18px;
-}
-
-.sign-in-copy h1 {
+.sign-in-layout h1 {
   font-size: clamp(36px, 6vw, 58px);
-}
-
-.sign-in-copy > p:last-child {
-  color: var(--warm-text-tertiary);
-  line-height: 1.6;
 }
 
 @media (max-width: 1120px) and (min-width: 761px) {

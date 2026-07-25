@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { SignIn, useAuth, useClerk } from '@clerk/vue';
-import { RouterLink, RouterView } from 'vue-router';
+import { RouterView } from 'vue-router';
 
 import { HOME_IS_DEV } from '@/config/runtime';
 import { useConvexAuthBridge } from '@/integrations/convex/useConvexAuthBridge';
@@ -34,12 +34,7 @@ function buildUrlWithAuth(url: string) {
   </AppShell>
 
   <main v-else class="sign-in-layout">
-    <div class="sign-in-copy">
-      <RouterLink class="brand-mark" to="/" aria-label="Doma Home">D</RouterLink>
-      <p class="eyebrow">Private household space</p>
-      <h1>Sign in to Doma</h1>
-      <p>Your household information stays behind your existing Doma account.</p>
-    </div>
+    <h1>Sign in</h1>
     <SignIn routing="hash" fallback-redirect-url="/" :with-sign-up="false" />
   </main>
 </template>
