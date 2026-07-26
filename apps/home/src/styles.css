@@ -280,24 +280,6 @@ h3 {
   opacity: 0.5;
 }
 
-.connection-status {
-  width: fit-content;
-  padding: 0;
-  background: transparent;
-  color: var(--warm-text-secondary);
-  font-size: 13px;
-}
-
-.connection-status.connected::before {
-  content: '';
-  display: inline-block;
-  width: 7px;
-  height: 7px;
-  margin-right: 7px;
-  border-radius: 50%;
-  background: var(--warm-positive);
-}
-
 .sr-only {
   position: absolute;
   width: 1px;

@@ -4,7 +4,6 @@ import { computed, nextTick, ref } from 'vue';
 
 import ActiveBoard from '@/components/ActiveBoard.vue';
 import ArchiveConfirmation from '@/components/ArchiveConfirmation.vue';
-import HomeConnectionStatus from '@/components/HomeConnectionStatus.vue';
 import ManualNoteEditor from '@/components/ManualNoteEditor.vue';
 import { useActiveBoard } from '@/composables/useActiveBoard';
 import { type ArchiveableBoardItem, useBoardArchive } from '@/composables/useBoardArchive';
@@ -121,11 +120,6 @@ async function finishArchive() {
     </header>
 
     <section class="noticeboard-shell" aria-labelledby="noticeboard-title">
-      <HomeConnectionStatus
-        v-if="HOME_RUNTIME.mode !== 'demo'"
-        :is-pending="boardPending"
-        :has-error="boardError !== null"
-      />
       <ActiveBoard
         :data="boardData"
         :is-pending="boardPending"
