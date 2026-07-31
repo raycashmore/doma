@@ -60,7 +60,15 @@ export function AuthGate({ publishableKey, fixtureMode = false, children }: Auth
                 footerAction: 'hidden',
                 footerActionLink: 'hidden',
                 headerSubtitle: 'hidden',
-                headerTitle: 'hidden'
+                headerTitle: 'hidden',
+                logoBox: {
+                  height: '9rem',
+                  width: '9rem'
+                },
+                logoImage: {
+                  height: '9rem',
+                  width: '9rem'
+                }
               }
             }}
             fallbackRedirectUrl="/"

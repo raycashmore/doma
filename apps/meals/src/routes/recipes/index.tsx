@@ -16,7 +16,7 @@ function MealsCollectionRoute() {
   const visibleRecipes = FIXTURE_MODE ? listFixtureRecipes() : recipes;
 
   if (visibleRecipes === undefined) {
-    return <div className="h-full animate-pulse rounded-[28px] bg-warm-bg-card" aria-label="Loading meals" />;
+    return <div className="h-full rounded-[28px] bg-warm-bg-card" aria-label="Loading meals" />;
   }
 
   return <RecipeCollection recipes={visibleRecipes} />;
