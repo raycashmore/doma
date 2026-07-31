@@ -107,6 +107,59 @@ describe('runEmailTriageAgent', () => {
     expect(serializedTrace).not.toContain('Private supersession evidence');
   });
 
+  it('keeps a valid notice when model lifecycle metadata is malformed', async () => {
+    const saveTrace = vi.fn();
+    const result = await runEmailTriageAgent({
+      model: modelReturning({
+        outcome: 'notice',
+        category: 'admin',
+        priority: 'medium',
+        title: 'Updated event details',
+        body: 'The event details have changed.',
+        extractedFacts: [{ label: 'Status', value: 'Updated' }],
+        reason: '',
+        obligation: null,
+        relevance: 'Private malformed relevance metadata',
+        supersession: {
+          noticeId: 123,
+          confidence: false,
+          evidence: ['Private malformed supersession evidence']
+        }
+      }),
+      input,
+      saveTrace,
+      logError: vi.fn(),
+      createRunId: () => 'email_run_malformed_lifecycle',
+      now: () => 1_700_000_000_000
+    });
+
+    expect(result).toEqual({
+      runId: 'email_run_malformed_lifecycle',
+      status: 'completed',
+      outcome: expect.objectContaining({
+        kind: 'notice',
+        title: 'Updated event details',
+        relevance: {
+          relevantThrough: null,
+          dateConfidence: 'low',
+          dateEvidence: ''
+        },
+        supersession: {
+          noticeId: null,
+          confidence: 'low',
+          evidence: ''
+        }
+      })
+    });
+    expect(saveTrace).toHaveBeenCalledWith(
+      expect.objectContaining({
+        outcomeKind: 'notice',
+        validation: { status: 'valid' }
+      })
+    );
+    expect(JSON.stringify(saveTrace.mock.calls)).not.toContain('Private malformed');
+  });
+
   it('fails closed when the structured result contains an impossible due date', async () => {
     const saveTrace = vi.fn();
     const result = await runEmailTriageAgent({

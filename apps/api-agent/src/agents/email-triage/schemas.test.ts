@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { emailTriageOutcomeFromModel } from './schemas.js';
+import { emailTriageModelOutputSchema, emailTriageOutcomeFromModel } from './schemas.js';
 
 const modelNotice = {
   outcome: 'notice' as const,
@@ -86,6 +86,68 @@ describe('emailTriageOutcomeFromModel', () => {
 
   it('falls back when lifecycle metadata is invalid or targets an unsupplied notice', () => {
     expect(emailTriageOutcomeFromModel(invalidLifecycleNotice, new Set(['email_current']))).toMatchObject({
+      kind: 'notice',
+      relevance: {
+        relevantThrough: null,
+        dateConfidence: 'low',
+        dateEvidence: ''
+      },
+      supersession: {
+        noticeId: null,
+        confidence: 'low',
+        evidence: ''
+      }
+    });
+  });
+
+  it('falls back when lifecycle metadata is missing from an otherwise valid model notice', () => {
+    const output = emailTriageModelOutputSchema.parse({
+      outcome: 'notice',
+      category: 'school',
+      priority: 'high',
+      title: 'Return permission form',
+      body: 'The permission form is due next week.',
+      extractedFacts: [{ label: 'Due', value: '2026-07-31' }],
+      reason: '',
+      obligation: {
+        action: 'Return the permission form',
+        dueOn: '2026-07-31',
+        dueDateConfidence: 'high',
+        dueDateEvidence: 'due Friday 31 July'
+      }
+    });
+
+    expect(emailTriageOutcomeFromModel(output, new Set(['email_old']))).toMatchObject({
+      kind: 'notice',
+      relevance: {
+        relevantThrough: null,
+        dateConfidence: 'low',
+        dateEvidence: ''
+      },
+      supersession: {
+        noticeId: null,
+        confidence: 'low',
+        evidence: ''
+      }
+    });
+  });
+
+  it('falls back when lifecycle fields have malformed model types', () => {
+    const output = emailTriageModelOutputSchema.parse({
+      ...modelNotice,
+      relevance: {
+        relevantThrough: 20_260_802,
+        dateConfidence: 'certain',
+        dateEvidence: { private: 'malformed relevance evidence' }
+      },
+      supersession: {
+        noticeId: 123,
+        confidence: false,
+        evidence: ['malformed supersession evidence']
+      }
+    });
+
+    expect(emailTriageOutcomeFromModel(output, new Set(['email_old']))).toMatchObject({
       kind: 'notice',
       relevance: {
         relevantThrough: null,

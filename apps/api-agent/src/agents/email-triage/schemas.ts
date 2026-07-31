@@ -26,17 +26,23 @@ export const emailObligationModelSchema = z.object({
   dueDateEvidence: z.string().max(240)
 });
 
-const relevanceModelSchema = z.object({
-  relevantThrough: z.string().max(10).nullable(),
-  dateConfidence: z.enum(lifecycleDateConfidences),
-  dateEvidence: z.string().max(240)
-});
+const relevanceModelSchema = z
+  .object({
+    relevantThrough: z.unknown().optional(),
+    dateConfidence: z.unknown().optional(),
+    dateEvidence: z.unknown().optional()
+  })
+  .optional()
+  .catch(undefined);
 
-const supersessionModelSchema = z.object({
-  noticeId: z.string().max(128).nullable(),
-  confidence: z.enum(lifecycleDateConfidences),
-  evidence: z.string().max(240)
-});
+const supersessionModelSchema = z
+  .object({
+    noticeId: z.unknown().optional(),
+    confidence: z.unknown().optional(),
+    evidence: z.unknown().optional()
+  })
+  .optional()
+  .catch(undefined);
 
 export const emailTriageModelOutputSchema = z.object({
   outcome: z.enum(['notice', 'noNotice']),
@@ -57,12 +63,15 @@ const emailObligationSchema = emailObligationModelSchema.extend({
   dueDateEvidence: z.string().trim().min(1).max(240)
 });
 
-const relevanceSchema = relevanceModelSchema.extend({
+const relevanceSchema = z.object({
   relevantThrough: z.string().refine(isCalendarDate, 'Invalid relevance date').nullable(),
+  dateConfidence: z.enum(lifecycleDateConfidences),
   dateEvidence: z.string().trim().max(240)
 });
 
-const supersessionSchema = supersessionModelSchema.extend({
+const supersessionSchema = z.object({
+  noticeId: z.string().max(128).nullable(),
+  confidence: z.enum(lifecycleDateConfidences),
   evidence: z.string().trim().max(240)
 });
 
@@ -85,9 +94,9 @@ export const emailTriageOutcomeSchema = z.discriminatedUnion('kind', [
 ]);
 
 function normalizedRelevance(relevance: z.infer<typeof relevanceModelSchema>) {
-  const dateEvidence = relevance.dateEvidence.trim();
+  const dateEvidence = typeof relevance?.dateEvidence === 'string' ? relevance.dateEvidence.trim() : '';
   if (
-    relevance.relevantThrough !== null &&
+    typeof relevance?.relevantThrough === 'string' &&
     isCalendarDate(relevance.relevantThrough) &&
     dateEvidence.length > 0 &&
     (relevance.dateConfidence === 'medium' || relevance.dateConfidence === 'high')
@@ -101,9 +110,9 @@ function normalizedSupersession(
   supersession: z.infer<typeof supersessionModelSchema>,
   candidateIds: ReadonlySet<string>
 ) {
-  const evidence = supersession.evidence.trim();
+  const evidence = typeof supersession?.evidence === 'string' ? supersession.evidence.trim() : '';
   if (
-    supersession.noticeId !== null &&
+    typeof supersession?.noticeId === 'string' &&
     candidateIds.has(supersession.noticeId) &&
     supersession.confidence === 'high' &&
     evidence.length > 0

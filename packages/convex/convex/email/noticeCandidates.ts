@@ -33,6 +33,8 @@ export async function readActiveEmailNoticeCandidates(
   ctx: Pick<QueryCtx, 'db'>,
   options: { nowMs: number; limit?: number }
 ): Promise<ActiveEmailNoticeCandidate[]> {
+  const requestedLimit = options.limit ?? 20;
+  const limit = Number.isFinite(requestedLimit) && requestedLimit > 0 ? Math.min(Math.floor(requestedLimit), 20) : 0;
   const [notices, archives] = await Promise.all([
     ctx.db.query('emailNotices').collect(),
     ctx.db.query('boardArchives').collect()
@@ -47,7 +49,7 @@ export async function readActiveEmailNoticeCandidates(
   return (notices as EmailNoticeRow[])
     .filter(isActive)
     .sort((left, right) => right.createdAt - left.createdAt)
-    .slice(0, options.limit ?? 20)
+    .slice(0, limit)
     .map((notice) => ({
       id: notice._id,
       category: notice.category,

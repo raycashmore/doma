@@ -140,4 +140,47 @@ describe('readActiveEmailNoticeCandidates', () => {
     );
     expect(candidates[0]?.obligation).toEqual({ action: 'Action 20', dueOn: '2026-08-01' });
   });
+
+  it('clamps an explicit over-limit request to twenty candidates', async () => {
+    const ctx = createContext({
+      notices: Array.from({ length: 25 }, (_, index) => ({
+        _id: `email_${index}`,
+        capturedEmailId: `capturedEmails_${index}`,
+        category: 'other',
+        title: `Notice ${index}`,
+        body: `Body ${index}`,
+        extractedFacts: [],
+        obligation: null,
+        createdAt: index
+      }))
+    });
+
+    const candidates = await readActiveEmailNoticeCandidates(ctx as never, { nowMs: 100, limit: 100 });
+
+    expect(candidates).toHaveLength(20);
+    expect(candidates[0]?.id).toBe('email_24');
+    expect(candidates[19]?.id).toBe('email_5');
+  });
+
+  it.each([0, -1, Number.NaN, Number.POSITIVE_INFINITY])(
+    'returns no candidates for a non-positive or non-finite limit (%s)',
+    async (limit) => {
+      const ctx = createContext({
+        notices: [
+          {
+            _id: 'email_current',
+            capturedEmailId: 'capturedEmails_private',
+            category: 'admin',
+            title: 'Current notice',
+            body: 'Current body',
+            extractedFacts: [],
+            obligation: null,
+            createdAt: 1
+          }
+        ]
+      });
+
+      await expect(readActiveEmailNoticeCandidates(ctx as never, { nowMs: 100, limit })).resolves.toEqual([]);
+    }
+  );
 });
