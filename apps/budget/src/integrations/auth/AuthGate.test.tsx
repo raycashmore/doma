@@ -46,6 +46,7 @@ describe('AuthGate', () => {
     const signIn = screen.getByTestId('sign-in');
     expect(signIn).toBeDefined();
     expect(screen.queryByText('Hidden app content')).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Sign in to Budget' })).toBeDefined();
 
     expect(signInSpy).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -55,9 +56,20 @@ describe('AuthGate', () => {
         withSignUp: false,
         fallbackRedirectUrl: '/',
         appearance: expect.objectContaining({
+          layout: {
+            logoImageUrl: '/icons/icon.svg'
+          },
           elements: expect.objectContaining({
             footerAction: 'hidden',
-            footerActionLink: 'hidden'
+            footerActionLink: 'hidden',
+            logoBox: {
+              height: '9rem',
+              width: '9rem'
+            },
+            logoImage: {
+              height: '9rem',
+              width: '9rem'
+            }
           })
         })
       })

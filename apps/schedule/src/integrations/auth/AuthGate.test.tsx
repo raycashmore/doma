@@ -80,6 +80,8 @@ describe('AuthGate', () => {
 
     expect(screen.getByTestId('sign-in')).toBeDefined();
     expect(screen.queryByText('Hidden app content')).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Sign in to Schedule' })).toBeDefined();
+    expect(screen.getByRole('img', { name: 'Schedule' }).getAttribute('src')).toBe('/icons/icon.svg');
 
     expect(signInSpy).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -88,6 +90,9 @@ describe('AuthGate', () => {
         fallbackRedirectUrl: '/',
         appearance: expect.objectContaining({
           elements: expect.objectContaining({
+            card: {
+              paddingTop: '12rem'
+            },
             footerAction: 'hidden',
             footerActionLink: 'hidden'
           })

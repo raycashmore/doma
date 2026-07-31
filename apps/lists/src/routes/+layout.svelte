@@ -8,7 +8,7 @@
 
   import { dev } from '$app/environment';
   import { base } from '$app/paths';
-  import { type ClerkAuthState, loadClerkSession } from '$lib/shell/auth';
+  import { type ClerkAuthState, loadClerkSession, resolveAuthenticatedUrl } from '$lib/shell/auth';
   import ConvexAuthGate from '$lib/shell/ConvexAuthGate.svelte';
   import NavIcon from '$lib/shell/NavIcon.svelte';
   import { appNavItems, getAppHref } from '$lib/shell/navigation';
@@ -78,13 +78,15 @@
   const showAuthOverlay = $derived(
     authState.status === 'error' || (authState.status === 'ready' && !authState.session)
   );
+  const showSignIn = $derived(authState.status === 'ready' && !authState.session);
 
   function resolveAppHref(item: (typeof appNavItems)[number]): string {
-    return getAppHref(item, dev);
+    return resolveAuthenticatedUrl(authState, getAppHref(item, dev));
   }
 
   function resolveSettingsHref(): string {
-    return dev ? `http://localhost:${homeNavItem.devPort}${settingsPath}` : settingsPath;
+    const settingsHref = dev ? `http://localhost:${homeNavItem.devPort}${settingsPath}` : settingsPath;
+    return resolveAuthenticatedUrl(authState, settingsHref);
   }
 
   function reloadToUpdate(): void {
@@ -102,7 +104,11 @@
 </svelte:head>
 
 <main class="auth-screen" class:auth-screen--hidden={!showAuthOverlay} aria-hidden={!showAuthOverlay}>
-  <div class="sign-in-host" bind:this={signInElement}></div>
+  <h1 class="sr-only">Sign in to Lists</h1>
+  <div class="sign-in-shell" class:sign-in-shell--ready={showSignIn}>
+    <img class="sign-in-logo" src={`${base}/icons/icon.svg`} alt="Lists" />
+    <div class="sign-in-host" bind:this={signInElement}></div>
+  </div>
 
   {#if authState.status === 'error'}
     <section class="auth-panel" role="alert">{authState.message}</section>

@@ -1,12 +1,16 @@
 import { useRef } from 'react';
 import { ClerkProvider, SignIn, SignedIn, SignedOut, useClerk } from '@clerk/clerk-react';
 import { SignInLayout, UrlAuthProvider } from '@repo/shell';
+import { getBudgetBaseUrl } from '@/config/basePath';
 import type { ReactNode } from 'react';
 
 export type AuthGateProps = {
   publishableKey: string | undefined;
   children: ReactNode;
 };
+
+// eslint-disable-next-line turbo/no-undeclared-env-vars
+const AUTH_LOGO_URL = `${getBudgetBaseUrl(import.meta.env.DEV)}icons/icon.svg`;
 
 function ClerkUrlAuth({ children }: { children: ReactNode }) {
   const clerk = useClerk();
@@ -32,17 +36,25 @@ export function AuthGate({ publishableKey, children }: AuthGateProps) {
         <ClerkUrlAuth>{children}</ClerkUrlAuth>
       </SignedIn>
       <SignedOut>
-        <SignInLayout>
+        <SignInLayout title="Sign in to Budget">
           <SignIn
             appearance={{
               layout: {
-                logoImageUrl: 'icons/icon.svg'
+                logoImageUrl: AUTH_LOGO_URL
               },
               elements: {
                 footerAction: 'hidden',
                 footerActionLink: 'hidden',
                 headerSubtitle: 'hidden',
-                headerTitle: 'hidden'
+                headerTitle: 'hidden',
+                logoBox: {
+                  height: '9rem',
+                  width: '9rem'
+                },
+                logoImage: {
+                  height: '9rem',
+                  width: '9rem'
+                }
               }
             }}
             fallbackRedirectUrl="/"

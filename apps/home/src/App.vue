@@ -9,7 +9,7 @@ import { HOME_IS_DEV, HOME_RUNTIME } from './config/runtime';
 <template>
   <main v-if="HOME_RUNTIME.mode === 'misconfigured'" class="configuration-error">
     <p class="eyebrow">Configuration required</p>
-    <h1>Home cannot connect securely</h1>
+    <h1>Noticeboard cannot connect securely</h1>
     <p>{{ HOME_RUNTIME.message }}</p>
   </main>
 

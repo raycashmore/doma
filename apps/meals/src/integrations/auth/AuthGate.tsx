@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { ClerkProvider, SignIn, SignedIn, SignedOut, useClerk } from '@clerk/clerk-react';
 import { SignInLayout, UrlAuthProvider } from '@repo/shell';
+import { getMealsBaseUrl } from '@/config/basePath';
 import type { ReactNode } from 'react';
 
 export type AuthGateProps = {
@@ -8,6 +9,9 @@ export type AuthGateProps = {
   fixtureMode?: boolean;
   children: ReactNode;
 };
+
+// eslint-disable-next-line turbo/no-undeclared-env-vars
+const AUTH_LOGO_URL = `${getMealsBaseUrl(import.meta.env.DEV)}icons/icon.svg`;
 
 function ClerkUrlAuth({ children }: { children: ReactNode }) {
   const clerk = useClerk();
@@ -50,11 +54,11 @@ export function AuthGate({ publishableKey, fixtureMode = false, children }: Auth
         <ClerkUrlAuth>{children}</ClerkUrlAuth>
       </SignedIn>
       <SignedOut>
-        <SignInLayout>
+        <SignInLayout title="Sign in to Meals">
           <SignIn
             appearance={{
               layout: {
-                logoImageUrl: 'icons/icon.svg'
+                logoImageUrl: AUTH_LOGO_URL
               },
               elements: {
                 footerAction: 'hidden',

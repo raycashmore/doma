@@ -916,14 +916,14 @@ h3 {
   z-index: 1;
   top: 24px;
   left: 50%;
-  width: 72px;
-  height: 72px;
+  width: 9rem;
+  height: 9rem;
   transform: translateX(-50%);
   pointer-events: none;
 }
 
 .auth-card-with-logo {
-  gap: 88px !important;
+  gap: 160px !important;
 }
 
 .auth-header-hidden {

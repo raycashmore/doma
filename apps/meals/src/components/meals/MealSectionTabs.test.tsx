@@ -1,12 +1,8 @@
-import {
-  RouterProvider,
-  createMemoryHistory,
-  createRootRoute,
-  createRoute,
-  createRouter
-} from '@tanstack/react-router';
+import { RouterContextProvider, createMemoryHistory, createRouter } from '@tanstack/react-router';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { routeTree } from '@/routeTree.gen';
 
 import { MealSectionTabs } from './MealSectionTabs';
 
@@ -18,29 +14,25 @@ afterEach(() => {
 });
 
 describe('MealSectionTabs', () => {
-  it('opens the recipe collection from the Week view', async () => {
-    const rootRoute = createRootRoute();
-    const weekRoute = createRoute({
-      getParentRoute: () => rootRoute,
-      path: '/week',
-      component: () => <MealSectionTabs active="week" />
-    });
-    const recipesRoute = createRoute({
-      getParentRoute: () => rootRoute,
-      path: '/recipes',
-      component: () => <p>Recipe collection</p>
-    });
+  it('opens the generated recipe collection route under the production base path', async () => {
     const router = createRouter({
-      routeTree: rootRoute.addChildren([weekRoute, recipesRoute]),
-      history: createMemoryHistory({ initialEntries: ['/week'] })
+      routeTree,
+      basepath: '/meals',
+      history: createMemoryHistory({ initialEntries: ['/meals/week'] })
     });
 
     await router.load();
-    render(<RouterProvider router={router} />);
+    render(
+      <RouterContextProvider router={router}>
+        <MealSectionTabs active="week" />
+      </RouterContextProvider>
+    );
 
-    fireEvent.click(screen.getByRole('link', { name: 'Meals' }));
+    const mealsLink = screen.getByRole('link', { name: 'Meals' });
+    expect(mealsLink.getAttribute('href')).toBe('/meals/recipes');
+    fireEvent.click(mealsLink);
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/recipes'));
-    expect(screen.getByText('Recipe collection')).toBeDefined();
+    expect(router.state.matches.at(-1)?.routeId).toBe('/recipes/');
   });
 });

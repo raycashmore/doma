@@ -81,10 +81,22 @@
 }
 
 .sign-in-host:not(:empty) {
-  @apply grid w-full max-w-[28rem] place-items-center;
+  @apply grid w-full place-items-center;
 }
 
-.sign-in-host:not(:empty) + .auth-panel {
+.sign-in-shell {
+  @apply relative hidden w-full max-w-[28rem] place-items-center;
+}
+
+.sign-in-shell--ready {
+  @apply grid;
+}
+
+.sign-in-logo {
+  @apply pointer-events-none absolute left-1/2 top-8 z-10 size-36 -translate-x-1/2;
+}
+
+.sign-in-shell--ready + .auth-panel {
   display: none;
 }
 

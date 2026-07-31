@@ -3,6 +3,7 @@ import { loadClerkJsScript, loadClerkUIScript } from '@clerk/shared/loadClerkJsS
 
 export type ClerkSession = {
   userName: string;
+  buildUrlWithAuth: (url: string) => string;
   getToken: (options: { template?: 'convex'; skipCache?: boolean }) => Promise<string | null>;
   signOut: () => Promise<void>;
 };
@@ -12,6 +13,10 @@ export type ClerkAuthState =
   | { status: 'ready'; session: ClerkSession | null }
   | { status: 'disabled' }
   | { status: 'error'; message: string };
+
+export function resolveAuthenticatedUrl(authState: ClerkAuthState, url: string): string {
+  return authState.status === 'ready' && authState.session ? authState.session.buildUrlWithAuth(url) : url;
+}
 
 type ClerkBrowser = InstanceType<typeof Clerk>;
 type ClerkUIConstructor = NonNullable<Parameters<ClerkBrowser['load']>[0]>['ui'] extends {
@@ -49,7 +54,18 @@ export async function loadClerkSession(
   await clerk.load({ ui: { ClerkUI: (window as ClerkWindow).__internal_ClerkUICtor } });
 
   if (!clerk.user || !clerk.session) {
-    clerk.mountSignIn(signInElement, { forceRedirectUrl: '/lists' });
+    clerk.mountSignIn(signInElement, {
+      forceRedirectUrl: '/lists',
+      appearance: {
+        elements: {
+          card: {
+            paddingTop: '12rem'
+          },
+          headerSubtitle: 'hidden',
+          headerTitle: 'hidden'
+        }
+      }
+    });
     return { status: 'ready', session: null };
   }
 
@@ -59,6 +75,7 @@ export async function loadClerkSession(
     status: 'ready',
     session: {
       userName: clerk.user.fullName ?? clerk.user.primaryEmailAddress?.emailAddress ?? 'Household user',
+      buildUrlWithAuth: (url) => clerk.buildUrlWithAuth(url),
       getToken: (options) => session.getToken(options),
       signOut: async () => {
         await clerk.signOut();

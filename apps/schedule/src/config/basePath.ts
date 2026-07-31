@@ -5,3 +5,7 @@ export const SCHEDULE_BASE_URL = `${SCHEDULE_BASE_PATH}/`;
 export function getScheduleBasePath(isDev: boolean): string {
   return isDev ? '' : SCHEDULE_BASE_PATH;
 }
+
+export function getScheduleAssetUrl(isDev: boolean, assetPath: string): string {
+  return `${getScheduleBasePath(isDev)}/${assetPath}`;
+}

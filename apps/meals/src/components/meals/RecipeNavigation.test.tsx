@@ -1,12 +1,8 @@
-import {
-  RouterProvider,
-  createMemoryHistory,
-  createRootRoute,
-  createRoute,
-  createRouter
-} from '@tanstack/react-router';
+import { RouterContextProvider, createMemoryHistory, createRouter } from '@tanstack/react-router';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { routeTree } from '@/routeTree.gen';
 
 import { RecipeDetail } from './RecipeDetail';
 import { RecipeForm } from './RecipeForm';
@@ -19,72 +15,56 @@ afterEach(() => {
 });
 
 function createRecipeRouter(initialEntry: string) {
-  const rootRoute = createRootRoute();
-  const collectionRoute = createRoute({
-    getParentRoute: () => rootRoute,
-    path: '/recipes',
-    component: () => <p>Recipe collection</p>
-  });
-  const detailRoute = createRoute({
-    getParentRoute: () => rootRoute,
-    path: '/recipes/$recipeId',
-    component: () => (
-      <RecipeDetail
-        recipe={{
-          publicId: 'recipe_tray',
-          name: 'Chicken tray bake',
-          description: 'A dependable dinner.',
-          preparationTime: '40 min',
-          servingsLabel: 'Serves 4',
-          mealSuitabilityTags: ['Dinner'],
-          ingredientLines: ['4 chicken thighs'],
-          instructions: 'Roast until cooked.'
-        }}
-      />
-    )
-  });
-  const createRouteForm = createRoute({
-    getParentRoute: () => rootRoute,
-    path: '/recipes/new',
-    component: () => <RecipeForm mode="create" onSubmit={vi.fn()} />
-  });
-  const editRoute = createRoute({
-    getParentRoute: () => rootRoute,
-    path: '/recipes/$recipeId/edit',
-    component: () => <p>Edit recipe</p>
-  });
-  const weekRoute = createRoute({
-    getParentRoute: () => rootRoute,
-    path: '/week',
-    component: () => <p>Week plan</p>
-  });
-
   return createRouter({
-    routeTree: rootRoute.addChildren([collectionRoute, detailRoute, createRouteForm, editRoute, weekRoute]),
+    routeTree,
+    basepath: '/meals',
     history: createMemoryHistory({ initialEntries: [initialEntry] })
   });
 }
 
 describe('recipe collection navigation', () => {
   it('returns from recipe details to the collection', async () => {
-    const router = createRecipeRouter('/recipes/recipe_tray');
+    const router = createRecipeRouter('/meals/recipes/recipe_tray');
     await router.load();
-    render(<RouterProvider router={router} />);
+    render(
+      <RouterContextProvider router={router}>
+        <RecipeDetail
+          recipe={{
+            publicId: 'recipe_tray',
+            name: 'Chicken tray bake',
+            description: 'A dependable dinner.',
+            preparationTime: '40 min',
+            servingsLabel: 'Serves 4',
+            mealSuitabilityTags: ['Dinner'],
+            ingredientLines: ['4 chicken thighs'],
+            instructions: 'Roast until cooked.'
+          }}
+        />
+      </RouterContextProvider>
+    );
 
-    fireEvent.click(screen.getByRole('link', { name: 'Back' }));
+    const backLink = screen.getByRole('link', { name: 'Back' });
+    expect(backLink.getAttribute('href')).toBe('/meals/recipes');
+    fireEvent.click(backLink);
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/recipes'));
-    expect(screen.getByText('Recipe collection')).toBeDefined();
+    expect(router.state.matches.at(-1)?.routeId).toBe('/recipes/');
   });
 
   it('cancels new recipe creation back to the collection', async () => {
-    const router = createRecipeRouter('/recipes/new');
+    const router = createRecipeRouter('/meals/recipes/new');
     await router.load();
-    render(<RouterProvider router={router} />);
+    render(
+      <RouterContextProvider router={router}>
+        <RecipeForm mode="create" onSubmit={vi.fn()} />
+      </RouterContextProvider>
+    );
 
-    fireEvent.click(screen.getByRole('link', { name: 'Cancel' }));
+    const cancelLink = screen.getByRole('link', { name: 'Cancel' });
+    expect(cancelLink.getAttribute('href')).toBe('/meals/recipes');
+    fireEvent.click(cancelLink);
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/recipes'));
-    expect(screen.getByText('Recipe collection')).toBeDefined();
+    expect(router.state.matches.at(-1)?.routeId).toBe('/recipes/');
   });
 });
