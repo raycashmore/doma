@@ -9,6 +9,8 @@
 
 Home tests cover derived board ordering and empty/error/loading states, notice expiry and supersession, manual-note and archive mutation states, keyboard/focus behavior, Clerk–Convex auth lifecycle, Telegram pairing, production rewrite order, and the root service-worker boundary. Browser verification uses `pnpm --filter home dev:no-auth` for privacy-safe desktop/mobile layout, navigation, focus, overflow, and console checks. Authenticated write and cross-client behavior stays in deterministic integration tests unless a safe signed-in browser session is explicitly available.
 
+Forwarded-email coverage includes the deterministic lifecycle policy and DST arithmetic, bounded candidate selection, typed agent-result validation and persistence, high-confidence supersession, reminder creation and delivery, retry-safe legacy expiry backfill, and privacy boundaries. Tests use generic source data and assert typed outcomes rather than raw email content.
+
 ## CI Pipeline
 
 GitHub Actions (`.github/workflows/ci.yml`) runs on push to `main` and PRs:

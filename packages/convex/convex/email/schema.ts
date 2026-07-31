@@ -83,6 +83,7 @@ export const emailNoticesTable = defineTable({
   supersededAt: v.optional(v.number())
 })
   .index('by_created_at', ['createdAt'])
+  .index('by_expires_at', ['expiresAt'])
   .index('by_telegram_worthy', ['telegramWorthy', 'createdAt']);
 
 export const emailReminderCandidatesTable = defineTable({
