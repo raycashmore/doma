@@ -909,19 +909,39 @@ h3 {
   text-align: center;
 }
 
-.configuration-error h1,
-.sign-in-layout h1 {
+.configuration-error h1 {
   color: var(--warm-text-on-dark);
 }
 
 .sign-in-layout {
-  grid-template-columns: minmax(260px, 440px) minmax(320px, 420px);
+  grid-template-columns: minmax(320px, 420px);
   justify-content: center;
-  gap: 64px;
 }
 
-.sign-in-layout h1 {
-  font-size: clamp(36px, 6vw, 58px);
+.sign-in-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.sign-in-logo {
+  position: absolute;
+  z-index: 1;
+  top: 24px;
+  left: 50%;
+  width: 72px;
+  height: 72px;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.auth-card-with-logo {
+  gap: 88px !important;
+}
+
+.auth-header-hidden {
+  display: none !important;
 }
 
 @media (max-width: 1120px) and (min-width: 761px) {
@@ -1183,6 +1203,5 @@ h3 {
 
   .sign-in-layout {
     grid-template-columns: 1fr;
-    gap: 32px;
   }
 }

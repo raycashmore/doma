@@ -35,9 +35,14 @@ export function AuthGate({ publishableKey, children }: AuthGateProps) {
         <SignInLayout>
           <SignIn
             appearance={{
+              layout: {
+                logoImageUrl: 'icons/icon.svg'
+              },
               elements: {
                 footerAction: 'hidden',
-                footerActionLink: 'hidden'
+                footerActionLink: 'hidden',
+                headerSubtitle: 'hidden',
+                headerTitle: 'hidden'
               }
             }}
             fallbackRedirectUrl="/"

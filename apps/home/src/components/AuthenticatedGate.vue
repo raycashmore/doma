@@ -34,7 +34,20 @@ function buildUrlWithAuth(url: string) {
   </AppShell>
 
   <main v-else class="sign-in-layout">
-    <h1>Sign in</h1>
-    <SignIn routing="hash" fallback-redirect-url="/" :with-sign-up="false" />
+    <div class="sign-in-panel">
+      <img class="sign-in-logo" src="/icons/icon.svg" alt="Doma" />
+      <SignIn
+        routing="hash"
+        fallback-redirect-url="/"
+        :with-sign-up="false"
+        :appearance="{
+          elements: {
+            card: 'auth-card-with-logo',
+            headerSubtitle: 'auth-header-hidden',
+            headerTitle: 'auth-header-hidden'
+          }
+        }"
+      />
+    </div>
   </main>
 </template>
