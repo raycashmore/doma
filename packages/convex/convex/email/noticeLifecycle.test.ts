@@ -69,6 +69,34 @@ describe('emailNoticeExpiresAt', () => {
     ).toBe(Date.parse('2026-08-03T14:00:00.000Z'));
   });
 
+  it('falls back when an obligation date is not a valid calendar date', () => {
+    expect(
+      emailNoticeExpiresAt({
+        createdAt: Date.parse('2026-07-21T02:00:00.000Z'),
+        obligation: {
+          dueOn: '2026-02-30',
+          dueDateConfidence: 'high',
+          dueDateEvidence: 'The form is due on the stated date.'
+        },
+        relevance: noRelevance
+      })
+    ).toBe(Date.parse('2026-08-03T14:00:00.000Z'));
+  });
+
+  it('falls back when relevance has only whitespace date evidence', () => {
+    expect(
+      emailNoticeExpiresAt({
+        createdAt: Date.parse('2026-07-21T02:00:00.000Z'),
+        obligation: null,
+        relevance: {
+          relevantThrough: '2026-08-02',
+          dateConfidence: 'high',
+          dateEvidence: '   '
+        }
+      })
+    ).toBe(Date.parse('2026-08-03T14:00:00.000Z'));
+  });
+
   it('uses Sydney midnight across the daylight-saving transition', () => {
     expect(
       emailNoticeExpiresAt({
