@@ -23,13 +23,14 @@ export function isEmailReminderDeliverable({
 }: {
   nowMs: number;
   reminder: { dueOn: string };
-  notice: { archivedAt?: number; supersededAt?: number } | null;
+  notice: { archivedAt?: number; expiresAt?: number; supersededAt?: number } | null;
   isArchivedOnHome: boolean;
 }) {
   return Boolean(
     notice &&
     notice.archivedAt === undefined &&
     notice.supersededAt === undefined &&
+    (notice.expiresAt === undefined || notice.expiresAt > nowMs) &&
     !isArchivedOnHome &&
     nowMs < zonedCalendarDateTimeMs(reminder.dueOn, 0, 0, forwardedEmailTimeZone)
   );

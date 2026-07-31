@@ -1,6 +1,8 @@
 import { v } from 'convex/values';
 
 import { internalMutation, type MutationCtx } from '../_generated/server';
+import { readActiveEmailNoticeCandidates } from './noticeCandidates';
+import { emailNoticeExpiresAt, type EmailNoticeRelevance } from './noticeLifecycle';
 import { reminderCandidateForNotice } from './reminders';
 
 type Obligation = {
@@ -8,6 +10,12 @@ type Obligation = {
   dueOn: string;
   dueDateConfidence: 'low' | 'medium' | 'high';
   dueDateEvidence: string;
+};
+
+export type EmailNoticeSupersession = {
+  noticeId: string | null;
+  confidence: 'low' | 'medium' | 'high';
+  evidence: string;
 };
 
 export type EmailTriageAgentResult =
@@ -24,6 +32,8 @@ export type EmailTriageAgentResult =
             body: string;
             extractedFacts: Array<{ label: string; value: string }>;
             obligation: Obligation | null;
+            relevance: EmailNoticeRelevance;
+            supersession: EmailNoticeSupersession;
           };
     }
   | { runId: string; status: 'failed'; reason: 'invalid_ai_output' | 'provider_failure' };
@@ -65,6 +75,18 @@ export async function persistEmailTriageAgentResult(
   }
 
   const outcome = result.outcome;
+  const activeNoticeCandidates = await readActiveEmailNoticeCandidates(ctx, { nowMs: processedAt });
+  const supersededNoticeId =
+    outcome.supersession.confidence === 'high' &&
+    outcome.supersession.noticeId !== null &&
+    activeNoticeCandidates.some((candidate) => candidate.id === outcome.supersession.noticeId)
+      ? outcome.supersession.noticeId
+      : null;
+  const expiresAt = emailNoticeExpiresAt({
+    createdAt: processedAt,
+    obligation: outcome.obligation,
+    relevance: outcome.relevance
+  });
   const noticeId = await ctx.db.insert('emailNotices', {
     capturedEmailId: capturedEmailId as never,
     category: outcome.category,
@@ -76,8 +98,12 @@ export async function persistEmailTriageAgentResult(
     obligation: outcome.obligation,
     triageRunId: result.runId,
     createdAt: processedAt,
-    updatedAt: processedAt
+    updatedAt: processedAt,
+    expiresAt
   });
+  if (supersededNoticeId) {
+    await ctx.db.patch(supersededNoticeId as never, { supersededAt: processedAt, updatedAt: processedAt });
+  }
   const candidate = reminderCandidateForNotice(
     {
       noticeId,

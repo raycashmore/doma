@@ -8,6 +8,30 @@ const completedResult = {
   outcome: { kind: 'noNotice' as const, reason: 'No durable action.' }
 };
 
+const completeNoticeResult = {
+  runId: 'email_run_456',
+  status: 'completed' as const,
+  outcome: {
+    kind: 'notice' as const,
+    category: 'admin' as const,
+    priority: 'high' as const,
+    title: 'Submit form',
+    body: 'Submit the form by the stated date.',
+    extractedFacts: [],
+    obligation: null,
+    relevance: {
+      relevantThrough: '2026-08-04',
+      dateConfidence: 'medium' as const,
+      dateEvidence: 'The notice applies through 4 August.'
+    },
+    supersession: {
+      noticeId: 'emailNotices_123',
+      confidence: 'high' as const,
+      evidence: 'This replaces the earlier form notice.'
+    }
+  }
+};
+
 describe('email triage agent bridge', () => {
   it('calls the service agent with only the claimed captured-email id', async () => {
     const fetchImpl = vi.fn(async () => Response.json(completedResult));
@@ -31,6 +55,38 @@ describe('email triage agent bridge', () => {
 
   it('rejects malformed service output before persistence', () => {
     expect(parseEmailTriageAgentResult({ runId: 'x', status: 'completed', outcome: { kind: 'notice' } })).toBeNull();
+  });
+
+  it('preserves valid lifecycle metadata on a complete notice', () => {
+    expect(parseEmailTriageAgentResult(completeNoticeResult)).toEqual(completeNoticeResult);
+  });
+
+  it('falls back when a complete notice has malformed lifecycle metadata', () => {
+    expect(
+      parseEmailTriageAgentResult({
+        ...completeNoticeResult,
+        outcome: {
+          ...completeNoticeResult.outcome,
+          relevance: {
+            relevantThrough: 'not-a-date',
+            dateConfidence: 'high',
+            dateEvidence: 'An invalid date should not persist.'
+          },
+          supersession: {
+            noticeId: 123,
+            confidence: 'medium',
+            evidence: 'An invalid target should not persist.'
+          }
+        }
+      })
+    ).toEqual({
+      ...completeNoticeResult,
+      outcome: {
+        ...completeNoticeResult.outcome,
+        relevance: { relevantThrough: null, dateConfidence: 'low', dateEvidence: '' },
+        supersession: { noticeId: null, confidence: 'low', evidence: '' }
+      }
+    });
   });
 
   it('claims, delegates, then passes the typed result to the persistence mutation', async () => {
