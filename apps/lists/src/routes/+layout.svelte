@@ -156,7 +156,7 @@
         <h1 class="font-warm-display text-[24px] leading-[1.1] text-warm-text-on-dark md:text-[32px]">Lists</h1>
       </header>
 
-      <main class="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 pb-4 md:overflow-hidden">
+      <main class="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-0 pb-4 md:overflow-hidden md:px-4">
         {#if authState.status === 'loading'}
           <StartupPlaceholder message="Opening Lists..." detail="Checking your session and preparing your lists." />
         {:else if authState.status === 'disabled'}
