@@ -37,7 +37,7 @@ function ClerkAuthenticatedGate({ children }: { children: ReactNode }) {
 
   return (
     <SignInLayout title="Sign in to Schedule">
-      <div className="relative w-full">
+      <div className="relative w-full max-w-[25rem]">
         {/* This branded SVG must bypass image optimization so its base-path URL stays exact. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img

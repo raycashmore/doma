@@ -38,7 +38,7 @@ export function AuthGate({ publishableKey, children }: AuthGateProps) {
       </SignedIn>
       <SignedOut>
         <SignInLayout title="Sign in to Budget">
-          <div className="relative w-full">
+          <div className="relative w-full max-w-[25rem]">
             <img
               className="pointer-events-none absolute left-1/2 top-8 z-10 size-36 -translate-x-1/2"
               src={AUTH_LOGO_URL}
