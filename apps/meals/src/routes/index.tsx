@@ -1,23 +1,7 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { useQuery } from 'convex/react';
-import { api } from '@repo/convex';
-
-import { RecipeCollection } from '@/components/meals/RecipeCollection';
-import { FIXTURE_MODE } from '@/config/runtime';
-import { listFixtureRecipes } from '@/lib/fixtureRecipes';
+import { createFileRoute, redirect } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/')({
-  ssr: !FIXTURE_MODE,
-  component: MealsCollectionRoute
-});
-
-function MealsCollectionRoute() {
-  const recipes = useQuery(api.meals.queries.listRecipes, FIXTURE_MODE ? 'skip' : {});
-  const visibleRecipes = FIXTURE_MODE ? listFixtureRecipes() : recipes;
-
-  if (visibleRecipes === undefined) {
-    return <div className="h-full animate-pulse rounded-[28px] bg-warm-bg-card" aria-label="Loading meals" />;
+  beforeLoad: () => {
+    throw redirect({ to: '/week' });
   }
-
-  return <RecipeCollection recipes={visibleRecipes} />;
-}
+});

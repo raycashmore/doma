@@ -115,7 +115,7 @@ export function RecipeForm({
               Cancel
             </Link>
           ) : (
-            <Link to="/" className="rounded-full px-3.5 py-2 text-xs font-semibold text-warm-text-secondary">
+            <Link to="/recipes" className="rounded-full px-3.5 py-2 text-xs font-semibold text-warm-text-secondary">
               Cancel
             </Link>
           )}

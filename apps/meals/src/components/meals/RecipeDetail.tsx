@@ -11,7 +11,7 @@ export function RecipeDetail({ recipe }: { recipe: RecipeView }) {
         <MealSectionTabs />
         <div className="flex items-center gap-2">
           <Link
-            to="/"
+            to="/recipes"
             className="hidden rounded-full border border-warm-border px-3.5 py-2 text-xs font-semibold text-warm-text-secondary md:flex md:items-center md:gap-1.5"
           >
             <ArrowLeft aria-hidden="true" size={14} /> Back
