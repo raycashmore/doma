@@ -17,7 +17,12 @@ describe('email triage agent Convex boundary', () => {
       attachmentMetadata: [],
       processingState: 'processing'
     };
-    const ctx = { db: { get: vi.fn().mockResolvedValue(email) } };
+    const ctx = {
+      db: {
+        get: vi.fn().mockResolvedValue(email),
+        query: () => ({ collect: async () => [] })
+      }
+    };
 
     await expect(
       readClaimedEmailInput(ctx as never, {
@@ -31,7 +36,8 @@ describe('email triage agent Convex boundary', () => {
       receivedAt: 10,
       textBody: 'The form is due Friday.',
       hasAttachments: false,
-      attachmentMetadata: []
+      attachmentMetadata: [],
+      activeNoticeCandidates: []
     });
   });
 
@@ -44,6 +50,103 @@ describe('email triage agent Convex boundary', () => {
         capturedEmailId: 'capturedEmails_123'
       })
     ).resolves.toBeNull();
+  });
+
+  it('adds only visible, bounded notice candidates after the email is claimed', async () => {
+    vi.stubEnv('AGENT_SERVICE_TOKEN', 'expected');
+    const notices = [
+      ...Array.from({ length: 21 }, (_, index) => ({
+        _id: `email_${index}`,
+        capturedEmailId: `capturedEmails_${index}`,
+        category: 'admin' as const,
+        title: `Notice ${index}`,
+        body: `Body ${index}`,
+        rawBody: 'private prior raw body',
+        extractedFacts: [{ label: 'Fact', value: `Value ${index}` }],
+        obligation: null,
+        createdAt: index
+      })),
+      {
+        _id: 'email_expired',
+        category: 'school' as const,
+        title: 'Expired',
+        body: 'Expired body',
+        extractedFacts: [],
+        obligation: null,
+        createdAt: 22,
+        expiresAt: 100
+      },
+      {
+        _id: 'email_superseded',
+        category: 'school' as const,
+        title: 'Superseded',
+        body: 'Superseded body',
+        extractedFacts: [],
+        obligation: null,
+        createdAt: 23,
+        supersededAt: 99
+      }
+    ];
+    const ctx = {
+      db: {
+        get: vi.fn().mockResolvedValue({
+          _id: 'capturedEmails_123',
+          subject: 'Permission form',
+          fromEmail: 'forwarder@example.com',
+          receivedAt: 10,
+          textBody: 'The form is due Friday.',
+          hasAttachments: false,
+          attachmentMetadata: [],
+          processingState: 'processing'
+        }),
+        query: (table: 'emailNotices' | 'boardArchives') => ({
+          collect: async () =>
+            table === 'emailNotices'
+              ? notices
+              : [
+                  {
+                    occurrenceId: 'emailNotice:email_19',
+                    sourceKind: 'forwardedEmail',
+                    archivedByUserId: 'user_123',
+                    archivedAt: 99
+                  }
+                ]
+        })
+      }
+    };
+
+    const input = await readClaimedEmailInput(
+      ctx as never,
+      { serviceToken: 'expected', capturedEmailId: 'capturedEmails_123' },
+      { nowMs: 100 }
+    );
+
+    expect(input?.activeNoticeCandidates).toHaveLength(20);
+    expect(input?.activeNoticeCandidates.map((candidate) => candidate.id)).toEqual([
+      'email_20',
+      'email_18',
+      'email_17',
+      'email_16',
+      'email_15',
+      'email_14',
+      'email_13',
+      'email_12',
+      'email_11',
+      'email_10',
+      'email_9',
+      'email_8',
+      'email_7',
+      'email_6',
+      'email_5',
+      'email_4',
+      'email_3',
+      'email_2',
+      'email_1',
+      'email_0'
+    ]);
+    expect(JSON.stringify(input?.activeNoticeCandidates)).not.toContain('private prior raw body');
+    expect(JSON.stringify(input?.activeNoticeCandidates)).not.toContain('email_expired');
+    expect(JSON.stringify(input?.activeNoticeCandidates)).not.toContain('email_superseded');
   });
 
   it('requires the dedicated service token and never persists it in traces', async () => {

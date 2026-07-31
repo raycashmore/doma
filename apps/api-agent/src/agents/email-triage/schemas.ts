@@ -3,6 +3,7 @@ import { z } from 'zod';
 export const emailNoticeCategories = ['school', 'admin', 'schedule', 'finance', 'other'] as const;
 export const emailNoticePriorities = ['low', 'medium', 'high'] as const;
 export const dueDateConfidences = ['low', 'medium', 'high'] as const;
+export const lifecycleDateConfidences = ['low', 'medium', 'high'] as const;
 
 const calendarDatePattern = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -25,6 +26,18 @@ export const emailObligationModelSchema = z.object({
   dueDateEvidence: z.string().max(240)
 });
 
+const relevanceModelSchema = z.object({
+  relevantThrough: z.string().max(10).nullable(),
+  dateConfidence: z.enum(lifecycleDateConfidences),
+  dateEvidence: z.string().max(240)
+});
+
+const supersessionModelSchema = z.object({
+  noticeId: z.string().max(128).nullable(),
+  confidence: z.enum(lifecycleDateConfidences),
+  evidence: z.string().max(240)
+});
+
 export const emailTriageModelOutputSchema = z.object({
   outcome: z.enum(['notice', 'noNotice']),
   category: z.enum(emailNoticeCategories),
@@ -33,13 +46,24 @@ export const emailTriageModelOutputSchema = z.object({
   body: z.string().max(600),
   extractedFacts: z.array(extractedFactSchema).max(12),
   reason: z.string().max(320),
-  obligation: emailObligationModelSchema.nullable()
+  obligation: emailObligationModelSchema.nullable(),
+  relevance: relevanceModelSchema,
+  supersession: supersessionModelSchema
 });
 
 const emailObligationSchema = emailObligationModelSchema.extend({
   action: z.string().trim().min(1).max(240),
   dueOn: z.string().refine(isCalendarDate, 'Invalid obligation due date'),
   dueDateEvidence: z.string().trim().min(1).max(240)
+});
+
+const relevanceSchema = relevanceModelSchema.extend({
+  relevantThrough: z.string().refine(isCalendarDate, 'Invalid relevance date').nullable(),
+  dateEvidence: z.string().trim().max(240)
+});
+
+const supersessionSchema = supersessionModelSchema.extend({
+  evidence: z.string().trim().max(240)
 });
 
 export const emailTriageOutcomeSchema = z.discriminatedUnion('kind', [
@@ -50,7 +74,9 @@ export const emailTriageOutcomeSchema = z.discriminatedUnion('kind', [
     title: z.string().trim().min(1).max(120),
     body: z.string().trim().min(1).max(600),
     extractedFacts: z.array(extractedFactSchema).max(12),
-    obligation: emailObligationSchema.nullable()
+    obligation: emailObligationSchema.nullable(),
+    relevance: relevanceSchema,
+    supersession: supersessionSchema
   }),
   z.object({
     kind: z.literal('noNotice'),
@@ -58,7 +84,39 @@ export const emailTriageOutcomeSchema = z.discriminatedUnion('kind', [
   })
 ]);
 
-export function emailTriageOutcomeFromModel(output: z.infer<typeof emailTriageModelOutputSchema>) {
+function normalizedRelevance(relevance: z.infer<typeof relevanceModelSchema>) {
+  const dateEvidence = relevance.dateEvidence.trim();
+  if (
+    relevance.relevantThrough !== null &&
+    isCalendarDate(relevance.relevantThrough) &&
+    dateEvidence.length > 0 &&
+    (relevance.dateConfidence === 'medium' || relevance.dateConfidence === 'high')
+  ) {
+    return { relevantThrough: relevance.relevantThrough, dateConfidence: relevance.dateConfidence, dateEvidence };
+  }
+  return { relevantThrough: null, dateConfidence: 'low' as const, dateEvidence: '' };
+}
+
+function normalizedSupersession(
+  supersession: z.infer<typeof supersessionModelSchema>,
+  candidateIds: ReadonlySet<string>
+) {
+  const evidence = supersession.evidence.trim();
+  if (
+    supersession.noticeId !== null &&
+    candidateIds.has(supersession.noticeId) &&
+    supersession.confidence === 'high' &&
+    evidence.length > 0
+  ) {
+    return { noticeId: supersession.noticeId, confidence: 'high' as const, evidence };
+  }
+  return { noticeId: null, confidence: 'low' as const, evidence: '' };
+}
+
+export function emailTriageOutcomeFromModel(
+  output: z.infer<typeof emailTriageModelOutputSchema>,
+  candidateIds: ReadonlySet<string>
+) {
   return emailTriageOutcomeSchema.parse(
     output.outcome === 'notice'
       ? {
@@ -68,11 +126,28 @@ export function emailTriageOutcomeFromModel(output: z.infer<typeof emailTriageMo
           title: output.title,
           body: output.body,
           extractedFacts: output.extractedFacts,
-          obligation: output.obligation
+          obligation: output.obligation,
+          relevance: normalizedRelevance(output.relevance),
+          supersession: normalizedSupersession(output.supersession, candidateIds)
         }
       : { kind: 'noNotice', reason: output.reason }
   );
 }
+
+export const activeNoticeCandidateSchema = z.object({
+  id: z.string().min(1).max(128),
+  category: z.enum(emailNoticeCategories),
+  title: z.string().max(120),
+  body: z.string().max(600),
+  extractedFacts: z.array(extractedFactSchema).max(12),
+  obligation: z
+    .object({
+      action: z.string().max(240),
+      dueOn: z.string().max(10)
+    })
+    .nullable(),
+  createdAt: z.number()
+});
 
 export const emailTriageRunInputSchema = z.object({
   capturedEmailId: z.string().min(1),
@@ -86,7 +161,8 @@ export const emailTriageRunInputSchema = z.object({
       filename: z.string().optional(),
       contentType: z.string().optional()
     })
-  )
+  ),
+  activeNoticeCandidates: z.array(activeNoticeCandidateSchema).max(20)
 });
 
 export type EmailTriageRunInput = z.infer<typeof emailTriageRunInputSchema>;
