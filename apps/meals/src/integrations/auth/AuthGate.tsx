@@ -1,8 +1,9 @@
 import { useRef } from 'react';
 import { ClerkProvider, SignIn, SignedIn, SignedOut, useClerk } from '@clerk/clerk-react';
-import { SignInLayout, UrlAuthProvider } from '@repo/shell';
-import { getMealsBaseUrl } from '@/config/basePath';
+import { SignInLayout, UrlAuthProvider, createClerkSignInAppearance } from '@repo/shell';
 import type { ReactNode } from 'react';
+
+import { getMealsBaseUrl } from '@/config/basePath';
 
 export type AuthGateProps = {
   publishableKey: string | undefined;
@@ -56,25 +57,7 @@ export function AuthGate({ publishableKey, fixtureMode = false, children }: Auth
       <SignedOut>
         <SignInLayout title="Sign in to Meals">
           <SignIn
-            appearance={{
-              layout: {
-                logoImageUrl: AUTH_LOGO_URL
-              },
-              elements: {
-                footerAction: 'hidden',
-                footerActionLink: 'hidden',
-                headerSubtitle: 'hidden',
-                headerTitle: 'hidden',
-                logoBox: {
-                  height: '9rem',
-                  width: '9rem'
-                },
-                logoImage: {
-                  height: '9rem',
-                  width: '9rem'
-                }
-              }
-            }}
+            appearance={createClerkSignInAppearance(AUTH_LOGO_URL)}
             fallbackRedirectUrl="/"
             routing="hash"
             signUpUrl=""

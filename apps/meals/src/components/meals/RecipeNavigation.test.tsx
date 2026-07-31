@@ -2,10 +2,10 @@ import { RouterContextProvider, createMemoryHistory, createRouter } from '@tanst
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { routeTree } from '@/routeTree.gen';
-
 import { RecipeDetail } from './RecipeDetail';
 import { RecipeForm } from './RecipeForm';
+
+import { routeTree } from '@/routeTree.gen';
 
 beforeEach(() => vi.stubGlobal('scrollTo', vi.fn()));
 
@@ -26,6 +26,9 @@ describe('recipe collection navigation', () => {
   it('returns from recipe details to the collection', async () => {
     const router = createRecipeRouter('/meals/recipes/recipe_tray');
     await router.load();
+    expect(router.state.location.pathname).toBe('/recipes/recipe_tray');
+    expect(router.state.matches.at(-1)?.routeId).toBe('/recipes/$recipeId');
+
     render(
       <RouterContextProvider router={router}>
         <RecipeDetail
@@ -49,6 +52,20 @@ describe('recipe collection navigation', () => {
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/recipes'));
     expect(router.state.matches.at(-1)?.routeId).toBe('/recipes/');
+  });
+
+  it('loads the generated edit route under the production base path', async () => {
+    const router = createRecipeRouter('/meals/recipes/recipe_tray/edit');
+    await router.load();
+
+    expect(router.state.location.pathname).toBe('/recipes/recipe_tray/edit');
+    expect(router.state.matches.at(-1)?.routeId).toBe('/recipes/$recipeId_/edit');
+    expect(
+      router.buildLocation({
+        to: '/recipes/$recipeId/edit',
+        params: { recipeId: 'recipe_tray' }
+      }).href
+    ).toBe('/meals/recipes/recipe_tray/edit');
   });
 
   it('cancels new recipe creation back to the collection', async () => {

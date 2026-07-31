@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 import { getScheduleAssetUrl } from '@/config/basePath';
 
-export function createScheduleMetadata(isDev: boolean): Metadata {
+export function createScheduleMetadata(isDev: boolean) {
   return {
     applicationName: 'Schedule',
     title: 'Schedule',
@@ -17,5 +17,5 @@ export function createScheduleMetadata(isDev: boolean): Metadata {
         sizes: '180x180'
       }
     ]
-  };
+  } satisfies Metadata;
 }

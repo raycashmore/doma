@@ -12,6 +12,28 @@ type UrlAuthBuilder = (url: string) => string;
 
 const UrlAuthContext = createContext<UrlAuthBuilder | null>(null);
 
+export function createClerkSignInAppearance(logoImageUrl: string) {
+  return {
+    layout: {
+      logoImageUrl
+    },
+    elements: {
+      footerAction: 'hidden',
+      footerActionLink: 'hidden',
+      headerSubtitle: 'hidden',
+      headerTitle: 'hidden',
+      logoBox: {
+        height: '9rem',
+        width: '9rem'
+      },
+      logoImage: {
+        height: '9rem',
+        width: '9rem'
+      }
+    }
+  };
+}
+
 export function useUrlAuth(): UrlAuthBuilder | null {
   return useContext(UrlAuthContext);
 }

@@ -1,7 +1,7 @@
 export { AppFrame } from './AppFrame';
 export type { AppId } from './apps';
 export { APPS, getActiveAppId, getAppHref } from './apps';
-export { SignInLayout, UrlAuthProvider, useUrlAuth } from './auth';
+export { createClerkSignInAppearance, SignInLayout, UrlAuthProvider, useUrlAuth } from './auth';
 export { Header } from './Header';
 export { MobileNav } from './MobileNav';
 export { PwaUpdater, usePwaUpdate } from './pwa';

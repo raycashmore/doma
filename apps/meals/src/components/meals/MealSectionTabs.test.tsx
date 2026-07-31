@@ -2,9 +2,9 @@ import { RouterContextProvider, createMemoryHistory, createRouter } from '@tanst
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { routeTree } from '@/routeTree.gen';
-
 import { MealSectionTabs } from './MealSectionTabs';
+
+import { routeTree } from '@/routeTree.gen';
 
 beforeEach(() => vi.stubGlobal('scrollTo', vi.fn()));
 
