@@ -96,7 +96,7 @@ export function RecipeForm({
   }
 
   const fieldClass =
-    'mt-1.5 w-full rounded-[11px] border border-warm-border bg-warm-bg-card-soft px-3 py-2.5 text-sm outline-none focus:border-warm-accent-soft';
+    'mt-1.5 w-full rounded-[11px] border border-warm-border bg-white px-3 py-2.5 text-sm outline-none focus:border-warm-accent-soft';
 
   return (
     <form
@@ -115,7 +115,7 @@ export function RecipeForm({
               Cancel
             </Link>
           ) : (
-            <Link to="/" className="rounded-full px-3.5 py-2 text-xs font-semibold text-warm-text-secondary">
+            <Link to="/recipes" className="rounded-full px-3.5 py-2 text-xs font-semibold text-warm-text-secondary">
               Cancel
             </Link>
           )}
@@ -226,7 +226,7 @@ export function RecipeForm({
                 <Plus aria-hidden="true" size={13} /> Add line
               </button>
             </div>
-            <div className="mt-3 divide-y divide-warm-border rounded-xl border border-warm-border bg-warm-bg-card">
+            <div className="mt-3 divide-y divide-warm-border rounded-xl border border-warm-border bg-white">
               {ingredientRows.map((row, index) => (
                 <div key={row.id} className="flex items-center gap-1 px-2.5">
                   <div className="flex shrink-0">
@@ -254,7 +254,7 @@ export function RecipeForm({
                     value={row.value}
                     onChange={(event) => updateIngredient(index, event.target.value)}
                     placeholder="e.g. 4 chicken thighs"
-                    className="min-w-0 flex-1 bg-transparent py-2.5 text-sm outline-none"
+                    className="min-w-0 flex-1 bg-white py-2.5 text-sm outline-none"
                   />
                   {ingredientRows.length > 1 ? (
                     <button
@@ -279,7 +279,7 @@ export function RecipeForm({
               aria-label="Instructions"
               value={value.instructions}
               onChange={(event) => setValue({ ...value, instructions: event.target.value })}
-              className="mt-2 min-h-32 flex-1 resize-none rounded-xl border border-warm-border bg-warm-bg-card p-3 text-sm font-normal leading-6 text-warm-text-primary outline-none focus:border-warm-accent-soft"
+              className="mt-2 min-h-32 flex-1 resize-none rounded-xl border border-warm-border bg-white p-3 text-sm font-normal leading-6 text-warm-text-primary outline-none focus:border-warm-accent-soft"
             />
           </label>
         </div>

@@ -135,7 +135,7 @@ function ConvexWeekRoute({
 
 export function WeeklyMealPlanLoading() {
   return (
-    <section aria-label="Loading weekly meal plan" className="h-full animate-pulse rounded-[28px] bg-warm-bg-card p-6">
+    <section aria-label="Loading weekly meal plan" className="h-full rounded-[28px] bg-warm-bg-card p-6">
       <p className="font-warm-display text-2xl text-warm-text-primary">Loading week plan…</p>
       <div className="mt-5 grid h-[calc(100%_-_3rem)] grid-cols-2 gap-3 md:grid-cols-5" aria-hidden="true">
         {Array.from({ length: 10 }, (_, index) => (

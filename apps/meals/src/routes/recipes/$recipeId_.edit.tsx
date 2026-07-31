@@ -19,8 +19,7 @@ function EditRecipeRoute() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
-  if (recipe === undefined)
-    return <div className="h-full animate-pulse rounded-[28px] bg-warm-bg-card" aria-label="Loading meal" />;
+  if (recipe === undefined) return <div className="h-full rounded-[28px] bg-warm-bg-card" aria-label="Loading meal" />;
   if (recipe === null)
     return (
       <div className="flex h-full items-center justify-center rounded-[28px] bg-warm-bg-card text-sm text-warm-text-secondary">

@@ -18,7 +18,7 @@ export function MealSectionTabs({ active = 'meals', className }: { active?: 'wee
         Week
       </Link>
       <Link
-        to="/"
+        to="/recipes"
         aria-current={active === 'meals' ? 'page' : undefined}
         className={cn(
           'flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2',

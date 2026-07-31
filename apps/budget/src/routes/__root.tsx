@@ -68,7 +68,6 @@ function RootDocument() {
                 isDev={IS_DEV}
                 actions={headerActions}
                 headerClassName="px-4 pt-2 pb-3"
-                mainClassName="px-4 pb-4"
               >
                 <Outlet />
               </AppFrame>

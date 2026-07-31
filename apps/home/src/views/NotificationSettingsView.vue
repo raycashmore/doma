@@ -11,7 +11,7 @@ import AuthenticatedNotificationSettings from './AuthenticatedNotificationSettin
       <header class="settings-heading">
         <p class="eyebrow">Auth unavailable</p>
         <h2>Notification settings</h2>
-        <p>Start Home with a Clerk publishable key to connect or manage Telegram.</p>
+        <p>Start Noticeboard with a Clerk publishable key to connect or manage Telegram.</p>
       </header>
       <div class="settings-card muted">Telegram pairing is disabled in this local preview.</div>
     </section>

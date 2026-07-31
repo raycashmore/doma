@@ -13,6 +13,8 @@ import type * as briefing_ai from "../briefing/ai.js";
 import type * as briefing_botBriefing from "../briefing/botBriefing.js";
 import type * as briefing_delivery from "../briefing/delivery.js";
 import type * as briefing_deliveryRunner from "../briefing/deliveryRunner.js";
+import type * as briefing_deliverySchedule from "../briefing/deliverySchedule.js";
+import type * as briefing_deliveryScheduleStore from "../briefing/deliveryScheduleStore.js";
 import type * as briefing_deliveryStore from "../briefing/deliveryStore.js";
 import type * as briefing_errors from "../briefing/errors.js";
 import type * as briefing_generation from "../briefing/generation.js";
@@ -91,6 +93,8 @@ declare const fullApi: ApiFromModules<{
   "briefing/botBriefing": typeof briefing_botBriefing;
   "briefing/delivery": typeof briefing_delivery;
   "briefing/deliveryRunner": typeof briefing_deliveryRunner;
+  "briefing/deliverySchedule": typeof briefing_deliverySchedule;
+  "briefing/deliveryScheduleStore": typeof briefing_deliveryScheduleStore;
   "briefing/deliveryStore": typeof briefing_deliveryStore;
   "briefing/errors": typeof briefing_errors;
   "briefing/generation": typeof briefing_generation;

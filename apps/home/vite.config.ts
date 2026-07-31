@@ -36,8 +36,8 @@ export default defineConfig({
       outDir: '.output/public',
       scope: '/',
       manifest: {
-        name: 'Doma',
-        short_name: 'Doma',
+        name: 'Noticeboard',
+        short_name: 'Noticeboard',
         start_url: '/',
         scope: '/',
         display: 'standalone',

@@ -46,6 +46,12 @@ describe('AuthGate', () => {
     const signIn = screen.getByTestId('sign-in');
     expect(signIn).toBeDefined();
     expect(screen.queryByText('Hidden app content')).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Sign in to Budget' })).toBeDefined();
+    const logo = screen.getByRole('img', { name: 'Budget' });
+    expect(logo.getAttribute('src')).toBe('/icons/icon.svg');
+    expect(logo.className).toContain('left-1/2');
+    expect(logo.className).toContain('-translate-x-1/2');
+    expect(logo.parentElement?.className).toContain('max-w-[25rem]');
 
     expect(signInSpy).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -57,7 +63,10 @@ describe('AuthGate', () => {
         appearance: expect.objectContaining({
           elements: expect.objectContaining({
             footerAction: 'hidden',
-            footerActionLink: 'hidden'
+            footerActionLink: 'hidden',
+            card: {
+              paddingTop: '12rem'
+            }
           })
         })
       })

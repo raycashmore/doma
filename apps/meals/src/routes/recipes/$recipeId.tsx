@@ -13,8 +13,7 @@ function RecipeDetailRoute() {
   const queriedRecipe = useQuery(api.meals.queries.getRecipeByPublicId, FIXTURE_MODE ? 'skip' : { publicId: recipeId });
   const recipe = FIXTURE_MODE ? getFixtureRecipe(recipeId) : queriedRecipe;
 
-  if (recipe === undefined)
-    return <div className="h-full animate-pulse rounded-[28px] bg-warm-bg-card" aria-label="Loading meal" />;
+  if (recipe === undefined) return <div className="h-full rounded-[28px] bg-warm-bg-card" aria-label="Loading meal" />;
   if (recipe === null)
     return (
       <div className="flex h-full items-center justify-center rounded-[28px] bg-warm-bg-card text-sm text-warm-text-secondary">

@@ -5,7 +5,6 @@ import { formatWeekRange } from './weeklyMealPlannerModel';
 
 type WeeklyMealPlannerHeaderProps = {
   dates: Array<string>;
-  isDesktop: boolean;
   onWeekChange: (weekDelta: number) => void;
   onSuggest?: () => void;
 };
@@ -48,36 +47,39 @@ function SuggestButton({ onSuggest }: { onSuggest: () => void }) {
   );
 }
 
-export function WeeklyMealPlannerTabs({
-  isDesktop,
-  onSuggest
-}: Pick<WeeklyMealPlannerHeaderProps, 'isDesktop' | 'onSuggest'>) {
+export function WeeklyMealPlannerTabs({ className }: { className?: string }) {
+  return <MealSectionTabs active="week" className={className} />;
+}
+
+export function DesktopWeeklyMealPlannerHeader({ dates, onWeekChange, onSuggest }: WeeklyMealPlannerHeaderProps) {
   return (
-    <div className="flex items-center justify-between gap-3">
-      <MealSectionTabs active="week" className="max-w-none md:max-w-64" />
-      {isDesktop && onSuggest ? <SuggestButton onSuggest={onSuggest} /> : null}
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+      <div className="shrink-0">
+        <h2 className="font-warm-display text-[30px] leading-tight">Week plan</h2>
+        <p className="mt-0.5 text-[13px] text-warm-text-secondary">{formatWeekRange(dates)}</p>
+      </div>
+      <WeeklyMealPlannerTabs className="w-full max-w-64" />
+      <div className="ml-auto flex items-center gap-3">
+        {onSuggest ? <SuggestButton onSuggest={onSuggest} /> : null}
+        <WeekNavigation onWeekChange={onWeekChange} />
+      </div>
     </div>
   );
 }
 
-export function WeeklyMealPlannerIntro({ dates, isDesktop, onWeekChange, onSuggest }: WeeklyMealPlannerHeaderProps) {
+export function WeeklyMealPlannerIntro({ dates, onWeekChange, onSuggest }: WeeklyMealPlannerHeaderProps) {
   return (
-    <div className="space-y-2 md:flex md:items-end md:justify-between md:gap-3 md:space-y-0">
-      <div className="flex items-end justify-between gap-3 md:block">
+    <div className="space-y-2">
+      <div className="flex items-end justify-between gap-3">
         <div>
-          <h2 className="font-warm-display text-[24px] leading-tight md:text-[30px]">Week plan</h2>
-          {isDesktop ? <p className="mt-0.5 text-[13px] text-warm-text-secondary">{formatWeekRange(dates)}</p> : null}
+          <h2 className="font-warm-display text-[24px] leading-tight">Week plan</h2>
         </div>
-        {isDesktop || !onSuggest ? null : <SuggestButton onSuggest={onSuggest} />}
+        {onSuggest ? <SuggestButton onSuggest={onSuggest} /> : null}
       </div>
-      {isDesktop ? (
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-[11px] text-warm-text-secondary">{formatWeekRange(dates)}</p>
         <WeekNavigation onWeekChange={onWeekChange} />
-      ) : (
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-[11px] text-warm-text-secondary">{formatWeekRange(dates)}</p>
-          <WeekNavigation onWeekChange={onWeekChange} />
-        </div>
-      )}
+      </div>
     </div>
   );
 }

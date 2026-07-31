@@ -107,9 +107,7 @@ describe('WeekRoute', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Select Tuesday 21 July' }));
     const mobileDay = screen.getByLabelText('Selected day meals');
     expect(within(mobileDay).getByText('Tuesday')).toBeDefined();
-    const nextDayPreview = screen.getByRole('button', { name: 'Preview Wednesday' });
-    expect(nextDayPreview.textContent).toContain('Rice bowls');
-    expect(nextDayPreview.textContent).toContain('Bean quesadillas');
+    expect(screen.queryByRole('button', { name: 'Preview Wednesday' })).toBeNull();
 
     fireEvent.click(within(mobileDay).getByRole('button', { name: 'Change Tuesday dinner' }));
     const chooser = screen.getByRole('dialog', { name: 'Choose Tuesday dinner' });

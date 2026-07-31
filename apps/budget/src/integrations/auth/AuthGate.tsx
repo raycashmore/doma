@@ -1,12 +1,17 @@
 import { useRef } from 'react';
 import { ClerkProvider, SignIn, SignedIn, SignedOut, useClerk } from '@clerk/clerk-react';
-import { SignInLayout, UrlAuthProvider } from '@repo/shell';
+import { SignInLayout, UrlAuthProvider, createClerkSignInAppearance } from '@repo/shell';
 import type { ReactNode } from 'react';
+
+import { getBudgetBaseUrl } from '@/config/basePath';
 
 export type AuthGateProps = {
   publishableKey: string | undefined;
   children: ReactNode;
 };
+
+// eslint-disable-next-line turbo/no-undeclared-env-vars
+const AUTH_LOGO_URL = `${getBudgetBaseUrl(import.meta.env.DEV)}icons/icon.svg`;
 
 function ClerkUrlAuth({ children }: { children: ReactNode }) {
   const clerk = useClerk();
@@ -32,20 +37,22 @@ export function AuthGate({ publishableKey, children }: AuthGateProps) {
         <ClerkUrlAuth>{children}</ClerkUrlAuth>
       </SignedIn>
       <SignedOut>
-        <SignInLayout>
-          <SignIn
-            appearance={{
-              elements: {
-                footerAction: 'hidden',
-                footerActionLink: 'hidden'
-              }
-            }}
-            fallbackRedirectUrl="/"
-            routing="hash"
-            signUpUrl=""
-            transferable={false}
-            withSignUp={false}
-          />
+        <SignInLayout title="Sign in to Budget">
+          <div className="relative w-full max-w-[25rem]">
+            <img
+              className="pointer-events-none absolute left-1/2 top-8 z-10 size-36 -translate-x-1/2"
+              src={AUTH_LOGO_URL}
+              alt="Budget"
+            />
+            <SignIn
+              appearance={createClerkSignInAppearance()}
+              fallbackRedirectUrl="/"
+              routing="hash"
+              signUpUrl=""
+              transferable={false}
+              withSignUp={false}
+            />
+          </div>
         </SignInLayout>
       </SignedOut>
     </ClerkProvider>
