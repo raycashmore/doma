@@ -59,7 +59,7 @@ export function RecipeSlot({ day, meal, recipe, onChoose, compact = false }: Rec
             <span className="text-[9px] font-bold capitalize text-warm-text-secondary">{MEAL_NAMES[meal]}</span>
             {recipe ? <Ellipsis aria-hidden="true" className="shrink-0 text-warm-text-secondary" size={17} /> : null}
           </span>
-          <span className="flex min-h-0 flex-1 items-center gap-3">
+          <span className="mx-auto flex min-h-0 w-full max-w-[280px] flex-1 items-center gap-3">
             <span
               className={cn(
                 'flex size-12 shrink-0 items-center justify-center rounded-[13px]',
@@ -72,7 +72,7 @@ export function RecipeSlot({ day, meal, recipe, onChoose, compact = false }: Rec
                 <Utensils aria-hidden="true" size={19} />
               )}
             </span>
-            <span className="min-w-0 flex-1">
+            <span className="min-w-0 flex-1 text-left">
               {recipeDetails ?? (
                 <span className="flex items-center gap-2 text-[10px] font-semibold text-warm-text-tertiary">
                   {addMeal}
