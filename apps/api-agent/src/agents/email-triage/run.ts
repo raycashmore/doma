@@ -76,7 +76,10 @@ export async function runEmailTriageAgent({
 
   try {
     const result = await generateEmailTriage({ model, input });
-    const outcome = emailTriageOutcomeFromModel(result.output);
+    const outcome = emailTriageOutcomeFromModel(
+      result.output,
+      new Set(input.activeNoticeCandidates.map((candidate) => candidate.id))
+    );
     const completedAt = now();
     await saveTrace({
       runId,

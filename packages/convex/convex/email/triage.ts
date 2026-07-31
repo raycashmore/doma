@@ -4,7 +4,8 @@ import { v } from 'convex/values';
 import { internal } from '../_generated/api';
 import { action, type ActionCtx, internalAction, internalMutation, query } from '../_generated/server';
 import { isCalendarDate } from '../calendarDate';
-import type { EmailTriageAgentResult } from './agentResult';
+import type { EmailNoticeSupersession, EmailTriageAgentResult } from './agentResult';
+import type { EmailNoticeRelevance } from './noticeLifecycle';
 
 type CapturedEmailRow = Record<string, unknown> & {
   _id: string;
@@ -105,6 +106,67 @@ function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0;
 }
 
+function isMediumOrHigh(value: unknown): value is 'medium' | 'high' {
+  return value === 'medium' || value === 'high';
+}
+
+function isNoticeCategory(value: unknown): value is 'school' | 'admin' | 'schedule' | 'finance' | 'other' {
+  return value === 'school' || value === 'admin' || value === 'schedule' || value === 'finance' || value === 'other';
+}
+
+function isNoticePriority(value: unknown): value is 'low' | 'medium' | 'high' {
+  return value === 'low' || value === 'medium' || value === 'high';
+}
+
+function isNoticeObligation(
+  value: unknown
+): value is { action: string; dueOn: string; dueDateConfidence: 'low' | 'medium' | 'high'; dueDateEvidence: string } {
+  return (
+    isRecord(value) &&
+    isNonEmptyString(value.action) &&
+    typeof value.dueOn === 'string' &&
+    isCalendarDate(value.dueOn) &&
+    isNoticePriority(value.dueDateConfidence) &&
+    isNonEmptyString(value.dueDateEvidence)
+  );
+}
+
+function isExtractedFacts(value: unknown): value is Array<{ label: string; value: string }> {
+  return (
+    Array.isArray(value) &&
+    value.every((fact) => isRecord(fact) && isNonEmptyString(fact.label) && isNonEmptyString(fact.value))
+  );
+}
+
+function normalizedRelevance(value: unknown): EmailNoticeRelevance {
+  if (
+    isRecord(value) &&
+    typeof value.relevantThrough === 'string' &&
+    isCalendarDate(value.relevantThrough) &&
+    isMediumOrHigh(value.dateConfidence) &&
+    isNonEmptyString(value.dateEvidence)
+  ) {
+    return {
+      relevantThrough: value.relevantThrough,
+      dateConfidence: value.dateConfidence,
+      dateEvidence: value.dateEvidence
+    };
+  }
+  return { relevantThrough: null, dateConfidence: 'low', dateEvidence: '' };
+}
+
+function normalizedSupersession(value: unknown): EmailNoticeSupersession {
+  if (
+    isRecord(value) &&
+    typeof value.noticeId === 'string' &&
+    value.confidence === 'high' &&
+    isNonEmptyString(value.evidence)
+  ) {
+    return { noticeId: value.noticeId, confidence: 'high', evidence: value.evidence };
+  }
+  return { noticeId: null, confidence: 'low', evidence: '' };
+}
+
 export function parseEmailTriageAgentResult(value: unknown): EmailTriageAgentResult | null {
   if (!isRecord(value) || typeof value.runId !== 'string') return null;
   if (value.status === 'failed') {
@@ -119,27 +181,38 @@ export function parseEmailTriageAgentResult(value: unknown): EmailTriageAgentRes
   }
   if (
     outcome.kind !== 'notice' ||
-    !['school', 'admin', 'schedule', 'finance', 'other'].includes(String(outcome.category)) ||
-    !['low', 'medium', 'high'].includes(String(outcome.priority)) ||
+    !isNoticeCategory(outcome.category) ||
+    !isNoticePriority(outcome.priority) ||
     !isNonEmptyString(outcome.title) ||
     !isNonEmptyString(outcome.body) ||
-    !Array.isArray(outcome.extractedFacts) ||
-    !outcome.extractedFacts.every(
-      (fact) => isRecord(fact) && isNonEmptyString(fact.label) && isNonEmptyString(fact.value)
-    ) ||
-    !(
-      outcome.obligation === null ||
-      (isRecord(outcome.obligation) &&
-        isNonEmptyString(outcome.obligation.action) &&
-        typeof outcome.obligation.dueOn === 'string' &&
-        isCalendarDate(outcome.obligation.dueOn) &&
-        ['low', 'medium', 'high'].includes(String(outcome.obligation.dueDateConfidence)) &&
-        isNonEmptyString(outcome.obligation.dueDateEvidence))
-    )
+    !isExtractedFacts(outcome.extractedFacts) ||
+    !(outcome.obligation === null || isNoticeObligation(outcome.obligation))
   ) {
     return null;
   }
-  return value as EmailTriageAgentResult;
+  return {
+    runId: value.runId,
+    status: 'completed',
+    outcome: {
+      kind: 'notice',
+      category: outcome.category,
+      priority: outcome.priority,
+      title: outcome.title,
+      body: outcome.body,
+      extractedFacts: outcome.extractedFacts.map((fact) => ({ label: fact.label, value: fact.value })),
+      obligation:
+        outcome.obligation === null
+          ? null
+          : {
+              action: outcome.obligation.action,
+              dueOn: outcome.obligation.dueOn,
+              dueDateConfidence: outcome.obligation.dueDateConfidence,
+              dueDateEvidence: outcome.obligation.dueDateEvidence
+            },
+      relevance: normalizedRelevance(outcome.relevance),
+      supersession: normalizedSupersession(outcome.supersession)
+    }
+  };
 }
 
 export async function requestEmailTriageAgent({

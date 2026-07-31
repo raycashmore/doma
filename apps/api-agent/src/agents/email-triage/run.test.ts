@@ -3,6 +3,7 @@ import { MockLanguageModelV3 } from 'ai/test';
 import { describe, expect, it, vi } from 'vitest';
 
 import { runEmailTriageAgent } from './run.js';
+import type { EmailTriageRunInput } from './schemas.js';
 
 const usage = {
   inputTokens: { total: 12, noCache: 12, cacheRead: undefined, cacheWrite: undefined },
@@ -16,8 +17,19 @@ const input = {
   receivedAt: Date.parse('2026-07-21T08:00:00.000Z'),
   textBody: 'Private household email body.',
   hasAttachments: false,
-  attachmentMetadata: []
-};
+  attachmentMetadata: [],
+  activeNoticeCandidates: [
+    {
+      id: 'email_old',
+      category: 'school',
+      title: 'Private candidate title',
+      body: 'Private candidate body.',
+      extractedFacts: [{ label: 'Private candidate fact', value: 'Private candidate value' }],
+      obligation: null,
+      createdAt: 1
+    }
+  ]
+} satisfies EmailTriageRunInput;
 
 function modelReturning(output: unknown) {
   return new MockLanguageModelV3({
@@ -48,6 +60,16 @@ describe('runEmailTriageAgent', () => {
           dueOn: '2026-07-31',
           dueDateConfidence: 'high',
           dueDateEvidence: 'due Friday 31 July'
+        },
+        relevance: {
+          relevantThrough: '2026-08-02',
+          dateConfidence: 'high',
+          dateEvidence: 'Private relevance evidence'
+        },
+        supersession: {
+          noticeId: 'email_old',
+          confidence: 'high',
+          evidence: 'Private supersession evidence'
         }
       }),
       input,
@@ -78,6 +100,64 @@ describe('runEmailTriageAgent', () => {
     expect(serializedTrace).not.toContain('private-sender@example.com');
     expect(serializedTrace).not.toContain('Private household email body.');
     expect(serializedTrace).not.toContain('Return permission form');
+    expect(serializedTrace).not.toContain('Private candidate title');
+    expect(serializedTrace).not.toContain('Private candidate body.');
+    expect(serializedTrace).not.toContain('Private candidate fact');
+    expect(serializedTrace).not.toContain('Private relevance evidence');
+    expect(serializedTrace).not.toContain('Private supersession evidence');
+  });
+
+  it('keeps a valid notice when model lifecycle metadata is malformed', async () => {
+    const saveTrace = vi.fn();
+    const result = await runEmailTriageAgent({
+      model: modelReturning({
+        outcome: 'notice',
+        category: 'admin',
+        priority: 'medium',
+        title: 'Updated event details',
+        body: 'The event details have changed.',
+        extractedFacts: [{ label: 'Status', value: 'Updated' }],
+        reason: '',
+        obligation: null,
+        relevance: 'Private malformed relevance metadata',
+        supersession: {
+          noticeId: 123,
+          confidence: false,
+          evidence: ['Private malformed supersession evidence']
+        }
+      }),
+      input,
+      saveTrace,
+      logError: vi.fn(),
+      createRunId: () => 'email_run_malformed_lifecycle',
+      now: () => 1_700_000_000_000
+    });
+
+    expect(result).toEqual({
+      runId: 'email_run_malformed_lifecycle',
+      status: 'completed',
+      outcome: expect.objectContaining({
+        kind: 'notice',
+        title: 'Updated event details',
+        relevance: {
+          relevantThrough: null,
+          dateConfidence: 'low',
+          dateEvidence: ''
+        },
+        supersession: {
+          noticeId: null,
+          confidence: 'low',
+          evidence: ''
+        }
+      })
+    });
+    expect(saveTrace).toHaveBeenCalledWith(
+      expect.objectContaining({
+        outcomeKind: 'notice',
+        validation: { status: 'valid' }
+      })
+    );
+    expect(JSON.stringify(saveTrace.mock.calls)).not.toContain('Private malformed');
   });
 
   it('fails closed when the structured result contains an impossible due date', async () => {
@@ -96,7 +176,9 @@ describe('runEmailTriageAgent', () => {
           dueOn: '2026-02-30',
           dueDateConfidence: 'high',
           dueDateEvidence: '30 February'
-        }
+        },
+        relevance: { relevantThrough: null, dateConfidence: 'low', dateEvidence: '' },
+        supersession: { noticeId: null, confidence: 'low', evidence: '' }
       }),
       input,
       saveTrace,

@@ -458,6 +458,23 @@ oldest pending captured email, delegates typed inference to the Agent API, then
 stores either a current notice or a no-notice outcome. Only a high-priority,
 high-confidence future obligation creates a reminder candidate.
 
+### One-time email-notice expiry backfill
+
+After deploying the lifecycle change to the target Convex deployment, run the
+appropriate internal mutation command repeatedly until it returns
+`{"patched":0,"hasMore":false}`. Confirm the target deployment before using
+`--prod`; do not include email content in command arguments.
+
+```bash
+pnpm --filter @repo/convex exec convex run email/noticeExpiryBackfill:backfillMissingExpiries '{}'
+pnpm --filter @repo/convex exec convex run email/noticeExpiryBackfill:backfillMissingExpiries '{}' --prod
+```
+
+The mutation patches only legacy notices missing `expiresAt`, so repeated runs
+are safe. Convex supports running internal mutations from the CLI; see
+[internal functions](https://docs.convex.dev/functions/internal-functions) and
+[the `convex run` reference](https://docs.convex.dev/cli/reference/run).
+
 Monthly spending insight generation runs in Convex cron every 12 hours (also an
 interval, not a wall-clock time). Each sweep finds the latest calendar month
 that has both `spendCategoryBreakdown` data and a `budget` row but no stored

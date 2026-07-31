@@ -25,6 +25,28 @@ describe('isEmailReminderDeliverable', () => {
       })
     ).toBe(true);
   });
+
+  it('suppresses a reminder when the canonical notice expires at the delivery time', () => {
+    expect(
+      isEmailReminderDeliverable({
+        nowMs: Date.parse('2026-07-30T09:00:00.000Z'),
+        reminder: { dueOn: '2026-07-31' },
+        notice: { expiresAt: Date.parse('2026-07-30T09:00:00.000Z') },
+        isArchivedOnHome: false
+      })
+    ).toBe(false);
+  });
+
+  it('allows a reminder while the canonical notice expires after the delivery time', () => {
+    expect(
+      isEmailReminderDeliverable({
+        nowMs: Date.parse('2026-07-30T09:00:00.000Z'),
+        reminder: { dueOn: '2026-07-31' },
+        notice: { expiresAt: Date.parse('2026-07-30T09:00:00.001Z') },
+        isArchivedOnHome: false
+      })
+    ).toBe(true);
+  });
 });
 
 describe('selectEmailReminderDeliveryAttemptWrite', () => {

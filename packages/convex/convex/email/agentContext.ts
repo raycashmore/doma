@@ -1,6 +1,7 @@
 import { v } from 'convex/values';
 
 import { mutation, type MutationCtx, query, type QueryCtx } from '../_generated/server';
+import { readActiveEmailNoticeCandidates } from './noticeCandidates';
 
 function requireAgentServiceToken(serviceToken: string) {
   const expectedToken = process.env.AGENT_SERVICE_TOKEN;
@@ -9,11 +10,13 @@ function requireAgentServiceToken(serviceToken: string) {
 
 export async function readClaimedEmailInput(
   ctx: Pick<QueryCtx, 'db'>,
-  args: { serviceToken: string; capturedEmailId: string }
+  args: { serviceToken: string; capturedEmailId: string },
+  options: { nowMs?: number } = {}
 ) {
   requireAgentServiceToken(args.serviceToken);
   const email = await ctx.db.get(args.capturedEmailId as never);
   if (!email || !('processingState' in email) || email.processingState !== 'processing') return null;
+  const activeNoticeCandidates = await readActiveEmailNoticeCandidates(ctx, { nowMs: options.nowMs ?? Date.now() });
   const { _id, subject, fromEmail, receivedAt, textBody, hasAttachments, attachmentMetadata } = email;
   return {
     capturedEmailId: _id,
@@ -22,13 +25,14 @@ export async function readClaimedEmailInput(
     receivedAt,
     textBody,
     hasAttachments,
-    attachmentMetadata
+    attachmentMetadata,
+    activeNoticeCandidates
   };
 }
 
 export const claimedInput = query({
   args: { serviceToken: v.string(), capturedEmailId: v.id('capturedEmails') },
-  handler: readClaimedEmailInput
+  handler: (ctx, args) => readClaimedEmailInput(ctx, args, { nowMs: Date.now() })
 });
 
 const traceArgs = {

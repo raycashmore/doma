@@ -74,9 +74,15 @@ current-week view.
 
 Forwarded-email inference also lives in `apps/api-agent`. Convex exposes only a
 currently claimed capture through a dedicated service-token boundary, stores
-the typed outcome and trace, and owns the deterministic reminder policy. Home
-continues to render the canonical `emailNotices` rows; the agent does not own a
-second noticeboard projection.
+the typed outcome and trace, and owns the deterministic lifecycle and reminder
+policy. Agent judgement is bounded to typed, grounded candidates: Convex
+calculates expiry arithmetic deterministically as it persists a new notice from
+the typed obligation or relevance outcome, using a fourteen-day fallback when
+neither is grounded. Legacy notices do not store relevance; their backfill uses
+the stored obligation with deliberately low, empty relevance and the same
+fallback. High-confidence supersession is applied atomically with creation of
+the replacement notice. Home continues to render the canonical `emailNotices`
+rows; the agent does not own a second noticeboard projection.
 
 ## PWA
 

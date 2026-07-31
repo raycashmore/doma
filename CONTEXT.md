@@ -48,6 +48,10 @@ _Avoid_: Morning schedule briefing, schedule reminder, calendar notification, ev
 An explicit action extracted from a forwarded household email with a calendar due date and recorded date-confidence evidence. It remains part of the canonical Home-visible email notice; it is not a separate task owned by the agent.
 _Avoid_: Email summary, inferred todo, agent task
 
+**Active email notice**:
+A canonical forwarded-email occurrence that has not expired, been archived, or been superseded. Every new occurrence receives a grounded relevance window when available, otherwise the fourteen-date fallback from its creation date.
+_Avoid_: Email payload, cleanup feed, agent-owned notice
+
 **Email reminder candidate**:
 A deterministic day-before notification candidate created only for a high-priority **email obligation** with a high-confidence future due date. It is scheduled for 7pm Australia/Sydney on the preceding day and is suppressed when the canonical Home occurrence is archived.
 _Avoid_: Telegram-worthy notice, immediate email relay, generic notification
