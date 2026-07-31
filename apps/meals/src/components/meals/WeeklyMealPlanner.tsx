@@ -6,7 +6,7 @@ import { MobileWeeklyMealPlan } from './MobileWeeklyMealPlan';
 import { MealSuggestionDialog } from './MealSuggestionDialog';
 import { RecipeChooser } from './RecipeChooser';
 import { ShoppingReview } from './ShoppingReview';
-import { WeeklyMealPlannerTabs } from './WeeklyMealPlannerHeader';
+import { DesktopWeeklyMealPlannerHeader, WeeklyMealPlannerTabs } from './WeeklyMealPlannerHeader';
 import { useDesktopViewport } from './useDesktopViewport';
 import { SharedShoppingListUnavailableError } from './weeklyMealPlannerModel';
 import type { ShoppingRow, SlotSelection, WeeklyMealPlannerProps, WeeklyMealProposal } from './weeklyMealPlannerModel';
@@ -144,7 +144,11 @@ export function WeeklyMealPlanner({
 
   return (
     <section className="flex min-h-full flex-col gap-4 rounded-t-[24px] bg-warm-bg-card p-4 md:h-full md:min-h-0 md:rounded-[28px] md:p-6">
-      <WeeklyMealPlannerTabs isDesktop={isDesktop} onSuggest={openSuggestions} />
+      {isDesktop ? (
+        <DesktopWeeklyMealPlannerHeader dates={dates} onSuggest={openSuggestions} onWeekChange={onWeekChange} />
+      ) : (
+        <WeeklyMealPlannerTabs className="max-w-none" />
+      )}
 
       {status ? (
         <p
@@ -166,8 +170,6 @@ export function WeeklyMealPlanner({
           onChooseSlot={chooseSlot}
           onRemoveShoppingRow={removeShoppingRow}
           onSendToLists={sendToLists}
-          onSuggest={openSuggestions}
-          onWeekChange={onWeekChange}
         />
       ) : (
         <MobileWeeklyMealPlan

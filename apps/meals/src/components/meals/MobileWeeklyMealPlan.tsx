@@ -39,7 +39,7 @@ export function MobileWeeklyMealPlan({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-[13px]">
-      <WeeklyMealPlannerIntro dates={dates} isDesktop={false} onWeekChange={onWeekChange} onSuggest={onSuggest} />
+      <WeeklyMealPlannerIntro dates={dates} onWeekChange={onWeekChange} onSuggest={onSuggest} />
       <div className="grid grid-cols-5 gap-1.5">
         {WEEKDAYS.map((day, index) => {
           const selected = selectedDay === day;
