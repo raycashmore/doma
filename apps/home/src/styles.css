@@ -119,39 +119,9 @@ h3 {
   list-style: none;
 }
 
-.nav-button {
-  width: 48px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  margin-top: 8px;
-  padding: 0;
-  border: 0;
-  color: var(--warm-text-tertiary);
-  background: transparent;
-  cursor: pointer;
-  font-size: 11px;
-  transition: color 160ms ease;
-}
-
-.logout-icon {
-  width: 40px;
-  height: 40px;
-  display: grid;
-  place-items: center;
-  border-radius: 12px;
-  background: var(--warm-bg-dark-muted);
-}
-
 .sidebar-home-link:hover,
 .nav-link:hover {
   background: var(--warm-bg-dark-muted);
-  color: var(--warm-text-on-dark);
-}
-
-.nav-button:hover {
   color: var(--warm-text-on-dark);
 }
 
@@ -854,6 +824,22 @@ h3 {
 .settings-copy > p {
   color: var(--warm-text-tertiary);
   line-height: 1.55;
+}
+
+.account-settings-panel {
+  margin-top: 24px;
+}
+
+.account-settings-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.account-settings-card h2 {
+  color: var(--warm-text-on-dark);
+  font-size: 22px;
 }
 
 .button-row {

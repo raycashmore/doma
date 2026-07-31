@@ -11,10 +11,6 @@ const auth = useAuth();
 const clerk = useClerk();
 useConvexAuthBridge(auth);
 
-async function signOut() {
-  await clerk.value?.signOut({ redirectUrl: '/' });
-}
-
 function buildUrlWithAuth(url: string) {
   return clerk.value?.buildUrlWithAuth(url) ?? url;
 }
@@ -23,13 +19,7 @@ function buildUrlWithAuth(url: string) {
 <template>
   <div v-if="!auth.isLoaded.value" class="auth-state" role="status">Loading your household…</div>
 
-  <AppShell
-    v-else-if="auth.isSignedIn.value"
-    :is-dev="HOME_IS_DEV"
-    :can-sign-out="true"
-    :build-url-with-auth="buildUrlWithAuth"
-    @sign-out="signOut"
-  >
+  <AppShell v-else-if="auth.isSignedIn.value" :is-dev="HOME_IS_DEV" :build-url-with-auth="buildUrlWithAuth">
     <RouterView />
   </AppShell>
 

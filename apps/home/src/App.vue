@@ -15,7 +15,7 @@ import { HOME_IS_DEV, HOME_RUNTIME } from './config/runtime';
 
   <AuthenticatedGate v-else-if="HOME_RUNTIME.mode === 'authenticated'" />
 
-  <AppShell v-else :is-dev="HOME_IS_DEV" :can-sign-out="false" :build-url-with-auth="(url) => url">
+  <AppShell v-else :is-dev="HOME_IS_DEV" :build-url-with-auth="(url) => url">
     <RouterView />
   </AppShell>
 </template>

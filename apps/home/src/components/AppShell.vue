@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Calendar, ChefHat, Home, Landmark, ListChecks, LogOut, PiggyBank, Settings } from '@lucide/vue';
+import { Calendar, ChefHat, Home, Landmark, ListChecks, PiggyBank, Settings } from '@lucide/vue';
 import { type AppId, APPS, getActiveAppId, getAppHref } from '@repo/app-registry';
 import { type Component, computed, provide } from 'vue';
 import { RouterLink } from 'vue-router';
@@ -8,11 +8,8 @@ import { homeUrlBuilderKey } from '../config/navigation';
 
 const props = defineProps<{
   isDev: boolean;
-  canSignOut: boolean;
   buildUrlWithAuth: (url: string) => string;
 }>();
-
-defineEmits<{ signOut: [] }>();
 
 provide(homeUrlBuilderKey, props.buildUrlWithAuth);
 
@@ -75,11 +72,6 @@ function buildAppHref(app: (typeof APPS)[number]) {
       <RouterLink class="nav-link" to="/settings/notifications" aria-label="Notification settings">
         <Settings :size="20" aria-hidden="true" />
       </RouterLink>
-
-      <button v-if="canSignOut" class="nav-button" type="button" aria-label="Log out" @click="$emit('signOut')">
-        <span class="logout-icon"><LogOut :size="18" aria-hidden="true" /></span>
-        <span>Log Out</span>
-      </button>
     </nav>
 
     <div class="shell-main">
@@ -89,9 +81,6 @@ function buildAppHref(app: (typeof APPS)[number]) {
           <RouterLink class="icon-action" to="/settings/notifications" aria-label="Notification settings">
             <Settings :size="19" aria-hidden="true" />
           </RouterLink>
-          <button v-if="canSignOut" class="icon-action" type="button" aria-label="Sign out" @click="$emit('signOut')">
-            <LogOut :size="19" aria-hidden="true" />
-          </button>
         </div>
       </header>
       <slot />

@@ -27,7 +27,7 @@ describe('AppShell', () => {
 
   it('renders every enabled Doma zone and the current Home content', () => {
     const { container } = renderAppShell({
-      props: { isDev: false, canSignOut: false, buildUrlWithAuth: (url: string) => url },
+      props: { isDev: false, buildUrlWithAuth: (url: string) => url },
       slots: { default: '<main><h2>Household overview</h2></main>' }
     });
 
@@ -47,16 +47,16 @@ describe('AppShell', () => {
     expect(screen.getByRole('heading', { name: 'Household overview' })).not.toBeNull();
   });
 
-  it('exposes notification settings and sign out when authenticated', async () => {
-    const { emitted } = renderAppShell({
-      props: { isDev: false, canSignOut: true, buildUrlWithAuth: (url: string) => url }
+  it('exposes notification settings without sign-out actions in the shell', () => {
+    renderAppShell({
+      props: { isDev: false, buildUrlWithAuth: (url: string) => url }
     });
 
     expect(screen.getAllByRole('link', { name: 'Notification settings' })[0]?.getAttribute('href')).toBe(
       '/settings/notifications'
     );
-    await screen.getAllByRole('button', { name: 'Log out' })[0]?.click();
-    expect(emitted()).toHaveProperty('signOut');
+    expect(screen.queryByRole('button', { name: 'Log out' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Sign out' })).toBeNull();
   });
 
   it('navigates between Home routes without reloading the document', async () => {
@@ -65,7 +65,7 @@ describe('AppShell', () => {
 
     renderAppShell(
       {
-        props: { isDev: false, canSignOut: false, buildUrlWithAuth: (url: string) => url }
+        props: { isDev: false, buildUrlWithAuth: (url: string) => url }
       },
       router
     );
@@ -79,7 +79,6 @@ describe('AppShell', () => {
     renderAppShell({
       props: {
         isDev: true,
-        canSignOut: false,
         buildUrlWithAuth: (url: string) => `${url}?__clerk_db_jwt=dev-token`
       }
     });
