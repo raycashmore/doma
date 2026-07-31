@@ -14,24 +14,16 @@ describe('SignInLayout', () => {
     expect(screen.getByRole('heading', { name: 'Sign in to Budget' })).toBeDefined();
   });
 
-  it('keeps Clerk app branding large and hides duplicate headings', () => {
-    expect(createClerkSignInAppearance('/meals/icons/icon.svg')).toEqual({
-      layout: {
-        logoImageUrl: '/meals/icons/icon.svg'
-      },
+  it('reserves space for an app-owned logo and hides duplicate headings', () => {
+    expect(createClerkSignInAppearance()).toEqual({
       elements: {
+        card: {
+          paddingTop: '12rem'
+        },
         footerAction: 'hidden',
         footerActionLink: 'hidden',
         headerSubtitle: 'hidden',
-        headerTitle: 'hidden',
-        logoBox: {
-          height: '9rem',
-          width: '9rem'
-        },
-        logoImage: {
-          height: '9rem',
-          width: '9rem'
-        }
+        headerTitle: 'hidden'
       }
     });
   });

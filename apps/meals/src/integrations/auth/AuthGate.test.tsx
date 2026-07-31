@@ -58,20 +58,16 @@ describe('AuthGate', () => {
     );
 
     expect(screen.getByRole('heading', { name: 'Sign in to Meals' })).toBeDefined();
+    const logo = screen.getByRole('img', { name: 'Meals' });
+    expect(logo.getAttribute('src')).toBe('/icons/icon.svg');
+    expect(logo.className).toContain('left-1/2');
+    expect(logo.className).toContain('-translate-x-1/2');
     expect(signInSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         appearance: expect.objectContaining({
-          layout: {
-            logoImageUrl: '/icons/icon.svg'
-          },
           elements: expect.objectContaining({
-            logoBox: {
-              height: '9rem',
-              width: '9rem'
-            },
-            logoImage: {
-              height: '9rem',
-              width: '9rem'
+            card: {
+              paddingTop: '12rem'
             }
           })
         })

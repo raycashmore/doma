@@ -38,14 +38,21 @@ export function AuthGate({ publishableKey, children }: AuthGateProps) {
       </SignedIn>
       <SignedOut>
         <SignInLayout title="Sign in to Budget">
-          <SignIn
-            appearance={createClerkSignInAppearance(AUTH_LOGO_URL)}
-            fallbackRedirectUrl="/"
-            routing="hash"
-            signUpUrl=""
-            transferable={false}
-            withSignUp={false}
-          />
+          <div className="relative w-full">
+            <img
+              className="pointer-events-none absolute left-1/2 top-8 z-10 size-36 -translate-x-1/2"
+              src={AUTH_LOGO_URL}
+              alt="Budget"
+            />
+            <SignIn
+              appearance={createClerkSignInAppearance()}
+              fallbackRedirectUrl="/"
+              routing="hash"
+              signUpUrl=""
+              transferable={false}
+              withSignUp={false}
+            />
+          </div>
         </SignInLayout>
       </SignedOut>
     </ClerkProvider>
