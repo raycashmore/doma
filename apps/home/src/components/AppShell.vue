@@ -84,7 +84,7 @@ function buildAppHref(app: (typeof APPS)[number]) {
 
     <div class="shell-main">
       <header class="mobile-header">
-        <RouterLink class="mobile-brand" to="/" aria-label="Doma Home"><span>D</span> Home</RouterLink>
+        <RouterLink class="mobile-brand" to="/" aria-label="Noticeboard Home"><span>N</span> Noticeboard</RouterLink>
         <div class="mobile-actions">
           <RouterLink class="icon-action" to="/settings/notifications" aria-label="Notification settings">
             <Settings :size="19" aria-hidden="true" />

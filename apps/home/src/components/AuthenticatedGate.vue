@@ -35,7 +35,7 @@ function buildUrlWithAuth(url: string) {
 
   <main v-else class="sign-in-layout">
     <div class="sign-in-panel">
-      <img class="sign-in-logo" src="/icons/icon.svg" alt="Doma" />
+      <img class="sign-in-logo" src="/icons/icon.svg" alt="Noticeboard" />
       <SignIn
         routing="hash"
         fallback-redirect-url="/"
