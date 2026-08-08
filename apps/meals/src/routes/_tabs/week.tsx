@@ -1,9 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-import { WeekRoute } from '@/components/meals/WeekRoute';
 import { FIXTURE_MODE } from '@/config/runtime';
 
-export const Route = createFileRoute('/week')({
+export const Route = createFileRoute('/_tabs/week')({
   ssr: !FIXTURE_MODE,
-  component: WeekRoute
+  component: () => null
 });

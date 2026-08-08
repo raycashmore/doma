@@ -9,26 +9,21 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as WeekRouteImport } from './routes/week'
+import { Route as TabsRouteImport } from './routes/_tabs'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as RecipesIndexRouteImport } from './routes/recipes/index'
 import { Route as RecipesNewRouteImport } from './routes/recipes/new'
 import { Route as RecipesRecipeIdRouteImport } from './routes/recipes/$recipeId'
+import { Route as TabsWeekRouteImport } from './routes/_tabs/week'
+import { Route as TabsRecipesIndexRouteImport } from './routes/_tabs/recipes/index'
 import { Route as RecipesRecipeIdEditRouteImport } from './routes/recipes/$recipeId_.edit'
 
-const WeekRoute = WeekRouteImport.update({
-  id: '/week',
-  path: '/week',
+const TabsRoute = TabsRouteImport.update({
+  id: '/_tabs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RecipesIndexRoute = RecipesIndexRouteImport.update({
-  id: '/recipes/',
-  path: '/recipes/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RecipesNewRoute = RecipesNewRouteImport.update({
@@ -41,6 +36,16 @@ const RecipesRecipeIdRoute = RecipesRecipeIdRouteImport.update({
   path: '/recipes/$recipeId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TabsWeekRoute = TabsWeekRouteImport.update({
+  id: '/week',
+  path: '/week',
+  getParentRoute: () => TabsRoute,
+} as any)
+const TabsRecipesIndexRoute = TabsRecipesIndexRouteImport.update({
+  id: '/recipes/',
+  path: '/recipes/',
+  getParentRoute: () => TabsRoute,
+} as any)
 const RecipesRecipeIdEditRoute = RecipesRecipeIdEditRouteImport.update({
   id: '/recipes/$recipeId_/edit',
   path: '/recipes/$recipeId/edit',
@@ -49,28 +54,29 @@ const RecipesRecipeIdEditRoute = RecipesRecipeIdEditRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/week': typeof WeekRoute
+  '/week': typeof TabsWeekRoute
   '/recipes/$recipeId': typeof RecipesRecipeIdRoute
   '/recipes/new': typeof RecipesNewRoute
-  '/recipes/': typeof RecipesIndexRoute
   '/recipes/$recipeId/edit': typeof RecipesRecipeIdEditRoute
+  '/recipes/': typeof TabsRecipesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/week': typeof WeekRoute
+  '/week': typeof TabsWeekRoute
   '/recipes/$recipeId': typeof RecipesRecipeIdRoute
   '/recipes/new': typeof RecipesNewRoute
-  '/recipes': typeof RecipesIndexRoute
   '/recipes/$recipeId/edit': typeof RecipesRecipeIdEditRoute
+  '/recipes': typeof TabsRecipesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/week': typeof WeekRoute
+  '/_tabs': typeof TabsRouteWithChildren
+  '/_tabs/week': typeof TabsWeekRoute
   '/recipes/$recipeId': typeof RecipesRecipeIdRoute
   '/recipes/new': typeof RecipesNewRoute
-  '/recipes/': typeof RecipesIndexRoute
   '/recipes/$recipeId_/edit': typeof RecipesRecipeIdEditRoute
+  '/_tabs/recipes/': typeof TabsRecipesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -79,42 +85,42 @@ export interface FileRouteTypes {
     | '/week'
     | '/recipes/$recipeId'
     | '/recipes/new'
-    | '/recipes/'
     | '/recipes/$recipeId/edit'
+    | '/recipes/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/week'
     | '/recipes/$recipeId'
     | '/recipes/new'
-    | '/recipes'
     | '/recipes/$recipeId/edit'
+    | '/recipes'
   id:
     | '__root__'
     | '/'
-    | '/week'
+    | '/_tabs'
+    | '/_tabs/week'
     | '/recipes/$recipeId'
     | '/recipes/new'
-    | '/recipes/'
     | '/recipes/$recipeId_/edit'
+    | '/_tabs/recipes/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  WeekRoute: typeof WeekRoute
+  TabsRoute: typeof TabsRouteWithChildren
   RecipesRecipeIdRoute: typeof RecipesRecipeIdRoute
   RecipesNewRoute: typeof RecipesNewRoute
-  RecipesIndexRoute: typeof RecipesIndexRoute
   RecipesRecipeIdEditRoute: typeof RecipesRecipeIdEditRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/week': {
-      id: '/week'
-      path: '/week'
-      fullPath: '/week'
-      preLoaderRoute: typeof WeekRouteImport
+    '/_tabs': {
+      id: '/_tabs'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof TabsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -122,13 +128,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/recipes/': {
-      id: '/recipes/'
-      path: '/recipes'
-      fullPath: '/recipes/'
-      preLoaderRoute: typeof RecipesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/recipes/new': {
@@ -145,6 +144,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RecipesRecipeIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_tabs/week': {
+      id: '/_tabs/week'
+      path: '/week'
+      fullPath: '/week'
+      preLoaderRoute: typeof TabsWeekRouteImport
+      parentRoute: typeof TabsRoute
+    }
+    '/_tabs/recipes/': {
+      id: '/_tabs/recipes/'
+      path: '/recipes'
+      fullPath: '/recipes/'
+      preLoaderRoute: typeof TabsRecipesIndexRouteImport
+      parentRoute: typeof TabsRoute
+    }
     '/recipes/$recipeId_/edit': {
       id: '/recipes/$recipeId_/edit'
       path: '/recipes/$recipeId/edit'
@@ -155,12 +168,23 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface TabsRouteChildren {
+  TabsWeekRoute: typeof TabsWeekRoute
+  TabsRecipesIndexRoute: typeof TabsRecipesIndexRoute
+}
+
+const TabsRouteChildren: TabsRouteChildren = {
+  TabsWeekRoute: TabsWeekRoute,
+  TabsRecipesIndexRoute: TabsRecipesIndexRoute,
+}
+
+const TabsRouteWithChildren = TabsRoute._addFileChildren(TabsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  WeekRoute: WeekRoute,
+  TabsRoute: TabsRouteWithChildren,
   RecipesRecipeIdRoute: RecipesRecipeIdRoute,
   RecipesNewRoute: RecipesNewRoute,
-  RecipesIndexRoute: RecipesIndexRoute,
   RecipesRecipeIdEditRoute: RecipesRecipeIdEditRoute,
 }
 export const routeTree = rootRouteImport

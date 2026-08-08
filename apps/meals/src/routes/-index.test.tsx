@@ -26,6 +26,6 @@ describe('Meals landing route', () => {
 
     await router.load();
 
-    expect(router.state.matches.at(-1)?.routeId).toBe('/recipes/');
+    expect(router.state.matches.at(-1)?.routeId).toBe('/_tabs/recipes/');
   });
 });

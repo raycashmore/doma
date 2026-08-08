@@ -33,6 +33,6 @@ describe('MealSectionTabs', () => {
     fireEvent.click(mealsLink);
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/recipes'));
-    expect(router.state.matches.at(-1)?.routeId).toBe('/recipes/');
+    expect(router.state.matches.at(-1)?.routeId).toBe('/_tabs/recipes/');
   });
 });

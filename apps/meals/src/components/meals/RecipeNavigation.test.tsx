@@ -51,7 +51,7 @@ describe('recipe collection navigation', () => {
     fireEvent.click(backLink);
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/recipes'));
-    expect(router.state.matches.at(-1)?.routeId).toBe('/recipes/');
+    expect(router.state.matches.at(-1)?.routeId).toBe('/_tabs/recipes/');
   });
 
   it('loads the generated edit route under the production base path', async () => {
@@ -82,6 +82,6 @@ describe('recipe collection navigation', () => {
     fireEvent.click(cancelLink);
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/recipes'));
-    expect(router.state.matches.at(-1)?.routeId).toBe('/recipes/');
+    expect(router.state.matches.at(-1)?.routeId).toBe('/_tabs/recipes/');
   });
 });
