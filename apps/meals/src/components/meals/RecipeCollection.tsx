@@ -24,22 +24,19 @@ export function RecipeCollection({ recipes }: { recipes: Array<RecipeView> }) {
 
   return (
     <section className="flex min-h-full flex-col gap-4 rounded-t-[24px] bg-warm-bg-card p-4 md:h-full md:min-h-0 md:gap-5 md:rounded-[28px] md:p-6">
-      <div className="flex items-center justify-between gap-3">
-        <MealSectionTabs />
-        <Link
-          to="/recipes/new"
-          className="flex items-center justify-center gap-2 rounded-full bg-warm-text-primary p-2.5 text-xs font-bold text-warm-bg-card-soft md:px-4"
-        >
-          <Plus aria-hidden="true" size={16} />
-          <span className="hidden md:inline">Add meal</span>
-          <span className="sr-only md:hidden">Add meal</span>
-        </Link>
-      </div>
+      <MealSectionTabs className="max-w-none" />
 
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="text-xs text-warm-text-secondary">A cookbook of household favourites</p>
+        <div className="flex items-center justify-between gap-3">
           <h2 className="font-warm-display text-[23px] leading-tight md:text-[28px]">Repertoire</h2>
+          <Link
+            to="/recipes/new"
+            className="flex items-center justify-center gap-2 rounded-full bg-warm-text-primary p-2.5 text-xs font-bold text-warm-bg-card-soft md:px-4"
+          >
+            <Plus aria-hidden="true" size={16} />
+            <span className="hidden md:inline">Add meal</span>
+            <span className="sr-only md:hidden">Add meal</span>
+          </Link>
         </div>
         <label className="flex items-center gap-2 rounded-full border border-warm-border bg-warm-bg-card-soft px-3.5 py-2.5 md:w-72">
           <Search aria-hidden="true" className="text-warm-text-tertiary" size={15} />
