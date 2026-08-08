@@ -74,8 +74,8 @@ describe('WeekRoute', () => {
   it('shows the Monday-to-Friday meal plan and exact ingredient-line shopping review', async () => {
     await renderWeek();
 
-    expect(screen.getByRole('heading', { name: 'Week plan' })).toBeDefined();
-    expect(screen.getByText('Mon 20 Jul – Fri 24 Jul')).toBeDefined();
+    expect(screen.getByRole('heading', { name: '20 Jul – 24 Jul' })).toBeDefined();
+    expect(screen.queryByRole('heading', { name: 'Week plan' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Suggest meals' })).toBeDefined();
 
     const desktopPlanner = screen.getByLabelText('Weekly meal plan');
@@ -103,6 +103,9 @@ describe('WeekRoute', () => {
   it('selects a weekday on mobile and lets the user replace a saved assignment', async () => {
     stubMobileViewport();
     await renderWeek();
+
+    expect(screen.getByRole('heading', { name: '20 Jul – 24 Jul' })).toBeDefined();
+    expect(screen.queryByRole('heading', { name: 'Week plan' })).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Select Tuesday 21 July' }));
     const mobileDay = screen.getByLabelText('Selected day meals');
@@ -247,7 +250,7 @@ describe('WeekRoute', () => {
     await renderWeek();
     fireEvent.click(screen.getByRole('button', { name: 'Next week' }));
 
-    expect(screen.getByText('Mon 27 Jul – Fri 31 Jul')).toBeDefined();
+    expect(screen.getByText('27 Jul – 31 Jul')).toBeDefined();
     expect(screen.getByRole('button', { name: 'Choose Monday school lunch' })).toBeDefined();
     expect(screen.getByText('Assign meals to build a shopping review.')).toBeDefined();
   });

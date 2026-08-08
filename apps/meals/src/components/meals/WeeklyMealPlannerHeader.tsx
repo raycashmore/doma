@@ -54,10 +54,7 @@ export function WeeklyMealPlannerTabs({ className }: { className?: string }) {
 export function DesktopWeeklyMealPlannerHeader({ dates, onWeekChange, onSuggest }: WeeklyMealPlannerHeaderProps) {
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-      <div className="shrink-0">
-        <h2 className="font-warm-display text-[30px] leading-tight">Week plan</h2>
-        <p className="mt-0.5 text-[13px] text-warm-text-secondary">{formatWeekRange(dates)}</p>
-      </div>
+      <h2 className="shrink-0 font-warm-display text-[28px] leading-tight">{formatWeekRange(dates)}</h2>
       <WeeklyMealPlannerTabs className="w-full max-w-64" />
       <div className="ml-auto flex items-center gap-3">
         {onSuggest ? <SuggestButton onSuggest={onSuggest} /> : null}
@@ -71,13 +68,10 @@ export function WeeklyMealPlannerIntro({ dates, onWeekChange, onSuggest }: Weekl
   return (
     <div className="space-y-2">
       <div className="flex items-end justify-between gap-3">
-        <div>
-          <h2 className="font-warm-display text-[24px] leading-tight">Week plan</h2>
-        </div>
+        <h2 className="whitespace-nowrap font-warm-display text-[18px] leading-tight">{formatWeekRange(dates)}</h2>
         {onSuggest ? <SuggestButton onSuggest={onSuggest} /> : null}
       </div>
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-[11px] text-warm-text-secondary">{formatWeekRange(dates)}</p>
+      <div className="flex justify-end">
         <WeekNavigation onWeekChange={onWeekChange} />
       </div>
     </div>

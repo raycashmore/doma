@@ -67,11 +67,7 @@ export function formatDate(date: string, options: Intl.DateTimeFormatOptions) {
 
 export function formatWeekRange(dates: Array<string>) {
   const formatRangeDate = (date: string) =>
-    [
-      formatDate(date, { weekday: 'short' }),
-      formatDate(date, { day: 'numeric' }),
-      formatDate(date, { month: 'short' })
-    ].join(' ');
+    [formatDate(date, { day: 'numeric' }), formatDate(date, { month: 'short' })].join(' ');
   const first = formatRangeDate(dates[0] ?? '');
   const last = formatRangeDate(dates[4] ?? '');
   return `${first} – ${last}`;

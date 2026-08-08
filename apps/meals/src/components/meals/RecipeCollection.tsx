@@ -24,21 +24,25 @@ export function RecipeCollection({ recipes }: { recipes: Array<RecipeView> }) {
 
   return (
     <section className="flex min-h-full flex-col gap-4 rounded-t-[24px] bg-warm-bg-card p-4 md:h-full md:min-h-0 md:gap-5 md:rounded-[28px] md:p-6">
-      <MealSectionTabs className="max-w-none" />
-
-      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="font-warm-display text-[23px] leading-tight md:text-[28px]">Repertoire</h2>
+      <div className="grid gap-3 md:grid-cols-[auto_minmax(0,16rem)_1fr_auto] md:items-center md:gap-4">
+        <MealSectionTabs className="order-1 max-w-none md:col-start-2 md:row-start-1 md:max-w-64" />
+        <div className="order-2 flex items-center justify-between gap-3 md:contents">
+          <h2 className="font-warm-display text-[23px] leading-tight md:col-start-1 md:row-start-1 md:text-[28px]">
+            Repertoire
+          </h2>
           <Link
             to="/recipes/new"
-            className="flex items-center justify-center gap-2 rounded-full bg-warm-text-primary p-2.5 text-xs font-bold text-warm-bg-card-soft md:px-4"
+            className="flex items-center justify-center gap-2 rounded-full bg-warm-text-primary p-2.5 text-xs font-bold text-warm-bg-card-soft md:col-start-4 md:row-start-1 md:px-4"
           >
             <Plus aria-hidden="true" size={16} />
             <span className="hidden md:inline">Add meal</span>
             <span className="sr-only md:hidden">Add meal</span>
           </Link>
         </div>
-        <label className="flex items-center gap-2 rounded-full border border-warm-border bg-warm-bg-card-soft px-3.5 py-2.5 md:w-72">
+      </div>
+
+      <div className="flex flex-col gap-3 md:flex-row md:items-center">
+        <label className="order-1 flex items-center gap-2 rounded-full border border-warm-border bg-warm-bg-card-soft px-3.5 py-2.5 md:order-2 md:ml-auto md:w-72">
           <Search aria-hidden="true" className="text-warm-text-tertiary" size={15} />
           <span className="sr-only">Search your meals</span>
           <input
@@ -50,29 +54,28 @@ export function RecipeCollection({ recipes }: { recipes: Array<RecipeView> }) {
             className="min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:text-warm-text-tertiary"
           />
         </label>
-      </div>
-
-      <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Meal filters">
-        {FILTERS.map((option) => {
-          const active = filter === option;
-          return (
-            <button
-              key={option}
-              type="button"
-              aria-pressed={active}
-              onClick={() => setFilter(option)}
-              className={cn(
-                'shrink-0 rounded-full border px-3 py-1.5 text-[10px] font-semibold md:text-xs',
-                active
-                  ? 'border-warm-text-primary bg-warm-text-primary text-warm-bg-card-soft'
-                  : 'border-warm-border bg-warm-bg-card-soft text-warm-text-secondary'
-              )}
-            >
-              {option === 'All meals' ? 'All' : option}
-              <span className="sr-only">{option === 'All meals' ? ' meals' : ''}</span>
-            </button>
-          );
-        })}
+        <div className="order-2 flex min-w-0 flex-1 gap-2 overflow-x-auto pb-1 md:order-1" aria-label="Meal filters">
+          {FILTERS.map((option) => {
+            const active = filter === option;
+            return (
+              <button
+                key={option}
+                type="button"
+                aria-pressed={active}
+                onClick={() => setFilter(option)}
+                className={cn(
+                  'shrink-0 rounded-full border px-3 py-1.5 text-[10px] font-semibold md:text-xs',
+                  active
+                    ? 'border-warm-text-primary bg-warm-text-primary text-warm-bg-card-soft'
+                    : 'border-warm-border bg-warm-bg-card-soft text-warm-text-secondary'
+                )}
+              >
+                {option === 'All meals' ? 'All' : option}
+                <span className="sr-only">{option === 'All meals' ? ' meals' : ''}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {recipes.length === 0 ? (
