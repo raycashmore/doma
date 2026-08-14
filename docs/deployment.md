@@ -572,7 +572,7 @@ Morning briefing delivery runs from Convex scheduled functions, not Vercel Cron.
 the Bot gateway deployable on Vercel Hobby, where frequent cron schedules are
 rejected. A 24-hour Convex reconciler schedules the next 48 hours of eligible local retry slots;
 the delivery action runs only during the
-local morning retry window `07:35 <= time < 08:30` every day and afternoon retry
+local morning retry window `08:20 <= time < 08:50` every day and afternoon retry
 window `14:30 <= time < 15:00` on weekdays only, forces a schedule sync before generation when possible,
 falls back to cached schedule data when needed, calls the Bot gateway's
 provider-neutral `/notifications/send` endpoint, and records the briefing
@@ -596,11 +596,13 @@ briefings:
 
 Morning briefing operations:
 
-- A scheduled delivery outside `07:35 <= time < 08:30` in
+- A scheduled delivery outside `08:20 <= time < 08:50` in
   `MORNING_BRIEFING_TZ`, or outside the weekday-only `14:30 <= time < 15:00`
-  afternoon window, no-ops. Morning delivery sends only the `This morning:`
-  calendar details and skips the notification when that section is empty,
-  including on weekends.
+  afternoon window, no-ops. Morning delivery sends the headline plus relevant
+  morning, afternoon, and watchout details, and skips the notification when the
+  day has no briefing content, including on weekends. Afternoon delivery sends
+  only unusual watchouts backed entirely by ordinary schedule events; it skips
+  when none qualify, and daily-requirements items cannot trigger it.
 - If no `MORNING_BRIEFING_RECIPIENT_USER_IDS` are configured, the scheduled run
   no-ops. `/briefing` can still be used on demand by a linked Telegram user.
 - Convex generates one briefing per local date and reuses it for morning
@@ -616,9 +618,7 @@ Morning briefing operations:
   Open-Meteo forecast context to make an already-qualified briefing more
   practical. Weather does not cause quiet-day notifications by itself. Missing,
   invalid, or unavailable weather context falls back to schedule-only AI
-  generation. Afternoon delivery refreshes the configured forecast context, but
-  only appends relevant afternoon readiness notes when the afternoon message
-  already has briefing content.
+  generation.
 - Stored briefings are plain text. AI output that leaks internal member ids,
   uses unknown member ownership, includes markup delimiters, or includes escaped
   HTML entities is rejected and replaced with the deterministic schedule

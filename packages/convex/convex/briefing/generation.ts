@@ -228,19 +228,14 @@ export async function createMorningBriefing({
 export function renderMorningBriefingDeliveryPreview({
   briefing,
   members,
-  slot,
-  weather
+  slot
 }: {
   briefing: BotMorningBriefing;
   members: ReturnType<typeof displayMembersFromConfig>;
   slot: BriefingDeliverySlot;
-  weather?: MorningBriefingWeatherContext;
 }): BotMorningBriefing {
   const message = briefing.briefing
-    ? formatBriefingDeliveryMessage(briefing.briefing, members, {
-        slot,
-        weather
-      })
+    ? formatBriefingDeliveryMessage(briefing.briefing, members, { slot })
     : briefing.message;
   const shouldSend = briefing.shouldSend && message.trim().length > 0;
 
@@ -415,11 +410,8 @@ export const renderMorningBriefingDeliveryPreviewForBot = action({
           generatedAt
         })
       );
-    const weather =
-      slot === 'afternoon' ? await morningBriefingWeatherFromEnv({ localDate, timeZone: resolvedTimeZone }) : undefined;
-
     return {
-      briefing: renderMorningBriefingDeliveryPreview({ briefing, members, slot, weather })
+      briefing: renderMorningBriefingDeliveryPreview({ briefing, members, slot })
     };
   }
 });

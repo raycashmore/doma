@@ -148,7 +148,7 @@ Watchouts
 });
 
 describe('formatBriefingDeliveryMessage', () => {
-  it('renders the morning delivery as morning calendar details only', () => {
+  it('renders the whole day in the morning delivery', () => {
     const message = formatBriefingDeliveryMessage(
       {
         shouldSend: true,
@@ -162,12 +162,21 @@ describe('formatBriefingDeliveryMessage', () => {
       { slot: 'morning' }
     );
 
-    expect(message).toBe(`This morning:
-- Child A: pack library bag`);
-    expect(message).not.toContain('Today:');
-    expect(message).not.toContain('Library bag and sport clothes.');
-    expect(message).not.toContain('Homework folder is due back.');
-    expect(message).not.toContain('dancing');
+    expect(message).toBe(`Today:
+Library bag and sport clothes.
+
+This morning:
+- Child A: pack library bag
+
+This afternoon:
+- Child A: bring water bottle for dancing
+
+Watchouts
+- Homework folder is due back.`);
+    expect(message).toContain('Today:');
+    expect(message).toContain('Library bag and sport clothes.');
+    expect(message).toContain('Homework folder is due back.');
+    expect(message).toContain('dancing');
   });
 
   it('returns an empty morning delivery when there is no morning calendar content', () => {
@@ -187,50 +196,39 @@ describe('formatBriefingDeliveryMessage', () => {
     expect(message).toBe('');
   });
 
-  it('renders afternoon details with relevant afternoon weather readiness', () => {
+  it('reserves the afternoon delivery for unusual watchouts', () => {
     const message = formatBriefingDeliveryMessage(
       {
         shouldSend: true,
         headline: 'Library bag and sport clothes.',
         morning: [{ text: 'pack library bag', who: ['childA'], sourceIds: ['req:library:1'] }],
         afternoon: [{ text: 'bring water bottle for dancing', who: ['childA'], sourceIds: ['req:dance:1'] }],
-        watchouts: [],
+        watchouts: [
+          {
+            text: 'Pickup timing has changed.',
+            who: ['childA'],
+            sourceIds: ['schedule:pickup:1'],
+            afternoonEligible: true
+          },
+          {
+            text: 'Remember the sports bag.',
+            who: ['childA'],
+            sourceIds: ['requirements:sports:1'],
+            afternoonEligible: false
+          }
+        ],
         sourceIdsIgnored: []
       },
       members,
-      {
-        slot: 'afternoon',
-        weather: {
-          summary: 'Wet afternoon.',
-          morning: {
-            temperatureC: { min: 12, max: 18 },
-            apparentTemperatureC: { min: 12, max: 18 },
-            relativeHumidityPercent: { min: 58, max: 62 },
-            rainChancePercent: 10,
-            maxWindGustKph: 10,
-            maxUvIndex: 2,
-            readiness: []
-          },
-          afternoon: {
-            temperatureC: { min: 17, max: 21 },
-            apparentTemperatureC: { min: 16, max: 20 },
-            relativeHumidityPercent: { min: 70, max: 74 },
-            rainChancePercent: 80,
-            maxWindGustKph: 12,
-            maxUvIndex: 3,
-            readiness: ['rain layer']
-          }
-        }
-      }
+      { slot: 'afternoon' }
     );
 
-    expect(message).toBe(`This afternoon:
-- Child A: bring water bottle for dancing
-
-Weather:
-- Rain layer may help this afternoon.`);
+    expect(message).toBe(`Watchouts
+- Pickup timing has changed.`);
     expect(message).not.toContain('Library bag');
     expect(message).not.toContain('pack library bag');
+    expect(message).not.toContain('water bottle');
+    expect(message).not.toContain('sports bag');
   });
 
   it('does not strip formatting-looking text from stored structured briefing text', () => {
@@ -253,7 +251,10 @@ Weather:
       { slot: 'morning' }
     );
 
-    expect(message).toBe(`This morning:
+    expect(message).toBe(`Today:
+A tidy split today: <b>library</b> and Crazy Hair &amp; Sock Day.
+
+This morning:
 - Child A: School run needs <b>library</b> bag and Crazy Hair &amp; Sock Day.`);
   });
 
@@ -279,10 +280,13 @@ Weather:
         sourceIdsIgnored: []
       },
       members,
-      { slot: 'afternoon' }
+      { slot: 'morning' }
     );
 
-    expect(message).toBe(`This afternoon:
+    expect(message).toBe(`Today:
+Dancing and swimming.
+
+This afternoon:
 - Child A: Dancing at 4:00 with Adult A picking up Child A.
 - Child B: Swimming at 5:00; bring goggles, swimmers, and a towel.`);
   });

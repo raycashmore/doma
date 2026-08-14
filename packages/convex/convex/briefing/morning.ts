@@ -1,7 +1,6 @@
 import type { ScheduleDisplayMember } from '../schedule/config';
 import type { CalendarConfig, ScheduleEventRow } from '../schedule/mapping';
 import { zonedDateStartMs } from '../schedule/week';
-import type { MorningBriefingWeatherContext, WeatherReadinessBlock } from './weather';
 
 export type BriefingKind = 'morning';
 
@@ -9,6 +8,7 @@ export type BriefingLine = {
   text: string;
   who: string[];
   sourceIds: string[];
+  afternoonEligible?: boolean;
 };
 
 export type MorningBriefing = {
@@ -99,24 +99,26 @@ export function formatMorningBriefing(briefing: MorningBriefing, members: Schedu
 export function formatBriefingDeliveryMessage(
   briefing: MorningBriefing,
   members: ScheduleDisplayMember[],
-  {
-    slot,
-    weather
-  }: {
+  options: {
     slot: BriefingDeliverySlot;
-    weather?: MorningBriefingWeatherContext;
   }
 ) {
   if (!briefing.shouldSend) return '';
 
   const lines: string[] = [];
-  if (slot === 'morning') {
+  if (options.slot === 'morning') {
+    const hasDayContent = briefing.morning.length > 0 || briefing.afternoon.length > 0 || briefing.watchouts.length > 0;
+    if (!hasDayContent) return '';
+
+    lines.push('Today:', normalizeBriefingText(briefing.headline).replace(/^Today:\s*/i, ''));
     appendBlock(lines, 'This morning:', briefing.morning, members);
-  } else {
     appendBlock(lines, 'This afternoon:', briefing.afternoon, members);
-    if (briefing.afternoon.length > 0) {
-      appendWeatherReadiness(lines, weather?.afternoon);
-    }
+    appendWatchouts(lines, briefing.watchouts);
+  } else {
+    appendWatchouts(
+      lines,
+      briefing.watchouts.filter((watchout) => watchout.afternoonEligible === true)
+    );
   }
 
   return lines.join('\n').trim();
@@ -148,32 +150,6 @@ function appendWatchouts(lines: string[], watchouts: BriefingLine[]) {
   if (watchouts.length === 0) return;
 
   lines.push('', 'Watchouts', ...watchouts.map((line) => `- ${normalizeBriefingText(line.text)}`));
-}
-
-function appendWeatherReadiness(lines: string[], afternoon: WeatherReadinessBlock | undefined) {
-  if (!afternoon || afternoon.readiness.length === 0) return;
-
-  const readinessLines = afternoon.readiness.map((hint) => `- ${weatherReadinessText(hint)}`);
-  lines.push('', 'Weather:', ...readinessLines);
-}
-
-function weatherReadinessText(hint: string) {
-  switch (hint) {
-    case 'warm layer':
-      return 'Warm layer may help this afternoon.';
-    case 'rain layer':
-      return 'Rain layer may help this afternoon.';
-    case 'heat plan':
-      return 'Heat plan may help this afternoon.';
-    case 'wind-aware pickup':
-      return 'Plan for windy pickup conditions this afternoon.';
-    case 'sun protection':
-      return 'Sun protection may help this afternoon.';
-    case 'allergy humidity':
-      return 'High humidity may matter for allergy control this afternoon.';
-    default:
-      return `${normalizeBriefingText(hint)} may help this afternoon.`;
-  }
 }
 
 function normalizeBriefingText(text: string) {

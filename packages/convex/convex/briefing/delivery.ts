@@ -1,4 +1,5 @@
 import type { ScheduleDisplayMember } from '../schedule/config';
+import { briefingDeliveryPolicy } from './deliverySchedule';
 import {
   type BriefingDeliverySlot,
   formatBriefingDeliveryMessage,
@@ -7,7 +8,6 @@ import {
   type MorningBriefing,
   morningBriefingKey
 } from './morning';
-import type { MorningBriefingWeatherContext } from './weather';
 
 export type BotMorningBriefing = {
   briefingKey: string;
@@ -53,10 +53,6 @@ export type MorningBriefingDeliveryAttemptRecorder = (attempt: {
   providerErrorCode?: string;
 }) => Promise<{ claimed?: boolean } | unknown>;
 
-const retryWindowStart = { hour: 7, minute: 35 };
-const retryWindowEnd = { hour: 8, minute: 30 };
-const afternoonRetryWindowStart = { hour: 14, minute: 30 };
-const afternoonRetryWindowEnd = { hour: 15, minute: 0 };
 const staleScheduleDataMs = 12 * 60 * 60_000;
 
 function localParts(nowMs: number, timeZone: string) {
@@ -91,10 +87,14 @@ function localParts(nowMs: number, timeZone: string) {
 
 export function deliverySlotForTime(nowMs: number, timeZone: string): BriefingDeliverySlot | null {
   const { isWeekend, minuteOfDay } = localParts(nowMs, timeZone);
-  const morningStart = retryWindowStart.hour * 60 + retryWindowStart.minute;
-  const morningEnd = retryWindowEnd.hour * 60 + retryWindowEnd.minute;
-  const afternoonStart = afternoonRetryWindowStart.hour * 60 + afternoonRetryWindowStart.minute;
-  const afternoonEnd = afternoonRetryWindowEnd.hour * 60 + afternoonRetryWindowEnd.minute;
+  const morningStartTime = briefingDeliveryPolicy.morning.retryTimes[0];
+  const afternoonStartTime = briefingDeliveryPolicy.afternoon.retryTimes[0];
+  const morningStart = morningStartTime.hour * 60 + morningStartTime.minute;
+  const morningEnd =
+    briefingDeliveryPolicy.morning.windowEnd.hour * 60 + briefingDeliveryPolicy.morning.windowEnd.minute;
+  const afternoonStart = afternoonStartTime.hour * 60 + afternoonStartTime.minute;
+  const afternoonEnd =
+    briefingDeliveryPolicy.afternoon.windowEnd.hour * 60 + briefingDeliveryPolicy.afternoon.windowEnd.minute;
 
   if (minuteOfDay >= morningStart && minuteOfDay < morningEnd) return 'morning';
   if (isWeekend) return null;
@@ -152,7 +152,6 @@ export async function runMorningBriefingDeliveryCycle({
   syncSchedule,
   loadBriefing,
   generateBriefing,
-  loadWeather,
   sendNotification,
   recordDeliveryAttempt
 }: {
@@ -170,7 +169,6 @@ export async function runMorningBriefingDeliveryCycle({
     generatedAt: number;
     replaceExisting?: boolean;
   }) => Promise<BotMorningBriefing>;
-  loadWeather?: (input: { localDate: string; timeZone: string }) => Promise<MorningBriefingWeatherContext | undefined>;
   sendNotification: MorningBriefingNotificationSender;
   recordDeliveryAttempt: MorningBriefingDeliveryAttemptRecorder;
 }): Promise<MorningBriefingDeliveryCounts> {
@@ -219,9 +217,8 @@ export async function runMorningBriefingDeliveryCycle({
     throw new Error('Morning briefing is not valid stored briefing content');
   }
   const counts = emptyCounts({ syncFailed, staleCache, generated });
-  const weather = deliverySlot === 'afternoon' && loadWeather ? await loadWeather({ localDate, timeZone }) : undefined;
   const baseMessage = briefing.briefing
-    ? formatBriefingDeliveryMessage(briefing.briefing, members, { slot: deliverySlot, weather })
+    ? formatBriefingDeliveryMessage(briefing.briefing, members, { slot: deliverySlot })
     : briefing.message;
   const shouldSend = briefing.shouldSend && baseMessage.trim().length > 0;
   const message = shouldSend && staleCache ? withStaleScheduleNote(baseMessage) : baseMessage;

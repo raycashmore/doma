@@ -18,20 +18,27 @@ type UpcomingBriefingDeliverySlotsOptions = {
   horizonMs: number;
 };
 
-const morningRetryTimes = [
-  { hour: 7, minute: 35 },
-  { hour: 7, minute: 45 },
-  { hour: 7, minute: 55 },
-  { hour: 8, minute: 5 },
-  { hour: 8, minute: 15 },
-  { hour: 8, minute: 25 }
-];
-
-const afternoonRetryTimes = [
-  { hour: 14, minute: 30 },
-  { hour: 14, minute: 40 },
-  { hour: 14, minute: 50 }
-];
+export const briefingDeliveryPolicy = {
+  morning: {
+    retryTimes: [
+      { hour: 8, minute: 20 },
+      { hour: 8, minute: 25 },
+      { hour: 8, minute: 30 },
+      { hour: 8, minute: 35 },
+      { hour: 8, minute: 40 },
+      { hour: 8, minute: 45 }
+    ],
+    windowEnd: { hour: 8, minute: 50 }
+  },
+  afternoon: {
+    retryTimes: [
+      { hour: 14, minute: 30 },
+      { hour: 14, minute: 40 },
+      { hour: 14, minute: 50 }
+    ],
+    windowEnd: { hour: 15, minute: 0 }
+  }
+} as const;
 
 export function upcomingBriefingDeliverySlots({
   nowMs,
@@ -47,14 +54,21 @@ export function upcomingBriefingDeliverySlots({
     localDate <= lastLocalDate;
     localDate = shiftCalendarDate(localDate, 1)
   ) {
-    appendSlots(slots, { localDate, slot: 'morning', retryTimes: morningRetryTimes, nowMs, horizonEndMs, timeZone });
+    appendSlots(slots, {
+      localDate,
+      slot: 'morning',
+      retryTimes: briefingDeliveryPolicy.morning.retryTimes,
+      nowMs,
+      horizonEndMs,
+      timeZone
+    });
 
     const { weekday } = weekFactsForCalendarDate(localDate);
     if (weekday !== 'saturday' && weekday !== 'sunday') {
       appendSlots(slots, {
         localDate,
         slot: 'afternoon',
-        retryTimes: afternoonRetryTimes,
+        retryTimes: briefingDeliveryPolicy.afternoon.retryTimes,
         nowMs,
         horizonEndMs,
         timeZone
@@ -70,7 +84,7 @@ function appendSlots(
   options: {
     localDate: string;
     slot: ScheduledBriefingDeliverySlot['slot'];
-    retryTimes: { hour: number; minute: number }[];
+    retryTimes: readonly { hour: number; minute: number }[];
     nowMs: number;
     horizonEndMs: number;
     timeZone: string;

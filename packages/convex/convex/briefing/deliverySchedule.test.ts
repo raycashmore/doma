@@ -3,49 +3,49 @@ import { describe, expect, it } from 'vitest';
 import { upcomingBriefingDeliverySlots } from './deliverySchedule';
 
 describe('upcomingBriefingDeliverySlots', () => {
-  it('creates the AEST morning retry slots at their Sydney-local times', () => {
+  it('creates morning retry slots from 8:20am at their Sydney-local times', () => {
     const slots = upcomingBriefingDeliverySlots({
-      nowMs: Date.parse('2026-06-11T21:00:00.000Z'),
+      nowMs: Date.parse('2026-06-11T22:00:00.000Z'),
       timeZone: 'Australia/Sydney',
       horizonMs: 2 * 60 * 60 * 1000
     });
 
     expect(slots).toEqual([
       {
-        key: 'morning:2026-06-12:morning:07:35',
+        key: 'morning:2026-06-12:morning:08:20',
         localDate: '2026-06-12',
         slot: 'morning',
-        scheduledAt: Date.parse('2026-06-11T21:35:00.000Z')
-      },
-      {
-        key: 'morning:2026-06-12:morning:07:45',
-        localDate: '2026-06-12',
-        slot: 'morning',
-        scheduledAt: Date.parse('2026-06-11T21:45:00.000Z')
-      },
-      {
-        key: 'morning:2026-06-12:morning:07:55',
-        localDate: '2026-06-12',
-        slot: 'morning',
-        scheduledAt: Date.parse('2026-06-11T21:55:00.000Z')
-      },
-      {
-        key: 'morning:2026-06-12:morning:08:05',
-        localDate: '2026-06-12',
-        slot: 'morning',
-        scheduledAt: Date.parse('2026-06-11T22:05:00.000Z')
-      },
-      {
-        key: 'morning:2026-06-12:morning:08:15',
-        localDate: '2026-06-12',
-        slot: 'morning',
-        scheduledAt: Date.parse('2026-06-11T22:15:00.000Z')
+        scheduledAt: Date.parse('2026-06-11T22:20:00.000Z')
       },
       {
         key: 'morning:2026-06-12:morning:08:25',
         localDate: '2026-06-12',
         slot: 'morning',
         scheduledAt: Date.parse('2026-06-11T22:25:00.000Z')
+      },
+      {
+        key: 'morning:2026-06-12:morning:08:30',
+        localDate: '2026-06-12',
+        slot: 'morning',
+        scheduledAt: Date.parse('2026-06-11T22:30:00.000Z')
+      },
+      {
+        key: 'morning:2026-06-12:morning:08:35',
+        localDate: '2026-06-12',
+        slot: 'morning',
+        scheduledAt: Date.parse('2026-06-11T22:35:00.000Z')
+      },
+      {
+        key: 'morning:2026-06-12:morning:08:40',
+        localDate: '2026-06-12',
+        slot: 'morning',
+        scheduledAt: Date.parse('2026-06-11T22:40:00.000Z')
+      },
+      {
+        key: 'morning:2026-06-12:morning:08:45',
+        localDate: '2026-06-12',
+        slot: 'morning',
+        scheduledAt: Date.parse('2026-06-11T22:45:00.000Z')
       }
     ]);
   });
@@ -58,10 +58,10 @@ describe('upcomingBriefingDeliverySlots', () => {
     });
 
     expect(slots[0]).toEqual({
-      key: 'morning:2026-01-12:morning:07:35',
+      key: 'morning:2026-01-12:morning:08:20',
       localDate: '2026-01-12',
       slot: 'morning',
-      scheduledAt: Date.parse('2026-01-11T20:35:00.000Z')
+      scheduledAt: Date.parse('2026-01-11T21:20:00.000Z')
     });
   });
 
@@ -113,7 +113,7 @@ describe('upcomingBriefingDeliverySlots', () => {
   });
 
   it('returns timestamp-sorted slots and excludes slots before now', () => {
-    const nowMs = Date.parse('2026-06-12T21:50:00.000Z');
+    const nowMs = Date.parse('2026-06-12T22:25:00.000Z');
     const slots = upcomingBriefingDeliverySlots({
       nowMs,
       timeZone: 'Australia/Sydney',
@@ -121,12 +121,13 @@ describe('upcomingBriefingDeliverySlots', () => {
     });
 
     expect(slots.map((slot) => slot.scheduledAt)).toEqual([
-      Date.parse('2026-06-12T21:55:00.000Z'),
-      Date.parse('2026-06-12T22:05:00.000Z'),
-      Date.parse('2026-06-12T22:15:00.000Z'),
       Date.parse('2026-06-12T22:25:00.000Z'),
-      Date.parse('2026-06-13T21:35:00.000Z'),
-      Date.parse('2026-06-13T21:45:00.000Z')
+      Date.parse('2026-06-12T22:30:00.000Z'),
+      Date.parse('2026-06-12T22:35:00.000Z'),
+      Date.parse('2026-06-12T22:40:00.000Z'),
+      Date.parse('2026-06-12T22:45:00.000Z'),
+      Date.parse('2026-06-13T22:20:00.000Z'),
+      Date.parse('2026-06-13T22:25:00.000Z')
     ]);
     expect(slots.every((slot) => slot.scheduledAt >= nowMs)).toBe(true);
   });

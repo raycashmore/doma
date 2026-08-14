@@ -6,7 +6,8 @@ export const briefingKindValidator = v.literal('morning');
 export const briefingLineValidator = v.object({
   text: v.string(),
   who: v.array(v.string()),
-  sourceIds: v.array(v.string())
+  sourceIds: v.array(v.string()),
+  afternoonEligible: v.optional(v.boolean())
 });
 
 export const morningBriefingValidator = v.object({
