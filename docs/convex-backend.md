@@ -145,16 +145,15 @@ delivery and `/briefing` replay stay idempotent.
 Morning briefing messages render as compact readiness summaries, not raw event
 feeds. Busy days lead with the shape of the day, then include morning,
 afternoon, and watchout sections when relevant. The morning notification and
-`/briefing` replay contain only the `This morning:` calendar details; the
-afternoon notification contains afternoon details. A morning notification is
-skipped when that section is empty, including on weekends; the afternoon
-delivery slot does not run on weekends. AI-generated briefings can use optional
+`/briefing` replay contain the headline and the full day's relevant details. A
+morning notification is skipped when the day has no briefing content, including
+on weekends. The weekday-only afternoon slot sends only unusual watchouts backed
+entirely by ordinary schedule sources, and skips delivery when none qualify;
+daily-requirements items never trigger it. AI-generated briefings can use optional
 Open-Meteo weather context to make calendar-derived block lines more practical,
-such as noting a cold start or wet pickup. Afternoon
-delivery can refresh the same weather context and add relevant afternoon
-readiness notes when the afternoon message already has briefing content. Weather
-decorates a briefing that schedule requirements already justify; it does not
-trigger a quiet-day notification by itself.
+such as noting a cold start or wet pickup. Weather decorates a briefing that
+schedule requirements already justify; it does not trigger a quiet-day
+notification by itself.
 
 Stored briefing text is plain text. The AI parser rejects responses that leak
 internal member ids, use unknown member ownership, include markup delimiters, or
@@ -170,7 +169,7 @@ briefing text can contain private household schedule details, so do not copy it
 into committed fixtures.
 
 Scheduled delivery is scheduled by a 24-hour Convex reconciler during the local
-`07:35 <= time < 08:30` morning retry window every day and the
+`08:20 <= time < 08:50` morning retry window every day and the
 `14:30 <= time < 15:00` afternoon retry window on weekdays only. The runner forces schedule sync
 before generation when possible, reuses an existing stored briefing for morning
 retries, refreshes the stored briefing after a successful afternoon sync, sends
