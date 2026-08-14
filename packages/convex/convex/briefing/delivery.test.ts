@@ -4,7 +4,7 @@ import type { ScheduleDisplayMember } from '../schedule/config';
 import { type BotMorningBriefing, runMorningBriefingDeliveryCycle } from './delivery';
 
 const timeZone = 'Australia/Sydney';
-const dueAtMs = Date.parse('2026-06-11T21:35:00.000Z'); // 7:35am 2026-06-12 in Sydney
+const dueAtMs = Date.parse('2026-06-11T22:20:00.000Z'); // 8:20am 2026-06-12 in Sydney
 const members: ScheduleDisplayMember[] = [{ id: 'childA', label: 'Child A', initials: 'CA' }];
 const briefing: BotMorningBriefing = {
   briefingKey: 'morning:2026-06-12',
@@ -21,6 +21,14 @@ const briefing: BotMorningBriefing = {
     sourceIdsIgnored: []
   }
 };
+const morningDeliveryMessage = `Today:
+Library bag and dancing pickup.
+
+This morning:
+- Child A: Bring library bag.
+
+This afternoon:
+- Child A: Bring dancing shoes.`;
 
 describe('runMorningBriefingDeliveryCycle', () => {
   it('does not sync, generate, send, or record outside the local morning retry window', async () => {
@@ -32,7 +40,7 @@ describe('runMorningBriefingDeliveryCycle', () => {
 
     await expect(
       runMorningBriefingDeliveryCycle({
-        nowMs: Date.parse('2026-06-12T21:34:00.000Z'), // 7:34am in Sydney
+        nowMs: Date.parse('2026-06-11T22:19:00.000Z'), // 8:19am in Sydney
         timeZone,
         members,
         recipientUserIds: ['user_123'],
@@ -105,8 +113,7 @@ describe('runMorningBriefingDeliveryCycle', () => {
     expect(sendNotification).toHaveBeenCalledWith({
       recipientUserId: 'user_123',
       topic: 'briefing.morning',
-      message: `This morning:
-- Child A: Bring library bag.`,
+      message: morningDeliveryMessage,
       metadata: {
         briefingKey: briefing.briefingKey,
         deliveryKey: `${briefing.briefingKey}:morning`,
@@ -118,8 +125,7 @@ describe('runMorningBriefingDeliveryCycle', () => {
     expect(sendNotification).toHaveBeenCalledWith({
       recipientUserId: 'user_456',
       topic: 'briefing.morning',
-      message: `This morning:
-- Child A: Bring library bag.`,
+      message: morningDeliveryMessage,
       metadata: {
         briefingKey: briefing.briefingKey,
         deliveryKey: `${briefing.briefingKey}:morning`,
@@ -180,8 +186,8 @@ describe('runMorningBriefingDeliveryCycle', () => {
     expect(recordDeliveryAttempt).not.toHaveBeenCalled();
   });
 
-  it('sends only the morning calendar details on weekends', async () => {
-    const weekendDueAtMs = Date.parse('2026-06-12T21:35:00.000Z'); // 7:35am Saturday in Sydney
+  it('sends the whole day in the morning delivery on weekends', async () => {
+    const weekendDueAtMs = Date.parse('2026-06-12T22:20:00.000Z'); // 8:20am Saturday in Sydney
     const weekendBriefing: BotMorningBriefing = {
       ...briefing,
       briefingKey: 'morning:2026-06-13',
@@ -213,8 +219,7 @@ describe('runMorningBriefingDeliveryCycle', () => {
     expect(sendNotification).toHaveBeenCalledWith({
       recipientUserId: 'user_123',
       topic: 'briefing.morning',
-      message: `This morning:
-- Child A: Bring library bag.`,
+      message: morningDeliveryMessage,
       metadata: {
         briefingKey: weekendBriefing.briefingKey,
         deliveryKey: `${weekendBriefing.briefingKey}:morning`,
@@ -330,8 +335,7 @@ describe('runMorningBriefingDeliveryCycle', () => {
     expect(sendNotification).toHaveBeenCalledWith({
       recipientUserId: 'user_retry',
       topic: 'briefing.morning',
-      message: `This morning:
-- Child A: Bring library bag.`,
+      message: morningDeliveryMessage,
       metadata: {
         briefingKey: briefing.briefingKey,
         deliveryKey: `${briefing.briefingKey}:morning`,
@@ -406,8 +410,7 @@ describe('runMorningBriefingDeliveryCycle', () => {
     expect(sendNotification).toHaveBeenCalledWith({
       recipientUserId: 'user_123',
       topic: 'briefing.morning',
-      message: `This morning:
-- Child A: Bring library bag.
+      message: `${morningDeliveryMessage}
 Note: schedule data may be stale because the latest calendar sync failed.`,
       metadata: {
         briefingKey: briefing.briefingKey,
@@ -449,8 +452,7 @@ Note: schedule data may be stale because the latest calendar sync failed.`,
     expect(sendNotification).toHaveBeenCalledWith({
       recipientUserId: 'user_123',
       topic: 'briefing.morning',
-      message: `This morning:
-- Child A: Bring library bag.`,
+      message: morningDeliveryMessage,
       metadata: {
         briefingKey: briefing.briefingKey,
         deliveryKey: `${briefing.briefingKey}:morning`,
@@ -584,7 +586,7 @@ Note: schedule data may be stale because the latest calendar sync failed.`,
     expect(sendNotification).not.toHaveBeenCalled();
   });
 
-  it('skips the afternoon slot when weather is ready but the briefing has no afternoon content', async () => {
+  it('skips the afternoon slot when the briefing has no eligible watchouts', async () => {
     const afternoonDueAtMs = Date.parse('2026-06-12T04:30:00.000Z'); // 2:30pm in Sydney
     const structuredBriefing = briefing.briefing;
     if (!structuredBriefing) throw new Error('Test fixture should include structured briefing content');
@@ -598,27 +600,6 @@ Note: schedule data may be stale because the latest calendar sync failed.`,
     const syncSchedule = vi.fn(async () => ({ ok: true as const, lastSyncedAt: afternoonDueAtMs }));
     const loadBriefing = vi.fn(async () => morningOnlyBriefing);
     const generateBriefing = vi.fn(async () => morningOnlyBriefing);
-    const loadWeather = vi.fn(async () => ({
-      summary: 'Wet afternoon.',
-      morning: {
-        temperatureC: { min: 12, max: 18 },
-        apparentTemperatureC: { min: 12, max: 18 },
-        relativeHumidityPercent: { min: 58, max: 62 },
-        rainChancePercent: 10,
-        maxWindGustKph: 10,
-        maxUvIndex: 2,
-        readiness: []
-      },
-      afternoon: {
-        temperatureC: { min: 17, max: 21 },
-        apparentTemperatureC: { min: 16, max: 20 },
-        relativeHumidityPercent: { min: 70, max: 74 },
-        rainChancePercent: 80,
-        maxWindGustKph: 12,
-        maxUvIndex: 3,
-        readiness: ['rain layer']
-      }
-    }));
     const sendNotification = vi.fn(async () => ({ status: 'sent' as const }));
     const recordDeliveryAttempt = vi.fn(async () => ({ claimed: true as const }));
 
@@ -636,7 +617,6 @@ Note: schedule data may be stale because the latest calendar sync failed.`,
         syncSchedule,
         loadBriefing,
         generateBriefing,
-        loadWeather,
         sendNotification,
         recordDeliveryAttempt
       })
@@ -653,7 +633,6 @@ Note: schedule data may be stale because the latest calendar sync failed.`,
       generatedAt: afternoonDueAtMs,
       replaceExisting: true
     });
-    expect(loadWeather).toHaveBeenCalledWith({ localDate: '2026-06-12', timeZone });
     expect(sendNotification).not.toHaveBeenCalled();
     expect(recordDeliveryAttempt).toHaveBeenCalledWith({
       briefingKey: `${briefing.briefingKey}:afternoon`,
@@ -765,32 +744,25 @@ Note: schedule data may be stale because the latest calendar sync failed.`,
     expect(recordDeliveryAttempt).not.toHaveBeenCalled();
   });
 
-  it('sends the afternoon slot at 2:30pm with refreshed afternoon weather', async () => {
+  it('sends an unusual ordinary-schedule watchout in the afternoon slot', async () => {
     const afternoonDueAtMs = Date.parse('2026-06-12T04:30:00.000Z'); // 2:30pm in Sydney
+    const unusualBriefing: BotMorningBriefing = {
+      ...briefing,
+      briefing: {
+        ...briefing.briefing!,
+        watchouts: [
+          {
+            text: 'Pickup timing has changed unexpectedly.',
+            who: ['childA'],
+            sourceIds: ['schedule:pickup:1'],
+            afternoonEligible: true
+          }
+        ]
+      }
+    };
     const syncSchedule = vi.fn(async () => ({ ok: true as const, lastSyncedAt: afternoonDueAtMs }));
     const loadBriefing = vi.fn(async () => briefing);
-    const generateBriefing = vi.fn(async () => briefing);
-    const loadWeather = vi.fn(async () => ({
-      summary: 'Wet afternoon.',
-      morning: {
-        temperatureC: { min: 12, max: 18 },
-        apparentTemperatureC: { min: 12, max: 18 },
-        relativeHumidityPercent: { min: 58, max: 62 },
-        rainChancePercent: 10,
-        maxWindGustKph: 10,
-        maxUvIndex: 2,
-        readiness: []
-      },
-      afternoon: {
-        temperatureC: { min: 17, max: 21 },
-        apparentTemperatureC: { min: 16, max: 20 },
-        relativeHumidityPercent: { min: 70, max: 74 },
-        rainChancePercent: 80,
-        maxWindGustKph: 12,
-        maxUvIndex: 3,
-        readiness: ['rain layer']
-      }
-    }));
+    const generateBriefing = vi.fn(async () => unusualBriefing);
     const sendNotification = vi.fn(async () => ({ status: 'sent' as const }));
     const recordDeliveryAttempt = vi.fn(async () => ({ claimed: true as const }));
 
@@ -805,7 +777,6 @@ Note: schedule data may be stale because the latest calendar sync failed.`,
         syncSchedule,
         loadBriefing,
         generateBriefing,
-        loadWeather,
         sendNotification,
         recordDeliveryAttempt
       })
@@ -821,21 +792,17 @@ Note: schedule data may be stale because the latest calendar sync failed.`,
       generatedAt: afternoonDueAtMs,
       replaceExisting: true
     });
-    expect(loadWeather).toHaveBeenCalledWith({ localDate: '2026-06-12', timeZone });
     expect(sendNotification).toHaveBeenCalledWith({
       recipientUserId: 'user_123',
       topic: 'briefing.morning',
-      message: `This afternoon:
-- Child A: Bring dancing shoes.
-
-Weather:
-- Rain layer may help this afternoon.`,
+      message: `Watchouts
+- Pickup timing has changed unexpectedly.`,
       metadata: {
-        briefingKey: briefing.briefingKey,
-        deliveryKey: `${briefing.briefingKey}:afternoon`,
+        briefingKey: unusualBriefing.briefingKey,
+        deliveryKey: `${unusualBriefing.briefingKey}:afternoon`,
         deliverySlot: 'afternoon',
-        localDate: briefing.localDate,
-        generationStatus: briefing.generationStatus
+        localDate: unusualBriefing.localDate,
+        generationStatus: unusualBriefing.generationStatus
       }
     });
     expect(recordDeliveryAttempt).toHaveBeenCalledWith({

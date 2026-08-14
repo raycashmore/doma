@@ -18,7 +18,6 @@ import {
   runMorningBriefingDeliveryCycle
 } from './delivery';
 import { serializeError } from './errors';
-import { morningBriefingWeatherFromEnv } from './generation';
 
 type BriefingDeliveryAttemptRecord = {
   briefingKey: string;
@@ -210,8 +209,6 @@ export const runDueMorningBriefingDelivery = internalAction({
           botGatewayOrigin: parseBotGatewayOrigin(),
           serviceToken
         }),
-        loadWeather: ({ localDate: date, timeZone: tz }) =>
-          morningBriefingWeatherFromEnv({ localDate: date, timeZone: tz }),
         recordDeliveryAttempt: (attempt) => ctx.runMutation(deliveryStore.recordBriefingDeliveryAttempt, attempt)
       });
 

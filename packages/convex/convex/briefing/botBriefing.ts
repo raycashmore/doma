@@ -27,7 +27,8 @@ function isBriefingLine(value: unknown) {
     Array.isArray(value.who) &&
     value.who.every((item) => typeof item === 'string') &&
     Array.isArray(value.sourceIds) &&
-    value.sourceIds.every((item) => typeof item === 'string')
+    value.sourceIds.every((item) => typeof item === 'string') &&
+    (value.afternoonEligible === undefined || typeof value.afternoonEligible === 'boolean')
   );
 }
 

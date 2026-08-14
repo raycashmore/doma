@@ -221,6 +221,7 @@ This afternoon:
     expect(result.generationStatus).toBe('ai');
     expect(result.message).toContain('Watchouts');
     expect(result.message).toContain('Two pickups clash at pickup time');
+    expect(result.briefing.watchouts[0]?.afternoonEligible).toBe(true);
     // The watchout must NOT appear as a block line under This morning: or This afternoon:
     expect(result.message).not.toMatch(/This morning:[^\n]*\n(?:- [^\n]*\n)*- [^:]*Two pickups/);
     expect(result.message).not.toMatch(/This afternoon:[^\n]*\n(?:- [^\n]*\n)*- [^:]*Two pickups/);
@@ -232,6 +233,104 @@ This morning:
 
 Watchouts
 - Two pickups clash at pickup time`);
+  });
+
+  it('keeps daily-requirement watchouts in the morning but marks them ineligible for afternoon delivery', async () => {
+    const provider: MorningBriefingAiProvider = async ({ sources }) => {
+      const requirement = sources.find((source) => source.kind === 'dailyRequirements');
+      return {
+        shouldSend: true,
+        headline: 'Sports bag day.',
+        morning: [],
+        afternoon: [{ text: 'Bring sports bag', who: ['childA'], sourceIds: [requirement?.sourceId ?? 'missing'] }],
+        watchouts: [
+          {
+            text: 'Remember the sports bag this afternoon',
+            who: ['childA'],
+            sourceIds: [requirement?.sourceId ?? 'missing']
+          }
+        ],
+        sourceIdsIgnored: []
+      };
+    };
+
+    const result = await createAiMorningBriefing({
+      localDate,
+      timeZone,
+      calendarConfigs: [requirementsCalendar],
+      events: [requirementEvent()],
+      provider,
+      members
+    });
+
+    expect(result.briefing.watchouts).toMatchObject([
+      {
+        text: 'Remember the sports bag this afternoon',
+        afternoonEligible: false
+      }
+    ]);
+    expect(result.briefing.afternoon).toHaveLength(1);
+  });
+
+  it('marks mixed daily-requirement and schedule watchouts ineligible for afternoon delivery', async () => {
+    const provider: MorningBriefingAiProvider = async ({ sources }) => {
+      const requirement = sources.find((source) => source.kind === 'dailyRequirements');
+      const schedule = sources.find((source) => source.kind === 'schedule');
+      return {
+        shouldSend: true,
+        headline: 'A changed pickup needs attention.',
+        morning: [],
+        afternoon: [],
+        watchouts: [
+          {
+            text: 'Bring the sports bag to the changed pickup',
+            who: ['childA'],
+            sourceIds: [requirement?.sourceId ?? 'missing', schedule?.sourceId ?? 'missing']
+          }
+        ],
+        sourceIdsIgnored: []
+      };
+    };
+
+    const result = await createAiMorningBriefing({
+      localDate,
+      timeZone,
+      calendarConfigs: [requirementsCalendar],
+      events: [requirementEvent(), ordinaryEvent()],
+      provider,
+      members
+    });
+
+    expect(result.briefing.watchouts[0]?.afternoonEligible).toBe(false);
+    expect(result.briefing.watchouts[0]?.sourceIds).toHaveLength(2);
+  });
+
+  it('keeps unusual morning schedule events out of the afternoon delivery', async () => {
+    const provider: MorningBriefingAiProvider = async ({ sources }) => ({
+      shouldSend: true,
+      headline: 'An early pickup needs attention.',
+      morning: [],
+      afternoon: [],
+      watchouts: [
+        {
+          text: 'Pickup is unusually early',
+          who: ['childA'],
+          sourceIds: [sources.find((source) => source.kind === 'schedule')?.sourceId ?? 'missing']
+        }
+      ],
+      sourceIdsIgnored: []
+    });
+
+    const result = await createAiMorningBriefing({
+      localDate,
+      timeZone,
+      calendarConfigs: [requirementsCalendar],
+      events: [requirementEvent(), event()],
+      provider,
+      members
+    });
+
+    expect(result.briefing.watchouts[0]?.afternoonEligible).toBe(false);
   });
 
   it('treats a missing daily requirements calendar as a setup problem before calling AI', async () => {
@@ -687,6 +786,9 @@ describe('morningBriefingSystemPrompt', () => {
     expect(morningBriefingSystemPrompt).toContain('supplied weather');
     expect(morningBriefingSystemPrompt).toContain('Weather must only decorate');
     expect(morningBriefingSystemPrompt).toContain('Never send a briefing because of weather alone');
+    expect(morningBriefingSystemPrompt).toContain(
+      'afternoon delivery is reserved for unusual ordinary-schedule events'
+    );
   });
 
   it('instructs the model to keep generated prose plain text', () => {

@@ -67,6 +67,7 @@ export const morningBriefingSystemPrompt = [
   'Only include people who have something in that block. Do not emit lines for idle people and never write "normal day".',
   'Daily requirements sources are authoritative. Ordinary schedule sources are timing and coordination context.',
   'Put an obligation in "watchouts" instead of a block line ONLY when it is a genuine issue: a schedule clash, unusual or off-pattern timing, or a high-stakes forgotten-item risk (passport, medication, signed form — not everyday water bottles).',
+  'Daily-requirement watchouts belong in the morning briefing only; afternoon delivery is reserved for unusual ordinary-schedule events.',
   'An obligation is either a block line or a watchout, never both. Keep run-of-the-mill handoffs and pickups as ordinary block lines.',
   'Keep low-priority ordinary events out unless they change readiness or coordination.',
   'Weather must only decorate a calendar-derived obligation when it changes readiness; it must never create an obligation, headline, or watchout by itself.',
@@ -167,7 +168,7 @@ export async function createAiMorningBriefing({
     const aiResponse = await provider(input);
     const parseResult = parseAiBriefing(
       aiResponse,
-      new Set(input.sources.map((source) => source.sourceId)),
+      new Map(input.sources.map((source) => [source.sourceId, source])),
       new Set(members.map((member) => member.id))
     );
     briefing = parseResult.briefing;
@@ -274,9 +275,10 @@ function localTimeBlock(ms: number, timeZone: string): MorningBriefingAiSource['
 
 function parseAiBriefing(
   value: unknown,
-  knownSourceIds: Set<string>,
+  sourceById: Map<string, MorningBriefingAiSource>,
   knownMemberIds: Set<string>
 ): { briefing: MorningBriefing | null; failure?: AiBriefingParseFailure } {
+  const knownSourceIds = new Set(sourceById.keys());
   if (!isRecord(value)) return { briefing: null, failure: { reason: 'not_object' } };
   if (typeof value.shouldSend !== 'boolean' || typeof value.headline !== 'string') {
     return { briefing: null, failure: { reason: 'invalid_top_level_fields' } };
@@ -298,6 +300,12 @@ function parseAiBriefing(
 
   const watchouts = parseLines(value.watchouts, 'watchouts', knownSourceIds, knownMemberIds);
   if (!watchouts.lines) return { briefing: null, failure: watchouts.failure };
+  const classifiedWatchouts = watchouts.lines.map((line) => ({
+    ...line,
+    afternoonEligible:
+      line.sourceIds.every((sourceId) => sourceById.get(sourceId)?.kind === 'schedule') &&
+      line.sourceIds.some((sourceId) => sourceById.get(sourceId)?.localTimeBlock === 'afternoon')
+  }));
 
   return {
     briefing: {
@@ -305,7 +313,7 @@ function parseAiBriefing(
       headline: value.headline,
       morning: morning.lines,
       afternoon: afternoon.lines,
-      watchouts: watchouts.lines,
+      watchouts: classifiedWatchouts,
       sourceIdsIgnored
     }
   };

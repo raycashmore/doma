@@ -148,15 +148,31 @@ describe('renderMorningBriefingDeliveryPreview', () => {
       headline: 'Library bag and dancing shoes.',
       morning: [{ text: 'Pack library bag', who: ['childA'], sourceIds: ['requirements-calendar:event-1'] }],
       afternoon: [{ text: 'Bring dancing shoes', who: ['childA'], sourceIds: ['requirements-calendar:event-2'] }],
-      watchouts: [{ text: 'Homework folder is due back.', who: [], sourceIds: ['requirements-calendar:event-3'] }],
+      watchouts: [
+        {
+          text: 'Pickup timing has changed.',
+          who: [],
+          sourceIds: ['schedule-calendar:event-3'],
+          afternoonEligible: true
+        }
+      ],
       sourceIdsIgnored: []
     }
   } satisfies BotMorningBriefing;
 
-  it('renders the morning slot from the structured briefing', () => {
+  it('renders the whole day and headline in the morning slot', () => {
     expect(renderMorningBriefingDeliveryPreview({ briefing, members, slot: 'morning' })).toMatchObject({
-      message: `This morning:
-- Child A: Pack library bag`,
+      message: `Today:
+Library bag and dancing shoes.
+
+This morning:
+- Child A: Pack library bag
+
+This afternoon:
+- Child A: Bring dancing shoes
+
+Watchouts
+- Pickup timing has changed.`,
       shouldSend: true
     });
   });
@@ -183,26 +199,16 @@ describe('renderMorningBriefingDeliveryPreview', () => {
     });
   });
 
-  it('renders the afternoon slot with relevant weather readiness', () => {
+  it('renders only unusual watchouts in the afternoon slot', () => {
     expect(
       renderMorningBriefingDeliveryPreview({
         briefing,
         members,
-        slot: 'afternoon',
-        weather: {
-          ...weather,
-          afternoon: {
-            ...weather.afternoon,
-            readiness: ['rain layer']
-          }
-        }
+        slot: 'afternoon'
       })
     ).toMatchObject({
-      message: `This afternoon:
-- Child A: Bring dancing shoes
-
-Weather:
-- Rain layer may help this afternoon.`,
+      message: `Watchouts
+- Pickup timing has changed.`,
       shouldSend: true
     });
   });
@@ -215,18 +221,12 @@ Weather:
           briefing: {
             ...briefing.briefing,
             morning: [{ text: 'Pack library bag', who: ['childA'], sourceIds: ['requirements-calendar:event-1'] }],
-            afternoon: []
+            afternoon: [],
+            watchouts: []
           }
         },
         members,
-        slot: 'afternoon',
-        weather: {
-          ...weather,
-          afternoon: {
-            ...weather.afternoon,
-            readiness: ['rain layer']
-          }
-        }
+        slot: 'afternoon'
       })
     ).toMatchObject({
       message: '',
@@ -236,7 +236,7 @@ Weather:
 });
 
 describe('renderBotMorningBriefingForReplay', () => {
-  it('rebuilds replay text as morning calendar details only', () => {
+  it('rebuilds replay text as the complete morning delivery', () => {
     const briefing = {
       briefingKey: 'morning:2026-06-12',
       localDate,
@@ -261,7 +261,10 @@ describe('renderBotMorningBriefingForReplay', () => {
     } satisfies BotMorningBriefing;
 
     expect(renderBotMorningBriefingForReplay({ briefing, members })).toMatchObject({
-      message: `This morning:
+      message: `Today:
+A tidy split today: library and Crazy Hair & Sock Day.
+
+This morning:
 - Child A: School run needs library bag and Crazy Hair & Sock Day.`
     });
   });
