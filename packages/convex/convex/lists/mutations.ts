@@ -201,13 +201,15 @@ export async function renameListHandler(ctx: ListsMutationCtx, { publicId, name 
   };
 }
 
+export async function renameListAndInvalidateHandler(ctx: MutationCtx, args: { publicId: string; name: string }) {
+  const list = await renameListHandler(ctx, args);
+  await enqueueWidgetInvalidation(ctx);
+  return list;
+}
+
 export const renameList = mutation({
   args: { publicId: v.string(), name: v.string() },
-  handler: async (ctx, args) => {
-    const list = await renameListHandler(ctx, args);
-    await enqueueWidgetInvalidation(ctx);
-    return list;
-  }
+  handler: renameListAndInvalidateHandler
 });
 
 export async function deleteListHandler(ctx: ListsMutationCtx, { publicId }: { publicId: string }) {

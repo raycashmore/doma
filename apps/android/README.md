@@ -9,7 +9,9 @@ Copy `config.example.properties` to `local.properties` and supply the Doma
 Convex deployment URL, Clerk publishable key, and the production Lists PWA base
 URL (for example, `https://doma.example.com/lists`). Do not commit
 `local.properties`, `google-services.json`, signing keys, or service-account
-credentials.
+credentials. Firebase configuration is also local: application ID, project ID,
+Web API key, and sender ID. These are public client identifiers, unlike the
+Firebase service account used by Convex.
 
 The companion requires JDK 17, Android SDK platform 37, and Android API 26 or
 newer. Use the checked-in Gradle wrapper from this directory:
@@ -20,8 +22,7 @@ newer. Use the checked-in Gradle wrapper from this directory:
 ```
 
 The release artifact is unsigned until the later sideload-release work adds the
-local signing configuration. Firebase delivery is part of the later refresh and
-release work.
+local signing configuration.
 
 ## Widget setup
 
@@ -37,6 +38,15 @@ The native Google prompt requires the Android application's Google client to be
 registered in the Clerk Dashboard before the first real-device sign-in. Keep
 Clerk restricted to approved accounts; the companion calls the non-transferable
 sign-in flow and does not offer sign-up.
+
+## Refresh
+
+After the first configured widget, the companion registers its encrypted
+installation ID and current FCM token with Convex. An opaque FCM invalidation
+refreshes all configured snapshots; a 15-minute WorkManager job is the fallback
+when delivery is delayed. Neither message contains list content or an
+identifier. The last successful encrypted snapshot remains visible while an
+ordinary refresh fails.
 
 ## Authentication
 

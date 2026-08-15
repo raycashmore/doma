@@ -1,6 +1,7 @@
 package com.doma.widget
 
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -20,21 +21,25 @@ class WidgetSnapshotRepository(
     private val application: DomaApplication,
 ) {
     suspend fun visibleLists(): Result<List<WidgetVisibleList>> = runCatching {
-        application.convexClient
-            .subscribe<List<WidgetVisibleList>>("lists/queries:listVisibleToMe")
-            .first()
-            .getOrThrow()
-            .sortedBy { list -> list.name.lowercase() }
+        withTimeout(SUBSCRIPTION_TIMEOUT_MS) {
+            application.convexClient
+                .subscribe<List<WidgetVisibleList>>("lists/queries:listVisibleToMe")
+                .first()
+                .getOrThrow()
+                .sortedBy { list -> list.name.lowercase() }
+        }
     }
 
     suspend fun refreshList(listPublicId: String): SnapshotRefreshResult = try {
-        val snapshot = application.convexClient
-            .subscribe<WidgetSnapshotProjection?>(
-                name = "lists/widget:getSnapshot",
-                args = mapOf("publicId" to listPublicId),
-            )
-            .first()
-            .getOrThrow()
+        val snapshot = withTimeout(SUBSCRIPTION_TIMEOUT_MS) {
+            application.convexClient
+                .subscribe<WidgetSnapshotProjection?>(
+                    name = "lists/widget:getSnapshot",
+                    args = mapOf("publicId" to listPublicId),
+                )
+                .first()
+                .getOrThrow()
+        }
 
         if (snapshot == null) {
             application.widgetStateStore.clearUnavailableList(listPublicId)
@@ -46,5 +51,9 @@ class WidgetSnapshotRepository(
         }
     } catch (_: Exception) {
         SnapshotRefreshResult.TransientFailure
+    }
+
+    private companion object {
+        const val SUBSCRIPTION_TIMEOUT_MS = 10_000L
     }
 }

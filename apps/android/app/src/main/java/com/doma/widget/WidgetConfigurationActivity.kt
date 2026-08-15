@@ -204,6 +204,7 @@ class WidgetConfigurationActivity : ComponentActivity() {
     }
 
     private fun finishConfiguration() {
+        WidgetRefreshWork.enqueueNow(this)
         setResult(
             RESULT_OK,
             Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId),
