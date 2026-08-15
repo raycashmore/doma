@@ -46,6 +46,7 @@ private data class WidgetState(
     val installationId: String,
     val selections: List<WidgetListSelection> = emptyList(),
     val snapshots: List<WidgetSnapshot> = emptyList(),
+    val unavailableWidgetIds: List<Int> = emptyList(),
 )
 
 class WidgetStateStore(context: Context) {
@@ -64,22 +65,76 @@ class WidgetStateStore(context: Context) {
     fun readSelections(): List<WidgetListSelection> = readState()?.selections.orEmpty()
 
     @Synchronized
+    fun readSelection(appWidgetId: Int): WidgetListSelection? =
+        readState()?.selections?.firstOrNull { selection -> selection.appWidgetId == appWidgetId }
+
+    @Synchronized
+    fun isUnavailable(appWidgetId: Int): Boolean =
+        readState()?.unavailableWidgetIds?.contains(appWidgetId) == true
+
+    @Synchronized
     fun readSnapshot(listPublicId: String): WidgetSnapshot? =
         readState()?.snapshots?.firstOrNull { snapshot -> snapshot.list.publicId == listPublicId }
 
     @Synchronized
-    fun replaceState(
-        selections: List<WidgetListSelection>,
-        snapshots: List<WidgetSnapshot>,
-    ) {
-        val installationId = readState()?.installationId ?: UUID.randomUUID().toString()
-        writeState(WidgetState(installationId, selections, snapshots))
+    fun selectList(selection: WidgetListSelection) {
+        val state = stateOrNew()
+        val selections = selectWidgetList(state.selections, selection)
+        writeState(
+            state.copy(
+                selections = selections,
+                unavailableWidgetIds = state.unavailableWidgetIds.filterNot { id -> id == selection.appWidgetId },
+            ),
+        )
+    }
+
+    @Synchronized
+    fun saveSnapshot(snapshot: WidgetSnapshot) {
+        val state = stateOrNew()
+        val snapshots = state.snapshots.filterNot { item -> item.list.publicId == snapshot.list.publicId } + snapshot
+        writeState(state.copy(snapshots = snapshots))
+    }
+
+    @Synchronized
+    fun clearWidget(appWidgetId: Int) {
+        val state = readState() ?: return
+        val selection = state.selections.firstOrNull { item -> item.appWidgetId == appWidgetId }
+        val selections = removeWidgetList(state.selections, appWidgetId)
+        val snapshots = if (selection == null || selections.any { it.listPublicId == selection.listPublicId }) {
+            state.snapshots
+        } else {
+            state.snapshots.filterNot { item -> item.list.publicId == selection.listPublicId }
+        }
+        writeState(
+            state.copy(
+                selections = selections,
+                snapshots = snapshots,
+                unavailableWidgetIds = state.unavailableWidgetIds.filterNot { id -> id == appWidgetId },
+            ),
+        )
+    }
+
+    @Synchronized
+    fun clearUnavailableList(listPublicId: String) {
+        val state = readState() ?: return
+        val unavailableWidgets = state.selections
+            .filter { selection -> selection.listPublicId == listPublicId }
+            .map { selection -> selection.appWidgetId }
+        writeState(
+            state.copy(
+                selections = state.selections.filterNot { selection -> selection.listPublicId == listPublicId },
+                snapshots = state.snapshots.filterNot { snapshot -> snapshot.list.publicId == listPublicId },
+                unavailableWidgetIds = (state.unavailableWidgetIds + unavailableWidgets).distinct(),
+            ),
+        )
     }
 
     @Synchronized
     fun clear() {
         stateFile.delete()
     }
+
+    private fun stateOrNew(): WidgetState = readState() ?: WidgetState(installationId = UUID.randomUUID().toString())
 
     private fun readState(): WidgetState? = runCatching {
         if (!stateFile.baseFile.exists()) return null

@@ -6,7 +6,8 @@ pnpm workspace package or a Vercel deployment zone.
 ## Local configuration
 
 Copy `config.example.properties` to `local.properties` and supply the Doma
-Convex deployment URL and Clerk publishable key. Do not commit
+Convex deployment URL, Clerk publishable key, and the production Lists PWA base
+URL (for example, `https://doma.example.com/lists`). Do not commit
 `local.properties`, `google-services.json`, signing keys, or service-account
 credentials.
 
@@ -19,8 +20,23 @@ newer. Use the checked-in Gradle wrapper from this directory:
 ```
 
 The release artifact is unsigned until the later sideload-release work adds the
-local signing configuration. The current foundation has no widget UI or Firebase
-delivery code.
+local signing configuration. Firebase delivery is part of the later refresh and
+release work.
+
+## Widget setup
+
+Add the **Doma list** widget from the Android launcher. Its configuration flow
+uses the native Google account prompt, then presents only the Lists visible to
+that Doma account. Each widget instance stores an independent list selection and
+an encrypted last successful snapshot. The rendered widget shows the list name,
+active count, ordered active titles, and a compact freshness label; it is
+resizable and scrollable. Tapping it opens the selected list in the configured
+Lists PWA.
+
+The native Google prompt requires the Android application's Google client to be
+registered in the Clerk Dashboard before the first real-device sign-in. Keep
+Clerk restricted to approved accounts; the companion calls the non-transferable
+sign-in flow and does not offer sign-up.
 
 ## Authentication
 

@@ -12,6 +12,8 @@ class DomaApplication : Application() {
 
     val convexClient by lazy { DomaConvexClient.create(configuration) }
 
+    val widgetSnapshotRepository by lazy { WidgetSnapshotRepository(this) }
+
     override fun onCreate() {
         super.onCreate()
 
