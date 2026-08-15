@@ -239,6 +239,15 @@ export default defineSchema({
     .index('by_list_id', ['listId'])
     .index('by_list_id_and_sort_order', ['listId', 'sortOrder'])
     .index('by_list_id_and_completed_at', ['listId', 'completedAt']),
+  androidWidgetDevices: defineTable({
+    userId: v.string(),
+    installationId: v.string(),
+    fcmToken: v.string(),
+    updatedAt: v.number()
+  })
+    .index('by_user_id_and_installation_id', ['userId', 'installationId'])
+    .index('by_fcm_token', ['fcmToken'])
+    .index('by_updated_at', ['updatedAt']),
   listProperties: defineTable({
     listId: v.id('lists'),
     name: v.string(),

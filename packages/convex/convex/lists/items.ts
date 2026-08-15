@@ -76,7 +76,7 @@ export async function findItemPropertyValue(
     .unique();
 }
 
-function sortActiveItems(items: Doc<'listItems'>[]) {
+export function sortActiveItems(items: Doc<'listItems'>[]) {
   return [...items]
     .filter((item) => item.completedAt === undefined)
     .sort((a, b) => a.sortOrder - b.sortOrder || a.createdAt - b.createdAt);
