@@ -99,7 +99,14 @@ class WidgetConfigurationActivity : ComponentActivity() {
         progress = ProgressBar(this).also(content::addView)
 
         lifecycleScope.launch {
-            when (val result = SignIn.authenticateWithGoogleOneTap(transferable = false)) {
+            val result = runCatching {
+                SignIn.authenticateWithGoogleOneTap(transferable = false)
+            }.getOrElse { error ->
+                showSignIn(googleSignInErrorMessage(error))
+                return@launch
+            }
+
+            when (result) {
                 is ClerkResult.Success -> {
                     val sessionId = result.value.signIn?.createdSessionId ?: result.value.signUp?.createdSessionId
                     if (sessionId == null) {
@@ -168,8 +175,12 @@ class WidgetConfigurationActivity : ComponentActivity() {
                 }
 
                 SnapshotRefreshResult.TransientFailure -> {
-                    updateWidget()
-                    finishConfiguration()
+                    if (domaApplication.widgetStateStore.readSnapshot(list.publicId) == null) {
+                        showError("Could not load the latest list items. Check your connection and try again.")
+                    } else {
+                        updateWidget()
+                        finishConfiguration()
+                    }
                 }
 
                 is SnapshotRefreshResult.Available -> {
@@ -230,3 +241,10 @@ class WidgetConfigurationActivity : ComponentActivity() {
         })
     }
 }
+
+fun googleSignInErrorMessage(error: Throwable): String =
+    if (error.message?.contains("Google One Tap Client ID") == true) {
+        "Google sign-in is not configured for this Clerk environment."
+    } else {
+        "Google sign-in could not start. Try again."
+    }

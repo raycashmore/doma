@@ -21,4 +21,22 @@ class DomaListWidgetTest {
             buildListPwaUrl("https://doma.example.com/lists/", "shopping", "weekly-shop"),
         )
     }
+
+    @Test
+    fun `server snapshot receives its freshness timestamp locally`() {
+        val snapshot = WidgetSnapshotProjection(
+            list = WidgetSnapshotList(publicId = "shopping", name = "Shopping", slug = "weekly-shop"),
+            activeItems = listOf(WidgetSnapshotItem(id = "item_1", title = "Milk")),
+        ).toStoredSnapshot(refreshedAt = 42_000)
+
+        assertEquals(42_000, snapshot.refreshedAt)
+    }
+
+    @Test
+    fun `missing One Tap configuration is explained without crashing`() {
+        assertEquals(
+            "Google sign-in is not configured for this Clerk environment.",
+            googleSignInErrorMessage(IllegalArgumentException("Google One Tap Client ID is not set.")),
+        )
+    }
 }

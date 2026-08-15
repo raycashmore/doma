@@ -42,6 +42,18 @@ data class WidgetSnapshot(
 )
 
 @Serializable
+data class WidgetSnapshotProjection(
+    val list: WidgetSnapshotList,
+    val activeItems: List<WidgetSnapshotItem>,
+)
+
+fun WidgetSnapshotProjection.toStoredSnapshot(refreshedAt: Long): WidgetSnapshot = WidgetSnapshot(
+    list = list,
+    activeItems = activeItems,
+    refreshedAt = refreshedAt,
+)
+
+@Serializable
 private data class WidgetState(
     val installationId: String,
     val selections: List<WidgetListSelection> = emptyList(),

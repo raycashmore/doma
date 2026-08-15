@@ -29,7 +29,7 @@ class WidgetSnapshotRepository(
 
     suspend fun refreshList(listPublicId: String): SnapshotRefreshResult = try {
         val snapshot = application.convexClient
-            .subscribe<WidgetSnapshot?>(
+            .subscribe<WidgetSnapshotProjection?>(
                 name = "lists/widget:getSnapshot",
                 args = mapOf("publicId" to listPublicId),
             )
@@ -40,7 +40,7 @@ class WidgetSnapshotRepository(
             application.widgetStateStore.clearUnavailableList(listPublicId)
             SnapshotRefreshResult.Unavailable
         } else {
-            val savedSnapshot = snapshot.copy(refreshedAt = System.currentTimeMillis())
+            val savedSnapshot = snapshot.toStoredSnapshot(refreshedAt = System.currentTimeMillis())
             application.widgetStateStore.saveSnapshot(savedSnapshot)
             SnapshotRefreshResult.Available(savedSnapshot)
         }
