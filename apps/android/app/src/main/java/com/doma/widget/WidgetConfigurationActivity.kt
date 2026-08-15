@@ -16,6 +16,8 @@ import com.clerk.api.network.serialization.ClerkResult
 import com.clerk.api.network.serialization.shortErrorMessageOrNull
 import com.clerk.api.signin.SignIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import androidx.lifecycle.lifecycleScope
 
 class WidgetConfigurationActivity : ComponentActivity() {
@@ -57,6 +59,17 @@ class WidgetConfigurationActivity : ComponentActivity() {
                 return@launch
             }
 
+            if (!Clerk.isInitialized.value && Clerk.initializationError.value != null) {
+                Clerk.reinitialize()
+            }
+            val initializationError = awaitClerkInitialization()
+            if (initializationError != null) {
+                showError(
+                    "Doma sign-in could not start. Enable Clerk Native API in the Clerk Dashboard, then try again.",
+                )
+                return@launch
+            }
+
             if (Clerk.activeSession == null || domaApplication.convexClient.loginFromCache().isFailure) {
                 showSignIn()
             } else {
@@ -64,6 +77,11 @@ class WidgetConfigurationActivity : ComponentActivity() {
             }
         }
     }
+
+    private suspend fun awaitClerkInitialization(): Throwable? =
+        combine(Clerk.isInitialized, Clerk.initializationError) { initialized, error -> initialized to error }
+            .first { (initialized, error) -> initialized || error != null }
+            .second
 
     private fun showSignIn(message: String? = null) {
         content.removeAllViews()
