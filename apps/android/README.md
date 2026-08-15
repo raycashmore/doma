@@ -10,12 +10,12 @@ Convex deployment URL and Clerk publishable key. Do not commit
 `local.properties`, `google-services.json`, signing keys, or service-account
 credentials.
 
-The companion requires JDK 17, Android SDK platform 37, and a Gradle version
-compatible with Android Gradle Plugin 8.11.1. From this directory, run:
+The companion requires JDK 17, Android SDK platform 37, and Android API 26 or
+newer. Use the checked-in Gradle wrapper from this directory:
 
 ```sh
-gradle :app:assembleDebug
-gradle :app:assembleRelease
+./gradlew :app:assembleDebug
+./gradlew :app:assembleRelease
 ```
 
 The release artifact is unsigned until the later sideload-release work adds the

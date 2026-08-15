@@ -2,7 +2,6 @@ import java.util.Properties
 
 plugins {
   id("com.android.application")
-  id("org.jetbrains.kotlin.android")
 }
 
 val localProperties = Properties().apply {
@@ -21,7 +20,7 @@ android {
 
   defaultConfig {
     applicationId = "com.doma.widget"
-    minSdk = 24
+    minSdk = 26
     targetSdk = 37
     versionCode = 1
     versionName = "0.1.0"
@@ -39,10 +38,6 @@ android {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
   }
-}
-
-kotlin {
-  jvmToolchain(17)
 }
 
 dependencies {
