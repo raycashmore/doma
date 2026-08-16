@@ -137,16 +137,7 @@ private fun ListWindow(snapshot: WidgetSnapshot) {
         Row(modifier = GlanceModifier.fillMaxWidth()) {
             Column(modifier = GlanceModifier.defaultWeight()) {
                 Text(
-                    text = "DOMA LISTS",
-                    style = TextStyle(
-                        color = ColorProvider(DomaWidgetColors.coral),
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                    ),
-                )
-                Text(
                     text = snapshot.list.name,
-                    modifier = GlanceModifier.padding(top = 3.dp),
                     style = TextStyle(
                         color = ColorProvider(DomaWidgetColors.espresso),
                         fontSize = 18.sp,
@@ -170,7 +161,7 @@ private fun ListWindow(snapshot: WidgetSnapshot) {
         }
         Text(
             text = "${snapshot.activeItems.size} active · ${freshnessLabel(snapshot.refreshedAt)}",
-            modifier = GlanceModifier.padding(top = 8.dp),
+            modifier = GlanceModifier.padding(top = 2.dp),
             style = TextStyle(color = ColorProvider(DomaWidgetColors.muted), fontSize = 12.sp),
         )
         LazyColumn {
