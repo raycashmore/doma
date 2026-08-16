@@ -288,8 +288,9 @@ describe('bot function service-token guard', () => {
       titles: ['milk']
     });
     expect(created.items.map((item) => item.title)).toEqual(['milk']);
-    expect(scheduled).toHaveLength(1);
+    expect(scheduled).toHaveLength(2);
     expect(scheduled[0]?.[2]).toEqual({ listId: sharedList._id, itemIds: ['listItems_1'] });
+    expect(scheduled[1]?.[2]).toEqual({});
 
     // No OPENAI_API_KEY/LIST_ITEMS_AI_MODEL set, so parsing uses the deterministic fallback.
     await expect(parseListItemsForBotHandler({ serviceToken: 'service-token', messageText: 'a\nb' })).resolves.toEqual({

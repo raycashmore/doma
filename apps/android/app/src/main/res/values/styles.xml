@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="doma_list_widget_description">Active items from a selected Doma list</string>
+    <string name="doma_list_widget_name">Doma list</string>
+    <style name="Theme.Doma" parent="Theme.AppCompat.DayNight.NoActionBar" />
+</resources>

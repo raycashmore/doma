@@ -47,6 +47,24 @@ Create one deployment for staging and one for production. Each command prints a 
 In the Convex dashboard for each cloud deployment:
 
 - **Settings → Environment Variables**: set `CLERK_JWT_ISSUER_DOMAIN` to the Clerk Frontend API URL for that environment.
+
+### Android widget Firebase delivery
+
+The Android companion receives only opaque widget-refresh FCM data messages.
+For each Convex deployment used by the companion, set
+`FIREBASE_SERVICE_ACCOUNT_JSON` in the Convex dashboard to the complete Firebase
+service-account JSON for the matching Firebase project. This is a secret: never
+place it in `apps/android/local.properties`, source control, Vercel variables,
+or a mobile build.
+
+The sideloaded Android build instead needs these public client identifiers in
+its ignored `apps/android/local.properties`: Firebase application ID, project
+ID, Web API key, and sender ID, plus the Convex URL and matching Clerk
+publishable key. Register the Android package and debug/release signing
+fingerprints in both Google Cloud OAuth and Clerk Native Applications before
+testing Google sign-in. See `apps/android/config.example.properties` for exact
+property names.
+
 - **Preview deployments → Default environment variables**: set the same backend env vars needed by Vercel Preview deployments. At minimum this includes `CLERK_JWT_ISSUER_DOMAIN`; Schedule previews also need the Google Calendar service account variables listed below. Vercel env vars do not automatically become Convex deployment env vars.
 
 ### Schedule ingestion (Google Calendar)
@@ -684,6 +702,7 @@ The pattern repeats:
 | `CLERK_SECRET_KEY`                                                       | Vercel (every app), `.env.local`                       | Server-side Clerk operations   | Never expose to the browser                                                     |
 | `VITE_CLERK_FRONTEND_API_URL`                                            | Vercel (every app), `.env.local`                       | Clerk JWT issuer URL           | Same in every app; one per Clerk env                                            |
 | `CLERK_JWT_ISSUER_DOMAIN`                                                | Convex dashboard (deployment env and preview defaults) | Convex auth.config.ts          | Same value as the Clerk Frontend API URL                                        |
+| `FIREBASE_SERVICE_ACCOUNT_JSON`                                          | Convex dashboard (deployment env and preview defaults) | Android widget FCM delivery    | Secret; never place in source control, Vercel, or a mobile build                |
 | `GOOGLE_SA_KEY`, `SCHEDULE_CALENDARS`, `SCHEDULE_MEMBERS`, `SCHEDULE_TZ` | Convex dashboard (deployment env and preview defaults) | Schedule sync actions          | Private calendar ingestion config; never put in git                             |
 
 ## Common pitfalls

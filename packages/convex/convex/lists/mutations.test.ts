@@ -6,6 +6,7 @@ import {
   createListHandler,
   createUniqueListPublicId,
   deleteListHandler,
+  renameListAndInvalidateHandler,
   renameListFields,
   renameListHandler,
   sendItemsToSharedShoppingListHandler
@@ -96,10 +97,17 @@ function createMutationCtx(
   const patchedRows: Array<{ id: string; patch: Record<string, unknown> }> = [];
   const deletedIds: string[] = [];
   const publicIdLookups: string[] = [];
+  const scheduled: unknown[][] = [];
 
   const ctx = {
     auth: {
       getUserIdentity: async () => identity
+    },
+    scheduler: {
+      runAfter: async (...args: unknown[]) => {
+        scheduled.push(args);
+        return 'scheduled';
+      }
     },
     db: {
       insert: async (table: string, row: Record<string, unknown>) => {
@@ -214,7 +222,7 @@ function createMutationCtx(
     }
   };
 
-  return { ctx, insertedRows, patchedRows, deletedIds, publicIdLookups, state };
+  return { ctx, insertedRows, patchedRows, deletedIds, publicIdLookups, scheduled, state };
 }
 
 afterEach(() => {
@@ -300,6 +308,21 @@ describe('createList', () => {
     expect(insertedRow).toBeDefined();
     expect(insertedRow!.publicId).toEqual(expect.stringMatching(/^list_[a-z0-9]+$/));
     expect(publicIdLookups).toHaveLength(1);
+  });
+});
+
+describe('renameListAndInvalidate', () => {
+  it('queues a widget refresh after changing a list title', async () => {
+    const { ctx, scheduled } = createMutationCtx({ subject: 'user_a' }, [personalList]);
+
+    await renameListAndInvalidateHandler(ctx as never, {
+      publicId: personalList.publicId,
+      name: 'Weekend reset plan'
+    });
+
+    expect(scheduled).toHaveLength(1);
+    expect(scheduled[0]?.[0]).toBe(0);
+    expect(scheduled[0]?.[2]).toEqual({});
   });
 });
 

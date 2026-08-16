@@ -28,6 +28,7 @@ import {
   setListPropertyCategorisationHandler,
   updateListPropertyHandler
 } from './properties';
+import { enqueueWidgetInvalidation } from './widgetInvalidation';
 
 const createSeed = customAlphabet('abcdefghjkmnpqrstuvwxyz23456789', 8);
 const CREATE_LIST_PUBLIC_ID_ATTEMPTS = 3;
@@ -74,6 +75,7 @@ export async function createListItemAndScheduleHandler(
   const item = await createListItemHandler(ctx, args);
   if (!item) throw new Error('Unable to create list item');
   await scheduleListCategorisation(ctx, { listId: item.listId, itemIds: [item._id] });
+  await enqueueWidgetInvalidation(ctx);
   return item;
 }
 
@@ -88,6 +90,7 @@ export async function createListItemsAndScheduleHandler(
       listId,
       itemIds: items.flatMap((item) => (item ? [item._id] : []))
     });
+    await enqueueWidgetInvalidation(ctx);
   }
   return items;
 }
@@ -198,9 +201,15 @@ export async function renameListHandler(ctx: ListsMutationCtx, { publicId, name 
   };
 }
 
+export async function renameListAndInvalidateHandler(ctx: MutationCtx, args: { publicId: string; name: string }) {
+  const list = await renameListHandler(ctx, args);
+  await enqueueWidgetInvalidation(ctx);
+  return list;
+}
+
 export const renameList = mutation({
   args: { publicId: v.string(), name: v.string() },
-  handler: renameListHandler
+  handler: renameListAndInvalidateHandler
 });
 
 export async function deleteListHandler(ctx: ListsMutationCtx, { publicId }: { publicId: string }) {
@@ -218,7 +227,11 @@ export async function deleteListHandler(ctx: ListsMutationCtx, { publicId }: { p
 
 export const deleteList = mutation({
   args: { publicId: v.string() },
-  handler: deleteListHandler
+  handler: async (ctx, args) => {
+    const result = await deleteListHandler(ctx, args);
+    await enqueueWidgetInvalidation(ctx);
+    return result;
+  }
 });
 
 export const createListItem = mutation({
@@ -249,7 +262,11 @@ export const renameListItem = mutation({
     itemId: v.id('listItems'),
     title: v.string()
   },
-  handler: renameListItemHandler
+  handler: async (ctx, args) => {
+    const item = await renameListItemHandler(ctx, args);
+    await enqueueWidgetInvalidation(ctx);
+    return item;
+  }
 });
 
 export const setListItemNotes = mutation({
@@ -264,21 +281,33 @@ export const deleteListItem = mutation({
   args: {
     itemId: v.id('listItems')
   },
-  handler: deleteListItemHandler
+  handler: async (ctx, args) => {
+    const result = await deleteListItemHandler(ctx, args);
+    await enqueueWidgetInvalidation(ctx);
+    return result;
+  }
 });
 
 export const completeListItem = mutation({
   args: {
     itemId: v.id('listItems')
   },
-  handler: completeListItemHandler
+  handler: async (ctx, args) => {
+    const item = await completeListItemHandler(ctx, args);
+    await enqueueWidgetInvalidation(ctx);
+    return item;
+  }
 });
 
 export const uncompleteListItem = mutation({
   args: {
     itemId: v.id('listItems')
   },
-  handler: uncompleteListItemHandler
+  handler: async (ctx, args) => {
+    const item = await uncompleteListItemHandler(ctx, args);
+    await enqueueWidgetInvalidation(ctx);
+    return item;
+  }
 });
 
 export const reorderListItem = mutation({
@@ -286,14 +315,22 @@ export const reorderListItem = mutation({
     itemId: v.id('listItems'),
     targetIndex: v.number()
   },
-  handler: reorderListItemHandler
+  handler: async (ctx, args) => {
+    const items = await reorderListItemHandler(ctx, args);
+    await enqueueWidgetInvalidation(ctx);
+    return items;
+  }
 });
 
 export const clearCompletedListItems = mutation({
   args: {
     listPublicId: v.string()
   },
-  handler: clearCompletedListItemsHandler
+  handler: async (ctx, args) => {
+    const result = await clearCompletedListItemsHandler(ctx, args);
+    await enqueueWidgetInvalidation(ctx);
+    return result;
+  }
 });
 
 export const createListProperty = mutation({
