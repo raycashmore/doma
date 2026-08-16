@@ -5,6 +5,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.action.ActionParameters
@@ -15,12 +17,17 @@ import androidx.glance.appwidget.AppWidgetId
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.SizeMode
+import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.lazy.LazyColumn
 import androidx.glance.appwidget.lazy.items
 import androidx.glance.appwidget.provideContent
+import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.background
+import androidx.glance.currentState
 import androidx.glance.layout.Column
+import androidx.glance.layout.Row
 import androidx.glance.layout.fillMaxSize
+import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.padding
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
@@ -47,11 +54,14 @@ class DomaListWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val widgetId = (id as AppWidgetId).appWidgetId
         val stateStore = (context.applicationContext as DomaApplication).widgetStateStore
-        val selection = stateStore.readSelection(widgetId)
-        val snapshot = selection?.let { item -> stateStore.readSnapshot(item.listPublicId) }
-        val unavailable = stateStore.isUnavailable(widgetId)
 
         provideContent {
+            // The encrypted snapshot store is deliberately outside Glance state. This revision
+            // makes writes to it observable to an already-running widget composition.
+            currentState(WidgetGlanceState.revision)
+            val selection = stateStore.readSelection(widgetId)
+            val snapshot = selection?.let { item -> stateStore.readSnapshot(item.listPublicId) }
+            val unavailable = stateStore.isUnavailable(widgetId)
             DomaListWidgetContent(snapshot = snapshot, unavailable = unavailable)
         }
     }
@@ -66,8 +76,23 @@ class DomaListWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = DomaListWidget()
 }
 
+internal object WidgetGlanceState {
+    val revision = intPreferencesKey("doma_widget_render_revision")
+}
+
+internal suspend fun advanceDomaWidgetRenderRevision(context: Context, glanceId: GlanceId) {
+    updateAppWidgetState(context, glanceId) { preferences ->
+        preferences[WidgetGlanceState.revision] = (preferences[WidgetGlanceState.revision] ?: 0) + 1
+    }
+}
+
+suspend fun refreshDomaWidget(context: Context, glanceId: GlanceId) {
+    advanceDomaWidgetRenderRevision(context, glanceId)
+    DomaListWidget().update(context, glanceId)
+}
+
 @Composable
-private fun DomaListWidgetContent(snapshot: WidgetSnapshot?, unavailable: Boolean) {
+internal fun DomaListWidgetContent(snapshot: WidgetSnapshot?, unavailable: Boolean) {
     when {
         unavailable -> WidgetMessage("List unavailable.")
         snapshot == null -> WidgetMessage("Choose a list in Doma.")
@@ -80,10 +105,16 @@ private fun WidgetMessage(message: String) {
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
-            .background(Color(0xFF1F1F1F))
+            .background(DomaWidgetColors.surface)
+            .cornerRadius(20.dp)
             .padding(16.dp),
     ) {
-        Text(message, style = TextStyle(color = ColorProvider(Color(0xFFF5F1EA))))
+        Text("DOMA LISTS", style = TextStyle(color = ColorProvider(DomaWidgetColors.coral), fontSize = 10.sp, fontWeight = FontWeight.Bold))
+        Text(
+            message,
+            modifier = GlanceModifier.padding(top = 8.dp),
+            style = TextStyle(color = ColorProvider(DomaWidgetColors.espresso), fontSize = 16.sp, fontWeight = FontWeight.Bold),
+        )
     }
 }
 
@@ -99,30 +130,69 @@ private fun ListWindow(snapshot: WidgetSnapshot) {
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
-            .background(Color(0xFF1F1F1F))
-            .padding(12.dp)
-            .clickable(action),
+            .background(DomaWidgetColors.surface)
+            .cornerRadius(20.dp)
+            .padding(14.dp),
     ) {
-        Text(
-            text = snapshot.list.name,
-            style = TextStyle(color = ColorProvider(Color(0xFFF5F1EA)), fontWeight = FontWeight.Bold),
-        )
+        Row(modifier = GlanceModifier.fillMaxWidth()) {
+            Column(modifier = GlanceModifier.defaultWeight()) {
+                Text(
+                    text = snapshot.list.name,
+                    style = TextStyle(
+                        color = ColorProvider(DomaWidgetColors.espresso),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                    ),
+                )
+            }
+            Text(
+                text = "Open list ↗",
+                modifier = GlanceModifier
+                    .background(DomaWidgetColors.chocolate)
+                    .cornerRadius(12.dp)
+                    .padding(8.dp, 6.dp)
+                    .clickable(action),
+                style = TextStyle(
+                    color = ColorProvider(DomaWidgetColors.surface),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                ),
+            )
+        }
         Text(
             text = "${snapshot.activeItems.size} active · ${freshnessLabel(snapshot.refreshedAt)}",
-            style = TextStyle(color = ColorProvider(Color(0xFFCFC8BF))),
+            modifier = GlanceModifier.padding(top = 2.dp),
+            style = TextStyle(color = ColorProvider(DomaWidgetColors.muted), fontSize = 12.sp),
         )
         LazyColumn {
             items(snapshot.activeItems) { item ->
-                Text(
-                    text = item.title,
+                Row(
                     modifier = GlanceModifier
-                        .padding(top = 8.dp)
+                        .fillMaxWidth()
+                        .padding(top = 9.dp)
                         .clickable(action),
-                    style = TextStyle(color = ColorProvider(Color(0xFFF5F1EA))),
-                )
+                ) {
+                    Text(
+                        text = "•",
+                        style = TextStyle(color = ColorProvider(DomaWidgetColors.coral), fontWeight = FontWeight.Bold),
+                    )
+                    Text(
+                        text = item.title,
+                        modifier = GlanceModifier.padding(start = 7.dp),
+                        style = TextStyle(color = ColorProvider(DomaWidgetColors.espresso), fontSize = 14.sp),
+                    )
+                }
             }
         }
     }
+}
+
+private object DomaWidgetColors {
+    val surface = Color(0xFFFFF8EF)
+    val espresso = Color(0xFF2E1E19)
+    val coral = Color(0xFFE26D50)
+    val muted = Color(0xFF76655D)
+    val chocolate = Color(0xFF6C3D2D)
 }
 
 fun freshnessLabel(refreshedAt: Long, now: Long = System.currentTimeMillis()): String {
