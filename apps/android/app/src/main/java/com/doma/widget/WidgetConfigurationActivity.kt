@@ -193,13 +193,13 @@ class WidgetConfigurationActivity : ComponentActivity() {
 
     private suspend fun updateWidget() {
         val glanceId = GlanceAppWidgetManager(this).getGlanceIdBy(appWidgetId)
-        DomaListWidget().update(this, glanceId)
+        refreshDomaWidget(this, glanceId)
     }
 
     private suspend fun updateAllWidgets() {
         val manager = GlanceAppWidgetManager(this)
         manager.getGlanceIds(DomaListWidget::class.java).forEach { glanceId ->
-            DomaListWidget().update(this, glanceId)
+            refreshDomaWidget(this, glanceId)
         }
     }
 

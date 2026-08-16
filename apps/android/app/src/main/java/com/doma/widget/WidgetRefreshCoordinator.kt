@@ -49,7 +49,7 @@ class WidgetRefreshCoordinator(
         val context = application.applicationContext
         val manager = GlanceAppWidgetManager(context)
         manager.getGlanceIds(DomaListWidget::class.java).forEach { glanceId ->
-            DomaListWidget().update(context, glanceId)
+            refreshDomaWidget(context, glanceId)
         }
     }
 }
