@@ -26,23 +26,17 @@ export const emailObligationModelSchema = z.object({
   dueDateEvidence: z.string().max(240)
 });
 
-const relevanceModelSchema = z
-  .object({
-    relevantThrough: z.unknown().optional(),
-    dateConfidence: z.unknown().optional(),
-    dateEvidence: z.unknown().optional()
-  })
-  .optional()
-  .catch(undefined);
+const relevanceModelSchema = z.object({
+  relevantThrough: z.string().max(10),
+  dateConfidence: z.enum(lifecycleDateConfidences),
+  dateEvidence: z.string().max(240)
+});
 
-const supersessionModelSchema = z
-  .object({
-    noticeId: z.unknown().optional(),
-    confidence: z.unknown().optional(),
-    evidence: z.unknown().optional()
-  })
-  .optional()
-  .catch(undefined);
+const supersessionModelSchema = z.object({
+  noticeId: z.string().max(128),
+  confidence: z.enum(lifecycleDateConfidences),
+  evidence: z.string().max(240)
+});
 
 export const emailTriageModelOutputSchema = z.object({
   outcome: z.enum(['notice', 'noNotice']),

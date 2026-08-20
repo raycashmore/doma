@@ -2,7 +2,7 @@ import type { FunctionReference } from 'convex/server';
 import { v } from 'convex/values';
 
 import { internal } from '../_generated/api';
-import { action, type ActionCtx, internalAction, internalMutation, query } from '../_generated/server';
+import { action, type ActionCtx, internalAction, internalMutation, mutation, query } from '../_generated/server';
 import { isCalendarDate } from '../calendarDate';
 import type { EmailNoticeSupersession, EmailTriageAgentResult } from './agentResult';
 import type { EmailNoticeRelevance } from './noticeLifecycle';
@@ -318,6 +318,24 @@ export const recordCapturedEmailTriageFailure = internalMutation({
       updatedAt: processedAt
     });
     return { status: 'failed' as const, capturedEmailId, reason };
+  }
+});
+
+export const retryFailedCapturedEmailForBot = mutation({
+  args: { serviceToken: v.string(), capturedEmailId: v.id('capturedEmails') },
+  handler: async (ctx, { serviceToken, capturedEmailId }) => {
+    assertAuthorizedServiceToken(serviceToken);
+    const email = await ctx.db.get(capturedEmailId);
+    if (!email) throw new Error('Captured email not found');
+    if (email.processingState !== 'failed') return { status: email.processingState, capturedEmailId };
+
+    const retriedAt = Date.now();
+    await ctx.db.patch(capturedEmailId, {
+      processingState: 'pending',
+      updatedAt: retriedAt,
+      triageFailureReason: undefined
+    });
+    return { status: 'pending' as const, capturedEmailId };
   }
 });
 

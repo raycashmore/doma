@@ -20,7 +20,27 @@ function modelName(model: LanguageModel) {
   return typeof model === 'string' ? model : model.modelId;
 }
 
-function safeErrorDetails(error: unknown): EmailTriageAgentError {
+function safeErrorMessage(error: unknown, input: EmailTriageRunInput) {
+  if (!(error instanceof Error) || !error.message) return undefined;
+
+  const privateValues = [
+    input.subject,
+    input.fromEmail,
+    input.textBody,
+    ...input.activeNoticeCandidates.flatMap((candidate) => [
+      candidate.title,
+      candidate.body,
+      ...candidate.extractedFacts.flatMap((fact) => [fact.label, fact.value])
+    ])
+  ].filter(Boolean);
+  let message = error.message.replace(/\s+/gu, ' ').trim();
+  for (const value of privateValues) {
+    if (value.length > 0) message = message.replaceAll(value, '[redacted]');
+  }
+  return message.slice(0, 500) || undefined;
+}
+
+function safeErrorDetails(error: unknown, input: EmailTriageRunInput): EmailTriageAgentError {
   const retryLastError = RetryError.isInstance(error) ? error.lastError : undefined;
   const gatewayError = GatewayError.isInstance(retryLastError)
     ? retryLastError
@@ -28,8 +48,10 @@ function safeErrorDetails(error: unknown): EmailTriageAgentError {
       ? error
       : undefined;
   if (gatewayError) {
+    const message = safeErrorMessage(gatewayError, input);
     return {
       name: gatewayError.name,
+      ...(message ? { message } : {}),
       statusCode: gatewayError.statusCode,
       type: gatewayError.type,
       ...(gatewayError.generationId ? { generationId: gatewayError.generationId } : {})
@@ -40,8 +62,10 @@ function safeErrorDetails(error: unknown): EmailTriageAgentError {
     typeof error === 'object' && error !== null && 'statusCode' in error && typeof error.statusCode === 'number'
       ? error.statusCode
       : undefined;
+  const message = safeErrorMessage(error, input);
   return {
     name: error instanceof Error ? error.name : 'UnknownError',
+    ...(message ? { message } : {}),
     ...(statusCode === undefined ? {} : { statusCode })
   };
 }
@@ -102,7 +126,7 @@ export async function runEmailTriageAgent({
   } catch (error) {
     const invalidOutput = isInvalidModelOutput(error);
     const reason = invalidOutput ? ('invalid_ai_output' as const) : ('provider_failure' as const);
-    const errorDetails = safeErrorDetails(error);
+    const errorDetails = safeErrorDetails(error, input);
     logError({
       level: 'error',
       message: 'email_triage_agent_failed',

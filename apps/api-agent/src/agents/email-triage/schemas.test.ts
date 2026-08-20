@@ -100,8 +100,9 @@ describe('emailTriageOutcomeFromModel', () => {
     });
   });
 
-  it('falls back when lifecycle metadata is missing from an otherwise valid model notice', () => {
-    const output = emailTriageModelOutputSchema.parse({
+  it('requires complete lifecycle metadata from the model', () => {
+    expect(() =>
+      emailTriageModelOutputSchema.parse({
       outcome: 'notice',
       category: 'school',
       priority: 'high',
@@ -115,25 +116,13 @@ describe('emailTriageOutcomeFromModel', () => {
         dueDateConfidence: 'high',
         dueDateEvidence: 'due Friday 31 July'
       }
-    });
-
-    expect(emailTriageOutcomeFromModel(output, new Set(['email_old']))).toMatchObject({
-      kind: 'notice',
-      relevance: {
-        relevantThrough: null,
-        dateConfidence: 'low',
-        dateEvidence: ''
-      },
-      supersession: {
-        noticeId: null,
-        confidence: 'low',
-        evidence: ''
-      }
-    });
+      })
+    ).toThrow();
   });
 
-  it('falls back when lifecycle fields have malformed model types', () => {
-    const output = emailTriageModelOutputSchema.parse({
+  it('rejects malformed lifecycle metadata from the model', () => {
+    expect(() =>
+      emailTriageModelOutputSchema.parse({
       ...modelNotice,
       relevance: {
         relevantThrough: 20_260_802,
@@ -145,21 +134,8 @@ describe('emailTriageOutcomeFromModel', () => {
         confidence: false,
         evidence: ['malformed supersession evidence']
       }
-    });
-
-    expect(emailTriageOutcomeFromModel(output, new Set(['email_old']))).toMatchObject({
-      kind: 'notice',
-      relevance: {
-        relevantThrough: null,
-        dateConfidence: 'low',
-        dateEvidence: ''
-      },
-      supersession: {
-        noticeId: null,
-        confidence: 'low',
-        evidence: ''
-      }
-    });
+      })
+    ).toThrow();
   });
 
   it('reduces a no-notice result to its quiet reason', () => {
@@ -174,8 +150,8 @@ describe('emailTriageOutcomeFromModel', () => {
           extractedFacts: [],
           reason: 'Marketing content with no household action.',
           obligation: null,
-          relevance: { relevantThrough: null, dateConfidence: 'low', dateEvidence: '' },
-          supersession: { noticeId: null, confidence: 'low', evidence: '' }
+          relevance: { relevantThrough: '', dateConfidence: 'low', dateEvidence: '' },
+          supersession: { noticeId: '', confidence: 'low', evidence: '' }
         },
         new Set()
       )
@@ -199,8 +175,8 @@ describe('emailTriageOutcomeFromModel', () => {
             dueDateConfidence: 'high',
             dueDateEvidence: '30 February'
           },
-          relevance: { relevantThrough: null, dateConfidence: 'low', dateEvidence: '' },
-          supersession: { noticeId: null, confidence: 'low', evidence: '' }
+          relevance: { relevantThrough: '', dateConfidence: 'low', dateEvidence: '' },
+          supersession: { noticeId: '', confidence: 'low', evidence: '' }
         },
         new Set()
       )
@@ -219,8 +195,8 @@ describe('emailTriageOutcomeFromModel', () => {
           extractedFacts: [],
           reason: '',
           obligation: null,
-          relevance: { relevantThrough: null, dateConfidence: 'low', dateEvidence: '' },
-          supersession: { noticeId: null, confidence: 'low', evidence: '' }
+          relevance: { relevantThrough: '', dateConfidence: 'low', dateEvidence: '' },
+          supersession: { noticeId: '', confidence: 'low', evidence: '' }
         },
         new Set()
       )
