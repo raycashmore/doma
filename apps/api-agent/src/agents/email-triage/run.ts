@@ -20,6 +20,10 @@ function modelName(model: LanguageModel) {
   return typeof model === 'string' ? model : model.modelId;
 }
 
+function normalizeErrorText(value: string) {
+  return value.replace(/\s+/gu, ' ').trim();
+}
+
 function safeErrorMessage(error: unknown, input: EmailTriageRunInput) {
   if (!(error instanceof Error) || !error.message) return undefined;
 
@@ -27,13 +31,17 @@ function safeErrorMessage(error: unknown, input: EmailTriageRunInput) {
     input.subject,
     input.fromEmail,
     input.textBody,
+    ...input.attachmentMetadata.flatMap((attachment) => [attachment.filename, attachment.contentType]),
     ...input.activeNoticeCandidates.flatMap((candidate) => [
       candidate.title,
       candidate.body,
       ...candidate.extractedFacts.flatMap((fact) => [fact.label, fact.value])
     ])
-  ].filter(Boolean);
-  let message = error.message.replace(/\s+/gu, ' ').trim();
+  ]
+    .filter((value): value is string => Boolean(value))
+    .map(normalizeErrorText)
+    .filter(Boolean);
+  let message = normalizeErrorText(error.message);
   for (const value of privateValues) {
     if (value.length > 0) message = message.replaceAll(value, '[redacted]');
   }

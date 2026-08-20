@@ -26,17 +26,34 @@ export const emailObligationModelSchema = z.object({
   dueDateEvidence: z.string().max(240)
 });
 
-const relevanceModelSchema = z.object({
-  relevantThrough: z.string().max(10),
-  dateConfidence: z.enum(lifecycleDateConfidences),
-  dateEvidence: z.string().max(240)
-});
+const relevanceModelSchema = z
+  .object({
+    relevantThrough: z.string().max(10),
+    dateConfidence: z.enum(lifecycleDateConfidences),
+    dateEvidence: z.string().max(240)
+  })
+  .superRefine((relevance, context) => {
+    const hasDate = relevance.relevantThrough.length > 0;
+    const hasEvidence = relevance.dateEvidence.trim().length > 0;
+    const isGroundedDate = hasDate && isCalendarDate(relevance.relevantThrough);
+    const isEmptyLifecycle = !hasDate && relevance.dateConfidence === 'low' && !hasEvidence;
+    if (isEmptyLifecycle || (isGroundedDate && hasEvidence && relevance.dateConfidence !== 'low')) return;
+    context.addIssue({ code: z.ZodIssueCode.custom, message: 'Invalid relevance lifecycle metadata' });
+  });
 
-const supersessionModelSchema = z.object({
-  noticeId: z.string().max(128),
-  confidence: z.enum(lifecycleDateConfidences),
-  evidence: z.string().max(240)
-});
+const supersessionModelSchema = z
+  .object({
+    noticeId: z.string().max(128),
+    confidence: z.enum(lifecycleDateConfidences),
+    evidence: z.string().max(240)
+  })
+  .superRefine((supersession, context) => {
+    const hasNoticeId = supersession.noticeId.length > 0;
+    const hasEvidence = supersession.evidence.trim().length > 0;
+    const isEmptyLifecycle = !hasNoticeId && supersession.confidence === 'low' && !hasEvidence;
+    if (isEmptyLifecycle || (hasNoticeId && supersession.confidence === 'high' && hasEvidence)) return;
+    context.addIssue({ code: z.ZodIssueCode.custom, message: 'Invalid supersession lifecycle metadata' });
+  });
 
 export const emailTriageModelOutputSchema = z.object({
   outcome: z.enum(['notice', 'noNotice']),
@@ -87,53 +104,50 @@ export const emailTriageOutcomeSchema = z.discriminatedUnion('kind', [
   })
 ]);
 
-function normalizedRelevance(relevance: z.infer<typeof relevanceModelSchema>) {
-  const dateEvidence = typeof relevance?.dateEvidence === 'string' ? relevance.dateEvidence.trim() : '';
-  if (
-    typeof relevance?.relevantThrough === 'string' &&
-    isCalendarDate(relevance.relevantThrough) &&
-    dateEvidence.length > 0 &&
-    (relevance.dateConfidence === 'medium' || relevance.dateConfidence === 'high')
-  ) {
-    return { relevantThrough: relevance.relevantThrough, dateConfidence: relevance.dateConfidence, dateEvidence };
-  }
-  return { relevantThrough: null, dateConfidence: 'low' as const, dateEvidence: '' };
+function relevanceFromModel(relevance: z.infer<typeof relevanceModelSchema>) {
+  return relevanceSchema.parse({
+    relevantThrough: relevance.relevantThrough || null,
+    dateConfidence: relevance.dateConfidence,
+    dateEvidence: relevance.dateEvidence.trim()
+  });
 }
 
-function normalizedSupersession(
+function supersessionFromModel(
   supersession: z.infer<typeof supersessionModelSchema>,
   candidateIds: ReadonlySet<string>
 ) {
-  const evidence = typeof supersession?.evidence === 'string' ? supersession.evidence.trim() : '';
-  if (
-    typeof supersession?.noticeId === 'string' &&
-    candidateIds.has(supersession.noticeId) &&
-    supersession.confidence === 'high' &&
-    evidence.length > 0
-  ) {
-    return { noticeId: supersession.noticeId, confidence: 'high' as const, evidence };
+  const noticeId = supersession.noticeId || null;
+  if (noticeId !== null) {
+    z.string()
+      .refine((candidateId) => candidateIds.has(candidateId), 'Supersession target was not supplied')
+      .parse(noticeId);
   }
-  return { noticeId: null, confidence: 'low' as const, evidence: '' };
+  return supersessionSchema.parse({
+    noticeId,
+    confidence: supersession.confidence,
+    evidence: supersession.evidence.trim()
+  });
 }
 
 export function emailTriageOutcomeFromModel(
   output: z.infer<typeof emailTriageModelOutputSchema>,
   candidateIds: ReadonlySet<string>
 ) {
+  const validatedOutput = emailTriageModelOutputSchema.parse(output);
   return emailTriageOutcomeSchema.parse(
-    output.outcome === 'notice'
+    validatedOutput.outcome === 'notice'
       ? {
           kind: 'notice',
-          category: output.category,
-          priority: output.priority,
-          title: output.title,
-          body: output.body,
-          extractedFacts: output.extractedFacts,
-          obligation: output.obligation,
-          relevance: normalizedRelevance(output.relevance),
-          supersession: normalizedSupersession(output.supersession, candidateIds)
+          category: validatedOutput.category,
+          priority: validatedOutput.priority,
+          title: validatedOutput.title,
+          body: validatedOutput.body,
+          extractedFacts: validatedOutput.extractedFacts,
+          obligation: validatedOutput.obligation,
+          relevance: relevanceFromModel(validatedOutput.relevance),
+          supersession: supersessionFromModel(validatedOutput.supersession, candidateIds)
         }
-      : { kind: 'noNotice', reason: output.reason }
+      : { kind: 'noNotice', reason: validatedOutput.reason }
   );
 }
 

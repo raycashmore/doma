@@ -138,7 +138,15 @@ function isExtractedFacts(value: unknown): value is Array<{ label: string; value
   );
 }
 
-function normalizedRelevance(value: unknown): EmailNoticeRelevance {
+function isEmailNoticeRelevance(value: unknown): value is EmailNoticeRelevance {
+  if (
+    isRecord(value) &&
+    value.relevantThrough === null &&
+    value.dateConfidence === 'low' &&
+    value.dateEvidence === ''
+  ) {
+    return true;
+  }
   if (
     isRecord(value) &&
     typeof value.relevantThrough === 'string' &&
@@ -146,25 +154,24 @@ function normalizedRelevance(value: unknown): EmailNoticeRelevance {
     isMediumOrHigh(value.dateConfidence) &&
     isNonEmptyString(value.dateEvidence)
   ) {
-    return {
-      relevantThrough: value.relevantThrough,
-      dateConfidence: value.dateConfidence,
-      dateEvidence: value.dateEvidence
-    };
+    return true;
   }
-  return { relevantThrough: null, dateConfidence: 'low', dateEvidence: '' };
+  return false;
 }
 
-function normalizedSupersession(value: unknown): EmailNoticeSupersession {
+function isEmailNoticeSupersession(value: unknown): value is EmailNoticeSupersession {
+  if (isRecord(value) && value.noticeId === null && value.confidence === 'low' && value.evidence === '') {
+    return true;
+  }
   if (
     isRecord(value) &&
     typeof value.noticeId === 'string' &&
     value.confidence === 'high' &&
     isNonEmptyString(value.evidence)
   ) {
-    return { noticeId: value.noticeId, confidence: 'high', evidence: value.evidence };
+    return true;
   }
-  return { noticeId: null, confidence: 'low', evidence: '' };
+  return false;
 }
 
 export function parseEmailTriageAgentResult(value: unknown): EmailTriageAgentResult | null {
@@ -186,7 +193,9 @@ export function parseEmailTriageAgentResult(value: unknown): EmailTriageAgentRes
     !isNonEmptyString(outcome.title) ||
     !isNonEmptyString(outcome.body) ||
     !isExtractedFacts(outcome.extractedFacts) ||
-    !(outcome.obligation === null || isNoticeObligation(outcome.obligation))
+    !(outcome.obligation === null || isNoticeObligation(outcome.obligation)) ||
+    !isEmailNoticeRelevance(outcome.relevance) ||
+    !isEmailNoticeSupersession(outcome.supersession)
   ) {
     return null;
   }
@@ -209,8 +218,8 @@ export function parseEmailTriageAgentResult(value: unknown): EmailTriageAgentRes
               dueDateConfidence: outcome.obligation.dueDateConfidence,
               dueDateEvidence: outcome.obligation.dueDateEvidence
             },
-      relevance: normalizedRelevance(outcome.relevance),
-      supersession: normalizedSupersession(outcome.supersession)
+      relevance: outcome.relevance,
+      supersession: outcome.supersession
     }
   };
 }

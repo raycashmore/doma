@@ -214,4 +214,35 @@ describe('runEmailTriageAgent', () => {
     );
     expect(JSON.stringify([saveTrace.mock.calls, logError.mock.calls])).not.toContain('Private household email body.');
   });
+
+  it('redacts normalized multiline content and attachment metadata from gateway diagnostics', async () => {
+    const multilineInput = {
+      ...input,
+      textBody: 'Private household\nemail body.',
+      attachmentMetadata: [{ filename: 'Private school letter.pdf', contentType: 'application/pdf' }]
+    } satisfies EmailTriageRunInput;
+    const model = new MockLanguageModelV3({
+      modelId: 'openai/gpt-5.4-mini',
+      doGenerate: async () => {
+        throw new GatewayForbiddenError({
+          message: 'Provider echoed Private household email body. and Private school letter.pdf.',
+          statusCode: 403
+        });
+      }
+    });
+    const saveTrace = vi.fn();
+    const logError = vi.fn();
+
+    await runEmailTriageAgent({
+      model,
+      input: multilineInput,
+      saveTrace,
+      logError,
+      createRunId: () => 'email_run_multiline'
+    });
+
+    const diagnostics = JSON.stringify([saveTrace.mock.calls, logError.mock.calls]);
+    expect(diagnostics).not.toContain('Private household email body.');
+    expect(diagnostics).not.toContain('Private school letter.pdf');
+  });
 });
