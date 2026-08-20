@@ -107,7 +107,7 @@ describe('runEmailTriageAgent', () => {
     expect(serializedTrace).not.toContain('Private supersession evidence');
   });
 
-  it('keeps a valid notice when model lifecycle metadata is malformed', async () => {
+  it('fails closed when model lifecycle metadata is malformed', async () => {
     const saveTrace = vi.fn();
     const result = await runEmailTriageAgent({
       model: modelReturning({
@@ -135,26 +135,13 @@ describe('runEmailTriageAgent', () => {
 
     expect(result).toEqual({
       runId: 'email_run_malformed_lifecycle',
-      status: 'completed',
-      outcome: expect.objectContaining({
-        kind: 'notice',
-        title: 'Updated event details',
-        relevance: {
-          relevantThrough: null,
-          dateConfidence: 'low',
-          dateEvidence: ''
-        },
-        supersession: {
-          noticeId: null,
-          confidence: 'low',
-          evidence: ''
-        }
-      })
+      status: 'failed',
+      reason: 'invalid_ai_output'
     });
     expect(saveTrace).toHaveBeenCalledWith(
       expect.objectContaining({
-        outcomeKind: 'notice',
-        validation: { status: 'valid' }
+        outcomeKind: 'failed',
+        validation: { status: 'invalid', reason: 'invalid_ai_output' }
       })
     );
     expect(JSON.stringify(saveTrace.mock.calls)).not.toContain('Private malformed');
@@ -177,8 +164,8 @@ describe('runEmailTriageAgent', () => {
           dueDateConfidence: 'high',
           dueDateEvidence: '30 February'
         },
-        relevance: { relevantThrough: null, dateConfidence: 'low', dateEvidence: '' },
-        supersession: { noticeId: null, confidence: 'low', evidence: '' }
+        relevance: { relevantThrough: '', dateConfidence: 'low', dateEvidence: '' },
+        supersession: { noticeId: '', confidence: 'low', evidence: '' }
       }),
       input,
       saveTrace,
@@ -219,14 +206,43 @@ describe('runEmailTriageAgent', () => {
       expect.objectContaining({
         error: expect.objectContaining({
           name: 'GatewayForbiddenError',
+          message: 'Provider echoed [redacted] [generation_email_123]',
           statusCode: 403,
           generationId: 'generation_email_123'
         })
       })
     );
     expect(JSON.stringify([saveTrace.mock.calls, logError.mock.calls])).not.toContain('Private household email body.');
-    expect(saveTrace).toHaveBeenCalledWith(
-      expect.objectContaining({ error: expect.not.objectContaining({ message: expect.anything() }) })
-    );
+  });
+
+  it('redacts normalized multiline content and attachment metadata from gateway diagnostics', async () => {
+    const multilineInput = {
+      ...input,
+      textBody: 'Private household\nemail body.',
+      attachmentMetadata: [{ filename: 'Private school letter.pdf', contentType: 'application/pdf' }]
+    } satisfies EmailTriageRunInput;
+    const model = new MockLanguageModelV3({
+      modelId: 'openai/gpt-5.4-mini',
+      doGenerate: async () => {
+        throw new GatewayForbiddenError({
+          message: 'Provider echoed Private household email body. and Private school letter.pdf.',
+          statusCode: 403
+        });
+      }
+    });
+    const saveTrace = vi.fn();
+    const logError = vi.fn();
+
+    await runEmailTriageAgent({
+      model,
+      input: multilineInput,
+      saveTrace,
+      logError,
+      createRunId: () => 'email_run_multiline'
+    });
+
+    const diagnostics = JSON.stringify([saveTrace.mock.calls, logError.mock.calls]);
+    expect(diagnostics).not.toContain('Private household email body.');
+    expect(diagnostics).not.toContain('Private school letter.pdf');
   });
 });

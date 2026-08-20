@@ -2,7 +2,7 @@ import type { FunctionReference } from 'convex/server';
 import { v } from 'convex/values';
 
 import { internal } from '../_generated/api';
-import { action, type ActionCtx, internalAction, internalMutation, query } from '../_generated/server';
+import { action, type ActionCtx, internalAction, internalMutation, mutation, query } from '../_generated/server';
 import { isCalendarDate } from '../calendarDate';
 import type { EmailNoticeSupersession, EmailTriageAgentResult } from './agentResult';
 import type { EmailNoticeRelevance } from './noticeLifecycle';
@@ -138,7 +138,15 @@ function isExtractedFacts(value: unknown): value is Array<{ label: string; value
   );
 }
 
-function normalizedRelevance(value: unknown): EmailNoticeRelevance {
+function isEmailNoticeRelevance(value: unknown): value is EmailNoticeRelevance {
+  if (
+    isRecord(value) &&
+    value.relevantThrough === null &&
+    value.dateConfidence === 'low' &&
+    value.dateEvidence === ''
+  ) {
+    return true;
+  }
   if (
     isRecord(value) &&
     typeof value.relevantThrough === 'string' &&
@@ -146,25 +154,24 @@ function normalizedRelevance(value: unknown): EmailNoticeRelevance {
     isMediumOrHigh(value.dateConfidence) &&
     isNonEmptyString(value.dateEvidence)
   ) {
-    return {
-      relevantThrough: value.relevantThrough,
-      dateConfidence: value.dateConfidence,
-      dateEvidence: value.dateEvidence
-    };
+    return true;
   }
-  return { relevantThrough: null, dateConfidence: 'low', dateEvidence: '' };
+  return false;
 }
 
-function normalizedSupersession(value: unknown): EmailNoticeSupersession {
+function isEmailNoticeSupersession(value: unknown): value is EmailNoticeSupersession {
+  if (isRecord(value) && value.noticeId === null && value.confidence === 'low' && value.evidence === '') {
+    return true;
+  }
   if (
     isRecord(value) &&
     typeof value.noticeId === 'string' &&
     value.confidence === 'high' &&
     isNonEmptyString(value.evidence)
   ) {
-    return { noticeId: value.noticeId, confidence: 'high', evidence: value.evidence };
+    return true;
   }
-  return { noticeId: null, confidence: 'low', evidence: '' };
+  return false;
 }
 
 export function parseEmailTriageAgentResult(value: unknown): EmailTriageAgentResult | null {
@@ -186,7 +193,9 @@ export function parseEmailTriageAgentResult(value: unknown): EmailTriageAgentRes
     !isNonEmptyString(outcome.title) ||
     !isNonEmptyString(outcome.body) ||
     !isExtractedFacts(outcome.extractedFacts) ||
-    !(outcome.obligation === null || isNoticeObligation(outcome.obligation))
+    !(outcome.obligation === null || isNoticeObligation(outcome.obligation)) ||
+    !isEmailNoticeRelevance(outcome.relevance) ||
+    !isEmailNoticeSupersession(outcome.supersession)
   ) {
     return null;
   }
@@ -209,8 +218,8 @@ export function parseEmailTriageAgentResult(value: unknown): EmailTriageAgentRes
               dueDateConfidence: outcome.obligation.dueDateConfidence,
               dueDateEvidence: outcome.obligation.dueDateEvidence
             },
-      relevance: normalizedRelevance(outcome.relevance),
-      supersession: normalizedSupersession(outcome.supersession)
+      relevance: outcome.relevance,
+      supersession: outcome.supersession
     }
   };
 }
@@ -318,6 +327,24 @@ export const recordCapturedEmailTriageFailure = internalMutation({
       updatedAt: processedAt
     });
     return { status: 'failed' as const, capturedEmailId, reason };
+  }
+});
+
+export const retryFailedCapturedEmailForBot = mutation({
+  args: { serviceToken: v.string(), capturedEmailId: v.id('capturedEmails') },
+  handler: async (ctx, { serviceToken, capturedEmailId }) => {
+    assertAuthorizedServiceToken(serviceToken);
+    const email = await ctx.db.get(capturedEmailId);
+    if (!email) throw new Error('Captured email not found');
+    if (email.processingState !== 'failed') return { status: email.processingState, capturedEmailId };
+
+    const retriedAt = Date.now();
+    await ctx.db.patch(capturedEmailId, {
+      processingState: 'pending',
+      updatedAt: retriedAt,
+      triageFailureReason: undefined
+    });
+    return { status: 'pending' as const, capturedEmailId };
   }
 });
 

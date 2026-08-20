@@ -61,7 +61,7 @@ describe('email triage agent bridge', () => {
     expect(parseEmailTriageAgentResult(completeNoticeResult)).toEqual(completeNoticeResult);
   });
 
-  it('falls back when a complete notice has malformed lifecycle metadata', () => {
+  it('rejects a complete notice with malformed lifecycle metadata', () => {
     expect(
       parseEmailTriageAgentResult({
         ...completeNoticeResult,
@@ -79,14 +79,7 @@ describe('email triage agent bridge', () => {
           }
         }
       })
-    ).toEqual({
-      ...completeNoticeResult,
-      outcome: {
-        ...completeNoticeResult.outcome,
-        relevance: { relevantThrough: null, dateConfidence: 'low', dateEvidence: '' },
-        supersession: { noticeId: null, confidence: 'low', evidence: '' }
-      }
-    });
+    ).toBeNull();
   });
 
   it('claims, delegates, then passes the typed result to the persistence mutation', async () => {

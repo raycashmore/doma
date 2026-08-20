@@ -455,8 +455,9 @@ The service persists privacy-safe agent traces and token usage for 30 days. It
 does not persist hidden reasoning, raw calendar events, or forwarded-email
 sender, subject, or body in trace rows. Model failures emit structured events
 in the Agent API's Vercel Runtime Logs. Logs exclude user IDs, prompts,
-household instructions, email content, tool context, credentials, and error
-causes.
+household instructions, email content, tool context, and credentials; any
+retained provider diagnostic is normalized, redacted against email input and
+attachment metadata, and limited to 500 characters.
 
 Forwarded email capture uses Resend's `email.received` webhook at
 `/inbound-email/resend`. Configure that webhook on a publicly reachable Bot
@@ -475,6 +476,10 @@ also be triggered manually through
 oldest pending captured email, delegates typed inference to the Agent API, then
 stores either a current notice or a no-notice outcome. Only a high-priority,
 high-confidence future obligation creates a reminder candidate.
+
+Failed captures can be requeued without forwarding the source email again via
+`email/triage:retryFailedCapturedEmailForBot`; it requires the configured
+`BOT_SERVICE_TOKEN` and requeues only rows in the `failed` state.
 
 ### One-time email-notice expiry backfill
 
