@@ -40,6 +40,13 @@ export type MorningBriefingAiInput = {
 
 export type MorningBriefingAiProvider = (input: MorningBriefingAiInput) => Promise<unknown>;
 
+export type MorningBriefingAiGenerationTrace = {
+  startedAt: number;
+  completedAt: number;
+  input: MorningBriefingAiInput;
+  output: DeterministicMorningBriefing;
+};
+
 type BriefingSection = 'morning' | 'afternoon' | 'watchouts';
 
 type AiBriefingParseFailure =
@@ -141,7 +148,8 @@ export async function createAiMorningBriefing({
   events,
   provider,
   members,
-  weather
+  weather,
+  onGenerationTrace
 }: {
   localDate: string;
   timeZone: string;
@@ -150,6 +158,7 @@ export async function createAiMorningBriefing({
   provider: MorningBriefingAiProvider;
   members: ScheduleDisplayMember[];
   weather?: MorningBriefingWeatherContext;
+  onGenerationTrace?: (trace: MorningBriefingAiGenerationTrace) => Promise<void> | void;
 }): Promise<DeterministicMorningBriefing> {
   if (!calendarConfigs.some((calendar) => calendar.kind === 'dailyRequirements')) {
     return createDeterministicMorningBriefing({ localDate, timeZone, calendarConfigs, events, members });
@@ -162,6 +171,7 @@ export async function createAiMorningBriefing({
     sources: localEvents.map((event) => toAiSource(event, timeZone)),
     ...(weather ? { weather } : {})
   };
+  const startedAt = Date.now();
   const sourceSummary = summarizeSources(input.sources);
   let briefing: MorningBriefing | null;
   try {
@@ -193,23 +203,40 @@ export async function createAiMorningBriefing({
   }
   if (!briefing) {
     const fallback = createMorningBriefingFallback({ events: localEvents, timeZone, members });
-    return {
+    const output = {
       briefingKind: 'morning',
       localDate,
       generationStatus: 'fallback',
       briefing: fallback.briefing,
       message: fallback.message,
       sourceIds: fallback.sourceIds
-    };
+    } satisfies DeterministicMorningBriefing;
+    await recordGenerationTrace(onGenerationTrace, { startedAt, completedAt: Date.now(), input, output });
+    return output;
   }
-  return {
+  const output = {
     briefingKind: 'morning',
     localDate,
     generationStatus: 'ai',
     briefing,
     message: formatMorningBriefing(briefing, members),
     sourceIds: sourceIdsUsedBy(briefing)
-  };
+  } satisfies DeterministicMorningBriefing;
+  await recordGenerationTrace(onGenerationTrace, { startedAt, completedAt: Date.now(), input, output });
+  return output;
+}
+
+async function recordGenerationTrace(
+  onGenerationTrace: ((trace: MorningBriefingAiGenerationTrace) => Promise<void> | void) | undefined,
+  trace: MorningBriefingAiGenerationTrace
+) {
+  try {
+    await onGenerationTrace?.(trace);
+  } catch (error) {
+    console.warn('[briefing.ai] Generation trace export failed', {
+      error: error instanceof Error ? error.name : 'unknown_error'
+    });
+  }
 }
 
 function briefingLineJsonSchema() {
