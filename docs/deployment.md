@@ -608,6 +608,11 @@ briefings:
 | `MORNING_BRIEFING_AI_MODEL`           | Convex                     | Required with `OPENAI_API_KEY` for AI generation; otherwise generation uses deterministic text                                                        |
 | `MORNING_BRIEFING_LATITUDE`           | Convex                     | Optional latitude for weather context in AI-generated morning briefings; configure with `MORNING_BRIEFING_LONGITUDE`                                  |
 | `MORNING_BRIEFING_LONGITUDE`          | Convex                     | Optional longitude for weather context in AI-generated morning briefings; configure with `MORNING_BRIEFING_LATITUDE`                                  |
+| `LANGFUSE_PUBLIC_KEY`                 | Convex                     | Optional Langfuse project public key; tracing is disabled unless this and `LANGFUSE_SECRET_KEY` are both configured                                   |
+| `LANGFUSE_SECRET_KEY`                 | Convex                     | Optional Langfuse project secret key; do not commit it                                                                                                |
+| `LANGFUSE_BASE_URL`                   | Convex                     | Optional Langfuse regional or self-hosted origin; defaults to `https://cloud.langfuse.com`                                                            |
+| `LANGFUSE_ENVIRONMENT`                | Convex                     | Optional environment label on Langfuse traces, for example `production` or `preview`                                                                  |
+| `LANGFUSE_TRACE_CONTENT`              | Convex                     | Set to exactly `true` only after approving external retention of private calendar inputs and rendered briefing content; metadata-only by default      |
 | `LIST_ITEMS_AI_MODEL`                 | Convex                     | Optional; with `OPENAI_API_KEY`, the model used to parse free-text Telegram captures into list items; otherwise a deterministic newline split is used |
 | `LIST_CATEGORISATION_AI_MODEL`        | Convex                     | Optional; with `OPENAI_API_KEY`, the model used to assign list items to the configured select-property options; otherwise items remain Unassigned     |
 | `OPENAI_API_KEY`                      | Convex                     | Required with `MORNING_BRIEFING_AI_MODEL`, `LIST_ITEMS_AI_MODEL`, or `LIST_CATEGORISATION_AI_MODEL` for AI generation                                 |
@@ -637,6 +642,15 @@ Morning briefing operations:
   practical. Weather does not cause quiet-day notifications by itself. Missing,
   invalid, or unavailable weather context falls back to schedule-only AI
   generation.
+- When Langfuse credentials are configured, every AI-generated morning briefing
+  emits a root observation and nested generation observation through Langfuse's
+  OTLP endpoint. The export is best-effort and can never force a fallback; it
+  has a 1.5-second timeout so an unavailable Langfuse endpoint cannot hold the
+  briefing indefinitely. It records timing, model, source counts, output shape,
+  and generation status by default. Set `LANGFUSE_TRACE_CONTENT=true` only when
+  the Langfuse project is an approved destination for private schedule input and
+  briefing text; this enables the full input/output needed for manual review and
+  output-quality evaluation.
 - Stored briefings are plain text. AI output that leaks internal member ids,
   uses unknown member ownership, includes markup delimiters, or includes escaped
   HTML entities is rejected and replaced with the deterministic schedule

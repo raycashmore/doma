@@ -13,9 +13,15 @@ import {
 } from '../_generated/server';
 import { displayMembersFromConfig, parseScheduleCalendars, parseScheduleMembers } from '../schedule/config';
 import type { ScheduleEventRow } from '../schedule/mapping';
-import { createAiMorningBriefing, createOpenAiMorningBriefingProvider, type MorningBriefingAiProvider } from './ai';
+import {
+  createAiMorningBriefing,
+  createOpenAiMorningBriefingProvider,
+  type MorningBriefingAiGenerationTrace,
+  type MorningBriefingAiProvider
+} from './ai';
 import { botMorningBriefingFromStoreResult } from './botBriefing';
 import type { BotMorningBriefing } from './delivery';
+import { emitMorningBriefingGenerationTrace, langfuseConfigFromEnv } from './langfuse';
 import {
   type BriefingDeliverySlot,
   createDeterministicMorningBriefing,
@@ -149,7 +155,7 @@ async function storeGeneratedBriefing(
   return { inserted: true as const, id, briefing: row };
 }
 
-function morningBriefingProviderFromEnv(): MorningBriefingAiProvider | null {
+function morningBriefingProviderFromEnv(): { provider: MorningBriefingAiProvider; model: string } | null {
   const apiKey = process.env.OPENAI_API_KEY;
   const model = process.env.MORNING_BRIEFING_AI_MODEL;
 
@@ -157,7 +163,7 @@ function morningBriefingProviderFromEnv(): MorningBriefingAiProvider | null {
     return null;
   }
 
-  return createOpenAiMorningBriefingProvider({ apiKey, model });
+  return { provider: createOpenAiMorningBriefingProvider({ apiKey, model }), model };
 }
 
 export async function morningBriefingWeatherFromEnv({
@@ -196,7 +202,8 @@ export async function createMorningBriefing({
   events,
   provider,
   members,
-  weather
+  weather,
+  onAiGenerationTrace
 }: {
   localDate: string;
   timeZone: string;
@@ -205,6 +212,7 @@ export async function createMorningBriefing({
   provider: MorningBriefingAiProvider | null;
   members: ReturnType<typeof displayMembersFromConfig>;
   weather?: MorningBriefingWeatherContext;
+  onAiGenerationTrace?: (trace: MorningBriefingAiGenerationTrace) => Promise<void> | void;
 }) {
   return provider
     ? await createAiMorningBriefing({
@@ -214,7 +222,8 @@ export async function createMorningBriefing({
         events,
         provider,
         members,
-        weather
+        weather,
+        onGenerationTrace: onAiGenerationTrace
       })
     : createDeterministicMorningBriefing({
         localDate,
@@ -330,16 +339,24 @@ export const generateAndStoreMorningBriefing = internalAction({
     const members = displayMembersFromConfig(parseScheduleMembers());
     const events = await ctx.runQuery(generationRefs.morningBriefingEvents);
     const provider = morningBriefingProviderFromEnv();
-    const canUseAiBriefing = provider && calendarConfigs.some((calendar) => calendar.kind === 'dailyRequirements');
+    const canUseAiBriefing =
+      provider !== null && calendarConfigs.some((calendar) => calendar.kind === 'dailyRequirements');
     const briefing = await createMorningBriefing({
       localDate,
       timeZone: resolvedTimeZone,
       calendarConfigs,
       events,
-      provider,
+      provider: provider?.provider ?? null,
       members,
       weather: canUseAiBriefing
         ? await morningBriefingWeatherFromEnv({ localDate, timeZone: resolvedTimeZone })
+        : undefined,
+      onAiGenerationTrace: provider
+        ? (trace) =>
+            emitMorningBriefingGenerationTrace({
+              config: langfuseConfigFromEnv(),
+              trace: { ...trace, model: provider.model }
+            })
         : undefined
     });
 

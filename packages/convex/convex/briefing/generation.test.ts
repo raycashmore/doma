@@ -133,6 +133,47 @@ describe('createMorningBriefing', () => {
 
     expect(provider).toHaveBeenCalledWith(expect.objectContaining({ weather }));
   });
+
+  it('does not let a tracing failure prevent an AI-generated briefing', async () => {
+    const provider = vi.fn(async () => ({
+      shouldSend: true,
+      headline: 'One thing to prep',
+      morning: [
+        {
+          text: 'Needs sports gear.',
+          who: ['childA'],
+          sourceIds: ['requirements-calendar:event-1:1781218800000']
+        }
+      ],
+      afternoon: [],
+      watchouts: [],
+      sourceIdsIgnored: []
+    }));
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    try {
+      await expect(
+        createMorningBriefing({
+          localDate,
+          timeZone,
+          calendarConfigs: [{ calendarId: 'requirements-calendar', who: 'shared', kind: 'dailyRequirements' }],
+          events: [event()],
+          provider,
+          members,
+          onAiGenerationTrace: async () => {
+            throw new Error('trace export unavailable');
+          }
+        })
+      ).resolves.toMatchObject({ generationStatus: 'ai' });
+
+      expect(warn).toHaveBeenCalledWith(
+        '[briefing.ai] Generation trace export failed',
+        expect.objectContaining({ error: 'Error' })
+      );
+    } finally {
+      warn.mockRestore();
+    }
+  });
 });
 
 describe('renderMorningBriefingDeliveryPreview', () => {
