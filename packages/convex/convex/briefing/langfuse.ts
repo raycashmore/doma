@@ -8,7 +8,6 @@ export type LangfuseConfig = {
   publicKey: string;
   secretKey: string;
   environment?: string;
-  captureContent: boolean;
 };
 
 type MorningBriefingGenerationTrace = {
@@ -43,8 +42,7 @@ export function langfuseConfigFromEnv(env: Record<string, string | undefined> = 
     publicKey,
     secretKey,
     baseUrl: (env.LANGFUSE_BASE_URL ?? 'https://cloud.langfuse.com').replace(/\/$/, ''),
-    ...(env.LANGFUSE_ENVIRONMENT ? { environment: env.LANGFUSE_ENVIRONMENT } : {}),
-    captureContent: env.LANGFUSE_TRACE_CONTENT === 'true'
+    ...(env.LANGFUSE_ENVIRONMENT ? { environment: env.LANGFUSE_ENVIRONMENT } : {})
   };
 }
 
@@ -66,8 +64,8 @@ export async function emitMorningBriefingGenerationTrace({
     const rootSpanId = randomId(8);
     const generationSpanId = randomId(8);
     const sharedAttributes = traceAttributes({ config, trace });
-    const rootInput = config.captureContent ? trace.input : inputSummary(trace.input);
-    const rootOutput = config.captureContent ? trace.output : outputSummary(trace.output);
+    const rootInput = inputSummary(trace.input);
+    const rootOutput = outputSummary(trace.output);
 
     const root = span({
       traceId,
@@ -199,7 +197,7 @@ function span({
 function randomId(byteLength: number) {
   const bytes = new Uint8Array(byteLength);
   crypto.getRandomValues(bytes);
-  return btoa(String.fromCharCode(...bytes));
+  return [...bytes].map((byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
 function unixNano(milliseconds: number) {

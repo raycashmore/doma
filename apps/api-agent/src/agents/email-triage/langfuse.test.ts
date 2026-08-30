@@ -54,16 +54,13 @@ describe('langfuseConfigFromEnv', () => {
     expect(langfuseConfigFromEnv({ LANGFUSE_PUBLIC_KEY: 'public' })).toBeNull();
   });
 
-  it('defaults to metadata-only capture and the EU Cloud endpoint', () => {
+  it('defaults to the EU Cloud endpoint', () => {
     expect(
       langfuseConfigFromEnv({
         LANGFUSE_PUBLIC_KEY: 'public',
         LANGFUSE_SECRET_KEY: 'secret'
       })
-    ).toMatchObject({
-      baseUrl: 'https://cloud.langfuse.com',
-      captureContent: false
-    });
+    ).toMatchObject({ baseUrl: 'https://cloud.langfuse.com' });
   });
 });
 
@@ -80,8 +77,7 @@ describe('emitEmailTriageGenerationTrace', () => {
         baseUrl: 'https://langfuse.example',
         publicKey: 'public',
         secretKey: 'secret',
-        environment: 'production',
-        captureContent: false
+        environment: 'production'
       },
       trace,
       fetchImpl
@@ -106,6 +102,9 @@ describe('emitEmailTriageGenerationTrace', () => {
     expect(generationSpan.parentSpanId).toBe(rootSpan.spanId);
     expect(attributeValue(generationSpan, 'langfuse.observation.type')).toBe('generation');
     expect(attributeValue(generationSpan, 'langfuse.observation.model.name')).toBe('openai/gpt-test');
+    expect(attributeValue(generationSpan, 'langfuse.observation.usage_details')).toBe(
+      JSON.stringify({ input: 100, output: 50 })
+    );
     expect(serializedRequest).not.toContain('Sensitive email subject');
     expect(serializedRequest).not.toContain('sensitive-sender@example.com');
     expect(serializedRequest).not.toContain('Sensitive forwarded email detail');
@@ -114,24 +113,25 @@ describe('emitEmailTriageGenerationTrace', () => {
     expect(serializedRequest).not.toContain('Sensitive action');
   });
 
-  it('includes the complete input and output only when explicitly enabled', async () => {
+  it('never includes the complete input or output', async () => {
     const fetchImpl = vi.fn(async () => new Response(null, { status: 200 }));
+    const config = langfuseConfigFromEnv({
+      LANGFUSE_PUBLIC_KEY: 'public',
+      LANGFUSE_SECRET_KEY: 'secret',
+      LANGFUSE_TRACE_CONTENT: 'true'
+    });
+    if (!config) throw new Error('Expected Langfuse config');
 
     await emitEmailTriageGenerationTrace({
-      config: {
-        baseUrl: 'https://langfuse.example',
-        publicKey: 'public',
-        secretKey: 'secret',
-        captureContent: true
-      },
+      config,
       trace,
       fetchImpl
     });
 
     const serializedRequest = JSON.stringify(requestBody(fetchImpl));
 
-    expect(serializedRequest).toContain('Sensitive forwarded email detail');
-    expect(serializedRequest).toContain('Sensitive generated title');
+    expect(serializedRequest).not.toContain('Sensitive forwarded email detail');
+    expect(serializedRequest).not.toContain('Sensitive generated title');
   });
 
   it('stops waiting when the Langfuse request exceeds the export timeout', async () => {
@@ -149,8 +149,7 @@ describe('emitEmailTriageGenerationTrace', () => {
         config: {
           baseUrl: 'https://langfuse.example',
           publicKey: 'public',
-          secretKey: 'secret',
-          captureContent: false
+          secretKey: 'secret'
         },
         trace,
         fetchImpl

@@ -194,8 +194,7 @@ only high-priority obligations with a high-confidence future date create an
 
 When configured, the Agent API also exports a best-effort Langfuse trace for
 each triage generation. It records only input and output shape by default;
-forwarded-email content is exported only with the explicit
-`LANGFUSE_TRACE_CONTENT=true` opt-in described in [Deployment](deployment.md).
+forwarded-email content is never exported.
 
 Reminder delivery is deterministic. A 15-minute Convex sweep sends eligible
 candidates at 7pm Australia/Sydney on the day before `dueOn`, through the Bot

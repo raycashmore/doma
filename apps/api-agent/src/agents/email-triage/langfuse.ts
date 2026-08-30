@@ -8,7 +8,6 @@ export type LangfuseConfig = {
   publicKey: string;
   secretKey: string;
   environment?: string;
-  captureContent: boolean;
 };
 
 export type EmailTriageGenerationTrace = {
@@ -49,8 +48,7 @@ export function langfuseConfigFromEnv(env: Record<string, string | undefined> = 
     publicKey,
     secretKey,
     baseUrl: (env.LANGFUSE_BASE_URL ?? 'https://cloud.langfuse.com').replace(/\/$/, ''),
-    ...(env.LANGFUSE_ENVIRONMENT ? { environment: env.LANGFUSE_ENVIRONMENT } : {}),
-    captureContent: env.LANGFUSE_TRACE_CONTENT === 'true'
+    ...(env.LANGFUSE_ENVIRONMENT ? { environment: env.LANGFUSE_ENVIRONMENT } : {})
   };
 }
 
@@ -72,8 +70,8 @@ export async function emitEmailTriageGenerationTrace({
     const rootSpanId = randomId(8);
     const generationSpanId = randomId(8);
     const sharedAttributes = traceAttributes({ config, trace });
-    const input = config.captureContent ? trace.input : inputSummary(trace.input);
-    const output = config.captureContent ? trace.output : outputSummary(trace);
+    const input = inputSummary(trace.input);
+    const output = outputSummary(trace);
 
     const root = span({
       traceId,
@@ -98,6 +96,7 @@ export async function emitEmailTriageGenerationTrace({
         ...sharedAttributes,
         stringAttribute('langfuse.observation.type', 'generation'),
         stringAttribute('langfuse.observation.model.name', trace.model),
+        jsonAttribute('langfuse.observation.usage_details', trace.tokenUsage),
         jsonAttribute('langfuse.observation.input', input),
         jsonAttribute('langfuse.observation.output', output)
       ]

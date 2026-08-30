@@ -55,16 +55,13 @@ describe('langfuseConfigFromEnv', () => {
     expect(langfuseConfigFromEnv({ LANGFUSE_PUBLIC_KEY: 'public' })).toBeNull();
   });
 
-  it('defaults to metadata-only capture and the EU Cloud endpoint', () => {
+  it('defaults to the EU Cloud endpoint', () => {
     expect(
       langfuseConfigFromEnv({
         LANGFUSE_PUBLIC_KEY: 'public',
         LANGFUSE_SECRET_KEY: 'secret'
       })
-    ).toMatchObject({
-      baseUrl: 'https://cloud.langfuse.com',
-      captureContent: false
-    });
+    ).toMatchObject({ baseUrl: 'https://cloud.langfuse.com' });
   });
 });
 
@@ -81,8 +78,7 @@ describe('emitMorningBriefingGenerationTrace', () => {
         baseUrl: 'https://langfuse.example',
         publicKey: 'public',
         secretKey: 'secret',
-        environment: 'production',
-        captureContent: false
+        environment: 'production'
       },
       trace,
       fetchImpl
@@ -105,30 +101,34 @@ describe('emitMorningBriefingGenerationTrace', () => {
     );
     expect(spans).toHaveLength(2);
     expect(generationSpan.parentSpanId).toBe(rootSpan.spanId);
+    expect(rootSpan.traceId).toMatch(/^[a-f0-9]{32}$/);
+    expect(rootSpan.spanId).toMatch(/^[a-f0-9]{16}$/);
+    expect(generationSpan.spanId).toMatch(/^[a-f0-9]{16}$/);
     expect(attributeValue(generationSpan, 'langfuse.observation.type')).toBe('generation');
     expect(attributeValue(generationSpan, 'langfuse.observation.model.name')).toBe('gpt-test');
     expect(serializedRequest).not.toContain('Sensitive requirement detail');
     expect(serializedRequest).not.toContain('Sensitive rendered briefing detail');
   });
 
-  it('includes the source and rendered output only when explicitly enabled', async () => {
+  it('never includes source or rendered output', async () => {
     const fetchImpl = vi.fn(async () => new Response(null, { status: 200 }));
+    const config = langfuseConfigFromEnv({
+      LANGFUSE_PUBLIC_KEY: 'public',
+      LANGFUSE_SECRET_KEY: 'secret',
+      LANGFUSE_TRACE_CONTENT: 'true'
+    });
+    if (!config) throw new Error('Expected Langfuse config');
 
     await emitMorningBriefingGenerationTrace({
-      config: {
-        baseUrl: 'https://langfuse.example',
-        publicKey: 'public',
-        secretKey: 'secret',
-        captureContent: true
-      },
+      config,
       trace,
       fetchImpl
     });
 
     const serializedRequest = JSON.stringify(requestBody(fetchImpl));
 
-    expect(serializedRequest).toContain('Sensitive requirement detail');
-    expect(serializedRequest).toContain('Sensitive rendered briefing detail');
+    expect(serializedRequest).not.toContain('Sensitive requirement detail');
+    expect(serializedRequest).not.toContain('Sensitive rendered briefing detail');
   });
 
   it('stops waiting when the Langfuse request exceeds the export timeout', async () => {
@@ -146,8 +146,7 @@ describe('emitMorningBriefingGenerationTrace', () => {
         config: {
           baseUrl: 'https://langfuse.example',
           publicKey: 'public',
-          secretKey: 'secret',
-          captureContent: false
+          secretKey: 'secret'
         },
         trace,
         fetchImpl
@@ -170,7 +169,9 @@ function requestBody(fetchImpl: ReturnType<typeof vi.fn>) {
   const request = fetchImpl.mock.calls[0]?.[1] as RequestInit;
   return JSON.parse(request.body as string) as {
     resourceSpans: Array<{
-      scopeSpans: Array<{ spans: Array<{ spanId: string; parentSpanId?: string; attributes: unknown[] }> }>;
+      scopeSpans: Array<{
+        spans: Array<{ traceId: string; spanId: string; parentSpanId?: string; attributes: unknown[] }>;
+      }>;
     }>;
   };
 }
