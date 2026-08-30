@@ -1,5 +1,5 @@
-import type { MorningBriefingAiInput } from './ai';
-import type { DeterministicMorningBriefing } from './morning';
+import type { EmailTriageOutcome, EmailTriageRunInput } from './schemas.js';
+import type { EmailTriageAgentError } from './trace.js';
 
 const exportTimeoutMs = 1_500;
 
@@ -10,12 +10,18 @@ export type LangfuseConfig = {
   environment?: string;
 };
 
-type MorningBriefingGenerationTrace = {
+export type EmailTriageGenerationTrace = {
+  runId: string;
+  model: string;
+  promptVersion: string;
   startedAt: number;
   completedAt: number;
-  input: MorningBriefingAiInput;
-  output: DeterministicMorningBriefing;
-  model: string;
+  input: EmailTriageRunInput;
+  output: EmailTriageOutcome | null;
+  stopReason: string;
+  tokenUsage: { input: number; output: number };
+  validation: { status: 'valid' } | { status: 'invalid'; reason: 'invalid_ai_output' | 'provider_failure' };
+  error?: EmailTriageAgentError;
 };
 
 type OtelAttribute = {
@@ -46,13 +52,13 @@ export function langfuseConfigFromEnv(env: Record<string, string | undefined> = 
   };
 }
 
-export async function emitMorningBriefingGenerationTrace({
+export async function emitEmailTriageGenerationTrace({
   config,
   trace,
   fetchImpl = fetch
 }: {
   config: LangfuseConfig | null;
-  trace: MorningBriefingGenerationTrace;
+  trace: EmailTriageGenerationTrace;
   fetchImpl?: typeof fetch;
 }): Promise<void> {
   if (!config) return;
@@ -64,34 +70,35 @@ export async function emitMorningBriefingGenerationTrace({
     const rootSpanId = randomId(8);
     const generationSpanId = randomId(8);
     const sharedAttributes = traceAttributes({ config, trace });
-    const rootInput = inputSummary(trace.input);
-    const rootOutput = outputSummary(trace.output);
+    const input = inputSummary(trace.input);
+    const output = outputSummary(trace);
 
     const root = span({
       traceId,
       spanId: rootSpanId,
-      name: 'morning-briefing.generation',
+      name: 'email-triage.generation',
       startedAt: trace.startedAt,
       completedAt: trace.completedAt,
       attributes: [
         ...sharedAttributes,
-        jsonAttribute('langfuse.observation.input', rootInput),
-        jsonAttribute('langfuse.observation.output', rootOutput)
+        jsonAttribute('langfuse.observation.input', input),
+        jsonAttribute('langfuse.observation.output', output)
       ]
     });
     const generation = span({
       traceId,
       spanId: generationSpanId,
       parentSpanId: rootSpanId,
-      name: 'morning-briefing.llm',
+      name: 'email-triage.llm',
       startedAt: trace.startedAt,
       completedAt: trace.completedAt,
       attributes: [
         ...sharedAttributes,
         stringAttribute('langfuse.observation.type', 'generation'),
         stringAttribute('langfuse.observation.model.name', trace.model),
-        jsonAttribute('langfuse.observation.input', rootInput),
-        jsonAttribute('langfuse.observation.output', rootOutput)
+        jsonAttribute('langfuse.observation.usage_details', trace.tokenUsage),
+        jsonAttribute('langfuse.observation.input', input),
+        jsonAttribute('langfuse.observation.output', output)
       ]
     });
 
@@ -107,62 +114,79 @@ export async function emitMorningBriefingGenerationTrace({
         body: JSON.stringify({
           resourceSpans: [
             {
-              resource: {
-                attributes: [stringAttribute('service.name', 'doma-convex')]
-              },
-              scopeSpans: [
-                {
-                  scope: { name: 'doma.morning-briefing' },
-                  spans: [root, generation]
-                }
-              ]
+              resource: { attributes: [stringAttribute('service.name', 'doma-api-agent')] },
+              scopeSpans: [{ scope: { name: 'doma.email-triage' }, spans: [root, generation] }]
             }
           ]
         })
       });
 
       if (!response.ok) {
-        console.warn('[briefing.langfuse] Trace export was rejected', { status: response.status });
+        console.warn('[email-triage.langfuse] Trace export was rejected', { status: response.status });
       }
     } finally {
       clearTimeout(timeout);
     }
   } catch (error) {
-    console.warn('[briefing.langfuse] Trace export failed', {
+    console.warn('[email-triage.langfuse] Trace export failed', {
       error: error instanceof Error ? error.name : 'unknown_error'
     });
   }
 }
 
-function traceAttributes({ config, trace }: { config: LangfuseConfig; trace: MorningBriefingGenerationTrace }) {
+function traceAttributes({ config, trace }: { config: LangfuseConfig; trace: EmailTriageGenerationTrace }) {
   return [
-    stringAttribute('langfuse.trace.name', 'morning-briefing.generation'),
-    stringAttribute('langfuse.trace.metadata.briefing_kind', 'morning'),
-    stringAttribute('langfuse.trace.metadata.generation_status', trace.output.generationStatus),
-    stringAttribute('langfuse.trace.metadata.local_date', trace.output.localDate),
+    stringAttribute('langfuse.trace.name', 'email-triage.generation'),
+    stringAttribute('langfuse.trace.metadata.prompt_version', trace.promptVersion),
+    stringAttribute('langfuse.trace.metadata.outcome_kind', trace.output?.kind ?? 'failed'),
+    stringAttribute('langfuse.trace.metadata.validation_status', trace.validation.status),
+    boolAttribute(
+      'langfuse.trace.metadata.has_obligation',
+      trace.output?.kind === 'notice' && trace.output.obligation !== null
+    ),
     ...(config.environment ? [stringAttribute('langfuse.environment', config.environment)] : [])
   ];
 }
 
-function inputSummary(input: MorningBriefingAiInput) {
+function inputSummary(input: EmailTriageRunInput) {
   return {
-    localDate: input.localDate,
-    timeZone: input.timeZone,
-    sourceCount: input.sources.length,
-    dailyRequirementSourceCount: input.sources.filter((source) => source.kind === 'dailyRequirements').length,
-    scheduleSourceCount: input.sources.filter((source) => source.kind === 'schedule').length,
-    weatherAvailable: input.weather !== undefined
+    textBodyLength: input.textBody.length,
+    hasAttachments: input.hasAttachments,
+    attachmentCount: input.attachmentMetadata.length,
+    activeNoticeCandidateCount: input.activeNoticeCandidates.length
   };
 }
 
-function outputSummary(output: DeterministicMorningBriefing) {
+function outputSummary(trace: EmailTriageGenerationTrace) {
+  if (!trace.output) {
+    return {
+      outcome: 'failed',
+      validation: trace.validation,
+      stopReason: trace.stopReason,
+      ...(trace.error
+        ? {
+            error: {
+              name: trace.error.name,
+              ...(trace.error.statusCode === undefined ? {} : { statusCode: trace.error.statusCode }),
+              ...(trace.error.type ? { type: trace.error.type } : {}),
+              ...(trace.error.generationId ? { generationId: trace.error.generationId } : {})
+            }
+          }
+        : {})
+    };
+  }
+
+  if (trace.output.kind === 'noNotice') return { outcome: 'noNotice' };
+
   return {
-    generationStatus: output.generationStatus,
-    shouldSend: output.briefing.shouldSend,
-    morningLineCount: output.briefing.morning.length,
-    afternoonLineCount: output.briefing.afternoon.length,
-    watchoutCount: output.briefing.watchouts.length,
-    sourceIdCount: output.sourceIds.length
+    outcome: 'notice',
+    category: trace.output.category,
+    priority: trace.output.priority,
+    extractedFactCount: trace.output.extractedFacts.length,
+    hasObligation: trace.output.obligation !== null,
+    ...(trace.output.obligation ? { dueDateConfidence: trace.output.obligation.dueDateConfidence } : {}),
+    relevanceDateConfidence: trace.output.relevance.dateConfidence,
+    supersessionConfidence: trace.output.supersession.confidence
   };
 }
 
@@ -206,6 +230,10 @@ function unixNano(milliseconds: number) {
 
 function stringAttribute(key: string, value: string): OtelAttribute {
   return { key, value: { stringValue: value } };
+}
+
+function boolAttribute(key: string, value: boolean): OtelAttribute {
+  return { key, value: { boolValue: value } };
 }
 
 function jsonAttribute(key: string, value: unknown): OtelAttribute {

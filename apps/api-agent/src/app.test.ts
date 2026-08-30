@@ -137,7 +137,8 @@ describe('email triage agent HTTP boundary', () => {
       expect.objectContaining({
         model: 'test/email-triage',
         input: expect.objectContaining({ capturedEmailId: 'capturedEmails_123' }),
-        saveTrace: boundary.saveTrace
+        saveTrace: boundary.saveTrace,
+        onGenerationTrace: expect.any(Function)
       })
     );
     await expect(response.json()).resolves.toEqual({

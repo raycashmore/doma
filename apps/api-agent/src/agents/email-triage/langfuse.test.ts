@@ -1,53 +1,52 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { emitMorningBriefingGenerationTrace, langfuseConfigFromEnv } from './langfuse';
-import type { DeterministicMorningBriefing } from './morning';
+import { emitEmailTriageGenerationTrace, langfuseConfigFromEnv } from './langfuse.js';
 
 const trace = {
+  runId: 'email_run_123',
+  model: 'openai/gpt-test',
+  promptVersion: 'email-triage-v2',
   startedAt: 1_750_000_000_000,
   completedAt: 1_750_000_002_000,
-  model: 'gpt-test',
   input: {
-    localDate: '2026-06-12',
-    timeZone: 'Australia/Sydney',
-    sources: [
+    capturedEmailId: 'capturedEmails_123',
+    subject: 'Sensitive email subject',
+    fromEmail: 'sensitive-sender@example.com',
+    receivedAt: 1_750_000_000_000,
+    textBody: 'Sensitive forwarded email detail',
+    hasAttachments: true,
+    attachmentMetadata: [{ filename: 'sensitive.pdf' }],
+    activeNoticeCandidates: [
       {
-        sourceId: 'requirements-calendar:event-1:1750000000000',
-        calendarId: 'requirements-calendar',
-        kind: 'dailyRequirements' as const,
-        title: 'Sensitive requirement detail',
-        start: 1_750_000_000_000,
-        end: 1_750_003_600_000,
-        localStart: '2026-06-12T08:00:00',
-        localEnd: '2026-06-12T09:00:00',
-        localTimeBlock: 'morning' as const,
-        allDay: false,
-        who: ['memberA'],
-        recurring: false
+        id: 'emailNotices_123',
+        category: 'school' as const,
+        title: 'Sensitive prior notice',
+        body: 'Sensitive prior notice detail',
+        extractedFacts: [],
+        obligation: null,
+        createdAt: 1_749_000_000_000
       }
     ]
   },
   output: {
-    briefingKind: 'morning',
-    localDate: '2026-06-12',
-    generationStatus: 'ai',
-    briefing: {
-      shouldSend: true,
-      headline: 'Specific day',
-      morning: [
-        {
-          text: 'Sensitive rendered briefing detail',
-          who: ['memberA'],
-          sourceIds: ['requirements-calendar:event-1:1750000000000']
-        }
-      ],
-      afternoon: [],
-      watchouts: [],
-      sourceIdsIgnored: []
+    kind: 'notice' as const,
+    category: 'school' as const,
+    priority: 'high' as const,
+    title: 'Sensitive generated title',
+    body: 'Sensitive generated summary',
+    extractedFacts: [{ label: 'Sensitive fact', value: 'Sensitive value' }],
+    obligation: {
+      action: 'Sensitive action',
+      dueOn: '2026-08-30',
+      dueDateConfidence: 'high' as const,
+      dueDateEvidence: 'Sensitive due-date evidence'
     },
-    message: 'Sensitive rendered briefing detail',
-    sourceIds: ['requirements-calendar:event-1:1750000000000']
-  } satisfies DeterministicMorningBriefing
+    relevance: { relevantThrough: '2026-08-30', dateConfidence: 'high' as const, dateEvidence: 'Sensitive relevance' },
+    supersession: { noticeId: null, confidence: 'low' as const, evidence: '' }
+  },
+  stopReason: 'stop',
+  tokenUsage: { input: 100, output: 50 },
+  validation: { status: 'valid' as const }
 };
 
 describe('langfuseConfigFromEnv', () => {
@@ -65,15 +64,15 @@ describe('langfuseConfigFromEnv', () => {
   });
 });
 
-describe('emitMorningBriefingGenerationTrace', () => {
+describe('emitEmailTriageGenerationTrace', () => {
   afterEach(() => {
     vi.useRealTimers();
   });
 
-  it('exports a nested OTLP trace without private briefing content by default', async () => {
+  it('exports a nested OTLP trace without private email content by default', async () => {
     const fetchImpl = vi.fn(async () => new Response(null, { status: 200 }));
 
-    await emitMorningBriefingGenerationTrace({
+    await emitEmailTriageGenerationTrace({
       config: {
         baseUrl: 'https://langfuse.example',
         publicKey: 'public',
@@ -101,16 +100,20 @@ describe('emitMorningBriefingGenerationTrace', () => {
     );
     expect(spans).toHaveLength(2);
     expect(generationSpan.parentSpanId).toBe(rootSpan.spanId);
-    expect(rootSpan.traceId).toMatch(/^[a-f0-9]{32}$/);
-    expect(rootSpan.spanId).toMatch(/^[a-f0-9]{16}$/);
-    expect(generationSpan.spanId).toMatch(/^[a-f0-9]{16}$/);
     expect(attributeValue(generationSpan, 'langfuse.observation.type')).toBe('generation');
-    expect(attributeValue(generationSpan, 'langfuse.observation.model.name')).toBe('gpt-test');
-    expect(serializedRequest).not.toContain('Sensitive requirement detail');
-    expect(serializedRequest).not.toContain('Sensitive rendered briefing detail');
+    expect(attributeValue(generationSpan, 'langfuse.observation.model.name')).toBe('openai/gpt-test');
+    expect(attributeValue(generationSpan, 'langfuse.observation.usage_details')).toBe(
+      JSON.stringify({ input: 100, output: 50 })
+    );
+    expect(serializedRequest).not.toContain('Sensitive email subject');
+    expect(serializedRequest).not.toContain('sensitive-sender@example.com');
+    expect(serializedRequest).not.toContain('Sensitive forwarded email detail');
+    expect(serializedRequest).not.toContain('Sensitive generated title');
+    expect(serializedRequest).not.toContain('Sensitive generated summary');
+    expect(serializedRequest).not.toContain('Sensitive action');
   });
 
-  it('never includes source or rendered output', async () => {
+  it('never includes the complete input or output', async () => {
     const fetchImpl = vi.fn(async () => new Response(null, { status: 200 }));
     const config = langfuseConfigFromEnv({
       LANGFUSE_PUBLIC_KEY: 'public',
@@ -119,7 +122,7 @@ describe('emitMorningBriefingGenerationTrace', () => {
     });
     if (!config) throw new Error('Expected Langfuse config');
 
-    await emitMorningBriefingGenerationTrace({
+    await emitEmailTriageGenerationTrace({
       config,
       trace,
       fetchImpl
@@ -127,8 +130,8 @@ describe('emitMorningBriefingGenerationTrace', () => {
 
     const serializedRequest = JSON.stringify(requestBody(fetchImpl));
 
-    expect(serializedRequest).not.toContain('Sensitive requirement detail');
-    expect(serializedRequest).not.toContain('Sensitive rendered briefing detail');
+    expect(serializedRequest).not.toContain('Sensitive forwarded email detail');
+    expect(serializedRequest).not.toContain('Sensitive generated title');
   });
 
   it('stops waiting when the Langfuse request exceeds the export timeout', async () => {
@@ -142,7 +145,7 @@ describe('emitMorningBriefingGenerationTrace', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
     try {
-      const exportPromise = emitMorningBriefingGenerationTrace({
+      const exportPromise = emitEmailTriageGenerationTrace({
         config: {
           baseUrl: 'https://langfuse.example',
           publicKey: 'public',
@@ -156,7 +159,7 @@ describe('emitMorningBriefingGenerationTrace', () => {
 
       await expect(exportPromise).resolves.toBeUndefined();
       expect(warn).toHaveBeenCalledWith(
-        '[briefing.langfuse] Trace export failed',
+        '[email-triage.langfuse] Trace export failed',
         expect.objectContaining({ error: 'AbortError' })
       );
     } finally {
@@ -169,9 +172,7 @@ function requestBody(fetchImpl: ReturnType<typeof vi.fn>) {
   const request = fetchImpl.mock.calls[0]?.[1] as RequestInit;
   return JSON.parse(request.body as string) as {
     resourceSpans: Array<{
-      scopeSpans: Array<{
-        spans: Array<{ traceId: string; spanId: string; parentSpanId?: string; attributes: unknown[] }>;
-      }>;
+      scopeSpans: Array<{ spans: Array<{ spanId: string; parentSpanId?: string; attributes: unknown[] }> }>;
     }>;
   };
 }

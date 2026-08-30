@@ -192,6 +192,10 @@ a privacy-safe 30-day trace. A notice may include an extracted obligation, but
 only high-priority obligations with a high-confidence future date create an
 `emailReminderCandidates` row. Inference never sends a notification.
 
+When configured, the Agent API also exports a best-effort Langfuse trace for
+each triage generation. It records only input and output shape by default;
+forwarded-email content is never exported.
+
 Reminder delivery is deterministic. A 15-minute Convex sweep sends eligible
 candidates at 7pm Australia/Sydney on the day before `dueOn`, through the Bot
 gateway with topic `email.reminder`. It records attempts per candidate and

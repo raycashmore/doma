@@ -147,6 +147,42 @@ describe('runEmailTriageAgent', () => {
     expect(JSON.stringify(saveTrace.mock.calls)).not.toContain('Private malformed');
   });
 
+  it('does not let Langfuse trace export failures prevent a completed triage', async () => {
+    const saveTrace = vi.fn();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    try {
+      await expect(
+        runEmailTriageAgent({
+          model: modelReturning({
+            outcome: 'noNotice',
+            category: 'other',
+            priority: 'low',
+            title: '',
+            body: '',
+            extractedFacts: [],
+            reason: 'No durable household information.',
+            obligation: null,
+            relevance: { relevantThrough: '', dateConfidence: 'low', dateEvidence: '' },
+            supersession: { noticeId: '', confidence: 'low', evidence: '' }
+          }),
+          input,
+          saveTrace,
+          onGenerationTrace: async () => {
+            throw new Error('Langfuse is unavailable');
+          }
+        })
+      ).resolves.toMatchObject({ status: 'completed', outcome: { kind: 'noNotice' } });
+
+      expect(warn).toHaveBeenCalledWith(
+        '[email-triage.run] Generation trace export failed',
+        expect.objectContaining({ error: 'Error' })
+      );
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
   it('fails closed when the structured result contains an impossible due date', async () => {
     const saveTrace = vi.fn();
     const result = await runEmailTriageAgent({
