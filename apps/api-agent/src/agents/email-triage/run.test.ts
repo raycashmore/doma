@@ -163,8 +163,8 @@ describe('runEmailTriageAgent', () => {
             extractedFacts: [],
             reason: 'No durable household information.',
             obligation: null,
-            relevance: { relevantThrough: null, dateConfidence: 'low', dateEvidence: '' },
-            supersession: { noticeId: null, confidence: 'low', evidence: '' }
+            relevance: { relevantThrough: '', dateConfidence: 'low', dateEvidence: '' },
+            supersession: { noticeId: '', confidence: 'low', evidence: '' }
           }),
           input,
           saveTrace,
