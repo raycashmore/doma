@@ -440,16 +440,21 @@ Do not commit real bot tokens, Telegram IDs, chat IDs, or private message payloa
 
 `apps/api-agent` requires:
 
-| Variable                          | Where it lives                         | Notes                                                                                     |
-| --------------------------------- | -------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `CLERK_SECRET_KEY`                | Vercel Agent API, `.env.local`         | Verifies Meals bearer tokens                                                              |
-| `CLERK_PUBLISHABLE_KEY`           | Vercel Agent API, `.env.local`         | Clerk backend configuration                                                               |
-| `APP_ORIGIN`                      | Vercel Agent API, `.env.local`         | Authorized public Home origin                                                             |
-| `CONVEX_URL`                      | Vercel Agent API, `.env.local`         | Matching Convex deployment                                                                |
-| `AGENT_SERVICE_TOKEN`             | Vercel Agent API, Convex, `.env.local` | Dedicated service credential; do not reuse the bot token                                  |
-| `WEEKLY_MEALS_AI_MODEL`           | Vercel Agent API, `.env.local`         | AI Gateway model id for weekly meal proposals                                             |
-| `FORWARDED_EMAIL_TRIAGE_AI_MODEL` | Vercel Agent API, `.env.local`         | AI Gateway model id for forwarded-email triage                                            |
-| `AI_GATEWAY_API_KEY`              | Local Agent API                        | AI Gateway credential for local runs; Vercel deployments use their injected OIDC identity |
+| Variable                          | Where it lives                         | Notes                                                                                                                                 |
+| --------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `CLERK_SECRET_KEY`                | Vercel Agent API, `.env.local`         | Verifies Meals bearer tokens                                                                                                          |
+| `CLERK_PUBLISHABLE_KEY`           | Vercel Agent API, `.env.local`         | Clerk backend configuration                                                                                                           |
+| `APP_ORIGIN`                      | Vercel Agent API, `.env.local`         | Authorized public Home origin                                                                                                         |
+| `CONVEX_URL`                      | Vercel Agent API, `.env.local`         | Matching Convex deployment                                                                                                            |
+| `AGENT_SERVICE_TOKEN`             | Vercel Agent API, Convex, `.env.local` | Dedicated service credential; do not reuse the bot token                                                                              |
+| `WEEKLY_MEALS_AI_MODEL`           | Vercel Agent API, `.env.local`         | AI Gateway model id for weekly meal proposals                                                                                         |
+| `FORWARDED_EMAIL_TRIAGE_AI_MODEL` | Vercel Agent API, `.env.local`         | AI Gateway model id for forwarded-email triage                                                                                        |
+| `AI_GATEWAY_API_KEY`              | Local Agent API                        | AI Gateway credential for local runs; Vercel deployments use their injected OIDC identity                                             |
+| `LANGFUSE_PUBLIC_KEY`             | Vercel Agent API                       | Optional Langfuse project public key; tracing is disabled unless this and `LANGFUSE_SECRET_KEY` are both configured                   |
+| `LANGFUSE_SECRET_KEY`             | Vercel Agent API                       | Optional Langfuse project secret key; do not commit it                                                                                |
+| `LANGFUSE_BASE_URL`               | Vercel Agent API                       | Optional Langfuse regional or self-hosted origin; defaults to `https://cloud.langfuse.com`                                            |
+| `LANGFUSE_ENVIRONMENT`            | Vercel Agent API                       | Optional environment label on Langfuse traces, for example `production` or `preview`                                                  |
+| `LANGFUSE_TRACE_CONTENT`          | Vercel Agent API                       | Set to exactly `true` only after approving external retention of raw forwarded-email input and model output; metadata-only by default |
 
 The service persists privacy-safe agent traces and token usage for 30 days. It
 does not persist hidden reasoning, raw calendar events, or forwarded-email
@@ -480,6 +485,13 @@ high-confidence future obligation creates a reminder candidate.
 Failed captures can be requeued without forwarding the source email again via
 `email/triage:retryFailedCapturedEmailForBot`; it requires the configured
 `BOT_SERVICE_TOKEN` and requeues only rows in the `failed` state.
+
+When Langfuse credentials are configured on the Agent API, each forwarded-email
+triage run emits a root observation and nested generation observation through
+Langfuse's OTLP endpoint. The export is best-effort and has a 1.5-second timeout,
+so Langfuse outages cannot interrupt notice creation. It records timing, model,
+prompt version, token usage, input shape, output classification, and validation state.
+Raw forwarded-email input and generated notice content are never exported.
 
 ### One-time email-notice expiry backfill
 

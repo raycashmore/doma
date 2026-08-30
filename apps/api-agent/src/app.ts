@@ -3,6 +3,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import { Hono } from 'hono';
 import { z } from 'zod';
 
+import { emitEmailTriageGenerationTrace, langfuseConfigFromEnv } from './agents/email-triage/langfuse.js';
 import { runEmailTriageAgent } from './agents/email-triage/run.js';
 import { runWeeklyMealsAgent } from './agents/weekly-meals/run.js';
 import { weeklyMealsRunInputSchema } from './agents/weekly-meals/schemas.js';
@@ -32,7 +33,8 @@ export function createApp(config: AgentConfig = getConfig()) {
     const result = await runEmailTriageAgent({
       model: config.emailTriageModel,
       input,
-      saveTrace: convex.saveTrace
+      saveTrace: convex.saveTrace,
+      onGenerationTrace: (trace) => emitEmailTriageGenerationTrace({ config: langfuseConfigFromEnv(), trace })
     });
     return c.json(result);
   });

@@ -5,6 +5,7 @@ import { type LanguageModel, NoObjectGeneratedError, RetryError } from 'ai';
 import { ZodError } from 'zod';
 
 import { EMAIL_TRIAGE_PROMPT_VERSION, generateEmailTriage } from './agent.js';
+import type { EmailTriageGenerationTrace } from './langfuse.js';
 import { emailTriageOutcomeFromModel, type EmailTriageRunInput, emailTriageRunInputSchema } from './schemas.js';
 import { EMAIL_TRIAGE_TRACE_RETENTION_MS, type EmailTriageAgentError, type EmailTriageRunTrace } from './trace.js';
 
@@ -90,6 +91,7 @@ export async function runEmailTriageAgent({
   model,
   input: rawInput,
   saveTrace,
+  onGenerationTrace,
   logError = defaultErrorLogger,
   createRunId = () => `email_run_${randomUUID()}`,
   now = Date.now
@@ -97,6 +99,7 @@ export async function runEmailTriageAgent({
   model: LanguageModel;
   input: EmailTriageRunInput;
   saveTrace: (trace: EmailTriageRunTrace) => Promise<void> | void;
+  onGenerationTrace?: (trace: EmailTriageGenerationTrace) => Promise<void> | void;
   logError?: (entry: EmailTriageErrorLog) => void;
   createRunId?: () => string;
   now?: () => number;
@@ -113,7 +116,7 @@ export async function runEmailTriageAgent({
       new Set(input.activeNoticeCandidates.map((candidate) => candidate.id))
     );
     const completedAt = now();
-    await saveTrace({
+    const trace = {
       runId,
       capturedEmailId: input.capturedEmailId,
       model: modelId,
@@ -129,6 +132,19 @@ export async function runEmailTriageAgent({
       outcomeKind: outcome.kind,
       hasObligation: outcome.kind === 'notice' && outcome.obligation !== null,
       validation: { status: 'valid' }
+    } satisfies EmailTriageRunTrace;
+    await saveTrace(trace);
+    await recordGenerationTrace(onGenerationTrace, {
+      runId,
+      model: modelId,
+      promptVersion: EMAIL_TRIAGE_PROMPT_VERSION,
+      startedAt,
+      completedAt,
+      input,
+      output: outcome,
+      stopReason: result.finishReason,
+      tokenUsage: trace.tokenUsage,
+      validation: trace.validation
     });
     return { runId, status: 'completed' as const, outcome };
   } catch (error) {
@@ -143,7 +159,7 @@ export async function runEmailTriageAgent({
       error: errorDetails
     });
     const completedAt = now();
-    await saveTrace({
+    const trace = {
       runId,
       capturedEmailId: input.capturedEmailId,
       model: modelId,
@@ -157,7 +173,34 @@ export async function runEmailTriageAgent({
       outcomeKind: 'failed',
       hasObligation: false,
       validation: { status: 'invalid', reason }
+    } satisfies EmailTriageRunTrace;
+    await saveTrace(trace);
+    await recordGenerationTrace(onGenerationTrace, {
+      runId,
+      model: modelId,
+      promptVersion: EMAIL_TRIAGE_PROMPT_VERSION,
+      startedAt,
+      completedAt,
+      input,
+      output: null,
+      stopReason: errorDetails.name,
+      tokenUsage: trace.tokenUsage,
+      validation: trace.validation,
+      error: errorDetails
     });
     return { runId, status: 'failed' as const, reason };
+  }
+}
+
+async function recordGenerationTrace(
+  onGenerationTrace: ((trace: EmailTriageGenerationTrace) => Promise<void> | void) | undefined,
+  trace: EmailTriageGenerationTrace
+) {
+  try {
+    await onGenerationTrace?.(trace);
+  } catch (error) {
+    console.warn('[email-triage.run] Generation trace export failed', {
+      error: error instanceof Error ? error.name : 'unknown_error'
+    });
   }
 }
