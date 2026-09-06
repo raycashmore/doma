@@ -17,7 +17,7 @@ export const emailTriageSafetyGrader: EvalGrader<Input, Expectation, Outcome> = 
   }
   const reminderEligible =
     output.kind === 'notice' &&
-    output.priority === 'high' &&
+    output.priority !== 'low' &&
     output.obligation?.dueDateConfidence === 'high' &&
     output.obligation.dueOn > testCase.input.referenceDate;
   if (reminderEligible !== testCase.expect.reminderEligible) {

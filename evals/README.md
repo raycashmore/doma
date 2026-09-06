@@ -33,7 +33,7 @@ WEEKLY_MEALS_AI_MODEL=openai/gpt-5.4-mini pnpm evals:weekly-meals
 ```
 
 The forwarded-email first-stage dataset in `email-triage/` covers the key
-launch boundary: only high-priority obligations with a high-confidence explicit
-date may become reminder candidates. Its deterministic grader runs under
+launch boundary: only medium- or high-priority obligations with a high-confidence
+explicit date may become reminder candidates. Its deterministic grader runs under
 `pnpm evals:test`; live model scoring can follow once production examples form
 a useful regression set.

@@ -478,8 +478,8 @@ also be triggered manually through
 `AGENT_SERVICE_ORIGIN` and `AGENT_SERVICE_TOKEN` in Convex, plus
 `FORWARDED_EMAIL_TRIAGE_AI_MODEL` in the Agent API. The triage action claims the
 oldest pending captured email, delegates typed inference to the Agent API, then
-stores either a current notice or a no-notice outcome. Only a high-priority,
-high-confidence future obligation creates a reminder candidate.
+stores either a current notice or a no-notice outcome. Only a medium- or
+high-priority obligation with a high-confidence future date creates a reminder candidate.
 
 Failed captures can be requeued without forwarding the source email again via
 `email/triage:retryFailedCapturedEmailForBot`; it requires the configured
@@ -637,8 +637,9 @@ Morning briefing operations:
 - A scheduled delivery outside `08:20 <= time < 08:50` in
   `MORNING_BRIEFING_TZ`, or outside the weekday-only `14:30 <= time < 15:00`
   afternoon window, no-ops. Morning delivery sends the headline plus relevant
-  morning, afternoon, and watchout details, and skips the notification when the
-  day has no briefing content, including on weekends. Afternoon delivery sends
+  morning, afternoon, and watchout details only when the briefing contains a
+  genuine watchout; routine daily requirements remain stored but do not trigger
+  Telegram. Afternoon delivery sends
   only unusual watchouts backed entirely by ordinary schedule events; it skips
   when none qualify, and daily-requirements items cannot trigger it.
 - If no `MORNING_BRIEFING_RECIPIENT_USER_IDS` are configured, the scheduled run

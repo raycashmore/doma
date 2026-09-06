@@ -21,7 +21,7 @@ export function reminderCandidateForNotice(
 ) {
   const obligation = notice.obligation;
   if (
-    notice.priority !== 'high' ||
+    notice.priority === 'low' ||
     obligation?.dueDateConfidence !== 'high' ||
     obligation.dueOn <= calendarDateInTimeZone(new Date(processedAt), timeZone)
   ) {

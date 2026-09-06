@@ -17,7 +17,13 @@ const briefing: BotMorningBriefing = {
     headline: 'Library bag and dancing pickup.',
     morning: [{ text: 'Bring library bag.', who: ['childA'], sourceIds: ['req:library:1'] }],
     afternoon: [{ text: 'Bring dancing shoes.', who: ['childA'], sourceIds: ['req:dance:1'] }],
-    watchouts: [],
+    watchouts: [
+      {
+        text: 'Signed form must be handed in today.',
+        who: ['childA'],
+        sourceIds: ['req:form:1']
+      }
+    ],
     sourceIdsIgnored: []
   }
 };
@@ -28,7 +34,10 @@ This morning:
 - Child A: Bring library bag.
 
 This afternoon:
-- Child A: Bring dancing shoes.`;
+- Child A: Bring dancing shoes.
+
+Watchouts
+- Signed form must be handed in today.`;
 
 describe('runMorningBriefingDeliveryCycle', () => {
   it('does not sync, generate, send, or record outside the local morning retry window', async () => {
@@ -541,6 +550,45 @@ Note: schedule data may be stale because the latest calendar sync failed.`,
       attemptedAt: dueAtMs,
       status: 'skipped'
     });
+  });
+
+  it('keeps a routine briefing available but skips its proactive morning delivery', async () => {
+    const routineBriefing: BotMorningBriefing = {
+      ...briefing,
+      briefing: {
+        ...briefing.briefing!,
+        watchouts: []
+      }
+    };
+    const syncSchedule = vi.fn(async () => ({ ok: true as const, lastSyncedAt: dueAtMs }));
+    const loadBriefing = vi.fn(async () => routineBriefing);
+    const generateBriefing = vi.fn();
+    const sendNotification = vi.fn(async () => ({ status: 'sent' as const }));
+    const recordDeliveryAttempt = vi.fn(async () => ({ claimed: true as const }));
+
+    await expect(
+      runMorningBriefingDeliveryCycle({
+        nowMs: dueAtMs,
+        timeZone,
+        members,
+        recipientUserIds: ['user_123'],
+        attempts: [],
+        lastSyncedAt: dueAtMs,
+        syncSchedule,
+        loadBriefing,
+        generateBriefing,
+        sendNotification,
+        recordDeliveryAttempt
+      })
+    ).resolves.toMatchObject({
+      processed: 1,
+      sent: 0,
+      skipped: 1,
+      generated: false
+    });
+
+    expect(routineBriefing.message).not.toBe('');
+    expect(sendNotification).not.toHaveBeenCalled();
   });
 
   it('does not let a stale-schedule note create a morning notification by itself', async () => {

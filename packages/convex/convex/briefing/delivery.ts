@@ -142,6 +142,12 @@ function isDeliverableBriefing(briefing: BotMorningBriefing, members: ScheduleDi
     : isPlainBriefingText(briefing.message);
 }
 
+function hasNoteworthyContentForSlot(briefing: BotMorningBriefing, slot: BriefingDeliverySlot) {
+  if (!briefing.briefing) return false;
+  if (slot === 'morning') return briefing.briefing.watchouts.length > 0;
+  return briefing.briefing.watchouts.some((watchout) => watchout.afternoonEligible === true);
+}
+
 export async function runMorningBriefingDeliveryCycle({
   nowMs,
   timeZone,
@@ -220,7 +226,8 @@ export async function runMorningBriefingDeliveryCycle({
   const baseMessage = briefing.briefing
     ? formatBriefingDeliveryMessage(briefing.briefing, members, { slot: deliverySlot })
     : briefing.message;
-  const shouldSend = briefing.shouldSend && baseMessage.trim().length > 0;
+  const shouldSend =
+    briefing.shouldSend && hasNoteworthyContentForSlot(briefing, deliverySlot) && baseMessage.trim().length > 0;
   const message = shouldSend && staleCache ? withStaleScheduleNote(baseMessage) : baseMessage;
 
   for (const recipientUserId of pendingRecipientUserIds) {

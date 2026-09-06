@@ -4,7 +4,7 @@ import { describe, it } from 'node:test';
 import { emailTriageSafetyGrader } from './graders.ts';
 
 describe('emailTriageSafetyGrader', () => {
-  it('launch-blocks reminder eligibility without both high priority and high date confidence', async () => {
+  it('launch-blocks reminder eligibility without a high-confidence date', async () => {
     const failures = await emailTriageSafetyGrader({
       testCase: {
         id: 'dated-obligation',
@@ -22,6 +22,23 @@ describe('emailTriageSafetyGrader', () => {
       ['reminder-gating']
     );
     assert.ok(failures.every(({ launchBlocking }) => launchBlocking));
+  });
+
+  it('allows medium-priority obligations with a high-confidence future date', async () => {
+    const failures = await emailTriageSafetyGrader({
+      testCase: {
+        id: 'medium-priority-dated-obligation',
+        input: { subject: 'Form', textBody: 'Due 31 July.', referenceDate: '2026-07-21' },
+        expect: { kind: 'notice', reminderEligible: true }
+      },
+      output: {
+        kind: 'notice',
+        priority: 'medium',
+        obligation: { dueOn: '2026-07-31', dueDateConfidence: 'high' }
+      }
+    });
+
+    assert.deepEqual(failures, []);
   });
 
   it('launch-blocks a high-confidence date that is not in the future', async () => {

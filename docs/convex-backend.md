@@ -144,16 +144,17 @@ delivery and `/briefing` replay stay idempotent.
 
 Morning briefing messages render as compact readiness summaries, not raw event
 feeds. Busy days lead with the shape of the day, then include morning,
-afternoon, and watchout sections when relevant. The morning notification and
-`/briefing` replay contain the headline and the full day's relevant details. A
-morning notification is skipped when the day has no briefing content, including
-on weekends. The weekday-only afternoon slot sends only unusual watchouts backed
-entirely by ordinary schedule sources, and skips delivery when none qualify;
-daily-requirements items never trigger it. AI-generated briefings can use optional
-Open-Meteo weather context to make calendar-derived block lines more practical,
-such as noting a cold start or wet pickup. Weather decorates a briefing that
-schedule requirements already justify; it does not trigger a quiet-day
-notification by itself.
+afternoon, and watchout sections when relevant. The `/briefing` replay contains
+the headline and the full day's relevant details. Scheduled morning delivery
+sends that summary only when the briefing contains a genuine watchout, leaving
+routine requirements stored for on-demand use without triggering Telegram. The
+weekday-only afternoon slot sends only unusual watchouts backed entirely by
+ordinary schedule sources, and skips delivery when none qualify;
+daily-requirements items never trigger it. AI-generated briefings can use
+optional Open-Meteo weather context to make calendar-derived block lines more
+practical, such as noting a cold start or wet pickup. Weather decorates a
+briefing that schedule requirements already justify; it does not trigger a
+quiet-day notification by itself.
 
 Stored briefing text is plain text. The AI parser rejects responses that leak
 internal member ids, use unknown member ownership, include markup delimiters, or
@@ -189,7 +190,7 @@ The `email/` module stores forwarded email source material in `capturedEmails`
 and remains authoritative for current `emailNotices`. Convex claims pending
 captures, then the Vercel Agent API performs typed AI SDK inference and records
 a privacy-safe 30-day trace. A notice may include an extracted obligation, but
-only high-priority obligations with a high-confidence future date create an
+only medium- or high-priority obligations with a high-confidence future date create an
 `emailReminderCandidates` row. Inference never sends a notification.
 
 When configured, the Agent API also exports a best-effort Langfuse trace for
