@@ -16,7 +16,7 @@ const notice = {
 };
 
 describe('reminderCandidateForNotice', () => {
-  it('schedules a high-confidence high-priority obligation for 7pm Sydney time the day before', () => {
+  it('schedules a high-confidence important obligation for 7pm Sydney time the day before', () => {
     expect(
       reminderCandidateForNotice(notice, {
         processedAt: Date.parse('2026-07-21T02:00:00.000Z')
@@ -29,6 +29,18 @@ describe('reminderCandidateForNotice', () => {
       reminderAt: Date.parse('2026-07-30T09:00:00.000Z'),
       triageRunId: 'email_run_123',
       createdAt: Date.parse('2026-07-21T02:00:00.000Z')
+    });
+  });
+
+  it('schedules a medium-priority obligation when its future due date is high confidence', () => {
+    expect(
+      reminderCandidateForNotice(
+        { ...notice, priority: 'medium' },
+        { processedAt: Date.parse('2026-07-21T02:00:00.000Z') }
+      )
+    ).toMatchObject({
+      noticeId: 'emailNotices_123',
+      dueOn: '2026-07-31'
     });
   });
 
@@ -45,7 +57,7 @@ describe('reminderCandidateForNotice', () => {
   });
 
   it.each([
-    ['medium priority', { priority: 'medium' as const }],
+    ['low priority', { priority: 'low' as const }],
     ['medium date confidence', { obligation: { ...notice.obligation, dueDateConfidence: 'medium' as const } }],
     ['a due date that is not in the future', { obligation: { ...notice.obligation, dueOn: '2026-07-21' } }]
   ])('does not schedule %s', (_label, override) => {

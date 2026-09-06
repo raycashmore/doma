@@ -127,6 +127,39 @@ describe('persistEmailTriageAgentResult', () => {
     expect(insert).not.toHaveBeenCalledWith('emailReminderCandidates', expect.anything());
   });
 
+  it('creates a reminder candidate for a medium-priority obligation with a high-confidence date', async () => {
+    const { ctx, insert } = createCtx();
+    await persistEmailTriageAgentResult(ctx as never, {
+      capturedEmailId: 'capturedEmails_123',
+      processedAt: Date.parse('2026-07-21T02:00:00.000Z'),
+      result: {
+        runId: 'email_run_123',
+        status: 'completed',
+        outcome: {
+          kind: 'notice',
+          category: 'admin',
+          priority: 'medium',
+          title: 'Return form',
+          body: 'The form should be returned.',
+          extractedFacts: [],
+          obligation: {
+            action: 'Return the form',
+            dueOn: '2026-07-31',
+            dueDateConfidence: 'high',
+            dueDateEvidence: 'The form is due 31 July.'
+          },
+          relevance: { relevantThrough: null, dateConfidence: 'low', dateEvidence: '' },
+          supersession: { noticeId: null, confidence: 'low', evidence: '' }
+        }
+      }
+    });
+
+    expect(insert).toHaveBeenCalledWith(
+      'emailReminderCandidates',
+      expect.objectContaining({ action: 'Return the form', dueOn: '2026-07-31' })
+    );
+  });
+
   it('writes expiry from a grounded relevance date', async () => {
     const { ctx, rows } = createCtx();
     await persistEmailTriageAgentResult(ctx as never, {

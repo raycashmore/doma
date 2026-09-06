@@ -53,7 +53,7 @@ A canonical forwarded-email occurrence that has not expired, been archived, or b
 _Avoid_: Email payload, cleanup feed, agent-owned notice
 
 **Email reminder candidate**:
-A deterministic day-before notification candidate created only for a high-priority **email obligation** with a high-confidence future due date. It is scheduled for 7pm Australia/Sydney on the preceding day and is suppressed when the canonical Home occurrence is archived.
+A deterministic day-before notification candidate created for a medium- or high-priority **email obligation** with a high-confidence future due date. It is scheduled for 7pm Australia/Sydney on the preceding day and is suppressed when the canonical Home occurrence is archived.
 _Avoid_: Telegram-worthy notice, immediate email relay, generic notification
 
 **Daily requirements calendar**:
