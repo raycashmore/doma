@@ -8,6 +8,7 @@ export type LangfuseConfig = {
   publicKey: string;
   secretKey: string;
   environment?: string;
+  traceContent: boolean;
 };
 
 type MorningBriefingGenerationTrace = {
@@ -42,6 +43,7 @@ export function langfuseConfigFromEnv(env: Record<string, string | undefined> = 
     publicKey,
     secretKey,
     baseUrl: (env.LANGFUSE_BASE_URL ?? 'https://cloud.langfuse.com').replace(/\/$/, ''),
+    traceContent: env.LANGFUSE_TRACE_CONTENT === 'true',
     ...(env.LANGFUSE_ENVIRONMENT ? { environment: env.LANGFUSE_ENVIRONMENT } : {})
   };
 }
@@ -64,8 +66,8 @@ export async function emitMorningBriefingGenerationTrace({
     const rootSpanId = randomId(8);
     const generationSpanId = randomId(8);
     const sharedAttributes = traceAttributes({ config, trace });
-    const rootInput = inputSummary(trace.input);
-    const rootOutput = outputSummary(trace.output);
+    const rootInput = config.traceContent ? trace.input : inputSummary(trace.input);
+    const rootOutput = config.traceContent ? trace.output : outputSummary(trace.output);
 
     const root = span({
       traceId,

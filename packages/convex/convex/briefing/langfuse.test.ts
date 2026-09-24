@@ -63,6 +63,22 @@ describe('langfuseConfigFromEnv', () => {
       })
     ).toMatchObject({ baseUrl: 'https://cloud.langfuse.com' });
   });
+
+  it('enables content tracing only when explicitly requested', () => {
+    expect(
+      langfuseConfigFromEnv({
+        LANGFUSE_PUBLIC_KEY: 'public',
+        LANGFUSE_SECRET_KEY: 'secret',
+        LANGFUSE_TRACE_CONTENT: 'true'
+      })
+    ).toMatchObject({ traceContent: true });
+    expect(
+      langfuseConfigFromEnv({
+        LANGFUSE_PUBLIC_KEY: 'public',
+        LANGFUSE_SECRET_KEY: 'secret'
+      })
+    ).toMatchObject({ traceContent: false });
+  });
 });
 
 describe('emitMorningBriefingGenerationTrace', () => {
@@ -78,6 +94,7 @@ describe('emitMorningBriefingGenerationTrace', () => {
         baseUrl: 'https://langfuse.example',
         publicKey: 'public',
         secretKey: 'secret',
+        traceContent: false,
         environment: 'production'
       },
       trace,
@@ -110,7 +127,7 @@ describe('emitMorningBriefingGenerationTrace', () => {
     expect(serializedRequest).not.toContain('Sensitive rendered briefing detail');
   });
 
-  it('never includes source or rendered output', async () => {
+  it('exports source and rendered output when content tracing is explicitly enabled', async () => {
     const fetchImpl = vi.fn(async () => new Response(null, { status: 200 }));
     const config = langfuseConfigFromEnv({
       LANGFUSE_PUBLIC_KEY: 'public',
@@ -127,8 +144,8 @@ describe('emitMorningBriefingGenerationTrace', () => {
 
     const serializedRequest = JSON.stringify(requestBody(fetchImpl));
 
-    expect(serializedRequest).not.toContain('Sensitive requirement detail');
-    expect(serializedRequest).not.toContain('Sensitive rendered briefing detail');
+    expect(serializedRequest).toContain('Sensitive requirement detail');
+    expect(serializedRequest).toContain('Sensitive rendered briefing detail');
   });
 
   it('stops waiting when the Langfuse request exceeds the export timeout', async () => {
@@ -146,7 +163,8 @@ describe('emitMorningBriefingGenerationTrace', () => {
         config: {
           baseUrl: 'https://langfuse.example',
           publicKey: 'public',
-          secretKey: 'secret'
+          secretKey: 'secret',
+          traceContent: false
         },
         trace,
         fetchImpl
