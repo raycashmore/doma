@@ -21,14 +21,14 @@ type UpcomingBriefingDeliverySlotsOptions = {
 export const briefingDeliveryPolicy = {
   morning: {
     retryTimes: [
-      { hour: 8, minute: 20 },
-      { hour: 8, minute: 25 },
-      { hour: 8, minute: 30 },
-      { hour: 8, minute: 35 },
-      { hour: 8, minute: 40 },
-      { hour: 8, minute: 45 }
+      { hour: 7, minute: 45 },
+      { hour: 7, minute: 50 },
+      { hour: 7, minute: 55 },
+      { hour: 8, minute: 0 },
+      { hour: 8, minute: 5 },
+      { hour: 8, minute: 10 }
     ],
-    windowEnd: { hour: 8, minute: 50 }
+    windowEnd: { hour: 8, minute: 15 }
   },
   afternoon: {
     retryTimes: [

@@ -606,7 +606,7 @@ Morning briefing delivery runs from Convex scheduled functions, not Vercel Cron.
 the Bot gateway deployable on Vercel Hobby, where frequent cron schedules are
 rejected. A 24-hour Convex reconciler schedules the next 48 hours of eligible local retry slots;
 the delivery action runs only during the
-local morning retry window `08:20 <= time < 08:50` every day and afternoon retry
+local morning retry window `07:45 <= time < 08:15` every day and afternoon retry
 window `14:30 <= time < 15:00` on weekdays only, forces a schedule sync before generation when possible,
 falls back to cached schedule data when needed, calls the Bot gateway's
 provider-neutral `/notifications/send` endpoint, and records the briefing
@@ -635,7 +635,7 @@ briefings:
 
 Morning briefing operations:
 
-- A scheduled delivery outside `08:20 <= time < 08:50` in
+- A scheduled delivery outside `07:45 <= time < 08:15` in
   `MORNING_BRIEFING_TZ`, or outside the weekday-only `14:30 <= time < 15:00`
   afternoon window, no-ops. Morning delivery sends the headline plus relevant
   morning, afternoon, and watchout details only when the briefing contains a

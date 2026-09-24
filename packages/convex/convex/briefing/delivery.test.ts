@@ -4,7 +4,7 @@ import type { ScheduleDisplayMember } from '../schedule/config';
 import { type BotMorningBriefing, runMorningBriefingDeliveryCycle } from './delivery';
 
 const timeZone = 'Australia/Sydney';
-const dueAtMs = Date.parse('2026-06-11T22:20:00.000Z'); // 8:20am 2026-06-12 in Sydney
+const dueAtMs = Date.parse('2026-06-11T21:45:00.000Z'); // 7:45am 2026-06-12 in Sydney
 const members: ScheduleDisplayMember[] = [{ id: 'childA', label: 'Child A', initials: 'CA' }];
 const briefing: BotMorningBriefing = {
   briefingKey: 'morning:2026-06-12',
@@ -196,7 +196,7 @@ describe('runMorningBriefingDeliveryCycle', () => {
   });
 
   it('sends the whole day in the morning delivery on weekends', async () => {
-    const weekendDueAtMs = Date.parse('2026-06-12T22:20:00.000Z'); // 8:20am Saturday in Sydney
+    const weekendDueAtMs = Date.parse('2026-06-12T21:45:00.000Z'); // 7:45am Saturday in Sydney
     const weekendBriefing: BotMorningBriefing = {
       ...briefing,
       briefingKey: 'morning:2026-06-13',

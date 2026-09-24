@@ -170,7 +170,7 @@ briefing text can contain private household schedule details, so do not copy it
 into committed fixtures.
 
 Scheduled delivery is scheduled by a 24-hour Convex reconciler during the local
-`08:20 <= time < 08:50` morning retry window every day and the
+`07:45 <= time < 08:15` morning retry window every day and the
 `14:30 <= time < 15:00` afternoon retry window on weekdays only. The runner forces schedule sync
 before generation when possible, reuses an existing stored briefing for morning
 retries, refreshes the stored briefing after a successful afternoon sync, sends
