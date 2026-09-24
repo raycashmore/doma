@@ -537,7 +537,7 @@ Watchouts
     consoleError.mockRestore();
   });
 
-  it('falls back when AI prose contains markup or escaped HTML entities', async () => {
+  it('falls back when AI prose contains HTML, Markdown, or escaped HTML entities', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
     const provider: MorningBriefingAiProvider = async ({ sources }) => {
       const requirement = sources.find((source) => source.kind === 'dailyRequirements');
@@ -546,7 +546,7 @@ Watchouts
         headline: 'Library &amp; sock day.',
         morning: [
           {
-            text: 'Bring the <b>library</b> bag and Crazy Hair &amp; Sock Day gear.',
+            text: 'Bring the **library** bag and Crazy Hair &amp; Sock Day gear.',
             who: ['childA'],
             sourceIds: [requirement?.sourceId ?? 'missing']
           }
@@ -568,7 +568,7 @@ Watchouts
 
     expect(result.generationStatus).toBe('fallback');
     expect(result.message).toContain('Bring sports bag');
-    expect(result.message).not.toContain('<b>');
+    expect(result.message).not.toContain('**');
     expect(result.message).not.toContain('&amp;');
     expect(consoleError).toHaveBeenCalledWith(expect.stringContaining('[briefing.ai]'), expect.anything());
     consoleError.mockRestore();
@@ -779,13 +779,17 @@ describe('morningBriefingSystemPrompt', () => {
     expect(morningBriefingSystemPrompt).toContain('watchout');
   });
 
-  it('instructs the model to write grounded non-generic headlines', () => {
+  it('instructs the model to write concise, grounded briefing copy', () => {
     expect(morningBriefingSystemPrompt).toContain('Avoid generic headlines');
+    expect(morningBriefingSystemPrompt).toContain('at most eight words');
+    expect(morningBriefingSystemPrompt).toContain('Do not use a characterful assistant voice');
     expect(morningBriefingSystemPrompt).toContain('Morning and afternoon readiness');
     expect(morningBriefingSystemPrompt).toContain('pre-noon');
     expect(morningBriefingSystemPrompt).toContain('supplied weather');
-    expect(morningBriefingSystemPrompt).toContain('Weather must only decorate');
+    expect(morningBriefingSystemPrompt).toContain('Weather may appear at most once');
+    expect(morningBriefingSystemPrompt).toContain('combine identical obligations for multiple people');
     expect(morningBriefingSystemPrompt).toContain('Never send a briefing because of weather alone');
+    expect(morningBriefingSystemPrompt).toContain('Never emit watchouts as the only briefing content');
     expect(morningBriefingSystemPrompt).toContain(
       'afternoon delivery is reserved for unusual ordinary-schedule events'
     );
@@ -794,6 +798,7 @@ describe('morningBriefingSystemPrompt', () => {
   it('instructs the model to keep generated prose plain text', () => {
     expect(morningBriefingSystemPrompt).toContain('plain text');
     expect(morningBriefingSystemPrompt).toContain('Do not include HTML');
+    expect(morningBriefingSystemPrompt).toContain('Markdown');
     expect(morningBriefingSystemPrompt).toContain('Do not write member ids inside prose');
   });
 });

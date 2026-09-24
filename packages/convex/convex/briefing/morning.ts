@@ -107,7 +107,7 @@ export function formatBriefingDeliveryMessage(
 
   const lines: string[] = [];
   if (options.slot === 'morning') {
-    const hasDayContent = briefing.morning.length > 0 || briefing.afternoon.length > 0 || briefing.watchouts.length > 0;
+    const hasDayContent = briefing.morning.length > 0 || briefing.afternoon.length > 0;
     if (!hasDayContent) return '';
 
     lines.push('Today:', normalizeBriefingText(briefing.headline).replace(/^Today:\s*/i, ''));
@@ -214,7 +214,11 @@ export function isValidMorningBriefingForMembers(briefing: MorningBriefing, memb
 }
 
 export function isPlainBriefingText(text: string) {
-  return !text.includes('<') && !text.includes('>') && !containsHtmlEntity(text);
+  return !text.includes('<') && !text.includes('>') && !containsHtmlEntity(text) && !containsMarkdownDelimiter(text);
+}
+
+function containsMarkdownDelimiter(text: string) {
+  return text.includes('**') || text.includes('__') || text.includes('`');
 }
 
 function isPlainBriefingLine(line: BriefingLine) {

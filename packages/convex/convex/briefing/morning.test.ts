@@ -549,10 +549,12 @@ describe('morningBriefingKey', () => {
 });
 
 describe('plain briefing validation', () => {
-  it('accepts raw ampersands and rejects markup or escaped HTML entities', () => {
+  it('accepts raw ampersands and rejects HTML or Markdown markup', () => {
     expect(isPlainBriefingText('Crazy Hair & Sock Day')).toBe(true);
     expect(isPlainBriefingText('Bring <b>library</b> bag')).toBe(false);
     expect(isPlainBriefingText('Crazy Hair &amp; Sock Day')).toBe(false);
+    expect(isPlainBriefingText('Wear **sport** clothes')).toBe(false);
+    expect(isPlainBriefingText('Bring `library` bag')).toBe(false);
   });
 
   it('requires every stored structured briefing field to be plain text', () => {

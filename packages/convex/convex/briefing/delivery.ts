@@ -144,7 +144,12 @@ function isDeliverableBriefing(briefing: BotMorningBriefing, members: ScheduleDi
 
 function hasNoteworthyContentForSlot(briefing: BotMorningBriefing, slot: BriefingDeliverySlot) {
   if (!briefing.briefing) return false;
-  if (slot === 'morning') return briefing.briefing.watchouts.length > 0;
+  if (slot === 'morning') {
+    return (
+      briefing.briefing.watchouts.length > 0 &&
+      (briefing.briefing.morning.length > 0 || briefing.briefing.afternoon.length > 0)
+    );
+  }
   return briefing.briefing.watchouts.some((watchout) => watchout.afternoonEligible === true);
 }
 

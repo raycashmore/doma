@@ -63,21 +63,22 @@ type AiBriefingParseFailure =
 
 export const morningBriefingSystemPrompt = [
   'You write a short household morning briefing — a readiness summary, not a calendar dump.',
-  'Write a specific, useful, one-line headline in a lightly characterful household-assistant voice.',
+  'Write a factual, direct headline of at most eight words. Do not use a characterful assistant voice, advice, weather, or a restatement of the block lines.',
   'Avoid generic headlines such as "Morning and afternoon readiness", "Today has a few things", or "Today\'s requirements".',
   'Group the day into two time blocks: morning and afternoon.',
   'Use each source localTimeBlock when assigning obligations; pre-noon localStart values belong in morning.',
   'Assign each obligation to the block when the underlying activity happens, even if it is prepared earlier (kit for an afternoon class is an afternoon item).',
-  "Within each block, produce one line per responsible person, combining that person's obligations into one natural sentence.",
+  'Within each block, combine identical obligations for multiple people into one shared line, setting who to all of their exact member ids. Otherwise, produce one line per responsible person.',
   'Set "who" to the exact supplied member ids the line is for. Do not put the person\'s name inside "text"; only describe the obligation.',
-  'Write headline and line text as plain text. Do not include HTML, escaped HTML entities, or markup. Do not write member ids inside prose.',
+  'Write headline and line text as plain text. Do not include HTML, escaped HTML entities, Markdown, or markup. Do not write member ids inside prose.',
   'Only include people who have something in that block. Do not emit lines for idle people and never write "normal day".',
   'Daily requirements sources are authoritative. Ordinary schedule sources are timing and coordination context.',
   'Put an obligation in "watchouts" instead of a block line ONLY when it is a genuine issue: a schedule clash, unusual or off-pattern timing, or a high-stakes forgotten-item risk (passport, medication, signed form — not everyday water bottles).',
+  'Never emit watchouts as the only briefing content. If no morning or afternoon block line is worth sending, set shouldSend to false and leave watchouts empty.',
   'Daily-requirement watchouts belong in the morning briefing only; afternoon delivery is reserved for unusual ordinary-schedule events.',
   'An obligation is either a block line or a watchout, never both. Keep run-of-the-mill handoffs and pickups as ordinary block lines.',
   'Keep low-priority ordinary events out unless they change readiness or coordination.',
-  'Weather must only decorate a calendar-derived obligation when it changes readiness; it must never create an obligation, headline, or watchout by itself.',
+  'Weather may appear at most once in the entire briefing, and only as a practical addition to one calendar-derived block line when it changes readiness. Never put weather in the headline or watchouts, and never repeat the same weather advice for multiple people.',
   'Never send a briefing because of weather alone, including high humidity for allergy control. If no calendar source is worth mentioning, set shouldSend to false and leave every block empty.',
   'Never invent weather, locations, or private details beyond supplied weather and schedule sources.',
   'Use generic, concise wording from the supplied sources and do not invent private details.',
@@ -388,6 +389,7 @@ function parseSourceIds(value: unknown, knownSourceIds: Set<string>) {
 function isPlainBriefingText(text: string, knownMemberIds: Set<string>) {
   return (
     !containsMarkupDelimiter(text) &&
+    !containsMarkdownDelimiter(text) &&
     !containsHtmlEntity(text) &&
     !containsConfiguredMemberToken(text, knownMemberIds) &&
     !containsInternalMemberToken(text)
@@ -396,6 +398,10 @@ function isPlainBriefingText(text: string, knownMemberIds: Set<string>) {
 
 function containsMarkupDelimiter(text: string) {
   return text.includes('<') || text.includes('>');
+}
+
+function containsMarkdownDelimiter(text: string) {
+  return text.includes('**') || text.includes('__') || text.includes('`');
 }
 
 function containsHtmlEntity(text: string) {

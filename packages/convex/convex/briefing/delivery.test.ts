@@ -591,21 +591,27 @@ Note: schedule data may be stale because the latest calendar sync failed.`,
     expect(sendNotification).not.toHaveBeenCalled();
   });
 
-  it('does not let a stale-schedule note create a morning notification by itself', async () => {
+  it('skips a watchout-only morning briefing even when schedule data is stale', async () => {
     const staleLastSyncedAt = dueAtMs - 13 * 60 * 60_000;
-    const weatherOnlyBriefing: BotMorningBriefing = {
+    const watchoutOnlyBriefing: BotMorningBriefing = {
       ...briefing,
-      message: 'Cold and humid this morning.',
+      message: 'Watchouts\n- Wet afternoon: plan for rain layers around later activities.',
       briefing: {
         ...briefing.briefing!,
-        headline: 'Cold and humid this morning.',
+        headline: 'Wet afternoon.',
         morning: [],
         afternoon: [],
-        watchouts: []
+        watchouts: [
+          {
+            text: 'Wet afternoon: plan for rain layers around later activities.',
+            who: ['childA'],
+            sourceIds: ['req:library:1']
+          }
+        ]
       }
     };
     const syncSchedule = vi.fn(async () => ({ ok: false as const, lastSyncedAt: staleLastSyncedAt }));
-    const loadBriefing = vi.fn(async () => weatherOnlyBriefing);
+    const loadBriefing = vi.fn(async () => watchoutOnlyBriefing);
     const generateBriefing = vi.fn();
     const sendNotification = vi.fn(async () => ({ status: 'sent' as const }));
     const recordDeliveryAttempt = vi.fn(async () => ({ claimed: true as const }));

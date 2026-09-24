@@ -240,6 +240,33 @@ Watchouts
     });
   });
 
+  it('does not let watchouts create a morning preview by themselves', () => {
+    expect(
+      renderMorningBriefingDeliveryPreview({
+        briefing: {
+          ...briefing,
+          briefing: {
+            ...briefing.briefing,
+            morning: [],
+            afternoon: [],
+            watchouts: [
+              {
+                text: 'Wet afternoon: plan for rain layers around later activities.',
+                who: ['childA'],
+                sourceIds: ['requirements-calendar:event-1']
+              }
+            ]
+          }
+        },
+        members,
+        slot: 'morning'
+      })
+    ).toMatchObject({
+      message: '',
+      shouldSend: false
+    });
+  });
+
   it('renders only unusual watchouts in the afternoon slot', () => {
     expect(
       renderMorningBriefingDeliveryPreview({

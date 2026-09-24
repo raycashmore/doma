@@ -615,23 +615,23 @@ delivery attempt in Convex per recipient and delivery slot.
 Set these Convex env vars on every Convex deployment that should send morning
 briefings:
 
-| Variable                              | Where it lives             | Notes                                                                                                                                                 |
-| ------------------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `BOT_GATEWAY_ORIGIN`                  | Convex                     | Public Bot gateway origin, for example `https://bot.example.com`; no path or trailing slash                                                           |
-| `BOT_SERVICE_TOKEN`                   | Convex, Vercel Bot gateway | Bearer token Convex sends to `/notifications/send` and Schedule validates for bot capability                                                          |
-| `MORNING_BRIEFING_RECIPIENT_USER_IDS` | Convex                     | Comma-separated Clerk user IDs that should receive scheduled morning briefings                                                                        |
-| `MORNING_BRIEFING_TZ`                 | Convex                     | Optional; falls back to `SCHEDULE_TZ`, then `Australia/Sydney`                                                                                        |
-| `MORNING_BRIEFING_AI_MODEL`           | Convex                     | Required with `OPENAI_API_KEY` for AI generation; otherwise generation uses deterministic text                                                        |
-| `MORNING_BRIEFING_LATITUDE`           | Convex                     | Optional latitude for weather context in AI-generated morning briefings; configure with `MORNING_BRIEFING_LONGITUDE`                                  |
-| `MORNING_BRIEFING_LONGITUDE`          | Convex                     | Optional longitude for weather context in AI-generated morning briefings; configure with `MORNING_BRIEFING_LATITUDE`                                  |
-| `LANGFUSE_PUBLIC_KEY`                 | Convex                     | Optional Langfuse project public key; tracing is disabled unless this and `LANGFUSE_SECRET_KEY` are both configured                                   |
-| `LANGFUSE_SECRET_KEY`                 | Convex                     | Optional Langfuse project secret key; do not commit it                                                                                                |
-| `LANGFUSE_BASE_URL`                   | Convex                     | Optional Langfuse regional or self-hosted origin; defaults to `https://cloud.langfuse.com`                                                            |
-| `LANGFUSE_ENVIRONMENT`                | Convex                     | Optional environment label on Langfuse traces, for example `production` or `preview`                                                                  |
+| Variable                              | Where it lives             | Notes                                                                                                                                                    |
+| ------------------------------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `BOT_GATEWAY_ORIGIN`                  | Convex                     | Public Bot gateway origin, for example `https://bot.example.com`; no path or trailing slash                                                              |
+| `BOT_SERVICE_TOKEN`                   | Convex, Vercel Bot gateway | Bearer token Convex sends to `/notifications/send` and Schedule validates for bot capability                                                             |
+| `MORNING_BRIEFING_RECIPIENT_USER_IDS` | Convex                     | Comma-separated Clerk user IDs that should receive scheduled morning briefings                                                                           |
+| `MORNING_BRIEFING_TZ`                 | Convex                     | Optional; falls back to `SCHEDULE_TZ`, then `Australia/Sydney`                                                                                           |
+| `MORNING_BRIEFING_AI_MODEL`           | Convex                     | Required with `OPENAI_API_KEY` for AI generation; otherwise generation uses deterministic text                                                           |
+| `MORNING_BRIEFING_LATITUDE`           | Convex                     | Optional latitude for weather context in AI-generated morning briefings; configure with `MORNING_BRIEFING_LONGITUDE`                                     |
+| `MORNING_BRIEFING_LONGITUDE`          | Convex                     | Optional longitude for weather context in AI-generated morning briefings; configure with `MORNING_BRIEFING_LATITUDE`                                     |
+| `LANGFUSE_PUBLIC_KEY`                 | Convex                     | Optional Langfuse project public key; tracing is disabled unless this and `LANGFUSE_SECRET_KEY` are both configured                                      |
+| `LANGFUSE_SECRET_KEY`                 | Convex                     | Optional Langfuse project secret key; do not commit it                                                                                                   |
+| `LANGFUSE_BASE_URL`                   | Convex                     | Optional Langfuse regional or self-hosted origin; defaults to `https://cloud.langfuse.com`                                                               |
+| `LANGFUSE_ENVIRONMENT`                | Convex                     | Optional environment label on Langfuse traces, for example `production` or `preview`                                                                     |
 | `LANGFUSE_TRACE_CONTENT`              | Convex                     | Optional explicit opt-in (`true`) to export full morning-briefing source context and rendered output; otherwise only privacy-safe summaries are exported |
-| `LIST_ITEMS_AI_MODEL`                 | Convex                     | Optional; with `OPENAI_API_KEY`, the model used to parse free-text Telegram captures into list items; otherwise a deterministic newline split is used |
-| `LIST_CATEGORISATION_AI_MODEL`        | Convex                     | Optional; with `OPENAI_API_KEY`, the model used to assign list items to the configured select-property options; otherwise items remain Unassigned     |
-| `OPENAI_API_KEY`                      | Convex                     | Required with `MORNING_BRIEFING_AI_MODEL`, `LIST_ITEMS_AI_MODEL`, or `LIST_CATEGORISATION_AI_MODEL` for AI generation                                 |
+| `LIST_ITEMS_AI_MODEL`                 | Convex                     | Optional; with `OPENAI_API_KEY`, the model used to parse free-text Telegram captures into list items; otherwise a deterministic newline split is used    |
+| `LIST_CATEGORISATION_AI_MODEL`        | Convex                     | Optional; with `OPENAI_API_KEY`, the model used to assign list items to the configured select-property options; otherwise items remain Unassigned        |
+| `OPENAI_API_KEY`                      | Convex                     | Required with `MORNING_BRIEFING_AI_MODEL`, `LIST_ITEMS_AI_MODEL`, or `LIST_CATEGORISATION_AI_MODEL` for AI generation                                    |
 
 Morning briefing operations:
 
