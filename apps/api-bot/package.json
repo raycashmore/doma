@@ -11,22 +11,22 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@clerk/backend": "^2.0.0",
-    "@hono/node-server": "^1.14.0",
-    "@upstash/redis": "^1.35.0",
-    "convex": "^1.27.3",
+    "@clerk/backend": "^2.33.7",
+    "@hono/node-server": "^1.19.17",
+    "@upstash/redis": "^1.39.0",
+    "convex": "^1.46.0",
     "dotenv-cli": "^11.0.0",
-    "hono": "^4.10.0",
-    "svix": "^1.76.1",
-    "tsx": "^4.21.0",
-    "zod": "^4.3.5"
+    "hono": "^4.13.13",
+    "svix": "^1.99.1",
+    "tsx": "^4.23.15",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "@types/node": "^22.10.2",
-    "eslint": "^9.39.1",
-    "typescript": "^5.7.2",
-    "vitest": "^3.0.5"
+    "@types/node": "^22.20.5",
+    "eslint": "^9.39.5",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.11"
   }
 }

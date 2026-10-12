@@ -25,3 +25,23 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on push to `main` and PRs:
 All steps must pass. The pipeline cancels in-progress runs when a new commit is pushed to the same branch.
 
 Before a PR, run `pnpm ci:checks` and complete the repository's pre-PR documentation audit. Browser verification is additional evidence for user-visible work; it does not replace the automated gates.
+
+## Dependency security checks
+
+Run `pnpm audit` after dependency updates, then verify with `pnpm ci:checks`.
+Security overrides in `pnpm-workspace.yaml` keep transitive packages on patched
+versions where upstream constraints lag behind. Remove an override when upstream
+releases resolve the patched version without it.
+
+As of 12 October 2026, the remaining advisory is
+[GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm) in
+`braces@3.0.3`, reached through the development dependency
+`@next/eslint-plugin-next → fast-glob → micromatch`. No patched release is
+available on npm. This path handles repository lint globs; it does not handle
+application request input. Keep the finding visible in audit output and update
+when a fixed release becomes available.
+
+The local spreadsheet seed script uses SheetJS 0.20.3 from the
+[official CDN](https://docs.sheetjs.com/docs/getting-started/installation/frameworks/)
+because the npm `xlsx` package stops at vulnerable version 0.18.5. Its tarball URL
+and integrity hash are recorded in the lockfile.

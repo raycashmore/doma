@@ -13,3 +13,9 @@ allowBuilds:
   sharp: true
   unrs-resolver: true
   utf-8-validate: true
+# Security patches for transitive dependencies with stale upstream constraints.
+overrides:
+  'cookie@<0.7.0': ^0.7.2
+  'seroval@<1.6.3': ^1.6.3
+  # TanStack's config currently pulls ESLint 10 rules into an ESLint 9 workspace.
+  '@tanstack/eslint-config>@eslint/js': ^9.39.5

@@ -11,8 +11,7 @@ export type SpendingInsightParseFailure = {
 };
 
 export type SpendingInsightParseResult =
-  | { insight: SpendingInsight }
-  | { insight: null; failure: SpendingInsightParseFailure };
+  { insight: SpendingInsight } | { insight: null; failure: SpendingInsightParseFailure };
 
 export type SpendingInsightAiProvider = (input: SpendingInsightAiInput) => Promise<unknown>;
 
