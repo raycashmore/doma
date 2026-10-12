@@ -15,8 +15,7 @@ import { planningHorizonRange } from './week';
 const FRESH_MS = 60_000; // 1 minute
 
 type RefreshResult =
-  | { skipped: true; count: null; lastSyncedAt: number | null }
-  | { skipped: false; count: number; lastSyncedAt: number };
+  { skipped: true; count: null; lastSyncedAt: number | null } | { skipped: false; count: number; lastSyncedAt: number };
 
 function parseEnv() {
   const key = parseJsonEnv<{ client_email: string; private_key: string }>(

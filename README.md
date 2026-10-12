@@ -148,7 +148,7 @@ history.
 
 ## Run it locally
 
-The repository uses the `pnpm` version declared in `package.json` and Node.js 18 or newer. If your shell resolves a different pnpm version, run `corepack enable pnpm`.
+The repository uses the `pnpm` version declared in `package.json` and Node.js 22.13 or newer. If your shell resolves a different pnpm version, run `corepack enable pnpm`.
 
 ```bash
 pnpm install

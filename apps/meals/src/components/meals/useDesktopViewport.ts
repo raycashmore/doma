@@ -1,17 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
+
+const query = '(min-width: 768px)';
+
+function subscribe(onChange: () => void) {
+  const media = window.matchMedia(query);
+  media.addEventListener('change', onChange);
+  return () => media.removeEventListener('change', onChange);
+}
+
+function getSnapshot() {
+  return window.matchMedia(query).matches;
+}
+
+function getServerSnapshot() {
+  return false;
+}
 
 export function useDesktopViewport() {
-  const query = '(min-width: 768px)';
-  const read = () => typeof window !== 'undefined' && window.matchMedia(query).matches;
-  const [isDesktop, setIsDesktop] = useState(read);
-
-  useEffect(() => {
-    const media = window.matchMedia(query);
-    const update = () => setIsDesktop(media.matches);
-    update();
-    media.addEventListener('change', update);
-    return () => media.removeEventListener('change', update);
-  }, []);
-
-  return isDesktop;
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
