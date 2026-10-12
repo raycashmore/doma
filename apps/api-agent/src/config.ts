@@ -6,7 +6,7 @@ const configSchema = z.object({
   CLERK_PUBLISHABLE_KEY: z.string().min(1),
   CLERK_SECRET_KEY: z.string().min(1),
   CONVEX_URL: z.string().url(),
-  FORWARDED_EMAIL_TRIAGE_AI_MODEL: z.string().min(1).default('openai/gpt-5.4-mini'),
+  FORWARDED_EMAIL_TRIAGE_AI_MODEL: z.string().min(1).default('openai/gpt-5-mini'),
   WEEKLY_MEALS_AI_MODEL: z.string().min(1).default('openai/gpt-5.4-mini')
 });
 

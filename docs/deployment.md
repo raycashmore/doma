@@ -476,7 +476,8 @@ Forwarded email triage runs in Convex cron every 15 minutes after capture, and c
 also be triggered manually through
 `email/triage:processNextPendingCapturedEmailForBot`. It requires
 `AGENT_SERVICE_ORIGIN` and `AGENT_SERVICE_TOKEN` in Convex, plus
-`FORWARDED_EMAIL_TRIAGE_AI_MODEL` in the Agent API. The triage action claims the
+`FORWARDED_EMAIL_TRIAGE_AI_MODEL` in the Agent API (defaults to
+`openai/gpt-5-mini`). The triage action claims the
 oldest pending captured email, delegates typed inference to the Agent API, then
 stores either a current notice or a no-notice outcome. Only a medium- or
 high-priority obligation with a high-confidence future date creates a reminder candidate.
