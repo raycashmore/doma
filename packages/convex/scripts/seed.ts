@@ -10,6 +10,7 @@
  * Every money column is converted to integer cents via toCents().
  */
 
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -23,6 +24,8 @@ import { parseSpendingSummaryRows } from '../convex/spendingSummary';
 import { getTargetConvexUrl } from './targetUrl';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+XLSX.set_fs(fs);
 
 const client = new ConvexHttpClient(getTargetConvexUrl());
 const XLSX_PATH = path.resolve(__dirname, 'CREAM.xlsx');
@@ -123,6 +126,10 @@ function findMortgageFieldsAtOrBefore(mortgageFields: MortgageFields[], date: nu
 }
 
 async function main() {
+  console.log('Reading CREAM.xlsx...');
+  const wb = XLSX.readFile(XLSX_PATH);
+  const { budgetRows, mortgageFieldsByDate } = readBudgetRows(wb);
+
   console.log('Clearing existing tables...');
   for (const table of [
     'currentAccounts',
@@ -140,9 +147,6 @@ async function main() {
     const { deleted } = await client.mutation(api.seed.clearTable, { table });
     console.log(`  cleared ${table}: ${deleted}`);
   }
-  console.log('Reading CREAM.xlsx...');
-  const wb = XLSX.readFile(XLSX_PATH);
-  const { budgetRows, mortgageFieldsByDate } = readBudgetRows(wb);
 
   // ── Current Accounts ──────────────────────────────────────
   {
