@@ -1,9 +1,16 @@
 package com.doma.widget
 
+import com.doma.tokens.DomaTokens
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class DomaListWidgetTest {
+    @Test
+    fun `generated list roles preserve Android ARGB and logical gap values`() {
+        assertEquals(0xFF2E1E19UL, DomaTokens.colorContentPrimary.toULong())
+        assertEquals(7.0f, DomaTokens.spaceListItemContentGap)
+    }
+
     @Test
     fun `freshness label is compact for a current snapshot`() {
         assertEquals("updated now", freshnessLabel(refreshedAt = 5_000, now = 59_999))

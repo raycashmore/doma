@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "target": "design/design-system.pen",
+  "variables": {
+    "doma-web-color-content-primary": {
+      "type": "color",
+      "value": "#3d2e22",
+      "token": "color.content.primary",
+      "platform": "web"
+    },
+    "doma-web-space-list-item-content-gap": {
+      "type": "number",
+      "value": 8,
+      "token": "space.listItemContentGap",
+      "platform": "web"
+    },
+    "doma-android-color-content-primary": {
+      "type": "color",
+      "value": "#2e1e19",
+      "token": "color.content.primary",
+      "platform": "android"
+    },
+    "doma-android-space-list-item-content-gap": {
+      "type": "number",
+      "value": 7,
+      "token": "space.listItemContentGap",
+      "platform": "android"
+    }
+  }
+}

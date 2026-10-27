@@ -1,10 +1,11 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
+import { loadTokens } from '@repo/tokens/validation';
+
 import { localFile, object, readJson, unique } from './files.ts';
 import type { Pattern } from './schema.ts';
 import { parsePattern } from './schema.ts';
-import { loadTokens } from './tokens.ts';
 
 export type PatternRecord = { contract: Pattern; contractPath: string; guidePath: string; guide: string };
 export function loadPatterns(root: string): PatternRecord[] {

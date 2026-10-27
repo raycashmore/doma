@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "list-overview-and-access",
   "kind": "pattern",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "status": "proposed",
   "title": "List overview and access",
   "summary": "Identify a list, read active items, understand unavailable access and continue on web or Android.",
@@ -115,9 +115,8 @@
         "Unconfigured is a widget state; web instead offers list creation/selection."
       ],
       "gaps": [
-        "Unavailable regression scenario pending RAY-228.",
-        "Nested button-role row, key bubbling, drag handle and focus semantics need keyboard review.",
-        "Referenced tests are not a current run or full rule-coverage claim."
+        "Drag-handle focus and screen-reader use need native assistive-technology review.",
+        "Browser keyboard checks cover detail and completion; they do not establish full accessibility conformance."
       ]
     },
     {
@@ -132,7 +131,8 @@
       "testPaths": [
         "apps/android/app/src/test/java/com/doma/widget/DomaListWidgetGlanceTest.kt",
         "apps/android/app/src/test/java/com/doma/widget/WidgetStateReducerTest.kt",
-        "apps/android/app/src/test/java/com/doma/widget/DomaListWidgetTest.kt"
+        "apps/android/app/src/test/java/com/doma/widget/DomaListWidgetTest.kt",
+        "apps/android/app/src/test/java/com/doma/widget/WidgetSnapshotRepositoryTest.kt"
       ],
       "ruleIds": ["identity", "active-content", "unavailable-content", "continue", "freshness", "accessible-actions"],
       "stateIds": ["populated", "empty", "unconfigured", "unavailable", "transient-failure"],
@@ -142,9 +142,8 @@
         "No separate transient-error banner or inline retry in message states."
       ],
       "gaps": [
-        "Unavailable rendering and selected-list action assertions pending RAY-228.",
         "TalkBack, launcher interaction and reading order not yet verified.",
-        "Referenced tests are not a current run or full rule-coverage claim."
+        "Encrypted on-device persistence and real PWA launch remain device checks; JVM tests cover state transitions and action targets."
       ]
     }
   ],

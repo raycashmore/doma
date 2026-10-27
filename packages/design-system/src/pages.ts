@@ -1,9 +1,10 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
+import { loadTokens } from '@repo/tokens/validation';
+
 import type { PatternRecord } from './catalog.ts';
 import { localFile } from './files.ts';
-import { loadTokens } from './tokens.ts';
 
 const cell = (text: string) => text.replaceAll('|', '\\|').replaceAll('\n', ' ');
 function table(headers: string[], rows: string[][]): string {
@@ -23,7 +24,7 @@ export function guidePages(root: string, records: PatternRecord[], revision: str
     `${stamp}# Patterns\n\nSearch for a task, state or platform. Proposed patterns expose current guidance and gaps; they are not promoted shared contracts.\n\n${records.map(({ contract: c }) => `- [${c.title}](/patterns/${c.id}.html) — ${c.summary} **${c.status} · ${c.version}**`).join('\n')}\n`;
   const { profile } = loadTokens(root);
   pages['foundations.md'] =
-    `${stamp}# Foundations\n\nThese are two candidate roles, with explicit native variants. Token generation and adoption are pending RAY-228. Handwritten CSS exports remain unchanged.\n\n${table(
+    `${stamp}# Foundations\n\nThese are two candidate roles, with explicit native variants. Generated CSS and Kotlin adopt these roles only at the selected native List item call sites. Legacy CSS exports remain compatible.\n\n${table(
       ['Role', 'Type', 'Meaning', 'Web Pencil name', 'Android Pencil name'],
       profile.roles.map((r) => [r.id, r.type, r.meaning, r.pencilNames.web, r.pencilNames.android])
     )}\n${table(
@@ -34,7 +35,7 @@ export function guidePages(root: string, records: PatternRecord[], revision: str
         profile.platforms[p].reason,
         profile.conversions[p]
       ])
-    )}\nProfile: ${sourceLink('packages/tokens/profile.json')}. ${profile.aliasPolicy}\n\nThe bounded profile uses ${profile.format}: ${profile.allowedTypes.join(', ')}. This slice checks role references and this limited source shape. Full vendored-schema validation, output generation, alias/output collision checks and propagation proof arrive in RAY-228. No new CSS or Kotlin output is adopted yet.\n`;
+    )}\nProfile: ${sourceLink('packages/tokens/profile.json')}. ${profile.aliasPolicy}\n\nThe bounded profile uses ${profile.format}: ${profile.allowedTypes.join(', ')}. The token package validates the vendored schema and narrower profile, resolves aliases through Style Dictionary and checks committed CSS/Kotlin/desired Pencil output. Disposable fixtures demonstrate independent platform propagation. Desired Pencil variables are not live document evidence; RAY-229 owns that remaining proof.\n`;
   for (const { contract: c, guide } of records) {
     pages[`patterns/${c.id}.md`] =
       `${stamp}Contract: **${c.status} · ${c.version}** · schema ${c.schemaVersion}\n\n${guide}\n## Roles\n\n${table(

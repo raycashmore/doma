@@ -129,14 +129,17 @@ class WidgetStateStore(context: Context) {
     @Synchronized
     fun clearUnavailableList(listPublicId: String) {
         val state = readState() ?: return
-        val unavailableWidgets = state.selections
-            .filter { selection -> selection.listPublicId == listPublicId }
-            .map { selection -> selection.appWidgetId }
+        val transition = clearUnavailableListState(
+            listPublicId = listPublicId,
+            selections = state.selections,
+            snapshots = state.snapshots,
+            unavailableWidgetIds = state.unavailableWidgetIds,
+        )
         writeState(
             state.copy(
-                selections = state.selections.filterNot { selection -> selection.listPublicId == listPublicId },
-                snapshots = state.snapshots.filterNot { snapshot -> snapshot.list.publicId == listPublicId },
-                unavailableWidgetIds = (state.unavailableWidgetIds + unavailableWidgets).distinct(),
+                selections = transition.selections,
+                snapshots = transition.snapshots,
+                unavailableWidgetIds = transition.unavailableWidgetIds,
             ),
         )
     }

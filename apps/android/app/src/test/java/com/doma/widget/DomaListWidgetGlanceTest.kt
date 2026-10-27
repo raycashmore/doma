@@ -8,6 +8,7 @@ import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.glance.appwidget.testing.unit.runGlanceAppWidgetUnitTest
 import androidx.glance.testing.unit.hasText
+import androidx.glance.testing.unit.hasStartActivityClickAction
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -39,8 +40,11 @@ class DomaListWidgetGlanceTest {
     fun `configured widget renders its saved list snapshot`() = runGlanceAppWidgetUnitTest {
         val snapshot = WidgetSnapshot(
             list = WidgetSnapshotList(publicId = "shopping", name = "Shopping", slug = "weekly-shop"),
-            activeItems = listOf(WidgetSnapshotItem(id = "item_1", title = "Milk")),
-            refreshedAt = 42_000,
+            activeItems = listOf(
+                WidgetSnapshotItem(id = "item_1", title = "Apples"),
+                WidgetSnapshotItem(id = "item_2", title = "Rice"),
+            ),
+            refreshedAt = System.currentTimeMillis(),
         )
 
         provideComposable {
@@ -48,6 +52,45 @@ class DomaListWidgetGlanceTest {
         }
 
         onNode(hasText("Shopping")).assertExists()
-        onNode(hasText("Milk")).assertExists()
+        onNode(hasText("Apples")).assertExists()
+        onNode(hasText("Rice")).assertExists()
+        onNode(hasText("2 active · updated now")).assertExists()
+        onNode(
+            hasText("Open list ↗").and(
+                hasStartActivityClickAction<WidgetLaunchActivity>(snapshot.listActionParameters()),
+            ),
+        ).assertExists()
+    }
+
+    @Test
+    fun `unavailable widget hides old list content`() = runGlanceAppWidgetUnitTest {
+        val oldSnapshot = WidgetSnapshot(
+            list = WidgetSnapshotList(publicId = "shopping", name = "Shopping", slug = "weekly-shop"),
+            activeItems = listOf(WidgetSnapshotItem(id = "item_1", title = "Apples")),
+            refreshedAt = 42_000,
+        )
+
+        provideComposable {
+            DomaListWidgetContent(snapshot = oldSnapshot, unavailable = true)
+        }
+
+        onNode(hasText("List unavailable.")).assertExists()
+        onNode(hasText(oldSnapshot.list.name)).assertDoesNotExist()
+        onNode(hasText("Apples")).assertDoesNotExist()
+        onNode(hasText("Open list ↗")).assertDoesNotExist()
+    }
+
+    @Test
+    fun `widget continuation carries selected list identity and slug`() {
+        val snapshot = WidgetSnapshot(
+            list = WidgetSnapshotList(publicId = "shopping", name = "Shopping", slug = "weekly-shop"),
+            activeItems = listOf(WidgetSnapshotItem(id = "item_1", title = "Rice")),
+            refreshedAt = 42_000,
+        )
+
+        val parameters = snapshot.listActionParameters()
+
+        assertEquals("shopping", parameters[WidgetActionParameters.listPublicId])
+        assertEquals("weekly-shop", parameters[WidgetActionParameters.listSlug])
     }
 }

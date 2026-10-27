@@ -92,6 +92,8 @@ pnpm --filter home build        # Verify Home route/UI/build changes
 pnpm --filter design-guide dev       # Local pattern guide on 127.0.0.1:3007
 pnpm --filter design-guide build     # Validate, assemble and render the static guide
 pnpm --filter design-guide preview   # Browse the built guide on 127.0.0.1:3007
+pnpm --filter @repo/tokens generate        # Explicitly update CSS/Kotlin/desired Pencil outputs
+pnpm --filter @repo/tokens check           # Non-mutating validation/staleness check
 pnpm --filter @repo/design-system generate # Explicitly update committed catalogs
 pnpm --filter @repo/design-system check    # Non-mutating validation/staleness check
 ```

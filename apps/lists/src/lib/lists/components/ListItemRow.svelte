@@ -26,18 +26,9 @@
 </script>
 
 <div
-  role="button"
-  tabindex="0"
-  class={`group flex w-full min-w-0 cursor-pointer items-center gap-2 rounded-none px-2 py-2 transition-colors ${
+  class={`group flex w-full min-w-0 cursor-pointer items-center gap-[var(--doma-space-list-item-content-gap)] rounded-none px-2 py-2 transition-colors ${
     selected ? 'bg-warm-section-spend/50' : 'hover:bg-warm-section-mortgage'
   }`}
-  onclick={onOpenDetail}
-  onkeydown={(e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      onOpenDetail();
-    }
-  }}
 >
   {#if completed || !reorderable}
     <span class="invisible flex h-7 w-6 shrink-0 items-center justify-center" aria-hidden="true">
@@ -72,13 +63,16 @@
     <ListIcon name="check" size={12} />
   </button>
 
-  <span
+  <button
+    type="button"
+    aria-label={`Open details for ${item.title}`}
+    onclick={onOpenDetail}
     class={`min-w-0 flex-1 truncate text-left text-sm ${
-      completed ? 'text-warm-text-secondary line-through' : 'font-semibold text-warm-text-primary'
+      completed ? 'text-warm-text-secondary line-through' : 'font-semibold text-[var(--doma-color-content-primary)]'
     }`}
   >
     {item.title}
-  </span>
+  </button>
 
   {#if valueSummary}
     <span class="hidden min-w-0 max-w-[35%] shrink truncate text-xs text-warm-text-secondary min-[700px]:inline">
@@ -88,7 +82,7 @@
 
   <button
     type="button"
-    class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-warm-accent opacity-0 transition-opacity hover:bg-warm-section-spend group-hover:opacity-100"
+    class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-warm-accent opacity-0 transition-opacity hover:bg-warm-section-spend group-hover:opacity-100 focus-visible:opacity-100"
     aria-label={`Delete ${item.title}`}
     onclick={(e) => {
       e.stopPropagation();

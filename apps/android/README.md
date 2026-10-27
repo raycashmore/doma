@@ -55,3 +55,9 @@ requests Clerk tokens using Doma's explicit `convex` JWT template and never
 persists or logs a token. Before a release, sign into Doma staging and call
 `lists/widget:getSnapshot` to prove the configured Clerk issuer and audience are
 accepted.
+
+## Shared List roles
+
+The active-item title color and marker-to-title gap use committed Kotlin output from `packages/tokens/generated/android`, included by the Gradle Kotlin source sets. Gradle does not run Node or regenerate tokens. Use `pnpm --filter @repo/tokens generate` from the repository root after changing canonical token sources, and commit the outputs together. Only those two call sites adopt the shared roles; the other widget colors remain local.
+
+Run `./gradlew :app:testDebugUnitTest :app:assembleDebug` for the JVM and debug-build proof. Glance tests cover saved/unavailable content and continuation; repository/state tests distinguish transient failure from unavailable access. These tests do not establish launcher/TalkBack behavior or encrypted keystore persistence on a device.

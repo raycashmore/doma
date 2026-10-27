@@ -24,3 +24,7 @@ packages/design-system/generated/
 **/test-results/
 **/playwright-report/
 **/.vitepress/cache/
+
+# Token output bytes are owned by the generator; preserve the upstream schema snapshot.
+packages/tokens/generated/
+packages/tokens/schema/dtcg-2025.10-format.json
