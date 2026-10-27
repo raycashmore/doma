@@ -2,6 +2,10 @@
 
 How to take Doma from `localhost` to a live deployment on Vercel.
 
+The [pattern guide](https://doma-design-guide.vercel.app) is a separate static project,
+outside the Home zones and Clerk session. Its manual publication and all-URL Vercel
+Authentication checks are documented in [guide publication](../apps/design-guide/README.md#publication).
+
 ## Background
 
 Doma is a **Vercel Multi-Zones** setup. Each app is a separate Vercel project. One project — `apps/home` — owns the apex domain and rewrites paths to the other projects' deployment URLs. From the browser's point of view it's a single site at one domain; behind the scenes the traffic for `/budget/*` is reverse-proxied to a different Vercel project's deployment.

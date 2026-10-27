@@ -106,12 +106,13 @@ component abstraction.
 
 ### Pattern guidance
 
-[The local pattern guide](apps/design-guide/README.md) explains shared behaviour,
-platform differences and native source references. Run `pnpm --filter design-guide dev`
-to browse it on <http://127.0.0.1:3007>. Agents can use
+[The pattern guide](https://doma-design-guide.vercel.app) explains shared behaviour,
+platform differences and native source references. Sign in with an authorized Vercel
+account, or run `pnpm --filter design-guide dev` to browse it on <http://127.0.0.1:3007>.
+See [guide usage](apps/design-guide/README.md). Agents can use
 [the repository catalog](packages/design-system/generated/catalog.md) without a server.
-The first List pattern is proposed; native token adoption, dedicated Pencil proof
-and protected hosting remain separate later slices.
+The first List pattern is proposed. Native token adoption, dedicated Pencil proof
+and protected hosting are available; device/accessibility checks and shared promotion remain open.
 
 ### Raw inputs in, derived views out
 

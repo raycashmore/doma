@@ -25,19 +25,23 @@ Doma is a Vercel Multi-Zones monorepo. `apps/home` owns the apex domain and rewr
 
 ## Pattern guide boundary
 
-`apps/design-guide` is a local VitePress site on loopback port 3007, independent
+`apps/design-guide` is a VitePress site with local browsing on loopback port 3007, independent
 of Home zones, Clerk and service workers. It depends on `packages/design-system`,
 which owns pattern contracts, prose, validation and deterministic committed agent
 catalogs. That package depends on `packages/tokens` for canonical candidate
-role/profile data; native token generation and adoption follow in RAY-228.
+role/profile data. Generated CSS and Kotlin values feed the bounded native List call sites;
+the desired Pencil manifest feeds the supported live adapter and dedicated visual proof.
 
 Explicit `generate` updates catalogs. Check/build never repair committed output.
 Composed Markdown in `packages/design-system/dist/guide` and site output in
 `apps/design-guide/.vitepress/dist` are ignored. Build/reference checks are
 noncached and verify the actual checkout revision, including dirty drafts.
 See [package usage](../packages/design-system/README.md) for source ownership
-and [guide commands](../apps/design-guide/README.md). No hosted project or URL
-is provisioned by this slice.
+and [guide commands and publication](../apps/design-guide/README.md).
+The separate `doma-design-guide` Vercel project serves static output at
+[the protected guide](https://doma-design-guide.vercel.app). It uses Vercel Authentication
+for all deployment URLs, with no Git integration or backend environment variables.
+Its hosting does not promote the proposed pattern or close native device/accessibility gaps.
 
 ## Multi-Zones
 
