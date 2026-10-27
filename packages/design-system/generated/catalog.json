@@ -13,7 +13,7 @@
         "widget"
       ],
       "status": "proposed",
-      "version": "0.1.1",
+      "version": "0.2.0",
       "contractPath": "packages/design-system/patterns/list-overview-and-access/contract.json",
       "guidePath": "packages/design-system/patterns/list-overview-and-access/guide.md",
       "tokenRoles": [
@@ -107,7 +107,48 @@
           ]
         }
       ],
-      "designReferences": []
+      "designReferences": [
+        {
+          "path": "design/design-system.pen",
+          "nodeIds": [
+            "xez2P"
+          ],
+          "assetPaths": [
+            "design/exports/list-overview-and-access/xez2P.png"
+          ],
+          "illustrative": true
+        },
+        {
+          "path": "design/design-system.pen",
+          "nodeIds": [
+            "Otzhh"
+          ],
+          "assetPaths": [
+            "design/exports/list-overview-and-access/Otzhh.png"
+          ],
+          "illustrative": true
+        },
+        {
+          "path": "design/design-system.pen",
+          "nodeIds": [
+            "It5oP"
+          ],
+          "assetPaths": [
+            "design/exports/list-overview-and-access/It5oP.png"
+          ],
+          "illustrative": true
+        },
+        {
+          "path": "design/design-system.pen",
+          "nodeIds": [
+            "mwa5k"
+          ],
+          "assetPaths": [
+            "design/exports/list-overview-and-access/mwa5k.png"
+          ],
+          "illustrative": true
+        }
+      ]
     }
   ]
 }

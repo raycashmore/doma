@@ -6,7 +6,8 @@
   "exports": {
     "./tokens.css": "./tokens.css",
     "./theme.css": "./theme.css",
-    "./validation": "./scripts/validate.ts"
+    "./validation": "./scripts/validate.ts",
+    "./pencil": "./scripts/pencil.ts"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
@@ -25,6 +26,7 @@
     "build": "node --import tsx scripts/cli.ts check",
     "test": "node --import tsx scripts/cli.ts check && node --import tsx --test scripts/*.test.ts",
     "lint": "eslint .",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "pencil:prepare": "node --import tsx scripts/pencil.ts"
   }
 }

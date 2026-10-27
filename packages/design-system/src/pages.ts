@@ -4,13 +4,20 @@ import path from 'node:path';
 import { loadTokens } from '@repo/tokens/validation';
 
 import type { PatternRecord } from './catalog.ts';
-import { localFile } from './files.ts';
+import { localFile, object, readJson } from './files.ts';
 
 const cell = (text: string) => text.replaceAll('|', '\\|').replaceAll('\n', ' ');
 function table(headers: string[], rows: string[][]): string {
   return `| ${headers.join(' | ')} |\n| ${headers.map(() => '---').join(' | ')} |\n${rows.map((row) => `| ${row.map(cell).join(' | ')} |`).join('\n')}\n`;
 }
 export function guidePages(root: string, records: PatternRecord[], revision: string): Record<string, string> {
+  const names = records.some(({ contract }) => contract.designReferences.length)
+    ? new Map(
+        (
+          object(readJson(localFile(root, 'design/design-system.proof.json'))).nodes as { id: string; name: string }[]
+        ).map((node) => [node.id, node.name])
+      )
+    : new Map<string, string>();
   const draft = revision.endsWith('-dirty');
   const sourceLink = (ref: string) =>
     draft
@@ -35,7 +42,7 @@ export function guidePages(root: string, records: PatternRecord[], revision: str
         profile.platforms[p].reason,
         profile.conversions[p]
       ])
-    )}\nProfile: ${sourceLink('packages/tokens/profile.json')}. ${profile.aliasPolicy}\n\nThe bounded profile uses ${profile.format}: ${profile.allowedTypes.join(', ')}. The token package validates the vendored schema and narrower profile, resolves aliases through Style Dictionary and checks committed CSS/Kotlin/desired Pencil output. Disposable fixtures demonstrate independent platform propagation. Desired Pencil variables are not live document evidence; RAY-229 owns that remaining proof.\n`;
+    )}\nProfile: ${sourceLink('packages/tokens/profile.json')}. ${profile.aliasPolicy}\n\nThe bounded profile uses ${profile.format}: ${profile.allowedTypes.join(', ')}. The token package validates the vendored schema and narrower profile, resolves aliases through Style Dictionary and checks committed CSS/Kotlin/desired Pencil output. Disposable fixtures demonstrate independent platform propagation. Desired Pencil variables alone are not live evidence. The dedicated Pencil proof records apply/save/reopen equality and independent live propagation through Pen 1.2.20, with restored baseline values. See the pattern’s annotated representations and design/README.md; native device and maintainer promotion gates remain open.\n`;
   for (const { contract: c, guide } of records) {
     pages[`patterns/${c.id}.md`] =
       `${stamp}Contract: **${c.status} · ${c.version}** · schema ${c.schemaVersion}\n\n${guide}\n## Roles\n\n${table(
@@ -50,7 +57,7 @@ export function guidePages(root: string, records: PatternRecord[], revision: str
       )}\n## Token roles\n\n${table(
         ['ID', 'Variants'],
         c.tokenRoles.map((r) => [r.id, r.platforms.join(', ')])
-      )}\n## Platform mappings and native references\n\n${c.implementations.map((i) => `### ${i.platform} — ${i.framework}\n\nSupported states: ${i.stateIds.map((s) => `\`${s}\``).join(', ')}.\n\nReferenced rules: ${i.ruleIds.map((r) => `\`${r}\``).join(', ')}. These references do not certify coverage.\n\nExclusions:\n\n${i.exclusions.map((s) => `- ${s}`).join('\n')}\n\nKnown gaps:\n\n${i.gaps.map((s) => `- ${s}`).join('\n')}\n\nSource:\n\n${i.sourcePaths.map((p) => `- ${sourceLink(p)}`).join('\n')}\n\nTests (navigation, not results):\n\n${i.testPaths.map((p) => `- ${sourceLink(p)}`).join('\n')}`).join('\n\n')}\n\n## Design references\n\n${c.designReferences.length ? c.designReferences.map((r) => `- ${sourceLink(r.path)}; nodes ${r.nodeIds.join(', ')}; ${r.illustrative ? 'illustration only' : 'reviewed representation'}; exports ${r.assetPaths.map(sourceLink).join(', ')}`).join('\n') : 'Pending RAY-229: no dedicated Pencil nodes or exported visuals are linked yet.'}\n\nContract source: ${sourceLink(`packages/design-system/patterns/${c.id}/contract.json`)}.\n`;
+      )}\n## Platform mappings and native references\n\n${c.implementations.map((i) => `### ${i.platform} — ${i.framework}\n\nSupported states: ${i.stateIds.map((s) => `\`${s}\``).join(', ')}.\n\nReferenced rules: ${i.ruleIds.map((r) => `\`${r}\``).join(', ')}. These references do not certify coverage.\n\nExclusions:\n\n${i.exclusions.map((s) => `- ${s}`).join('\n')}\n\nKnown gaps:\n\n${i.gaps.map((s) => `- ${s}`).join('\n')}\n\nSource:\n\n${i.sourcePaths.map((p) => `- ${sourceLink(p)}`).join('\n')}\n\nTests (navigation, not results):\n\n${i.testPaths.map((p) => `- ${sourceLink(p)}`).join('\n')}`).join('\n\n')}\n\n## Design references\n\n${c.designReferences.length ? c.designReferences.map((r) => `### ${r.nodeIds.map((id) => names.get(id) ?? id).join(', ')}\n\n${sourceLink(r.path)}; stable nodes ${r.nodeIds.join(', ')}; ${r.illustrative ? 'illustration only; native checks remain separate' : 'reviewed representation'}.\n\n${r.assetPaths.map((asset) => `![${r.nodeIds.map((id) => names.get(id) ?? id).join(', ')}](/representations/${asset})`).join('\n\n')}`).join('\n\n') : 'Pending RAY-229: no dedicated Pencil nodes or exported visuals are linked yet.'}\n\nContract source: ${sourceLink(`packages/design-system/patterns/${c.id}/contract.json`)}.\n`;
   }
   return pages;
 }

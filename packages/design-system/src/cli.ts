@@ -1,7 +1,8 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { catalogFiles, loadPatterns } from './catalog.ts';
+import { localFile } from './files.ts';
 import { guidePages } from './pages.ts';
 import { checkoutRevision, repositoryRoot } from './revision.ts';
 
@@ -26,6 +27,13 @@ export function run(command: string, root = repositoryRoot): void {
       const pages = guidePages(root, records, checkoutRevision(root));
       const output = path.join(root, 'packages/design-system/dist/guide');
       rmSync(output, { force: true, recursive: true });
+      for (const asset of new Set(
+        records.flatMap(({ contract }) => contract.designReferences.flatMap((ref) => ref.assetPaths))
+      )) {
+        const destination = path.join(output, 'public/representations', asset);
+        mkdirSync(path.dirname(destination), { recursive: true });
+        cpSync(localFile(root, asset), destination);
+      }
       for (const [name, contents] of Object.entries(pages)) {
         const filename = path.join(output, name);
         mkdirSync(path.dirname(filename), { recursive: true });

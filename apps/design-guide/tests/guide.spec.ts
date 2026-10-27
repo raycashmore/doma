@@ -34,6 +34,17 @@ test('guide routes expose proposed guidance and keyboard search reaches recovery
   await expect(main).toContainText('This list is unavailable.');
   await expect(main).toContainText('List unavailable.');
   await expect(main).toContainText('transient refresh failure');
+  const examples = main.getByRole('img', { name: /annotated/ });
+  await expect(examples).toHaveCount(4);
+  for (const example of await examples.all()) {
+    const source = await example.getAttribute('src');
+    expect(source).toBeTruthy();
+    expect((await request.get(source!)).status()).toBe(200);
+    expect(
+      await example.evaluate((image) => image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0)
+    ).toBe(true);
+  }
+
   await page.getByRole('button', { name: 'Search', exact: true }).click();
   await expect(search).toBeVisible();
   await page.keyboard.press('Escape');

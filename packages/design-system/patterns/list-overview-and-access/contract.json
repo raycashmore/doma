@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "list-overview-and-access",
   "kind": "pattern",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "status": "proposed",
   "title": "List overview and access",
   "summary": "Identify a list, read active items, understand unavailable access and continue on web or Android.",
@@ -147,5 +147,30 @@
       ]
     }
   ],
-  "designReferences": []
+  "designReferences": [
+    {
+      "path": "design/design-system.pen",
+      "nodeIds": ["xez2P"],
+      "assetPaths": ["design/exports/list-overview-and-access/xez2P.png"],
+      "illustrative": true
+    },
+    {
+      "path": "design/design-system.pen",
+      "nodeIds": ["Otzhh"],
+      "assetPaths": ["design/exports/list-overview-and-access/Otzhh.png"],
+      "illustrative": true
+    },
+    {
+      "path": "design/design-system.pen",
+      "nodeIds": ["It5oP"],
+      "assetPaths": ["design/exports/list-overview-and-access/It5oP.png"],
+      "illustrative": true
+    },
+    {
+      "path": "design/design-system.pen",
+      "nodeIds": ["mwa5k"],
+      "assetPaths": ["design/exports/list-overview-and-access/mwa5k.png"],
+      "illustrative": true
+    }
+  ]
 }

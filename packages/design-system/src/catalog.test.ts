@@ -19,6 +19,13 @@ function fixture(t: { after: (fn: () => void) => void }) {
   for (const dir of ['packages/tokens/source', 'packages/design-system/patterns', 'packages/design-system/guidance'])
     cpSync(path.join(repositoryRoot, dir), path.join(root, dir), { recursive: true });
   cpSync(path.join(repositoryRoot, 'packages/tokens/profile.json'), path.join(root, 'packages/tokens/profile.json'));
+  cpSync(path.join(repositoryRoot, 'packages/tokens/generated'), path.join(root, 'packages/tokens/generated'), {
+    recursive: true
+  });
+  mkdirSync(path.join(root, 'design'), { recursive: true });
+  for (const file of ['design-system.pen', 'design-system.proof.json'])
+    cpSync(path.join(repositoryRoot, 'design', file), path.join(root, 'design', file));
+  cpSync(path.join(repositoryRoot, 'design/exports'), path.join(root, 'design/exports'), { recursive: true });
   const original = loadPatterns(repositoryRoot)[0]!.contract;
   for (const ref of original.implementations.flatMap((i) => [...i.sourcePaths, ...i.testPaths])) {
     const filename = path.join(root, ref);
@@ -126,27 +133,32 @@ test('repository references cannot escape through a symlink', (t) => {
   symlinkSync(repositoryRoot, path.join(root, 'outside'));
   assert.throws(() => localFile(root, 'outside/package.json'), /Invalid repository file/);
 });
-test('real design references require an existing dedicated-file node and asset', (t) => {
-  const { root, update } = fixture(t);
-  mkdirSync(path.join(root, 'design'));
-  writeFileSync(path.join(root, 'design/design-system.pen'), JSON.stringify({ children: [{ id: 'web-populated' }] }));
-  writeFileSync(path.join(root, 'design/example.svg'), '<svg xmlns="http://www.w3.org/2000/svg"/>');
-  update((c) =>
-    c.designReferences.push({
-      path: 'design/design-system.pen',
-      nodeIds: ['missing-node'],
-      assetPaths: ['design/example.svg'],
-      illustrative: true
-    })
-  );
-  assert.throws(() => run('generate', root), /Missing Pencil node/);
-  update((c) => {
-    c.designReferences[0]!.nodeIds = ['web-populated'];
+for (const failure of ['node', 'asset', 'document', 'variable', 'version', 'parent', 'binding'] as const)
+  test(`Pencil API evidence rejects changed ${failure}`, (t) => {
+    const { root, update } = fixture(t);
+    const filename = path.join(root, 'design/design-system.proof.json');
+    const proof = JSON.parse(readFileSync(filename, 'utf8')) as {
+      appVersion: string;
+      variables: Record<string, { value: unknown }>;
+      nodes: { id: string; parent: string | null; fill?: string }[];
+    };
+    if (failure === 'node')
+      update((c) => {
+        c.designReferences[0]!.nodeIds = ['missing'];
+      });
+    if (failure === 'asset') {
+      const asset = loadPatterns(root)[0]!.contract.designReferences[0]!.assetPaths[0]!;
+      writeFileSync(path.join(root, asset), 'not an image');
+    }
+    if (failure === 'document') writeFileSync(path.join(root, 'design/design-system.pen'), 'opaque changed bytes');
+    if (failure === 'variable') proof.variables['doma-web-color-content-primary']!.value = '#000000';
+    if (failure === 'version') proof.appVersion = 'unknown';
+    if (failure === 'parent') proof.nodes[0]!.parent = 'missing';
+    if (failure === 'binding')
+      for (const node of proof.nodes) if (node.fill === '$doma-web-color-content-primary') node.fill = '#3d2e22';
+    writeFileSync(filename, JSON.stringify(proof));
+    assert.throws(() => run('generate', root), /Missing Pencil|Stale Pencil|Unsupported Pencil|Unbound Pencil/);
   });
-  run('generate', root);
-  rmSync(path.join(root, 'design/example.svg'));
-  assert.throws(() => run('check', root), /ENOENT/);
-});
 test('token references reject unknown aliases, cycles and incompatible values', (t) => {
   const { root } = fixture(t);
   const filename = path.join(root, 'packages/tokens/source/web.json');

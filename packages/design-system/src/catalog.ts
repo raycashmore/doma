@@ -3,7 +3,8 @@ import path from 'node:path';
 
 import { loadTokens } from '@repo/tokens/validation';
 
-import { localFile, object, readJson, unique } from './files.ts';
+import { localFile, readJson, unique } from './files.ts';
+import { validatePencilReferences } from './pencil.ts';
 import type { Pattern } from './schema.ts';
 import { parsePattern } from './schema.ts';
 
@@ -46,23 +47,7 @@ export function loadPatterns(root: string): PatternRecord[] {
         for (const id of implementation.stateIds)
           if (!contract.states.some((state) => state.id === id)) throw new Error(`Unknown state ${id}`);
       }
-      for (const ref of contract.designReferences) {
-        if (ref.path !== 'design/design-system.pen')
-          throw new Error('Design references must target the dedicated design-system.pen');
-        const document = readJson(localFile(root, ref.path));
-        const ids: string[] = [];
-        function visit(value: unknown) {
-          if (Array.isArray(value)) for (const child of value) visit(child);
-          else if (value && typeof value === 'object') {
-            const node = object(value);
-            if (typeof node.id === 'string') ids.push(node.id);
-            for (const child of Object.values(node)) visit(child);
-          }
-        }
-        visit(document);
-        for (const id of ref.nodeIds) if (!ids.includes(id)) throw new Error(`Missing Pencil node ${id}`);
-        for (const asset of ref.assetPaths) localFile(root, asset);
-      }
+      if (contract.designReferences.length) validatePencilReferences(root, contract.designReferences);
       const guide = readFileSync(localFile(root, guidePath), 'utf8');
       if (!guide.startsWith(`# ${contract.title}\n`)) throw new Error(`Guide title must match ${contract.id}`);
       return { contract, contractPath, guidePath, guide };
