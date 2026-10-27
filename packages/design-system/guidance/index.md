@@ -8,4 +8,4 @@ The first pattern is proposed. Its current source and test references help you i
 
 [Foundations](/foundations.html) explains the two candidate token roles and intentional native differences. [Contribution guidance](/contributing.html) explains changes and approval.
 
-This guide uses generic examples only. Local browsing is available now; a stable protected hosted URL requires the later publication and access checks.
+This guide uses generic examples only. Browse it locally or at [the protected guide](https://doma-design-guide.vercel.app) with your authorized Vercel account. Hosted access does not approve the proposed pattern or close its device and accessibility gaps.
