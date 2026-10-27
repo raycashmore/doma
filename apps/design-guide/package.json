@@ -9,7 +9,9 @@
     "preview": "node scripts/preview.mjs",
     "lint": "eslint .",
     "check-types": "tsc --noEmit",
-    "test:browser": "playwright test"
+    "test:browser": "playwright test",
+    "test": "node --test scripts/*.test.mjs",
+    "check:protection": "node scripts/check-protection.mjs"
   },
   "dependencies": {
     "@repo/design-system": "workspace:*"
