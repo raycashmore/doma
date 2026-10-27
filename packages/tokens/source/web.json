@@ -1,0 +1,16 @@
+{
+  "color": {
+    "content": {
+      "primary": {
+        "$type": "color",
+        "$value": "{foundation.color.webPrimary}"
+      }
+    }
+  },
+  "space": {
+    "listItemContentGap": {
+      "$type": "dimension",
+      "$value": "{foundation.space.webListGap}"
+    }
+  }
+}

@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.intPreferencesKey
@@ -33,6 +34,7 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
+import com.doma.tokens.DomaTokens
 
 object WidgetActionParameters {
     const val LIST_PUBLIC_ID = "doma_list_public_id"
@@ -80,6 +82,16 @@ internal object WidgetGlanceState {
     val revision = intPreferencesKey("doma_widget_render_revision")
 }
 
+internal object ListItemTokenAdapter {
+    val contentColor: Color = Color(DomaTokens.colorContentPrimary)
+    val contentGap: Dp = DomaTokens.spaceListItemContentGap.dp
+}
+
+internal fun WidgetSnapshot.listActionParameters(): ActionParameters = actionParametersOf(
+    WidgetActionParameters.listPublicId to list.publicId,
+    WidgetActionParameters.listSlug to list.slug,
+)
+
 internal suspend fun advanceDomaWidgetRenderRevision(context: Context, glanceId: GlanceId) {
     updateAppWidgetState(context, glanceId) { preferences ->
         preferences[WidgetGlanceState.revision] = (preferences[WidgetGlanceState.revision] ?: 0) + 1
@@ -121,10 +133,7 @@ private fun WidgetMessage(message: String) {
 @Composable
 private fun ListWindow(snapshot: WidgetSnapshot) {
     val action = actionStartActivity<WidgetLaunchActivity>(
-        actionParametersOf(
-            WidgetActionParameters.listPublicId to snapshot.list.publicId,
-            WidgetActionParameters.listSlug to snapshot.list.slug,
-        ),
+        snapshot.listActionParameters(),
     )
 
     Column(
@@ -178,8 +187,8 @@ private fun ListWindow(snapshot: WidgetSnapshot) {
                     )
                     Text(
                         text = item.title,
-                        modifier = GlanceModifier.padding(start = 7.dp),
-                        style = TextStyle(color = ColorProvider(DomaWidgetColors.espresso), fontSize = 14.sp),
+                        modifier = GlanceModifier.padding(start = ListItemTokenAdapter.contentGap),
+                        style = TextStyle(color = ColorProvider(ListItemTokenAdapter.contentColor), fontSize = 14.sp),
                     )
                 }
             }

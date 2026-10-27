@@ -33,9 +33,9 @@ Use the pnpm version declared in `package.json`. If `pnpm --version` does not
 match that declaration, run `corepack enable pnpm` before running repo commands.
 
 `pnpm ci:local` checks the pnpm version first, installs with the frozen
-lockfile, then runs `pnpm ci:checks`. `pnpm ci:checks` is the same format, lint,
-typecheck, test, and build sequence used by CI, and it forces Turbo tasks so a
-warm local cache cannot hide missing dependencies or broken scripts.
+lockfile, installs the guide Chromium browser, then runs `pnpm ci:checks`. `pnpm ci:checks` is the same format, lint,
+typecheck, test, build and guide browser-smoke sequence used by CI, and it forces Turbo tasks so a
+warm local cache cannot hide missing dependencies or broken scripts. It also fails if verification changes tracked files relative to the starting diff. Before running checks without installation, install Chromium once with `pnpm --filter design-guide exec playwright install chromium`.
 
 Schedule intentionally builds with `next build --webpack`. Next 16 defaults
 production builds to Turbopack, which currently spawns/binds an internal worker
@@ -84,4 +84,17 @@ pnpm --filter api-bot check-types # Bot gateway TypeScript check
 pnpm --filter api-agent dev     # Agent API on :3006
 pnpm --filter api-agent test    # Agent unit tests
 pnpm --filter home build        # Verify Home route/UI/build changes
+```
+
+## Pattern guide
+
+```bash
+pnpm --filter design-guide dev       # Local pattern guide on 127.0.0.1:3007
+pnpm --filter design-guide build     # Validate, assemble and render the static guide
+pnpm --filter design-guide preview   # Browse the built guide on 127.0.0.1:3007
+pnpm --filter @repo/tokens generate        # Explicitly update CSS/Kotlin/desired Pencil outputs
+pnpm --filter @repo/tokens check           # Non-mutating validation/staleness check
+pnpm --filter @repo/tokens pencil:prepare  # Print a live API apply snippet; see design/README.md
+pnpm --filter @repo/design-system generate # Explicitly update committed catalogs
+pnpm --filter @repo/design-system check    # Non-mutating validation/staleness check
 ```

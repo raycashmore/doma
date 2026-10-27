@@ -20,6 +20,10 @@ android {
   namespace = "com.doma.widget"
   compileSdk = 37
 
+  sourceSets["main"].kotlin.directories.add(
+    rootProject.file("../../packages/tokens/generated/android").absolutePath,
+  )
+
   defaultConfig {
     applicationId = "com.doma.widget"
     minSdk = 26

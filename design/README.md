@@ -1,0 +1,27 @@
+# Dedicated pattern proof
+
+`design-system.pen` is the dedicated representation of canonical tokens and shared patterns. Historical `design.pen` and `v2.pen` remain independent. Do not migrate or rebind them for this proof.
+
+The document was created with Pen 1.2.20, using its installed `pen-dev` schema (2.21) and `execute` API. The adapter is deliberately pinned to that app version: verify a new version’s supported API before changing the pin. Documents are encrypted; edit them through Pen, not JSON rewrites. Opaque file fingerprints below establish identity, not an independent parser or decryption proof.
+
+## What was observed
+
+Four annotated Shopping examples use Apples and Rice: web populated `xez2P`, web unavailable `Otzhh`, Glance populated `It5oP`, and Glance unavailable `mwa5k`. Native regions are illustrative compositions, not screenshots of running applications. The web composition focuses on the detail region and omits the app shell and hidden delete controls. Android shows a 320×260 logical-size snapshot and a compact unavailable message. Text/action and cache/access semantics are verified separately in the native tests.
+
+The adapter applied exactly the four generated managed variables through `GetVariables` / `SetVariables`. It checked the prior state and type before writing, merged without replacement, and compared unrelated variables and the unresolved node graph afterward. An unrelated annotation colour and its binding survived every apply. Disposable canonical edits independently changed each platform’s colour/gap to #336699/11.5. Resolved live title/spacing values and screenshots showed the matching change; the other platform retained its baseline. Source edits stayed in disposable directories.
+
+All baseline variables were restored. Save (⌘S), close (⌘W) and reopen through Pen’s recent-file controls produced exact API equality for all 57 nodes and five variables. Baseline web values are #3d2e22/8; Android values are #2e1e19/7. Four PNGs were exported with supported `Export`, decoded and visually inspected. Settled layout bounds reported no clipping. `design-system.proof.json` stores that reopened API capture, saved-document SHA-256 and each exported root frame’s image dimensions/fingerprint. It is observed state, not another editable token source.
+
+## Repeat the live procedure
+
+1. Open this exact dedicated file in the supported Pen desktop. Read `GetVariables()` and capture unresolved nodes with `Get((n,c) => { const {children,...properties}=n; return {parent:c.parentCtx?.node.id??null,...properties}; })`. Save the previous desired manifest locally before changing canonical tokens. Confirm any existing managed variables equal that known previous state.
+2. Generate canonical outputs explicitly. From the repository root, `pnpm --filter @repo/tokens pencil:prepare /absolute/path/to/previous-variables.json > /tmp/doma-pencil-apply.js` prints the supported `execute` snippet. With no prior-manifest argument it permits initial adoption only when managed variables are absent. The command checks the installed macOS app version. It does not open, modify, save or export a file.
+3. Send the printed snippet to Pen `execute` with the exact repository `design/design-system.pen` filePath. It rejects changed prior values/types, unknown managed names or unavailable APIs before writing. Never work around a collision with `replace: true`. Inspect resolved native bindings and a screenshot; preserve unrelated content. Repeat disposable platform changes independently, then restore canonical baseline and apply it using the changed manifest as the explicit prior state.
+4. Save, close and reopen in Pen. Compare the entire unresolved node capture and variables before/after, not only a few selected values. Export referenced root frames with `Export(ids, 'png', absoluteExportDirectory, {scale:1})` and inspect the images. Updating snapshots/fingerprints is an explicit maintenance action after these observations; no build or generate command asserts live success.
+5. Update the proof capture and contract references together, calculate fingerprints of the saved opaque file and actual PNG bytes, regenerate the catalog and run token/design-system checks plus the guide build/browser checks. Visual changes require fresh review. Do not merely refresh fingerprints to hide an unverified document change.
+
+CI checks the proof schema/app pin, opaque file fingerprint, unique node IDs/parent topology, every managed variable/value and presence of managed bindings. It checks each linked root frame/export mapping, PNG header/dimensions and exact image fingerprint. Removing a referenced node or export, changing a saved document or leaving a desired value stale fails. CI cannot certify that a human/API capture is honest, reopen Pen, inspect encrypted nodes independently or repeat live propagation. Re-run the live procedure when the saved document changes.
+
+## Remaining review
+
+The guide labels all four exports as illustrations and the pattern as proposed. Native browser detail/completion keyboard checks passed in RAY-228. Launcher/TalkBack, screen-reader drag handling, encrypted keystore persistence and actual PWA launch still need device review; no Android device was attached for RAY-229. Representative contrast review found the small coral widget brand at 3.05:1; this is an existing gap, not a passing accessibility result. Maintainer approval of shared promotion is still required. Hosting and owner usefulness belong to RAY-230 and have no publication authority from this work.

@@ -1,0 +1,11 @@
+{
+  "extends": "@repo/typescript-config/base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "declaration": false,
+    "declarationMap": false,
+    "module": "ESNext",
+    "moduleResolution": "Bundler"
+  },
+  "include": [".vitepress/*.ts", "playwright.config.ts", "tests/**/*.ts"]
+}

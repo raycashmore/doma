@@ -104,6 +104,16 @@ to Svelte while consuming the same framework-neutral app registry and Tailwind
 design tokens. The contract is product identity and navigation—not a universal
 component abstraction.
 
+### Pattern guidance
+
+[The pattern guide](https://doma-design-guide.vercel.app) explains shared behaviour,
+platform differences and native source references. Sign in with an authorized Vercel
+account, or run `pnpm --filter design-guide dev` to browse it on <http://127.0.0.1:3007>.
+See [guide usage](apps/design-guide/README.md). Agents can use
+[the repository catalog](packages/design-system/generated/catalog.md) without a server.
+The first List pattern is proposed. Native token adoption, dedicated Pencil proof
+and protected hosting are available; device/accessibility checks and shared promotion remain open.
+
 ### Raw inputs in, derived views out
 
 The finance model stores source values and derives totals at read time. This
@@ -171,7 +181,9 @@ pnpm ci:local
 ```
 
 CI uses the same checks via `pnpm ci:checks`, which forces Turbo tasks so local
-cache hits cannot hide a clean-run failure.
+cache hits cannot hide a clean-run failure. The full sequence includes the guide
+browser smoke checks and a tracked-file cleanliness guard; `ci:local` installs
+dependencies and Chromium first.
 
 Or run individual checks:
 

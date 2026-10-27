@@ -1,0 +1,722 @@
+{
+  "version": "2.21",
+  "children": [
+    {
+      "type": "frame",
+      "id": "xez2P",
+      "x": 0,
+      "y": 0,
+      "name": "Web / populated / annotated",
+      "clip": true,
+      "width": 760,
+      "fill": "#f7f5f0",
+      "layout": "vertical",
+      "gap": 20,
+      "padding": 32,
+      "children": [
+        {
+          "type": "text",
+          "id": "oGtKe",
+          "name": "Proof title",
+          "fill": "$proof-note-color",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "01 / WEB · POPULATED",
+          "fontFamily": "DM Sans",
+          "fontSize": 13,
+          "fontWeight": "bold"
+        },
+        {
+          "type": "text",
+          "id": "W8Vn6T",
+          "name": "Pattern title",
+          "fill": "#3d2e22",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "List overview and access",
+          "fontFamily": "Merriweather",
+          "fontSize": 28,
+          "fontWeight": "bold"
+        },
+        {
+          "type": "frame",
+          "id": "Bt07v",
+          "name": "Web accessible list surface",
+          "width": "fill_container",
+          "fill": "#fffcf6",
+          "cornerRadius": 24,
+          "layout": "vertical",
+          "gap": 16,
+          "padding": 20,
+          "children": [
+            {
+              "type": "text",
+              "id": "agCdh",
+              "name": "List identity",
+              "fill": "#3d2e22",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Shopping",
+              "fontFamily": "Merriweather",
+              "fontSize": 22,
+              "fontWeight": "bold"
+            },
+            {
+              "type": "frame",
+              "id": "XAJCX",
+              "name": "Native add-item affordance",
+              "width": "fill_container",
+              "fill": "#faf9f7",
+              "cornerRadius": 16,
+              "padding": 12,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "PcRu5",
+                  "name": "Add-item placeholder",
+                  "fill": "#7c6755",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "+   Add an item or paste a list…",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "p8jGmg",
+              "name": "Native order",
+              "fill": "#7c6755",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Items  2                                     Group  Manual order",
+              "fontFamily": "DM Sans",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "pLWjx",
+              "name": "Web active row Apples",
+              "width": "fill_container",
+              "gap": "$doma-web-space-list-item-content-gap",
+              "padding": 8,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "Znlx6",
+                  "name": "Drag to reorder Apples",
+                  "width": 24,
+                  "height": 28,
+                  "icon": "grip-vertical",
+                  "library": "lucide",
+                  "fill": "#7c6755"
+                },
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 6,
+                  "id": "kU7yo",
+                  "name": "Mark Apples complete",
+                  "fill": "#fffcf6",
+                  "width": 20,
+                  "height": 20,
+                  "stroke": "#9dbb8d",
+                  "strokeWidth": 2
+                },
+                {
+                  "type": "text",
+                  "id": "sKCuh",
+                  "name": "Open details for Apples",
+                  "fill": "$doma-web-color-content-primary",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Apples",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 14,
+                  "fontWeight": "600"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "Crcfd",
+              "name": "Web active row Rice",
+              "width": "fill_container",
+              "gap": "$doma-web-space-list-item-content-gap",
+              "padding": 8,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "COzuK",
+                  "name": "Drag to reorder Rice",
+                  "width": 24,
+                  "height": 28,
+                  "icon": "grip-vertical",
+                  "library": "lucide",
+                  "fill": "#7c6755"
+                },
+                {
+                  "type": "rectangle",
+                  "cornerRadius": 6,
+                  "id": "GPSCs",
+                  "name": "Mark Rice complete",
+                  "fill": "#fffcf6",
+                  "width": 20,
+                  "height": 20,
+                  "stroke": "#9dbb8d",
+                  "strokeWidth": 2
+                },
+                {
+                  "type": "text",
+                  "id": "I0Y8G",
+                  "name": "Open details for Rice",
+                  "fill": "$doma-web-color-content-primary",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Rice",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 14,
+                  "fontWeight": "600"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "ncoWR",
+          "name": "Web annotation",
+          "fill": "#3d2e22",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "Identity → active items → native actions. Completion and detail are sibling buttons. Manual order is preserved; grouping remains a web choice.",
+          "fontFamily": "DM Sans",
+          "fontSize": 14,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "text",
+          "id": "Xv6Hs",
+          "name": "Managed-role annotation",
+          "fill": "#3d2e22",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "Active titles bind the web primary role. The 8px row gap applies between all adjacent children, including completion → title.",
+          "fontFamily": "DM Sans",
+          "fontSize": 13,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "text",
+          "id": "me3jL",
+          "name": "Accessibility annotation",
+          "fill": "#53645b",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "Native browser: Enter/Space opens details; completion is separate. Drag-handle focus and screen-reader use remain unverified.",
+          "fontFamily": "DM Sans",
+          "fontSize": 13,
+          "fontWeight": "normal"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "Otzhh",
+      "x": 840,
+      "y": 0,
+      "name": "Web / unavailable / annotated",
+      "clip": true,
+      "width": 760,
+      "fill": "#f7f5f0",
+      "layout": "vertical",
+      "gap": 20,
+      "padding": 32,
+      "children": [
+        {
+          "type": "text",
+          "id": "WA21B",
+          "name": "Proof title",
+          "fill": "#53645b",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "02 / WEB · UNAVAILABLE",
+          "fontFamily": "DM Sans",
+          "fontSize": 13,
+          "fontWeight": "bold"
+        },
+        {
+          "type": "text",
+          "id": "Wkz5G",
+          "name": "Pattern title",
+          "fill": "#3d2e22",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "Access replaces content",
+          "fontFamily": "Merriweather",
+          "fontSize": 28,
+          "fontWeight": "bold"
+        },
+        {
+          "type": "frame",
+          "id": "g5ssse",
+          "name": "Web unavailable native surface",
+          "width": "fill_container",
+          "fill": "#fffcf6",
+          "cornerRadius": 24,
+          "layout": "vertical",
+          "padding": 24,
+          "children": [
+            {
+              "type": "text",
+              "id": "CiP5U",
+              "name": "Web unavailable message",
+              "fill": "#3d2e22",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "This list is unavailable.",
+              "fontFamily": "DM Sans",
+              "fontSize": 18,
+              "fontWeight": "600"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "o4AcT",
+          "name": "Unavailable annotation",
+          "fill": "#3d2e22",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "The selected null response removes prior list details and item actions. There is no recovery button inside this state; choose another list through app navigation.",
+          "fontFamily": "DM Sans",
+          "fontSize": 14,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "text",
+          "id": "Mf23C",
+          "name": "Accessibility annotation",
+          "fill": "#53645b",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "Read the unavailable message in place of inaccessible content. Do not leave old focusable item controls. Browser regression verifies replacement; screen-reader review remains open.",
+          "fontFamily": "DM Sans",
+          "fontSize": 13,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "text",
+          "id": "yVXi0",
+          "name": "Scope annotation",
+          "fill": "#3d2e22",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "Illustration of the native detail region, not a full application screen. No previous title, items or edit controls remain in this surface.",
+          "fontFamily": "DM Sans",
+          "fontSize": 13,
+          "fontWeight": "normal"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "It5oP",
+      "x": 1680,
+      "y": 0,
+      "name": "Android Glance / populated / annotated",
+      "clip": true,
+      "width": 760,
+      "fill": "#f7f5f0",
+      "layout": "vertical",
+      "gap": 20,
+      "padding": 32,
+      "children": [
+        {
+          "type": "text",
+          "id": "gHtm8",
+          "name": "Proof title",
+          "fill": "#53645b",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "03 / ANDROID GLANCE · POPULATED",
+          "fontFamily": "DM Sans",
+          "fontSize": 13,
+          "fontWeight": "bold"
+        },
+        {
+          "type": "text",
+          "id": "ejAre",
+          "name": "Pattern title",
+          "fill": "#3d2e22",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "Saved snapshot, native continuation",
+          "fontFamily": "Merriweather",
+          "fontSize": 26,
+          "fontWeight": "bold"
+        },
+        {
+          "type": "frame",
+          "id": "HP5gW",
+          "name": "Glance saved snapshot surface",
+          "width": 320,
+          "height": 260,
+          "fill": "#fff8ef",
+          "cornerRadius": 20,
+          "layout": "vertical",
+          "padding": 14,
+          "children": [
+            {
+              "type": "frame",
+              "id": "mdagQ",
+              "name": "Glance identity and continuation",
+              "width": "fill_container",
+              "gap": 10,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "BD7BC",
+                  "name": "Glance list identity",
+                  "fill": "#2e1e19",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Shopping",
+                  "fontFamily": "Roboto",
+                  "fontSize": 18,
+                  "fontWeight": "bold"
+                },
+                {
+                  "type": "frame",
+                  "id": "GVSvV",
+                  "name": "Open selected Lists PWA",
+                  "fill": "#6c3d2d",
+                  "cornerRadius": 12,
+                  "padding": [
+                    6,
+                    8
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "dfMLU",
+                      "name": "Native open action label",
+                      "fill": "#fff8ef",
+                      "content": "Open list ↗",
+                      "fontFamily": "Roboto",
+                      "fontSize": 11,
+                      "fontWeight": "bold"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "Y2mTa",
+              "name": "Glance freshness padding",
+              "width": "fill_container",
+              "padding": [
+                2,
+                0,
+                0,
+                0
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "a8eBSS",
+                  "name": "Glance active count and last-success age",
+                  "fill": "#76655d",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "2 active · updated 5m ago",
+                  "fontFamily": "Roboto",
+                  "fontSize": 12,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "BiDhE",
+              "name": "Glance active row Apples",
+              "width": "fill_container",
+              "padding": [
+                9,
+                0,
+                0,
+                0
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "t2iZL",
+                  "name": "Glance bullet Apples",
+                  "fill": "#e26d50",
+                  "content": "•",
+                  "fontFamily": "Roboto",
+                  "fontSize": 14,
+                  "fontWeight": "bold"
+                },
+                {
+                  "type": "frame",
+                  "id": "vqAGB",
+                  "name": "Glance marker-to-title padding Apples",
+                  "width": "fill_container",
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    "$doma-android-space-list-item-content-gap"
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "SNH4U",
+                      "name": "Glance active title Apples",
+                      "fill": "$doma-android-color-content-primary",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Apples",
+                      "fontFamily": "Roboto",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "f6Xc4",
+              "name": "Glance active row Rice",
+              "width": "fill_container",
+              "padding": [
+                9,
+                0,
+                0,
+                0
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "Nh1nI",
+                  "name": "Glance bullet Rice",
+                  "fill": "#e26d50",
+                  "content": "•",
+                  "fontFamily": "Roboto",
+                  "fontSize": 14,
+                  "fontWeight": "bold"
+                },
+                {
+                  "type": "frame",
+                  "id": "yH5r3",
+                  "name": "Glance marker-to-title padding Rice",
+                  "width": "fill_container",
+                  "padding": [
+                    0,
+                    0,
+                    0,
+                    "$doma-android-space-list-item-content-gap"
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Ck9qe",
+                      "name": "Glance active title Rice",
+                      "fill": "$doma-android-color-content-primary",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Rice",
+                      "fontFamily": "Roboto",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "goJsU",
+          "name": "Snapshot annotation",
+          "fill": "#3d2e22",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "Identity → count / last-success age → active items in returned order. Open list and item taps open the selected Lists PWA route; no widget editing.",
+          "fontFamily": "DM Sans",
+          "fontSize": 14,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "text",
+          "id": "D7o8fQ",
+          "name": "Managed-role annotation",
+          "fill": "#3d2e22",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "Android active titles use their own primary role. Marker-to-title start padding is 7 logical dp. These values deliberately differ from web.",
+          "fontFamily": "DM Sans",
+          "fontSize": 13,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "text",
+          "id": "qo916",
+          "name": "Accessibility annotation",
+          "fill": "#53645b",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "Launcher, TalkBack reading order, action announcements and real PWA launch need device verification. JVM tests prove text and action targets only.",
+          "fontFamily": "DM Sans",
+          "fontSize": 13,
+          "fontWeight": "normal"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "mwa5k",
+      "x": 2520,
+      "y": 0,
+      "name": "Android Glance / unavailable / annotated",
+      "clip": true,
+      "width": 760,
+      "fill": "#f7f5f0",
+      "layout": "vertical",
+      "gap": 20,
+      "padding": 32,
+      "children": [
+        {
+          "type": "text",
+          "id": "nQOXk",
+          "name": "Proof title",
+          "fill": "#53645b",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "04 / ANDROID GLANCE · UNAVAILABLE",
+          "fontFamily": "DM Sans",
+          "fontSize": 13,
+          "fontWeight": "bold"
+        },
+        {
+          "type": "text",
+          "id": "BOkNi",
+          "name": "Pattern title",
+          "fill": "#3d2e22",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "Access loss clears the snapshot",
+          "fontFamily": "Merriweather",
+          "fontSize": 26,
+          "fontWeight": "bold"
+        },
+        {
+          "type": "frame",
+          "id": "uGZOE",
+          "name": "Glance unavailable native surface",
+          "width": 320,
+          "height": 180,
+          "fill": "#fff8ef",
+          "cornerRadius": 20,
+          "layout": "vertical",
+          "gap": 8,
+          "padding": 16,
+          "children": [
+            {
+              "type": "text",
+              "id": "OyRaV",
+              "name": "Glance brand",
+              "fill": "#e26d50",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "DOMA LISTS",
+              "fontFamily": "Roboto",
+              "fontSize": 10,
+              "fontWeight": "bold"
+            },
+            {
+              "type": "text",
+              "id": "uRdqS",
+              "name": "Glance unavailable message",
+              "fill": "#2e1e19",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "List unavailable.",
+              "fontFamily": "Roboto",
+              "fontSize": 16,
+              "fontWeight": "bold"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "QEIh0",
+          "name": "Unavailable annotation",
+          "fill": "#3d2e22",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "Invalid access clears the saved snapshot and affected widget selections. The previous list identity, count, freshness, items and Open list action are absent.",
+          "fontFamily": "DM Sans",
+          "fontSize": 14,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "text",
+          "id": "O28kbS",
+          "name": "Recovery annotation",
+          "fill": "#3d2e22",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "No inline retry or action is offered. Reconfigure in Doma. A transient failure is different: keep the snapshot and its last-success age; never report a successful current refresh.",
+          "fontFamily": "DM Sans",
+          "fontSize": 14,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "text",
+          "id": "iIYO4",
+          "name": "Accessibility annotation",
+          "fill": "#53645b",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "The message must replace inaccessible content. Real TalkBack and launcher checks remain open; this visual composition cannot certify them.",
+          "fontFamily": "DM Sans",
+          "fontSize": 13,
+          "fontWeight": "normal"
+        }
+      ]
+    }
+  ],
+  "variables": {
+    "proof-note-color": {
+      "type": "color",
+      "value": "#53645b"
+    },
+    "doma-web-color-content-primary": {
+      "type": "color",
+      "value": "#3d2e22"
+    },
+    "doma-web-space-list-item-content-gap": {
+      "type": "number",
+      "value": 8
+    },
+    "doma-android-color-content-primary": {
+      "type": "color",
+      "value": "#2e1e19"
+    },
+    "doma-android-space-list-item-content-gap": {
+      "type": "number",
+      "value": 7
+    }
+  },
+  "fileToken": "d345908f-3015-40ec-804a-72db6df77e5f"
+}

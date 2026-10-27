@@ -1,0 +1,39 @@
+{
+  "$description": "Existing native values preserved for the first List role candidates.",
+  "foundation": {
+    "color": {
+      "webPrimary": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.23921568627450981, 0.1803921568627451, 0.13333333333333333],
+          "alpha": 1
+        }
+      },
+      "androidPrimary": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.1803921568627451, 0.11764705882352941, 0.09803921568627451],
+          "alpha": 1
+        }
+      }
+    },
+    "space": {
+      "webListGap": {
+        "$type": "dimension",
+        "$value": {
+          "value": 8,
+          "unit": "px"
+        }
+      },
+      "androidListGap": {
+        "$type": "dimension",
+        "$value": {
+          "value": 7,
+          "unit": "px"
+        }
+      }
+    }
+  }
+}

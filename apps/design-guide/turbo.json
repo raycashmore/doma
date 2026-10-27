@@ -1,0 +1,14 @@
+{
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "cache": false,
+      "outputs": [".vitepress/dist/**"],
+      "env": ["DESIGN_GUIDE_REVISION"],
+      "passThroughEnv": ["TURBO_HASH"]
+    },
+    "dev": {
+      "passThroughEnv": ["TURBO_HASH"]
+    }
+  }
+}

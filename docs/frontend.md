@@ -2,7 +2,7 @@
 
 ## Frameworks
 
-The frontend is intentionally multi-framework. Home is a client-side Vue 3 SPA with Vue Router. Budget and Meals use TanStack Start with React 19, Schedule uses Next.js, and Lists uses SvelteKit. Shared cross-framework UI contracts belong in `@repo/app-registry` and `@repo/tokens`; `@repo/shell` and `@repo/ui` remain React-only.
+The frontend is intentionally multi-framework. Home is a client-side Vue 3 SPA with Vue Router. Budget and Meals use TanStack Start with React 19, Schedule uses Next.js, and Lists uses SvelteKit. Shared cross-framework app metadata and tokens belong in `@repo/app-registry` and `@repo/tokens`; pattern contracts and guidance belong in `@repo/design-system` (see [package usage](../packages/design-system/README.md)); `@repo/shell` and `@repo/ui` remain React-only.
 
 ## React-zone styling
 

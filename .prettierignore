@@ -16,3 +16,15 @@ yarn.lock
 **/convex/_generated
 **/routeTree.gen.ts
 **/next-env.d.ts
+
+# Deterministic agent catalogs are formatted by their generator.
+packages/design-system/generated/
+
+# Browser verification artifacts
+**/test-results/
+**/playwright-report/
+**/.vitepress/cache/
+
+# Token output bytes are owned by the generator; preserve the upstream schema snapshot.
+packages/tokens/generated/
+packages/tokens/schema/dtcg-2025.10-format.json

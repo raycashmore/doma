@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "format": "DTCG 2025.10",
+  "allowedTypes": ["color", "dimension"],
+  "aliasPolicy": "Whole-token aliases only; explicit types on every token. No extends, root, resolver modules or composite values.",
+  "conversions": {
+    "web": "sRGB to CSS; layout px remains px.",
+    "android": "sRGB to ARGB; adopted layout px becomes dp as an explicit logical-unit policy. No typography/sp/rem conversions."
+  },
+  "platforms": {
+    "web": {
+      "sources": ["source/foundation.json", "source/web.json"],
+      "reason": "Preserve existing Svelte title #3d2e22 and 8px row gap (also separates adjacent children)."
+    },
+    "android": {
+      "sources": ["source/foundation.json", "source/android.json"],
+      "reason": "Preserve existing Glance title #2e1e19 and 7dp marker-to-title padding."
+    }
+  },
+  "roles": [
+    {
+      "id": "color.content.primary",
+      "type": "color",
+      "meaning": "Primary active-item title text.",
+      "pencilNames": {
+        "web": "doma-web-color-content-primary",
+        "android": "doma-android-color-content-primary"
+      }
+    },
+    {
+      "id": "space.listItemContentGap",
+      "type": "dimension",
+      "meaning": "Gap between a leading item affordance/marker and title, within native row structure.",
+      "pencilNames": {
+        "web": "doma-web-space-list-item-content-gap",
+        "android": "doma-android-space-list-item-content-gap"
+      }
+    }
+  ]
+}

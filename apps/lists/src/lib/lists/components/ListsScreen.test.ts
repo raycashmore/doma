@@ -125,9 +125,7 @@ describe('ListsScreen mobile details', () => {
     const target = await renderScreen();
     await provideLiveData();
 
-    target.querySelectorAll<HTMLElement>('[role="button"]').forEach((el) => {
-      if (el.textContent?.includes('Bananas')) el.click();
-    });
+    target.querySelector<HTMLButtonElement>('button[aria-label="Open details for Bananas"]')?.click();
     await tick();
     expect(target.querySelector('textarea')?.value).toBe('Buy firm ones so they last the week.');
 
@@ -136,9 +134,7 @@ describe('ListsScreen mobile details', () => {
     await tick();
     expect(target.querySelector('textarea')).toBeNull();
 
-    target.querySelectorAll<HTMLElement>('[role="button"]').forEach((el) => {
-      if (el.textContent?.includes('Bananas')) el.click();
-    });
+    target.querySelector<HTMLButtonElement>('button[aria-label="Open details for Bananas"]')?.click();
     await tick();
     expect(target.querySelector('textarea')?.value).toBe('Buy firm ones so they last the week.');
   });
@@ -563,5 +559,34 @@ describe('ListsScreen empty state', () => {
     const nameInput = target.querySelector<HTMLInputElement>('input[placeholder="New list name"]');
     expect(nameInput).not.toBeNull();
     expect(document.activeElement).toBe(nameInput);
+  });
+});
+
+describe('List overview and access contract', () => {
+  it('replaces formerly accessible content when the selected list becomes unavailable', async () => {
+    const target = await renderScreen();
+    await provideLiveData();
+    expect(target.querySelector('button[aria-label="Mark Milk complete"]')).not.toBeNull();
+    queryResults[1]?.set({ data: null, isLoading: false });
+    await tick();
+    expect(target.textContent).toContain('This list is unavailable.');
+    expect(target.textContent).not.toContain('Milk');
+    expect(target.querySelector('button[aria-label="Mark Milk complete"]')).toBeNull();
+  });
+
+  it('keeps completion and deletion separate from the native detail action', async () => {
+    const target = await renderScreen();
+    await provideLiveData();
+    const detail = target.querySelector<HTMLButtonElement>('button[aria-label="Open details for Milk"]');
+    expect(detail).not.toBeNull();
+    const complete = target.querySelector<HTMLButtonElement>('button[aria-label="Mark Milk complete"]');
+    complete?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    complete?.click();
+    await tick();
+    expect(target.querySelector('button[aria-label="Close details"]')).toBeNull();
+    expect(detail?.querySelector('button')).toBeNull();
+    target.querySelector<HTMLButtonElement>('button[aria-label="Open details for Bananas"]')?.click();
+    await tick();
+    expect(target.querySelector('button[aria-label="Close details"]')).not.toBeNull();
   });
 });

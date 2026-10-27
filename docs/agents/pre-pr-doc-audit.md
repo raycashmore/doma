@@ -1,7 +1,10 @@
 # Pre-PR Docs Audit
 
-Before opening or updating a PR, check whether the branch changed behavior,
+Before the final commit or publication, check whether the branch changed behavior,
 commands, deployment, architecture, privacy posture, or agent workflow.
+Confirm the audit is still current before opening or updating a PR. Keep durable
+usage and maintenance guidance in the repo; record changing delivery status and
+acceptance evidence in the canonical tracker.
 
 Update the matching docs in the same PR when they are affected:
 

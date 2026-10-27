@@ -5,6 +5,28 @@
   "type": "module",
   "exports": {
     "./tokens.css": "./tokens.css",
-    "./theme.css": "./theme.css"
+    "./theme.css": "./theme.css",
+    "./validation": "./scripts/validate.ts",
+    "./pencil": "./scripts/pencil.ts"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^22.20.5",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "eslint": "^9.39.5",
+    "style-dictionary": "5.7.1",
+    "tsx": "^4.23.15",
+    "typescript": "5.9.2"
+  },
+  "scripts": {
+    "generate": "node --import tsx scripts/cli.ts generate",
+    "check": "node --import tsx scripts/cli.ts check",
+    "build": "node --import tsx scripts/cli.ts check",
+    "test": "node --import tsx scripts/cli.ts check && node --import tsx --test scripts/*.test.ts",
+    "lint": "eslint .",
+    "check-types": "tsc --noEmit",
+    "pencil:prepare": "node --import tsx scripts/pencil.ts"
   }
 }

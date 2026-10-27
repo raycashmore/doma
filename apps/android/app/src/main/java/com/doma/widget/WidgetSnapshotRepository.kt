@@ -30,30 +30,44 @@ class WidgetSnapshotRepository(
         }
     }
 
-    suspend fun refreshList(listPublicId: String): SnapshotRefreshResult = try {
-        val snapshot = withTimeout(SUBSCRIPTION_TIMEOUT_MS) {
-            application.convexClient
-                .subscribe<WidgetSnapshotProjection?>(
-                    name = "lists/widget:getSnapshot",
-                    args = mapOf("publicId" to listPublicId),
-                )
-                .first()
-                .getOrThrow()
-        }
-
-        if (snapshot == null) {
-            application.widgetStateStore.clearUnavailableList(listPublicId)
-            SnapshotRefreshResult.Unavailable
-        } else {
-            val savedSnapshot = snapshot.toStoredSnapshot(refreshedAt = System.currentTimeMillis())
-            application.widgetStateStore.saveSnapshot(savedSnapshot)
-            SnapshotRefreshResult.Available(savedSnapshot)
-        }
-    } catch (_: Exception) {
-        SnapshotRefreshResult.TransientFailure
-    }
+    suspend fun refreshList(listPublicId: String): SnapshotRefreshResult = refreshWidgetSnapshot(
+        listPublicId = listPublicId,
+        load = {
+            withTimeout(SUBSCRIPTION_TIMEOUT_MS) {
+                application.convexClient
+                    .subscribe<WidgetSnapshotProjection?>(
+                        name = "lists/widget:getSnapshot",
+                        args = mapOf("publicId" to listPublicId),
+                    )
+                    .first()
+                    .getOrThrow()
+            }
+        },
+        save = application.widgetStateStore::saveSnapshot,
+        clearUnavailable = application.widgetStateStore::clearUnavailableList,
+    )
 
     private companion object {
         const val SUBSCRIPTION_TIMEOUT_MS = 10_000L
     }
+}
+
+internal suspend fun refreshWidgetSnapshot(
+    listPublicId: String,
+    load: suspend () -> WidgetSnapshotProjection?,
+    save: (WidgetSnapshot) -> Unit,
+    clearUnavailable: (String) -> Unit,
+    now: () -> Long = System::currentTimeMillis,
+): SnapshotRefreshResult = try {
+    val projection = load()
+    if (projection == null) {
+        clearUnavailable(listPublicId)
+        SnapshotRefreshResult.Unavailable
+    } else {
+        val snapshot = projection.toStoredSnapshot(refreshedAt = now())
+        save(snapshot)
+        SnapshotRefreshResult.Available(snapshot)
+    }
+} catch (_: Exception) {
+    SnapshotRefreshResult.TransientFailure
 }
