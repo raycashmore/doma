@@ -23,6 +23,22 @@ Doma is a Vercel Multi-Zones monorepo. `apps/home` owns the apex domain and rewr
 | `packages/eslint-config`     | —                    | Shared ESLint configs                                                        |
 | `packages/typescript-config` | —                    | Shared TypeScript configs                                                    |
 
+## Pattern guide boundary
+
+`apps/design-guide` is a local VitePress site on loopback port 3007, independent
+of Home zones, Clerk and service workers. It depends on `packages/design-system`,
+which owns pattern contracts, prose, validation and deterministic committed agent
+catalogs. That package depends on `packages/tokens` for canonical candidate
+role/profile data; native token generation and adoption follow in RAY-228.
+
+Explicit `generate` updates catalogs. Check/build never repair committed output.
+Composed Markdown in `packages/design-system/dist/guide` and site output in
+`apps/design-guide/.vitepress/dist` are ignored. Build/reference checks are
+noncached and verify the actual checkout revision, including dirty drafts.
+See [package usage](../packages/design-system/README.md) for source ownership
+and [guide commands](../apps/design-guide/README.md). No hosted project or URL
+is provisioned by this slice.
+
 ## Multi-Zones
 
 `apps/home/vercel.json` rewrites paths to other Vercel projects. TanStack Start sub-apps build with `base: '/<path>/'` (Vite) plus `basepath: '/<path>'` (TanStack Router) so asset URLs and route matching agree. Next.js sub-apps (e.g. `schedule`) achieve the same with `basePath` set to the mount path — **in production only**, unset in dev — so cross-port dev links to `localhost:<port>/` still resolve. (Next derives the asset prefix from `basePath`, so assets serve under the mount path without a separate `assetPrefix`.) SvelteKit sub-apps (e.g. `lists`) use `kit.paths.base` in production and an empty base in dev for the same reason. Cross-app navigation is real browser navigation; same apex domain means a single Clerk cookie covers every zone.

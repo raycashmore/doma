@@ -16,3 +16,6 @@ yarn.lock
 **/convex/_generated
 **/routeTree.gen.ts
 **/next-env.d.ts
+
+# Deterministic agent catalogs are formatted by their generator.
+packages/design-system/generated/

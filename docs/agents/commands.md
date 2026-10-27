@@ -85,3 +85,13 @@ pnpm --filter api-agent dev     # Agent API on :3006
 pnpm --filter api-agent test    # Agent unit tests
 pnpm --filter home build        # Verify Home route/UI/build changes
 ```
+
+## Pattern guide
+
+```bash
+pnpm --filter design-guide dev       # Local pattern guide on 127.0.0.1:3007
+pnpm --filter design-guide build     # Validate, assemble and render the static guide
+pnpm --filter design-guide preview   # Browse the built guide on 127.0.0.1:3007
+pnpm --filter @repo/design-system generate # Explicitly update committed catalogs
+pnpm --filter @repo/design-system check    # Non-mutating validation/staleness check
+```

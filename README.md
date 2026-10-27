@@ -104,6 +104,15 @@ to Svelte while consuming the same framework-neutral app registry and Tailwind
 design tokens. The contract is product identity and navigation—not a universal
 component abstraction.
 
+### Pattern guidance
+
+[The local pattern guide](apps/design-guide/README.md) explains shared behaviour,
+platform differences and native source references. Run `pnpm --filter design-guide dev`
+to browse it on <http://127.0.0.1:3007>. Agents can use
+[the repository catalog](packages/design-system/generated/catalog.md) without a server.
+The first List pattern is proposed; native token adoption, dedicated Pencil proof
+and protected hosting remain separate later slices.
+
 ### Raw inputs in, derived views out
 
 The finance model stores source values and derives totals at read time. This

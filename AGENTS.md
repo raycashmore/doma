@@ -12,6 +12,10 @@ Use `pnpm` via the version declared in `package.json` (`packageManager`).
 - Before committing, follow [Git Workflow](docs/agents/git-workflow.md).
 - Follow the [TypeScript & Code Conventions](docs/agents/typescript.md) when writing or editing code.
 
+## Design guidance
+
+Before designing a UI feature or adopting a shared pattern, read [the local pattern catalog](packages/design-system/generated/catalog.md), then its linked contract and guide. [Package usage](packages/design-system/README.md) explains validation and browsing. Check proposed status and evidence gaps before reuse.
+
 ## Task-Specific Instructions
 
 - [Testing policy](docs/agents/testing-policy.md)

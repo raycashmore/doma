@@ -1,0 +1,26 @@
+{
+  "name": "design-guide",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/run.mjs build",
+    "dev": "node scripts/run.mjs dev",
+    "preview": "vite preview --host 127.0.0.1 --port 3007 --strictPort --outDir .vitepress/dist",
+    "lint": "eslint .",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@repo/design-system": "workspace:*"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^22.20.5",
+    "eslint": "^9.39.5",
+    "typescript": "5.9.2",
+    "vitepress": "1.6.4",
+    "vue": "^3.5.0",
+    "vite": "6.4.5"
+  }
+}

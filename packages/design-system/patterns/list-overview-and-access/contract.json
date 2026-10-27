@@ -1,0 +1,152 @@
+{
+  "schemaVersion": 1,
+  "id": "list-overview-and-access",
+  "kind": "pattern",
+  "version": "0.1.0",
+  "status": "proposed",
+  "title": "List overview and access",
+  "summary": "Identify a list, read active items, understand unavailable access and continue on web or Android.",
+  "tags": ["lists", "checklist", "access", "widget", "freshness"],
+  "roles": [
+    {
+      "id": "identity",
+      "meaning": "Name of the accessible list."
+    },
+    {
+      "id": "content",
+      "meaning": "Active items in native order."
+    },
+    {
+      "id": "status",
+      "meaning": "Availability and platform-specific freshness."
+    },
+    {
+      "id": "continuation",
+      "meaning": "Native action to continue with this list."
+    }
+  ],
+  "states": [
+    {
+      "id": "populated",
+      "meaning": "Active items exist."
+    },
+    {
+      "id": "empty",
+      "meaning": "The accessible list has no active items."
+    },
+    {
+      "id": "loading",
+      "meaning": "The web is waiting for initial list data."
+    },
+    {
+      "id": "unconfigured",
+      "meaning": "The widget has no saved snapshot to display."
+    },
+    {
+      "id": "unavailable",
+      "meaning": "The selected list cannot be accessed."
+    },
+    {
+      "id": "transient-failure",
+      "meaning": "A refresh or mutation failed without proving loss of access."
+    }
+  ],
+  "rules": [
+    {
+      "id": "identity",
+      "level": "must",
+      "behaviour": "Show the list identity when content is accessible.",
+      "platforms": ["web", "android"]
+    },
+    {
+      "id": "active-content",
+      "level": "must",
+      "behaviour": "Distinguish active items from completed items and respect native ordering.",
+      "platforms": ["web", "android"]
+    },
+    {
+      "id": "unavailable-content",
+      "level": "must",
+      "behaviour": "Replace inaccessible list content with an unavailable message.",
+      "platforms": ["web", "android"]
+    },
+    {
+      "id": "continue",
+      "level": "must",
+      "behaviour": "Offer native continuation appropriate to the accessible list; the widget opens the selected web list rather than editing it.",
+      "platforms": ["web", "android"]
+    },
+    {
+      "id": "freshness",
+      "level": "must",
+      "behaviour": "Retain the last-success time on transient widget failure; never describe cached content as a successful current refresh.",
+      "platforms": ["android"]
+    },
+    {
+      "id": "accessible-actions",
+      "level": "should",
+      "behaviour": "Expose meaningful reading and action labels and verify native keyboard or TalkBack use.",
+      "platforms": ["web", "android"]
+    }
+  ],
+  "tokenRoles": [
+    {
+      "id": "color.content.primary",
+      "platforms": ["web", "android"]
+    },
+    {
+      "id": "space.listItemContentGap",
+      "platforms": ["web", "android"]
+    }
+  ],
+  "implementations": [
+    {
+      "platform": "web",
+      "framework": "Svelte",
+      "sourcePaths": [
+        "apps/lists/src/lib/lists/components/ListsScreen.svelte",
+        "apps/lists/src/lib/lists/components/ListItemRow.svelte"
+      ],
+      "testPaths": ["apps/lists/src/lib/lists/components/ListsScreen.test.ts"],
+      "ruleIds": ["identity", "active-content", "unavailable-content", "continue", "accessible-actions"],
+      "stateIds": ["populated", "empty", "loading", "unavailable", "transient-failure"],
+      "exclusions": [
+        "No widget-style saved-snapshot freshness promise.",
+        "Unconfigured is a widget state; web instead offers list creation/selection."
+      ],
+      "gaps": [
+        "Unavailable regression scenario pending RAY-228.",
+        "Nested button-role row, key bubbling, drag handle and focus semantics need keyboard review.",
+        "Referenced tests are not a current run or full rule-coverage claim."
+      ]
+    },
+    {
+      "platform": "android",
+      "framework": "Kotlin / Glance",
+      "sourcePaths": [
+        "apps/android/app/src/main/java/com/doma/widget/DomaListWidget.kt",
+        "apps/android/app/src/main/java/com/doma/widget/WidgetSnapshotRepository.kt",
+        "apps/android/app/src/main/java/com/doma/widget/WidgetStateStore.kt",
+        "apps/android/app/src/main/java/com/doma/widget/WidgetLaunchActivity.kt"
+      ],
+      "testPaths": [
+        "apps/android/app/src/test/java/com/doma/widget/DomaListWidgetGlanceTest.kt",
+        "apps/android/app/src/test/java/com/doma/widget/WidgetStateReducerTest.kt",
+        "apps/android/app/src/test/java/com/doma/widget/DomaListWidgetTest.kt"
+      ],
+      "ruleIds": ["identity", "active-content", "unavailable-content", "continue", "freshness", "accessible-actions"],
+      "stateIds": ["populated", "empty", "unconfigured", "unavailable", "transient-failure"],
+      "exclusions": [
+        "Read-only snapshot; no item completion, editing, web grouping or completed-item view.",
+        "No separate loading presentation: missing snapshot uses choose-list copy.",
+        "No separate transient-error banner or inline retry in message states."
+      ],
+      "gaps": [
+        "Unavailable rendering and selected-list action assertions pending RAY-228.",
+        "TalkBack, launcher interaction and reading order not yet verified.",
+        "Referenced tests are not a current run or full rule-coverage claim."
+      ]
+    }
+  ],
+  "designReferences": []
+}

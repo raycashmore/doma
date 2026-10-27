@@ -1,0 +1,26 @@
+{
+  "name": "@repo/design-system",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate": "node --import tsx src/cli.ts generate",
+    "check": "node --import tsx src/cli.ts check",
+    "build": "node --import tsx src/cli.ts build",
+    "test": "node --import tsx src/cli.ts check && node --import tsx --test src/*.test.ts",
+    "lint": "eslint .",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@repo/tokens": "workspace:*",
+    "ajv": "8.20.0"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^22.20.5",
+    "eslint": "^9.39.5",
+    "typescript": "5.9.2",
+    "tsx": "^4.23.15"
+  }
+}

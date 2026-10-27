@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "patterns": [
+    {
+      "id": "list-overview-and-access",
+      "title": "List overview and access",
+      "summary": "Identify a list, read active items, understand unavailable access and continue on web or Android.",
+      "tags": [
+        "access",
+        "checklist",
+        "freshness",
+        "lists",
+        "widget"
+      ],
+      "status": "proposed",
+      "version": "0.1.0",
+      "contractPath": "packages/design-system/patterns/list-overview-and-access/contract.json",
+      "guidePath": "packages/design-system/patterns/list-overview-and-access/guide.md",
+      "tokenRoles": [
+        {
+          "id": "color.content.primary",
+          "platforms": [
+            "web",
+            "android"
+          ]
+        },
+        {
+          "id": "space.listItemContentGap",
+          "platforms": [
+            "web",
+            "android"
+          ]
+        }
+      ],
+      "platforms": [
+        {
+          "platform": "web",
+          "framework": "Svelte",
+          "stateIds": [
+            "populated",
+            "empty",
+            "loading",
+            "unavailable",
+            "transient-failure"
+          ],
+          "ruleIds": [
+            "identity",
+            "active-content",
+            "unavailable-content",
+            "continue",
+            "accessible-actions"
+          ],
+          "exclusions": [
+            "No widget-style saved-snapshot freshness promise.",
+            "Unconfigured is a widget state; web instead offers list creation/selection."
+          ],
+          "gaps": [
+            "Unavailable regression scenario pending RAY-228.",
+            "Nested button-role row, key bubbling, drag handle and focus semantics need keyboard review.",
+            "Referenced tests are not a current run or full rule-coverage claim."
+          ],
+          "sourcePaths": [
+            "apps/lists/src/lib/lists/components/ListsScreen.svelte",
+            "apps/lists/src/lib/lists/components/ListItemRow.svelte"
+          ],
+          "testPaths": [
+            "apps/lists/src/lib/lists/components/ListsScreen.test.ts"
+          ]
+        },
+        {
+          "platform": "android",
+          "framework": "Kotlin / Glance",
+          "stateIds": [
+            "populated",
+            "empty",
+            "unconfigured",
+            "unavailable",
+            "transient-failure"
+          ],
+          "ruleIds": [
+            "identity",
+            "active-content",
+            "unavailable-content",
+            "continue",
+            "freshness",
+            "accessible-actions"
+          ],
+          "exclusions": [
+            "Read-only snapshot; no item completion, editing, web grouping or completed-item view.",
+            "No separate loading presentation: missing snapshot uses choose-list copy.",
+            "No separate transient-error banner or inline retry in message states."
+          ],
+          "gaps": [
+            "Unavailable rendering and selected-list action assertions pending RAY-228.",
+            "TalkBack, launcher interaction and reading order not yet verified.",
+            "Referenced tests are not a current run or full rule-coverage claim."
+          ],
+          "sourcePaths": [
+            "apps/android/app/src/main/java/com/doma/widget/DomaListWidget.kt",
+            "apps/android/app/src/main/java/com/doma/widget/WidgetSnapshotRepository.kt",
+            "apps/android/app/src/main/java/com/doma/widget/WidgetStateStore.kt",
+            "apps/android/app/src/main/java/com/doma/widget/WidgetLaunchActivity.kt"
+          ],
+          "testPaths": [
+            "apps/android/app/src/test/java/com/doma/widget/DomaListWidgetGlanceTest.kt",
+            "apps/android/app/src/test/java/com/doma/widget/WidgetStateReducerTest.kt",
+            "apps/android/app/src/test/java/com/doma/widget/DomaListWidgetTest.kt"
+          ]
+        }
+      ],
+      "designReferences": []
+    }
+  ]
+}

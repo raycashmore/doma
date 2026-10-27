@@ -1,0 +1,10 @@
+{
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "cache": false,
+      "outputs": ["dist/guide/**"],
+      "env": ["DESIGN_GUIDE_REVISION"]
+    }
+  }
+}
