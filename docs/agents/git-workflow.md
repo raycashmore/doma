@@ -1,6 +1,6 @@
 # Git Workflow
 
-Before committing, run all four — this is the gate CI enforces, so a green local run means a green PR:
+Before committing, run all four code checks:
 
 ```bash
 pnpm format        # writes Prettier formatting (CI runs format:check, which only verifies)
@@ -10,6 +10,8 @@ pnpm test
 ```
 
 These are four separate tools, not one. In particular `lint` (ESLint) does **not** check Prettier formatting — code can pass `pnpm lint` while `pnpm format:check` fails. Always run `pnpm format` (or at least `pnpm format:check`) as part of the gate; do not treat a passing `lint` as covering formatting. When defining a task's "full gate" anywhere (e.g. an implementation plan), include all four commands.
+
+`pnpm ci:checks` runs the full CI gate: these checks plus builds, guide browser smoke tests and a check that verification leaves tracked files unchanged from the starting diff. Use `pnpm ci:local` to install dependencies and Chromium before the full gate. The four individual checks alone do not establish a passing CI run.
 
 Before opening or updating a PR, also run the [Pre-PR Docs Audit](pre-pr-doc-audit.md). Update impacted docs in the same PR, or mention in the PR notes that no docs changed because the audit found nothing stale.
 

@@ -180,7 +180,9 @@ pnpm ci:local
 ```
 
 CI uses the same checks via `pnpm ci:checks`, which forces Turbo tasks so local
-cache hits cannot hide a clean-run failure.
+cache hits cannot hide a clean-run failure. The full sequence includes the guide
+browser smoke checks and a tracked-file cleanliness guard; `ci:local` installs
+dependencies and Chromium first.
 
 Or run individual checks:
 

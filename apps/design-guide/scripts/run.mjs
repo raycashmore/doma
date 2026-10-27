@@ -16,9 +16,11 @@ function run(args) {
   if (result.error) throw result.error;
   if (result.status !== 0) process.exit(result.status ?? 1);
 }
-// Derive the actual checkout before Turbo. Direct package commands and CI use
-// the same graph; build tasks are noncached so app-reference deletion is visible.
-run(['turbo', 'run', 'build', '--filter=@repo/design-system']);
+// Turbo build already awaits ^build. Standalone commands and dev must assemble
+// dependencies themselves; dev has no build dependency in the task graph.
+if (process.argv[2] !== 'build' || !process.env.TURBO_HASH) {
+  run(['turbo', 'run', 'build', '--filter=@repo/design-system']);
+}
 run([
   '--filter',
   'design-guide',

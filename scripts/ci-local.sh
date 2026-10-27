@@ -22,4 +22,5 @@ fi
 export CI="${CI:-true}"
 
 pnpm install --frozen-lockfile
+pnpm --filter design-guide exec playwright install chromium
 pnpm ci:checks

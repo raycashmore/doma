@@ -26,6 +26,14 @@ All steps must pass. The pipeline cancels in-progress runs when a new commit is 
 
 Before a PR, run `pnpm ci:checks` and complete the repository's pre-PR documentation audit. Browser verification is additional evidence for user-visible work; it does not replace the automated gates.
 
+## Guide browser checks and build cleanliness
+
+`pnpm ci:checks` runs the CI-script regression fixtures, existing formatting/lint/type/unit checks and builds, then the guide's Chromium smoke suite. The suite checks navigation and keyboard search against the built site, plus loopback binding and strict-port behaviour. It uses its own port 3407, with no reuse of an existing server. For a targeted run, build the guide and run `pnpm --filter design-guide test:browser`.
+
+`pnpm ci:local` installs Chromium after the frozen package install. For checks without installation, first run `pnpm --filter design-guide exec playwright install chromium` once. GitHub Actions also installs Linux browser dependencies.
+
+The check script compares the tracked-file diff before and after verification. Existing local edits are allowed; any additional tracked-file change fails the check without resetting it. Generated route files must match the installed generator's output. The guard has disposable Git-fixture tests for clean, edited and build-mutated checkouts; run them with `node --test scripts/ci-checks.test.mjs`.
+
 ## Dependency security checks
 
 Run `pnpm audit` after dependency updates, then verify with `pnpm ci:checks`.

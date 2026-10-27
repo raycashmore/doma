@@ -9,37 +9,37 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TabsRouteImport } from './routes/_tabs'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as RecipesNewRouteImport } from './routes/recipes/new'
-import { Route as RecipesRecipeIdRouteImport } from './routes/recipes/$recipeId'
+import { Route as TabsRouteImport } from './routes/_tabs'
 import { Route as TabsWeekRouteImport } from './routes/_tabs/week'
+import { Route as RecipesRecipeIdRouteImport } from './routes/recipes/$recipeId'
+import { Route as RecipesNewRouteImport } from './routes/recipes/new'
 import { Route as TabsRecipesIndexRouteImport } from './routes/_tabs/recipes/index'
 import { Route as RecipesRecipeIdEditRouteImport } from './routes/recipes/$recipeId_.edit'
 
-const TabsRoute = TabsRouteImport.update({
-  id: '/_tabs',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RecipesNewRoute = RecipesNewRouteImport.update({
-  id: '/recipes/new',
-  path: '/recipes/new',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RecipesRecipeIdRoute = RecipesRecipeIdRouteImport.update({
-  id: '/recipes/$recipeId',
-  path: '/recipes/$recipeId',
+const TabsRoute = TabsRouteImport.update({
+  id: '/_tabs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TabsWeekRoute = TabsWeekRouteImport.update({
   id: '/week',
   path: '/week',
   getParentRoute: () => TabsRoute,
+} as any)
+const RecipesRecipeIdRoute = RecipesRecipeIdRouteImport.update({
+  id: '/recipes/$recipeId',
+  path: '/recipes/$recipeId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecipesNewRoute = RecipesNewRouteImport.update({
+  id: '/recipes/new',
+  path: '/recipes/new',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const TabsRecipesIndexRoute = TabsRecipesIndexRouteImport.update({
   id: '/recipes/',
@@ -116,13 +116,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/_tabs': {
-      id: '/_tabs'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof TabsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -130,18 +123,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/recipes/new': {
-      id: '/recipes/new'
-      path: '/recipes/new'
-      fullPath: '/recipes/new'
-      preLoaderRoute: typeof RecipesNewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/recipes/$recipeId': {
-      id: '/recipes/$recipeId'
-      path: '/recipes/$recipeId'
-      fullPath: '/recipes/$recipeId'
-      preLoaderRoute: typeof RecipesRecipeIdRouteImport
+    '/_tabs': {
+      id: '/_tabs'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof TabsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_tabs/week': {
@@ -150,6 +136,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/week'
       preLoaderRoute: typeof TabsWeekRouteImport
       parentRoute: typeof TabsRoute
+    }
+    '/recipes/$recipeId': {
+      id: '/recipes/$recipeId'
+      path: '/recipes/$recipeId'
+      fullPath: '/recipes/$recipeId'
+      preLoaderRoute: typeof RecipesRecipeIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recipes/new': {
+      id: '/recipes/new'
+      path: '/recipes/new'
+      fullPath: '/recipes/new'
+      preLoaderRoute: typeof RecipesNewRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_tabs/recipes/': {
       id: '/_tabs/recipes/'

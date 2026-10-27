@@ -33,9 +33,9 @@ Use the pnpm version declared in `package.json`. If `pnpm --version` does not
 match that declaration, run `corepack enable pnpm` before running repo commands.
 
 `pnpm ci:local` checks the pnpm version first, installs with the frozen
-lockfile, then runs `pnpm ci:checks`. `pnpm ci:checks` is the same format, lint,
-typecheck, test, and build sequence used by CI, and it forces Turbo tasks so a
-warm local cache cannot hide missing dependencies or broken scripts.
+lockfile, installs the guide Chromium browser, then runs `pnpm ci:checks`. `pnpm ci:checks` is the same format, lint,
+typecheck, test, build and guide browser-smoke sequence used by CI, and it forces Turbo tasks so a
+warm local cache cannot hide missing dependencies or broken scripts. It also fails if verification changes tracked files relative to the starting diff. Before running checks without installation, install Chromium once with `pnpm --filter design-guide exec playwright install chromium`.
 
 Schedule intentionally builds with `next build --webpack`. Next 16 defaults
 production builds to Turbopack, which currently spawns/binds an internal worker
