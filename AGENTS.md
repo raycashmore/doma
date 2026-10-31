@@ -12,6 +12,19 @@ Use `pnpm` via the version declared in `package.json` (`packageManager`).
 - Before committing, follow [Git Workflow](docs/agents/git-workflow.md).
 - Follow the [TypeScript & Code Conventions](docs/agents/typescript.md) when writing or editing code.
 
+## Planning source
+
+Linear is the planning source of truth. Start or resume work from the **Doma — now, next and later** document in the `Doma` Linear project (see [planning records](docs/agents/issue-tracker.md#planning-records)). Do not substitute GitHub Projects or infer a roadmap from commit history.
+
+## Operating workflow
+
+- **Resume or checkpoint:** read [tracker ownership and feedback](docs/agents/issue-tracker.md).
+- **Groom the backlog, select, expand or accept a capability:** read [product oversight](docs/agents/product-oversight.md).
+- **Prepare, implement, verify or publish:** read [delivery workflow](docs/agents/delivery-workflow.md).
+- **Report progress or close out:** read [progress reporting](docs/agents/progress-reporting.md).
+
+Shared defaults, review roles and skills stay in their personal locations. These documents adapt them to Doma; they grant no additional authority.
+
 ## Design guidance
 
 Before designing a UI feature or adopting a shared pattern, read [the local pattern catalog](packages/design-system/generated/catalog.md), then its linked contract and guide. [Package usage](packages/design-system/README.md) explains validation and browsing. Check proposed status and evidence gaps before reuse.
