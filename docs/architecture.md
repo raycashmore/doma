@@ -9,9 +9,10 @@ Doma is a Vercel Multi-Zones monorepo. `apps/home` owns the apex domain and rewr
 | `apps/home`                  | Vue 3 + Vite         | Apex SPA, port 3000; owns `vercel.json` rewrites                             |
 | `apps/budget`                | TanStack Start       | Mounts at `/budget`, port 3001                                               |
 | `apps/schedule`              | Next.js (App Router) | Mounts at `/schedule`, port 3003                                             |
-| `apps/lists`                 | SvelteKit            | Mounts at `/lists`, port 3004; native Svelte shell using shared tokens       |
+| `apps/lists`                 | SvelteKit            | `/lists` in production, root on port 3004 locally; native Svelte shell       |
 | `apps/meals`                 | TanStack Start       | Mounts at `/meals`, port 3005; household cookbook and weekday planning zone  |
 | `apps/android`               | Kotlin + Gradle      | Sideloaded companion and Glance list widget; outside Turbo and Vercel        |
+| `apps/ios`                   | SwiftUI + Xcode      | Native iOS/iPadOS app (Lists tracer so far); outside Turbo and Vercel        |
 | `apps/api-bot`               | Hono on Vercel       | Shared bot gateway for Telegram delivery and chat                            |
 | `apps/api-agent`             | Hono + Vercel AI SDK | Inspectable, independently deployed AI agents; port 3006                     |
 | `apps/api-*`                 | (per-experiment)     | Convention for non-Convex backends                                           |
@@ -88,6 +89,14 @@ only its installation ID, per-widget list selections, and last successful
 snapshots. Convex stores the current FCM token per authenticated installation,
 then sends only an opaque invalidation signal; Android refetches its own selected
 lists. A 15-minute WorkManager refresh is the delivery fallback.
+
+### Native iOS app
+
+`apps/ios` is an independent Xcode project, not a Vercel zone or pnpm workspace
+package. `DomaKit` (a local Swift package) holds the Clerk-to-Convex auth adapter
+and typed wrappers for the Convex functions the app calls. Like Android, it uses
+the explicit Clerk `convex` JWT template; `clerk-convex-swift` is not used because
+it requests the default session token. See `apps/ios/README.md`.
 
 ### Home noticeboard composition
 

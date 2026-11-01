@@ -18,6 +18,7 @@ import type * as briefing_deliveryScheduleStore from "../briefing/deliverySchedu
 import type * as briefing_deliveryStore from "../briefing/deliveryStore.js";
 import type * as briefing_errors from "../briefing/errors.js";
 import type * as briefing_generation from "../briefing/generation.js";
+import type * as briefing_langfuse from "../briefing/langfuse.js";
 import type * as briefing_morning from "../briefing/morning.js";
 import type * as briefing_weather from "../briefing/weather.js";
 import type * as budgetDisplayMonth from "../budgetDisplayMonth.js";
@@ -105,6 +106,7 @@ declare const fullApi: ApiFromModules<{
   "briefing/deliveryStore": typeof briefing_deliveryStore;
   "briefing/errors": typeof briefing_errors;
   "briefing/generation": typeof briefing_generation;
+  "briefing/langfuse": typeof briefing_langfuse;
   "briefing/morning": typeof briefing_morning;
   "briefing/weather": typeof briefing_weather;
   budgetDisplayMonth: typeof budgetDisplayMonth;

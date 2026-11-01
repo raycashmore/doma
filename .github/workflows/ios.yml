@@ -1,0 +1,43 @@
+name: iOS
+
+on:
+  push:
+    branches: [main]
+    paths: ['apps/ios/**', '.github/workflows/ios.yml']
+  pull_request:
+    branches: [main]
+    paths: ['apps/ios/**', '.github/workflows/ios.yml']
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build iOS app and tests
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      # The app targets iOS 27, so it needs the newest Xcode on the runner image.
+      - name: Select newest Xcode
+        run: |
+          xcode="$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
+          sudo xcode-select -s "$xcode"
+          xcodebuild -version
+
+      # Compiles the app and the app-hosted tests without running them: the live
+      # contract tests need a Convex backend and a Clerk sign-in ticket.
+      # arm64 only: ConvexMobile's binary framework has no x86_64 simulator slice.
+      - name: Build for testing
+        working-directory: apps/ios
+        run: |
+          xcodebuild build-for-testing \
+            -project Doma.xcodeproj \
+            -scheme Doma \
+            -destination 'generic/platform=iOS Simulator' \
+            ARCHS=arm64 \
+            CODE_SIGNING_ALLOWED=NO \
+            -quiet

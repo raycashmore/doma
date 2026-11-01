@@ -43,13 +43,14 @@ Linear owns planning; the repository owns reusable operating guidance.
 
 Find these with the Linear tools by the reference shown.
 
-| Record                                    | Linear reference                                                         |
-| ----------------------------------------- | ------------------------------------------------------------------------ |
-| Project                                   | "Doma" (Ray team)                                                        |
-| Now, next and later (ranking and handoff) | Project document "Doma — now, next and later"; created by first grooming |
+| Record                                    | Linear reference                              |
+| ----------------------------------------- | --------------------------------------------- |
+| Project                                   | "Doma" (Ray team)                             |
+| Now, next and later (ranking and handoff) | Project document "Doma — now, next and later" |
 
 If the document does not exist, the ranking is missing: run `ray-groom-backlog`
-before selecting work, and record the document's link in this table.
+before selecting work. This repository is public, so refer to Linear records
+by title rather than by URL.
 
 ## Start or resume
 
@@ -93,6 +94,8 @@ At handoff, pause, material direction/acceptance change or closeout:
    leave the ranking itself to [grooming](product-oversight.md#groom-the-backlog).
    Replace rather than append: dated detail belongs in the evidence record, with
    [reporting conventions](progress-reporting.md).
+   Linear rewrites issue links into `<issue>` tags on save, so take patch
+   anchors from a fresh `get_document` or from link-free text.
 4. File ideas for new work as Backlog issues labelled `needs-triage`, within
    tracker write authority, for the next grooming.
 

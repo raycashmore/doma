@@ -1,0 +1,3 @@
+// Shared settings. Deployment-specific public client values live in the ignored
+// Local.xcconfig (copy Local.example.xcconfig). Never put a secret key here.
+#include? "Local.xcconfig"

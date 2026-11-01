@@ -1,0 +1,374 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		D0A000000000000000000101 /* DomaKit in Frameworks */ = {isa = PBXBuildFile; productRef = D0A000000000000000000901 /* DomaKit */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		D0A000000000000000000801 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D0A000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D0A000000000000000000501;
+			remoteInfo = Doma;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		D0A000000000000000000201 /* Doma.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Doma.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D0A000000000000000000202 /* DomaTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DomaTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		D0A000000000000000000203 /* Doma.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Doma.xcconfig; sourceTree = "<group>"; };
+		D0A000000000000000000204 /* Doma-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Doma-Info.plist"; sourceTree = "<group>"; };
+		D0A000000000000000000205 /* DomaKit */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = DomaKit; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		D0A000000000000000000301 /* Doma */ = {isa = PBXFileSystemSynchronizedRootGroup; path = Doma; sourceTree = "<group>"; };
+		D0A000000000000000000302 /* DomaTests */ = {isa = PBXFileSystemSynchronizedRootGroup; path = DomaTests; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		D0A000000000000000000601 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D0A000000000000000000101 /* DomaKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D0A000000000000000000611 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		D0A000000000000000000401 = {
+			isa = PBXGroup;
+			children = (
+				D0A000000000000000000301 /* Doma */,
+				D0A000000000000000000302 /* DomaTests */,
+				D0A000000000000000000205 /* DomaKit */,
+				D0A000000000000000000403 /* Config */,
+				D0A000000000000000000402 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		D0A000000000000000000402 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				D0A000000000000000000201 /* Doma.app */,
+				D0A000000000000000000202 /* DomaTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		D0A000000000000000000403 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				D0A000000000000000000203 /* Doma.xcconfig */,
+				D0A000000000000000000204 /* Doma-Info.plist */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		D0A000000000000000000501 /* Doma */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D0A000000000000000000A02 /* Build configuration list for PBXNativeTarget "Doma" */;
+			buildPhases = (
+				D0A000000000000000000602 /* Sources */,
+				D0A000000000000000000601 /* Frameworks */,
+				D0A000000000000000000603 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				D0A000000000000000000301 /* Doma */,
+			);
+			name = Doma;
+			packageProductDependencies = (
+				D0A000000000000000000901 /* DomaKit */,
+			);
+			productName = Doma;
+			productReference = D0A000000000000000000201 /* Doma.app */;
+			productType = "com.apple.product-type.application";
+		};
+		D0A000000000000000000502 /* DomaTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D0A000000000000000000A03 /* Build configuration list for PBXNativeTarget "DomaTests" */;
+			buildPhases = (
+				D0A000000000000000000612 /* Sources */,
+				D0A000000000000000000611 /* Frameworks */,
+				D0A000000000000000000613 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				D0A000000000000000000802 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				D0A000000000000000000302 /* DomaTests */,
+			);
+			name = DomaTests;
+			productName = DomaTests;
+			productReference = D0A000000000000000000202 /* DomaTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		D0A000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2720;
+				LastUpgradeCheck = 2720;
+				TargetAttributes = {
+					D0A000000000000000000501 = {
+						CreatedOnToolsVersion = 27.2;
+					};
+					D0A000000000000000000502 = {
+						CreatedOnToolsVersion = 27.2;
+						TestTargetID = D0A000000000000000000501;
+					};
+				};
+			};
+			buildConfigurationList = D0A000000000000000000A01 /* Build configuration list for PBXProject "Doma" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = D0A000000000000000000401;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				D0A000000000000000000902 /* XCLocalSwiftPackageReference "DomaKit" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = D0A000000000000000000402 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				D0A000000000000000000501 /* Doma */,
+				D0A000000000000000000502 /* DomaTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		D0A000000000000000000603 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D0A000000000000000000613 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		D0A000000000000000000602 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D0A000000000000000000612 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		D0A000000000000000000802 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D0A000000000000000000501 /* Doma */;
+			targetProxy = D0A000000000000000000801 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		D0A000000000000000000B01 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = D0A000000000000000000203 /* Doma.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		D0A000000000000000000B02 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = D0A000000000000000000203 /* Doma.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_VERSION = 6.0;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		D0A000000000000000000B11 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				INFOPLIST_FILE = "Config/Doma-Info.plist";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Doma;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.doma.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		D0A000000000000000000B12 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = "Config/Doma-Info.plist";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Doma;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.doma.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		D0A000000000000000000B21 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.doma.app.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Doma.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Doma";
+			};
+			name = Debug;
+		};
+		D0A000000000000000000B22 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.doma.app.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Doma.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Doma";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		D0A000000000000000000A01 /* Build configuration list for PBXProject "Doma" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D0A000000000000000000B01 /* Debug */,
+				D0A000000000000000000B02 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D0A000000000000000000A02 /* Build configuration list for PBXNativeTarget "Doma" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D0A000000000000000000B11 /* Debug */,
+				D0A000000000000000000B12 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D0A000000000000000000A03 /* Build configuration list for PBXNativeTarget "DomaTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D0A000000000000000000B21 /* Debug */,
+				D0A000000000000000000B22 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		D0A000000000000000000902 /* XCLocalSwiftPackageReference "DomaKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = DomaKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		D0A000000000000000000901 /* DomaKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D0A000000000000000000902 /* XCLocalSwiftPackageReference "DomaKit" */;
+			productName = DomaKit;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = D0A000000000000000000001 /* Project object */;
+}
