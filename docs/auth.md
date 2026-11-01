@@ -21,6 +21,10 @@ We use Clerk for sign-in across all zones. One Clerk application; the cookie is 
 8. **Staging and Preview.** Use a separate non-production Clerk environment or equivalent staging-safe keys for the stable staging Convex deployment and for Vercel Preview deployments. Point staging and preview Vercel env vars plus the staging Convex issuer configuration at that environment.
 9. **Production.** Add the production Clerk env vars to each Vercel project. The cookie domain should be the apex (e.g. `doma.example.com`); Clerk handles this automatically when the deployment URL matches.
 
+### Development instance
+
+The development Clerk instance allows Google sign-in only and restricts sign-up, so an email/password test user cannot sign in. Automated native tests sign in as the instance's Google-linked user with a Backend API sign-in token (`apps/ios/scripts/mint-test-sign-in-ticket.sh`). Native apps also need their redirect URL allowlisted in each instance; the iOS app uses `com.doma.app://callback`.
+
 ## How it flows
 
 - Home mounts Clerk through `@clerk/vue`; React zones use their framework-specific `AuthGate`, and Lists mounts Clerk through `@clerk/clerk-js`.
