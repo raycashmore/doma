@@ -35,6 +35,17 @@ Before designing a UI feature or adopting a shared pattern, read [the local patt
 - [Browser Verification](docs/agents/browser-verification.md)
 - [Repository Map](docs/agents/repo-map.md)
 
+## Who does what
+
+Claude Code only: delegate to the subagents in `.claude/agents/` and `~/.claude/agents/` instead of doing this work in the main session. Other agents can ignore this section.
+
+- **Explore** (haiku): finding where code lives or what uses it. Use it before reading several files yourself. It returns paths, line numbers and one sentence each.
+- **test-runner** (haiku): running tests, lint, type checks and builds. Use it after changes. It returns PASS/FAIL and the failures only.
+- **reviewer** (sonnet): reviewing the diff. Use it once a change is finished and before committing or opening a PR.
+- **architect** (opus): checking a plan or a large, risky change before implementing it. Use it for multi-package work, data model, auth or shared pattern changes. Skip it for small tweaks.
+
+The main session keeps the editing and the decisions.
+
 ## Agent skills
 
 ### Issue tracker
