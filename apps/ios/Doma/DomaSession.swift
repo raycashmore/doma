@@ -21,8 +21,18 @@ final class DomaSession {
   @ObservationIgnored private var authStateSubscription: AnyCancellable?
   @ObservationIgnored private var sessionSync: Task<Void, Never>?
 
+  /// The redirect each Clerk instance allowlists. Fixed, so a build with an overridden
+  /// bundle identifier (free provisioning) still matches the allowlisted URL.
+  private static let clerkRedirect = Clerk.Options.RedirectConfig(
+    redirectUrl: "com.doma.app://callback",
+    callbackUrlScheme: "com.doma.app"
+  )
+
   init(configuration: DomaConfiguration) {
-    Clerk.configure(publishableKey: configuration.clerkPublishableKey)
+    Clerk.configure(
+      publishableKey: configuration.clerkPublishableKey,
+      options: .init(redirectConfig: Self.clerkRedirect)
+    )
     convex = ConvexClientWithAuth(deploymentUrl: configuration.convexURL, authProvider: DomaClerkConvexAuthProvider())
     lists = DomaListsClient(convex: convex)
 

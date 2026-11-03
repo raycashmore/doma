@@ -9,7 +9,7 @@ read_env() { grep -E "^$1=" "$repo_root/.env.local" | head -1 | cut -d= -f2-; }
 
 convex_url="${DOMA_CONVEX_URL:-$(read_env VITE_CONVEX_URL)}"
 publishable_key="$(read_env VITE_CLERK_PUBLISHABLE_KEY)"
-destination="${DOMA_IOS_DESTINATION:-platform=iOS Simulator,name=iPhone 17,OS=27.2}"
+destination="${DOMA_IOS_DESTINATION:-platform=iOS Simulator,name=iPhone 18 Pro,OS=27.2}"
 
 if [[ "$publishable_key" != pk_test_* ]]; then
   echo "Refusing: VITE_CLERK_PUBLISHABLE_KEY in .env.local is not a Clerk development key." >&2

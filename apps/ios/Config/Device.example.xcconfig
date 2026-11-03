@@ -1,0 +1,13 @@
+// Copy to Device.xcconfig (ignored by git) to install on a physical iPhone or iPad.
+// The [sdk=iphoneos*] values apply to device builds only; simulator builds keep Local.xcconfig.
+// Production public client values only. Never put a secret key here.
+// xcconfig treats "//" as a comment, so write URLs with "$()" between the slashes.
+DOMA_CONVEX_URL[sdk=iphoneos*] = https:/$()/your-production-deployment.convex.cloud
+DOMA_CLERK_PUBLISHABLE_KEY[sdk=iphoneos*] = pk_live_your_clerk_production_publishable_key
+
+// Your personal team ID: Xcode > Settings > Apple Accounts, or the Team menu in Signing & Capabilities.
+DEVELOPMENT_TEAM = YOURTEAMID
+
+// Only if Xcode reports that com.doma.app is not available to your team. The Clerk
+// redirect URL stays com.doma.app://callback either way.
+// DOMA_BUNDLE_ID = com.example.doma
