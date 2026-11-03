@@ -24,7 +24,7 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on push to `main` and PRs:
 
 All steps must pass. The pipeline cancels in-progress runs when a new commit is pushed to the same branch.
 
-A separate macOS workflow (`.github/workflows/ios.yml`) runs only when `apps/ios` changes. It compiles the iOS app and its tests without running them, because the live contract tests need a Convex backend and a Clerk sign-in ticket. Run those locally with `apps/ios/scripts/test-live.sh`.
+A separate macOS workflow (`.github/workflows/ios.yml`) runs only when `apps/ios` changes. It runs the app-hosted iOS tests in a simulator and checks that no personal signing values are committed to the Xcode project. The live contract suite disables itself there because it needs a Convex backend and a Clerk sign-in ticket; run it locally with `apps/ios/scripts/test-live.sh`.
 
 Before a PR, run `pnpm ci:checks` and complete the repository's pre-PR documentation audit. Browser verification is additional evidence for user-visible work; it does not replace the automated gates.
 

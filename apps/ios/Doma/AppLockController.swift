@@ -8,12 +8,24 @@ import SwiftUI
 final class AppLockController {
   private var lock = AppLock()
   private var isAwaitingLaunchPrompt = true
+  private var isLockDisabled = false
   private(set) var isAuthenticating = false
 
   var isLocked: Bool { lock.isLocked }
 
+  init() {
+    #if DEBUG && targetEnvironment(simulator)
+    // Lets agents and scripts verify the UI headlessly; the simulator cannot pass Face ID unattended.
+    if ProcessInfo.processInfo.environment["DOMA_SKIP_APP_LOCK"] == "1" {
+      lock.unlock()
+      isLockDisabled = true
+    }
+    #endif
+  }
+
   /// Prompts only once the scene is active: on cold launch, and on returning from the background locked.
   func scenePhaseChanged(to phase: ScenePhase) {
+    guard !isLockDisabled else { return }
     switch phase {
     case .background:
       lock.enterBackground(at: .now)

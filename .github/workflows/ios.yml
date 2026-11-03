@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   build:
-    name: Build iOS app and tests
+    name: Build and test iOS app
     runs-on: macos-latest
 
     steps:
@@ -28,16 +28,19 @@ jobs:
           sudo xcode-select -s "$xcode"
           xcodebuild -version
 
-      # Compiles the app and the app-hosted tests without running them: the live
-      # contract tests need a Convex backend and a Clerk sign-in ticket.
+      - name: Check committed signing settings
+        run: apps/ios/scripts/check-project-signing.sh
+
+      # Runs the app-hosted tests. The live contract suite disables itself without a
+      # Convex backend and Clerk sign-in ticket; run it locally with scripts/test-live.sh.
       # arm64 only: ConvexMobile's binary framework has no x86_64 simulator slice.
-      - name: Build for testing
+      - name: Build and run tests
         working-directory: apps/ios
         run: |
-          xcodebuild build-for-testing \
+          xcodebuild test \
             -project Doma.xcodeproj \
             -scheme Doma \
-            -destination 'generic/platform=iOS Simulator' \
+            -destination "$(scripts/simulator-destination.sh)" \
             ARCHS=arm64 \
             CODE_SIGNING_ALLOWED=NO \
             -quiet

@@ -79,7 +79,23 @@ The test creates its own personal fixture list, exercises it and deletes it, so
 household data is never read into assertions or changed.
 
 Set `DOMA_IOS_DESTINATION` to choose a simulator, for example
-`platform=iOS Simulator,name=iPhone 18 Pro,OS=27.2`.
+`platform=iOS Simulator,name=iPhone 18 Pro,OS=27.2`; otherwise the script picks one.
+
+## Checking the UI in the simulator
+
+The Face ID lock cannot be passed unattended in the simulator. Debug simulator builds
+skip it when launched with `DOMA_SKIP_APP_LOCK=1`; device and release builds ignore it:
+
+```sh
+SIMCTL_CHILD_DOMA_SKIP_APP_LOCK=1 xcrun simctl launch booted <bundle id>
+```
+
+## Signing checks
+
+`scripts/check-project-signing.sh` fails if Xcode has written a team, entitlements file
+or literal bundle ID into `project.pbxproj`; iOS CI runs it. To learn whether the free
+personal team can sign a capability, run `scripts/probe-entitlement.sh` (for example
+`app-group group.<bundle id>`) rather than relying on Xcode's capability screen.
 
 ConvexMobile forwards subscription updates through a pass-through publisher:
 attach a subscriber before triggering a change, or the update is lost.
