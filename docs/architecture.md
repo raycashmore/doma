@@ -96,7 +96,10 @@ lists. A 15-minute WorkManager refresh is the delivery fallback.
 package. `DomaKit` (a local Swift package) holds the Clerk-to-Convex auth adapter
 and typed wrappers for the Convex functions the app calls. Like Android, it uses
 the explicit Clerk `convex` JWT template; `clerk-convex-swift` is not used because
-it requests the default session token. See `apps/ios/README.md`.
+it requests the default session token. Simulator builds target a development
+backend; device builds target production through an ignored `Device.xcconfig`.
+A Face ID lock gates the interface only; the Clerk session stays in the keychain.
+See `apps/ios/README.md`.
 
 ### Home noticeboard composition
 

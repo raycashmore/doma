@@ -1,6 +1,6 @@
 import Foundation
 
-/// Public client values injected from `Config/Local.xcconfig` through Info.plist.
+/// Public client values injected from the ignored xcconfig files through Info.plist.
 struct DomaConfiguration {
   let convexURL: String
   let clerkPublishableKey: String

@@ -3,7 +3,10 @@
 A native SwiftUI app for iPhone and iPad (iOS 27 or newer). It is an independent
 Xcode project, not a pnpm workspace package or a Vercel deployment zone. So far it
 covers sign-in and Lists: see visible lists, open one, check and uncheck items, with
-changes arriving live from Convex.
+changes arriving live from Convex. Face ID (or the device passcode) unlocks it on
+every cold launch and after 5 minutes in the background. The lock covers the
+interface only: the Clerk session stays stored while locked. A device without a
+passcode cannot authenticate, so the app does not lock there.
 
 ## Layout
 
@@ -12,7 +15,8 @@ changes arriving live from Convex.
   `DomaListsClient`, the typed wrappers for the Convex Lists functions.
 - `DomaTests/`: app-hosted tests. They need the app host because Clerk stores its
   session in the keychain, which plain package tests in the simulator cannot reach.
-- `Config/`: build settings. Public client values go in the ignored `Local.xcconfig`.
+- `Config/`: build settings. Public client values go in the ignored `Local.xcconfig`
+  (simulator) and `Device.xcconfig` (physical devices).
 
 ## Local configuration
 
@@ -26,6 +30,32 @@ Google sign-in. The app signs in only (`transferable: false`), so an unknown Goo
 account cannot become a sign-up.
 
 Open `Doma.xcodeproj` in Xcode and run the `Doma` scheme on an iOS 27 simulator.
+
+## Install on an iPhone or iPad (free provisioning)
+
+Device builds use the production Convex deployment and the production Clerk
+instance. A free Apple ID (personal team) is enough; apps it signs expire after
+7 days and must be reinstalled from the Mac.
+
+1. Copy `Config/Device.example.xcconfig` to `Config/Device.xcconfig`. Fill in the
+   production Convex URL, the production Clerk publishable key (`pk_live_`), your
+   personal team ID and a bundle identifier you own in `DOMA_BUNDLE_ID`
+   (`com.doma.app` is not available to a personal team). The Convex and Clerk
+   values apply to device builds only; simulator builds keep using `Local.xcconfig`.
+   Change these here rather than in Xcode's Signing & Capabilities screen, which
+   writes them into the committed project file.
+2. Before the first production sign-in, check the production Clerk instance. It
+   must allowlist `com.doma.app://callback`; the app always uses this redirect,
+   even if `DOMA_BUNDLE_ID` is overridden. Its `convex` JWT template must match the
+   production Convex `CLERK_JWT_ISSUER_DOMAIN`, and native applications must be
+   enabled for it.
+3. In Xcode, add your Apple ID under Settings > Apple Accounts.
+4. Connect the device by cable, unlock it and choose Trust This Computer. Turn on
+   Settings > Privacy & Security > Developer Mode and restart when asked.
+5. Select the device as the run destination and run the `Doma` scheme.
+6. On the first install, open Settings > General > VPN & Device Management and
+   trust your developer certificate.
+7. Repeat step 5 within 7 days to keep the app working.
 
 ## Authentication
 
@@ -49,7 +79,23 @@ The test creates its own personal fixture list, exercises it and deletes it, so
 household data is never read into assertions or changed.
 
 Set `DOMA_IOS_DESTINATION` to choose a simulator, for example
-`platform=iOS Simulator,name=iPhone 17,OS=27.2`.
+`platform=iOS Simulator,name=iPhone 18 Pro,OS=27.2`; otherwise the script picks one.
+
+## Checking the UI in the simulator
+
+The Face ID lock cannot be passed unattended in the simulator. Debug simulator builds
+skip it when launched with `DOMA_SKIP_APP_LOCK=1`; device and release builds ignore it:
+
+```sh
+SIMCTL_CHILD_DOMA_SKIP_APP_LOCK=1 xcrun simctl launch booted <bundle id>
+```
+
+## Signing checks
+
+`scripts/check-project-signing.sh` fails if Xcode has written a team, entitlements file
+or literal bundle ID into `project.pbxproj`; iOS CI runs it. To learn whether the free
+personal team can sign a capability, run `scripts/probe-entitlement.sh` (for example
+`app-group group.<bundle id>`) rather than relying on Xcode's capability screen.
 
 ConvexMobile forwards subscription updates through a pass-through publisher:
 attach a subscriber before triggering a change, or the update is lost.

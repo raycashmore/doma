@@ -5,13 +5,19 @@ struct ListsView: View {
   let session: DomaSession
   @State private var lists: [DomaListSummary]?
   @State private var loadFailed = false
+  @State private var selectedListId: DomaListSummary.ID?
+
+  private var selectedList: DomaListSummary? {
+    lists?.first { $0.id == selectedListId }
+  }
 
   var body: some View {
-    NavigationStack {
+    // A sidebar and detail on iPad; collapses to a navigation stack on iPhone.
+    NavigationSplitView {
       Group {
         if let lists {
-          List(lists) { list in
-            NavigationLink(value: list) {
+          List(lists, selection: $selectedListId) { list in
+            NavigationLink(value: list.id) {
               Label(list.name, systemImage: list.visibility == .shared ? "person.2" : "person")
             }
           }
@@ -27,13 +33,19 @@ struct ListsView: View {
         }
       }
       .navigationTitle("Lists")
-      .navigationDestination(for: DomaListSummary.self) { list in
-        ListDetailView(lists: session.lists, list: list)
-      }
       .toolbar {
         Button("Sign out") {
           Task { await session.signOut() }
         }
+      }
+    } detail: {
+      if let selectedList {
+        ListDetailView(lists: session.lists, list: selectedList)
+          .id(selectedList.id)
+      } else if selectedListId != nil {
+        ContentUnavailableView("This list is unavailable", systemImage: "lock")
+      } else {
+        ContentUnavailableView("Choose a list", systemImage: "checklist")
       }
     }
     .task {

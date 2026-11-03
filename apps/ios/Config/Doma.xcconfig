@@ -1,3 +1,6 @@
-// Shared settings. Deployment-specific public client values live in the ignored
-// Local.xcconfig (copy Local.example.xcconfig). Never put a secret key here.
+// Shared settings. Deployment-specific values live in ignored files: Local.xcconfig for
+// the simulator (copy Local.example.xcconfig) and Device.xcconfig for a physical iPhone or
+// iPad (copy Device.example.xcconfig). Never put a secret key in any of them.
+DOMA_BUNDLE_ID = com.doma.app
 #include? "Local.xcconfig"
+#include? "Device.xcconfig"
