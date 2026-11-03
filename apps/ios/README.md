@@ -38,9 +38,12 @@ instance. A free Apple ID (personal team) is enough; apps it signs expire after
 7 days and must be reinstalled from the Mac.
 
 1. Copy `Config/Device.example.xcconfig` to `Config/Device.xcconfig`. Fill in the
-   production Convex URL, the production Clerk publishable key (`pk_live_`) and your
-   personal team ID. These values apply to device builds only; simulator builds
-   keep using `Local.xcconfig`.
+   production Convex URL, the production Clerk publishable key (`pk_live_`), your
+   personal team ID and a bundle identifier you own in `DOMA_BUNDLE_ID`
+   (`com.doma.app` is not available to a personal team). The Convex and Clerk
+   values apply to device builds only; simulator builds keep using `Local.xcconfig`.
+   Change these here rather than in Xcode's Signing & Capabilities screen, which
+   writes them into the committed project file.
 2. Before the first production sign-in, check the production Clerk instance. It
    must allowlist `com.doma.app://callback`; the app always uses this redirect,
    even if `DOMA_BUNDLE_ID` is overridden. Its `convex` JWT template must match the
@@ -49,9 +52,7 @@ instance. A free Apple ID (personal team) is enough; apps it signs expire after
 3. In Xcode, add your Apple ID under Settings > Apple Accounts.
 4. Connect the device by cable, unlock it and choose Trust This Computer. Turn on
    Settings > Privacy & Security > Developer Mode and restart when asked.
-5. Select the device as the run destination and run the `Doma` scheme. If Xcode
-   reports that `com.doma.app` is unavailable to your team, set `DOMA_BUNDLE_ID` in
-   `Device.xcconfig` to an identifier you own.
+5. Select the device as the run destination and run the `Doma` scheme.
 6. On the first install, open Settings > General > VPN & Device Management and
    trust your developer certificate.
 7. Repeat step 5 within 7 days to keep the app working.

@@ -8,6 +8,6 @@ DOMA_CLERK_PUBLISHABLE_KEY[sdk=iphoneos*] = pk_live_your_clerk_production_publis
 // Your personal team ID: Xcode > Settings > Apple Accounts, or the Team menu in Signing & Capabilities.
 DEVELOPMENT_TEAM = YOURTEAMID
 
-// Only if Xcode reports that com.doma.app is not available to your team. The Clerk
-// redirect URL stays com.doma.app://callback either way.
-// DOMA_BUNDLE_ID = com.example.doma
+// A bundle identifier you own: com.doma.app is not available to a personal team.
+// The Clerk redirect URL stays com.doma.app://callback either way.
+DOMA_BUNDLE_ID = com.example.doma
