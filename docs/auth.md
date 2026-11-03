@@ -23,7 +23,7 @@ We use Clerk for sign-in across all zones. One Clerk application; the cookie is 
 
 ### Development instance
 
-The development Clerk instance allows Google sign-in only and restricts sign-up, so an email/password test user cannot sign in. Automated native tests sign in as the instance's Google-linked user with a Backend API sign-in token (`apps/ios/scripts/mint-test-sign-in-ticket.sh`). Native apps also need their redirect URL allowlisted in each instance; the iOS app uses `com.doma.app://callback`.
+The development Clerk instance allows Google sign-in only and restricts sign-up, so an email/password test user cannot sign in. Automated native tests sign in as the instance's Google-linked user with a Backend API sign-in token (`apps/ios/scripts/mint-test-sign-in-ticket.sh`). Native apps also need their redirect URL allowlisted in each instance; the iOS app always uses `com.doma.app://callback`, even when a device build overrides its bundle identifier for free provisioning.
 
 ## How it flows
 
