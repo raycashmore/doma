@@ -21,7 +21,12 @@ vi.mock('../_generated/api', () => ({
   }
 }));
 
-type CapturedEmail = { _id: string; processingState: string; triageFailureReason?: string };
+type CapturedEmail = {
+  _id: string;
+  processingState: string;
+  triageFailureReason?: string;
+  rawBodyClearedAt?: number;
+};
 
 function createContext(email: CapturedEmail | null) {
   return {
@@ -35,6 +40,28 @@ function createContext(email: CapturedEmail | null) {
 }
 
 describe('retryFailedCapturedEmailForBot', () => {
+  it('keeps an email failed once retention has cleared its body', async () => {
+    vi.stubEnv('BOT_SERVICE_TOKEN', 'expected-token');
+    const { retryFailedCapturedEmailForBot } = (await import('./triage')) as unknown as {
+      retryFailedCapturedEmailForBot: {
+        handler: (
+          ctx: ReturnType<typeof createContext>,
+          args: { serviceToken: string; capturedEmailId: string }
+        ) => Promise<unknown>;
+      };
+    };
+    const ctx = createContext({ _id: 'capturedEmails_123', processingState: 'failed', rawBodyClearedAt: 1_000 });
+
+    await expect(
+      retryFailedCapturedEmailForBot.handler(ctx, {
+        serviceToken: 'expected-token',
+        capturedEmailId: 'capturedEmails_123'
+      })
+    ).resolves.toEqual({ status: 'failed', capturedEmailId: 'capturedEmails_123' });
+    expect(ctx.db.patch).not.toHaveBeenCalled();
+    vi.unstubAllEnvs();
+  });
+
   it('rejects an unauthorized service token before reading the captured email', async () => {
     vi.stubEnv('BOT_SERVICE_TOKEN', 'expected-token');
     const { retryFailedCapturedEmailForBot } = (await import('./triage')) as unknown as {

@@ -197,6 +197,15 @@ When configured, the Agent API also exports a best-effort Langfuse trace for
 each triage generation. It records only input and output shape by default;
 forwarded-email content is never exported.
 
+A daily cron enforces retention on `capturedEmails`, in batches. After 30 days
+it blanks `textBody` and `messageFingerprint`, which embeds the body, and removes
+`htmlBody`. A cleared email cannot be triaged: one still awaiting triage fails
+with `raw_body_expired`, and a failed one can no longer be retried. Re-forwarding
+the same email after this point captures it again. After 90 days it removes the
+sender, recipients, subject, attachment details and no-notice reason, leaving a
+bare record so `emailNotices` stay linked. Notices and their extracted facts are
+not affected.
+
 Reminder delivery is deterministic. A 15-minute Convex sweep sends eligible
 candidates at 7pm Australia/Sydney on the day before `dueOn`, through the Bot
 gateway with topic `email.reminder`. It records attempts per candidate and

@@ -70,7 +70,7 @@ type AgentResultRefs = {
 const triageRefs: TriageRefs = (internal as unknown as { email: { triage: TriageRefs } }).email.triage;
 const agentResultRefs: AgentResultRefs = (internal as unknown as { email: { agentResult: AgentResultRefs } }).email
   .agentResult;
-const processingLeaseMs = 15 * 60 * 1000;
+export const processingLeaseMs = 15 * 60 * 1000;
 
 function assertAuthorizedServiceToken(serviceToken: string) {
   const expectedToken = process.env.BOT_SERVICE_TOKEN;
@@ -336,7 +336,9 @@ export const retryFailedCapturedEmailForBot = mutation({
     assertAuthorizedServiceToken(serviceToken);
     const email = await ctx.db.get(capturedEmailId);
     if (!email) throw new Error('Captured email not found');
-    if (email.processingState !== 'failed') return { status: email.processingState, capturedEmailId };
+    if (email.processingState !== 'failed' || email.rawBodyClearedAt !== undefined) {
+      return { status: email.processingState, capturedEmailId };
+    }
 
     const retriedAt = Date.now();
     await ctx.db.patch(capturedEmailId, {
