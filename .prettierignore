@@ -12,6 +12,9 @@ yarn.lock
 **/.turbo
 .superpowers
 
+# Xcode rewrites asset catalog JSON in its own format.
+**/*.xcassets
+
 # Generated code
 **/convex/_generated
 **/routeTree.gen.ts

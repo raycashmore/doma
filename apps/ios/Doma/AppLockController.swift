@@ -15,8 +15,7 @@ final class AppLockController {
 
   init() {
     #if DEBUG && targetEnvironment(simulator)
-    // Lets agents and scripts verify the UI headlessly; the simulator cannot pass Face ID unattended.
-    if ProcessInfo.processInfo.environment["DOMA_SKIP_APP_LOCK"] == "1" {
+    if SimulatorLaunch.skipsAppLock {
       lock.unlock()
       isLockDisabled = true
     }
