@@ -6,11 +6,18 @@ covers sign-in and Lists: see visible lists, open one, check and uncheck items, 
 changes arriving live from Convex. Face ID (or the device passcode) unlocks it on
 every cold launch and after 5 minutes in the background. The lock covers the
 interface only: the Clerk session stays stored while locked. A device without a
-passcode cannot authenticate, so the app does not lock there.
+passcode cannot authenticate, so the app does not lock there. It reopens on the last list
+opened, and iPhone keeps Lists one step back.
 
 ## Layout
 
 - `Doma/`: the app target (SwiftUI views and the session that links Clerk to Convex).
+  `DomaColor`, `DomaFont` and `DomaTheme` hold the hand-written theme. `Assets.xcassets`
+  holds the app icon and launch assets.
+- `Doma/Fonts/`: TTF versions of the web fonts in `packages/tokens/fonts/`, because iOS
+  cannot bundle `.woff2`. They are Latin subsets, so other scripts fall back to the system
+  font. Merriweather is unpacked unchanged because the OFL reserves its name, so
+  `DomaFont` uses its original PostScript names.
 - `DomaKit/`: local Swift package with `DomaClerkConvexAuthProvider` and
   `DomaListsClient`, the typed wrappers for the Convex Lists functions.
 - `DomaTests/`: app-hosted tests. They need the app host because Clerk stores its

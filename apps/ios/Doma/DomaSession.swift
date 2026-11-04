@@ -43,6 +43,7 @@ final class DomaSession {
   }
 
   func signOut() async {
+    LastOpenedList().forget()
     await convex.logout()
   }
 
@@ -71,6 +72,8 @@ final class DomaSession {
     if session?.status == .active {
       _ = await convex.loginFromCache()
     } else {
+      // Here rather than on the signed-out phase, which also appears briefly during a normal launch.
+      LastOpenedList().forget()
       await convex.logout()
       phase = .signedOut
     }

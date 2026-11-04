@@ -11,36 +11,19 @@ struct ListDetailView: View {
   var body: some View {
     Group {
       if let items {
-        List {
-          Section {
-            ForEach(items.activeItems) { item in
-              ListItemRow(title: item.title, isCompleted: false) {
-                await toggle { try await lists.complete(itemId: item.id) }
-              }
-            }
-          }
-          if !items.completedItems.isEmpty {
-            Section("Completed") {
-              ForEach(items.completedItems) { item in
-                ListItemRow(title: item.title, isCompleted: true) {
-                  await toggle { try await lists.uncomplete(itemId: item.id) }
-                }
-              }
-            }
-          }
-        }
-        .overlay {
-          if items.activeItems.isEmpty && items.completedItems.isEmpty {
-            ContentUnavailableView("No items", systemImage: "checklist")
-          }
+        if items.activeItems.isEmpty && items.completedItems.isEmpty {
+          DomaStateView(title: "No items yet", systemImage: "checklist")
+        } else {
+          itemList(items)
         }
       } else if isUnavailable {
-        ContentUnavailableView("This list is unavailable", systemImage: "lock")
+        DomaStateView(title: "This list is unavailable", systemImage: "lock")
       } else {
-        ProgressView()
+        DomaLoadingView()
       }
     }
     .navigationTitle(list.name)
+    .navigationSubtitle(list.visibility == .shared ? "Shared" : "Personal")
     .alert("The change was not saved", isPresented: $actionFailed) {
       Button("OK", role: .cancel) {}
     }
@@ -54,6 +37,34 @@ struct ListDetailView: View {
         isUnavailable = true
       }
     }
+  }
+
+  private func itemList(_ items: DomaListItems) -> some View {
+    List {
+      if !items.activeItems.isEmpty {
+        Section {
+          ForEach(items.activeItems) { item in
+            ListItemRow(title: item.title, isCompleted: false) {
+              await toggle { try await lists.complete(itemId: item.id) }
+            }
+          }
+        } header: {
+          DomaSectionHeader(title: "Items", count: items.activeItems.count)
+        }
+      }
+      if !items.completedItems.isEmpty {
+        Section {
+          ForEach(items.completedItems) { item in
+            ListItemRow(title: item.title, isCompleted: true) {
+              await toggle { try await lists.uncomplete(itemId: item.id) }
+            }
+          }
+        } header: {
+          DomaSectionHeader(title: "Completed")
+        }
+      }
+    }
+    .domaScreenBackground()
   }
 
   private func toggle(_ change: () async throws -> Void) async {

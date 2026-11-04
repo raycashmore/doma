@@ -2,5 +2,6 @@
 // the simulator (copy Local.example.xcconfig) and Device.xcconfig for a physical iPhone or
 // iPad (copy Device.example.xcconfig). Never put a secret key in any of them.
 DOMA_BUNDLE_ID = com.doma.app
+ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon
 #include? "Local.xcconfig"
 #include? "Device.xcconfig"
