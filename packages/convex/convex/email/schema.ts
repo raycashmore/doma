@@ -60,11 +60,15 @@ export const capturedEmailsTable = defineTable({
   triageFailureReason: v.optional(v.string()),
   noNoticeReason: v.optional(v.string()),
   rawBodyExpiresAt: v.number(),
-  metadataExpiresAt: v.number()
+  metadataExpiresAt: v.number(),
+  rawBodyClearedAt: v.optional(v.number()),
+  metadataClearedAt: v.optional(v.number())
 })
   .index('by_provider_message', ['provider', 'providerMessageId'])
   .index('by_fingerprint', ['messageFingerprint'])
-  .index('by_processing_state', ['processingState', 'capturedAt']);
+  .index('by_processing_state', ['processingState', 'capturedAt'])
+  .index('by_raw_body_retention', ['rawBodyClearedAt', 'rawBodyExpiresAt'])
+  .index('by_metadata_retention', ['metadataClearedAt', 'metadataExpiresAt']);
 
 export const emailNoticesTable = defineTable({
   capturedEmailId: v.id('capturedEmails'),

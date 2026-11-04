@@ -36,6 +36,7 @@ import type * as email_noticeCandidates from "../email/noticeCandidates.js";
 import type * as email_noticeExpiryBackfill from "../email/noticeExpiryBackfill.js";
 import type * as email_noticeLifecycle from "../email/noticeLifecycle.js";
 import type * as email_reminders from "../email/reminders.js";
+import type * as email_retentionCleanup from "../email/retentionCleanup.js";
 import type * as email_triage from "../email/triage.js";
 import type * as helpers from "../helpers.js";
 import type * as home_activeBoard from "../home/activeBoard.js";
@@ -124,6 +125,7 @@ declare const fullApi: ApiFromModules<{
   "email/noticeExpiryBackfill": typeof email_noticeExpiryBackfill;
   "email/noticeLifecycle": typeof email_noticeLifecycle;
   "email/reminders": typeof email_reminders;
+  "email/retentionCleanup": typeof email_retentionCleanup;
   "email/triage": typeof email_triage;
   helpers: typeof helpers;
   "home/activeBoard": typeof home_activeBoard;

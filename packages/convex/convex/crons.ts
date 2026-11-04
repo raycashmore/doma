@@ -32,6 +32,10 @@ type EmailAgentCleanupRefs = {
   deleteExpiredRuns: FunctionReference<'mutation', 'internal', Record<string, never>, unknown>;
 };
 
+type EmailRetentionCleanupRefs = {
+  clearExpiredContent: FunctionReference<'mutation', 'internal', Record<string, never>, unknown>;
+};
+
 const briefingDeliveryScheduleStore: BriefingDeliveryScheduleStoreRefs = (
   internal as unknown as { briefing: { deliveryScheduleStore: BriefingDeliveryScheduleStoreRefs } }
 ).briefing.deliveryScheduleStore;
@@ -76,6 +80,10 @@ const emailAgentCleanup: EmailAgentCleanupRefs = (
   internal as unknown as { email: { agentCleanup: EmailAgentCleanupRefs } }
 ).email.agentCleanup;
 
+const emailRetentionCleanup: EmailRetentionCleanupRefs = (
+  internal as unknown as { email: { retentionCleanup: EmailRetentionCleanupRefs } }
+).email.retentionCleanup;
+
 crons.interval(
   'morning briefing delivery schedule reconciliation',
   { hours: 24 },
@@ -86,6 +94,11 @@ crons.interval('monthly spending insight sweep', { hours: 12 }, insightGeneratio
 crons.interval('monthly spending insight delivery', { hours: 1 }, insightDeliveryRunner.runDueSpendingInsightDelivery);
 crons.daily('weekly meal agent trace cleanup', { hourUTC: 15, minuteUTC: 0 }, mealAgentCleanup.deleteExpiredRuns);
 crons.interval('email triage agent trace cleanup', { hours: 1 }, emailAgentCleanup.deleteExpiredRuns);
+crons.daily(
+  'forwarded email retention cleanup',
+  { hourUTC: 15, minuteUTC: 30 },
+  emailRetentionCleanup.clearExpiredContent
+);
 crons.interval('forwarded email reminder delivery', { minutes: 15 }, emailDeliveryRunner.runDueEmailReminderDelivery);
 
 export default crons;
