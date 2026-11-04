@@ -6,6 +6,10 @@ struct DomaApp: App {
   @State private var lock = AppLockController()
   @Environment(\.scenePhase) private var scenePhase
 
+  init() {
+    DomaTheme.applyNavigationBarAppearance()
+  }
+
   var body: some Scene {
     WindowGroup {
       if let session {

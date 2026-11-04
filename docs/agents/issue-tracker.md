@@ -11,6 +11,7 @@ Issues and PRDs for this repo live in Linear in the `Doma` project on the `Ray` 
   - `Backlog` for unsorted or future work
   - `Todo` for ready work
   - `In Progress` for active work
+  - `In Review` for merged or finished work with open owner gates
   - `Done` for completed work
   - `Canceled` for work that should not be actioned
 - The triage labels for skill-driven workflows are:
@@ -47,6 +48,7 @@ Find these with the Linear tools by the reference shown.
 | ----------------------------------------- | --------------------------------------------- |
 | Project                                   | "Doma" (Ray team)                             |
 | Now, next and later (ranking and handoff) | Project document "Doma — now, next and later" |
+| Decision history                          | Project document "Doma — decision history"    |
 
 If the document does not exist, the ranking is missing: run `ray-groom-backlog`
 before selecting work. This repository is public, so refer to Linear records
@@ -87,7 +89,9 @@ At handoff, pause, material direction/acceptance change or closeout:
 
 1. Save new evidence and decisions in the issue/brief, including the three
    [verdicts](product-oversight.md#accept-the-outcome).
-2. Update issue metadata only when scope, state or dependencies change.
+2. Update issue metadata only when scope, state or dependencies change. A merge
+   can mark an issue Done automatically; move one with open owner gates to
+   `In Review` until they pass.
 3. Replace the current handoff once with a short result, evidence link,
    remaining gates, authority source and resume action. When the slice is
    complete, point to the ranking and add one to the slices-since-grooming count;
@@ -97,7 +101,8 @@ At handoff, pause, material direction/acceptance change or closeout:
    Linear rewrites issue links into `<issue>` tags on save, so take patch
    anchors from a fresh `get_document` or from link-free text.
 4. File ideas for new work as Backlog issues labelled `needs-triage`, within
-   tracker write authority, for the next grooming.
+   tracker write authority, for the next grooming. If Linear refuses a new issue,
+   record the idea under grooming input in the handoff.
 
 Check every write result before dependent updates or claims of success. If
 saving fails, report the stale record and preserve a safe chat handoff. Routine

@@ -7,34 +7,35 @@ struct SignInView: View {
   @State private var errorMessage: String?
 
   var body: some View {
-    VStack(spacing: 24) {
-      Spacer()
-      VStack(spacing: 8) {
-        Text("Doma")
-          .font(.largeTitle.bold())
-        Text("Sign in with an approved household account.")
-          .foregroundStyle(.secondary)
-          .multilineTextAlignment(.center)
-      }
+    VStack(spacing: 12) {
+      Image(decorative: "HearthMark")
+      Text("Doma")
+        .domaFont(.display)
+        .foregroundStyle(DomaColor.warmTextPrimary)
+      Text("Sign in with an approved household account.")
+        .domaFont(.supporting)
+        .foregroundStyle(DomaColor.warmTextSecondary)
+        .multilineTextAlignment(.center)
       Button {
         Task { await signIn() }
       } label: {
-        Label("Continue with Google", systemImage: "person.crop.circle")
+        Text(isSigningIn ? "Signing in..." : "Continue with Google")
           .frame(maxWidth: .infinity)
       }
-      .buttonStyle(.borderedProminent)
-      .controlSize(.large)
+      .domaPrimaryButton()
       .disabled(isSigningIn)
+      .padding(.top, 16)
       if let errorMessage {
         Text(errorMessage)
-          .font(.footnote)
-          .foregroundStyle(.red)
+          .domaFont(.supporting)
+          .foregroundStyle(DomaColor.warmAccent)
           .multilineTextAlignment(.center)
       }
-      Spacer()
     }
     .padding(32)
     .frame(maxWidth: 480)
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .background(DomaColor.warmBgCardSoft.ignoresSafeArea())
   }
 
   private func signIn() async {

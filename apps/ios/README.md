@@ -6,11 +6,18 @@ covers sign-in and Lists: see visible lists, open one, check and uncheck items, 
 changes arriving live from Convex. Face ID (or the device passcode) unlocks it on
 every cold launch and after 5 minutes in the background. The lock covers the
 interface only: the Clerk session stays stored while locked. A device without a
-passcode cannot authenticate, so the app does not lock there.
+passcode cannot authenticate, so the app does not lock there. It reopens on the last list
+opened, and iPhone keeps Lists one step back.
 
 ## Layout
 
 - `Doma/`: the app target (SwiftUI views and the session that links Clerk to Convex).
+  `DomaColor`, `DomaFont` and `DomaTheme` hold the hand-written theme. `Assets.xcassets`
+  holds the app icon and launch assets.
+- `Doma/Fonts/`: TTF versions of the web fonts in `packages/tokens/fonts/`, because iOS
+  cannot bundle `.woff2`. They are Latin subsets, so other scripts fall back to the system
+  font. Merriweather is unpacked unchanged because the OFL reserves its name, so
+  `DomaFont` uses its original PostScript names.
 - `DomaKit/`: local Swift package with `DomaClerkConvexAuthProvider` and
   `DomaListsClient`, the typed wrappers for the Convex Lists functions.
 - `DomaTests/`: app-hosted tests. They need the app host because Clerk stores its
@@ -83,12 +90,36 @@ Set `DOMA_IOS_DESTINATION` to choose a simulator, for example
 
 ## Checking the UI in the simulator
 
-The Face ID lock cannot be passed unattended in the simulator. Debug simulator builds
-skip it when launched with `DOMA_SKIP_APP_LOCK=1`; device and release builds ignore it:
+Debug simulator builds can reach signed-in screens headlessly; `SimulatorLaunch` is compiled
+out of device and release builds. Start `pnpm convex`, then:
 
-```sh
-SIMCTL_CHILD_DOMA_SKIP_APP_LOCK=1 xcrun simctl launch booted <bundle id>
-```
+1. Run `scripts/simulator-sign-in.sh`, which leaves a one-use development ticket that the next
+   launch consumes when no session exists.
+2. Launch with the app lock skipped, using one of:
+
+   ```sh
+   agent-device open <bundle id> --relaunch --launch-args DOMA_SKIP_APP_LOCK=1
+   SIMCTL_CHILD_DOMA_SKIP_APP_LOCK=1 xcrun simctl launch booted <bundle id>
+   ```
+
+To exercise the real lock instead, run `agent-device settings faceid enroll` once, then
+`agent-device settings faceid match` after launch.
+
+The bundle ID comes from `DOMA_BUNDLE_ID`; `Device.xcconfig` may override it. Confirm the built
+app uses a local Convex URL and a `pk_test_` key first, because `Device.xcconfig` also applies
+to Debug builds. Reset any changed text size afterwards.
+
+Compile tests with `xcodebuild build-for-testing`: `build` alone skips them. The app target
+defaults to main-actor isolation, so tests of its types need `@MainActor`.
+
+## Review standards
+
+- Screens use `domaFont(_:)` and `DomaColor`; `scripts/check-theme.sh` enforces this in iOS CI.
+- Text scales with Dynamic Type and honours Bold Text; fixed-size containers around text or
+  symbols use `@ScaledMetric`.
+- Controls keep a 44 pt tap target. Rows with `listRowBackground` draw their own selected state.
+- Session phases pass through `.signedOut` briefly on launch, so sign-out side effects belong
+  in `DomaSession`, not on phase changes.
 
 ## Signing checks
 

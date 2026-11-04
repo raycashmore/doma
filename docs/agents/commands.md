@@ -25,6 +25,7 @@ pnpm seed          # Seed Convex data
 pnpm seed:clear    # Clear seeded Convex data
 pnpm seed:url -- <convex-url>       # Seed a specific Convex deployment
 pnpm seed:url:clear -- <convex-url> # Clear seeded data from a specific Convex deployment
+pnpm prod:status <module>...       # Read-only: is this Convex function on production?
 ```
 
 ## Package Manager

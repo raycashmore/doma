@@ -43,6 +43,7 @@ final class DomaSession {
   }
 
   func signOut() async {
+    LastOpenedList().forget()
     await convex.logout()
   }
 
@@ -59,6 +60,11 @@ final class DomaSession {
       try? await Task.sleep(for: .milliseconds(100))
       if Task.isCancelled { return }
     }
+    #if DEBUG && targetEnvironment(simulator)
+    if Clerk.shared.session == nil, let ticket = SimulatorLaunch.consumeSignInTicket() {
+      _ = try? await Clerk.shared.auth.signInWithTicket(ticket)
+    }
+    #endif
     await authenticate(for: Clerk.shared.session)
     for await event in Clerk.shared.auth.events {
       if case .sessionChanged(_, let session) = event {
@@ -71,6 +77,8 @@ final class DomaSession {
     if session?.status == .active {
       _ = await convex.loginFromCache()
     } else {
+      // Here rather than on the signed-out phase, which also appears briefly during a normal launch.
+      LastOpenedList().forget()
       await convex.logout()
       phase = .signedOut
     }
