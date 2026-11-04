@@ -25,3 +25,13 @@ CI checks the proof schema/app pin, opaque file fingerprint, unique node IDs/par
 ## Remaining review
 
 The guide labels all four exports as illustrations and the pattern as proposed. Native browser detail/completion keyboard checks passed in RAY-228. Launcher/TalkBack, screen-reader drag handling, encrypted keystore persistence and actual PWA launch still need device review; no Android device was attached for RAY-229. Representative contrast review found the small coral widget brand at 3.05:1; this is an existing gap, not a passing accessibility result. Maintainer approval of shared promotion is still required. Hosting and owner usefulness belong to RAY-230 and have no publication authority from this work.
+
+## Where designs live
+
+`v2.pen` holds the web and PWA mobile frames, and the iOS frames named `iOS · Lists · …`, including the Overview, Edit item sheet and iPad layouts. `design.pen` holds the earliest finance designs. New iOS surfaces belong beside their `iOS ·` frames; this proof covers only `design-system.pen`.
+
+## Pen tool gotchas
+
+- `execute` runs against the open document when `filePath` names a file that does not exist, and it cannot create a file. Confirm the target with `get_app_state` before any write; create new files in the app.
+- Agent writes stay unsaved until someone presses ⌘S in Pen. Check the file changed on disk before relying on them.
+- The Pen app must be running for its tools to connect. Start it with `open -a Pen` and allow a few seconds.

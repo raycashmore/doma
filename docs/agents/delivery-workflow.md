@@ -33,6 +33,9 @@ configuration or code change. Standards/Spec code review uses a fixed base/head
 diff and accepted brief when applicable; product review answers a different
 question about usefulness. Scale review to the change.
 
+A scheduled job that removes or rewrites real data ships disabled until its owner
+gate passes. The PR names the gate and the step that enables the job.
+
 Local checks do not prove hosted behavior. Record which surface and environment
 were exercised. Production Convex data and real-data seeding need applicable
 owner authority; preserve unresolved gates rather than silently running them or
@@ -43,7 +46,8 @@ substituting seed-data proof.
 Before pushing or opening a PR, inspect the current workflow events and the
 actual deployment target. `.github/workflows/ci.yml` runs on pull requests to
 and pushes to `main`; it does not establish hosted behavior. Explain material
-automatic effects and apply existing authority to them.
+automatic effects and apply existing authority to them. Production Convex can
+change independently of a merge, so check gates with `pnpm prod:status`.
 
 Run the [Pre-PR Docs Audit](pre-pr-doc-audit.md) and the
 [privacy checks](privacy.md), including commit metadata. A local commit, PR,
