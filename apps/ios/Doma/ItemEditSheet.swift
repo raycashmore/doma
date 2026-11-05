@@ -136,10 +136,10 @@ struct ItemEditSheet: View {
 
   private func save() async {
     do {
-      try await model.save(properties: properties) { change in
+      let didSave = try await model.save(properties: properties) { change in
         try await lists.apply(change, toItem: item.id)
       }
-      dismiss()
+      if didSave { dismiss() }
     } catch {
       saveFailed = true
     }

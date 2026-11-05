@@ -61,7 +61,7 @@ final class DomaSession {
 
   private func apply(_ state: AuthState<String>) {
     let next = phase.next(after: state, isClerkLoaded: Clerk.shared.isLoaded)
-    if next != phase { logger.info("Phase \(String(describing: self.phase)) -> \(String(describing: next))") }
+    if next != phase { logger.info("Phase \(String(describing: self.phase), privacy: .public) -> \(String(describing: next), privacy: .public)") }
     phase = next
   }
 
@@ -78,7 +78,7 @@ final class DomaSession {
     await authenticate(for: Clerk.shared.session)
     for await event in Clerk.shared.auth.events {
       if case .sessionChanged(_, let session) = event {
-        logger.debug("Clerk session changed")
+        logger.info("Clerk session changed")
         await authenticate(for: session)
       }
     }

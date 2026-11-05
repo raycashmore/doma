@@ -145,14 +145,17 @@ final class ItemEditModel {
   }
 
   /// Stops at the first failure and rethrows it, leaving the unsaved changes pending.
-  func save(properties: [DomaListProperty], using apply: (ItemChange) async throws -> Void) async throws {
-    guard canSave(properties: properties) else { return }
+  /// Returns whether a save ran, because a second tap must not close the sheet on the first one.
+  @discardableResult
+  func save(properties: [DomaListProperty], using apply: (ItemChange) async throws -> Void) async throws -> Bool {
+    guard canSave(properties: properties) else { return false }
     isSaving = true
     defer { isSaving = false }
     for change in changes(properties: properties) {
       try await apply(change)
       record(change)
     }
+    return true
   }
 
   private func hasInvalidValue(properties: [DomaListProperty]) -> Bool {

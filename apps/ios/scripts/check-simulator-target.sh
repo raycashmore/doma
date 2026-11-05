@@ -9,7 +9,7 @@ plist="${1:-}"
 
 if [[ -z "$plist" ]]; then
   products="$(xcodebuild -project "$ios_dir/Doma.xcodeproj" -scheme Doma -sdk iphonesimulator -configuration Debug \
-    -showBuildSettings 2>/dev/null | sed -n 's/^ *BUILT_PRODUCTS_DIR = //p' | head -1)"
+    -showBuildSettings 2>/dev/null | sed -n 's/^ *BUILT_PRODUCTS_DIR = //p' | head -1)" || true
   plist="$products/Doma.app/Info.plist"
 fi
 

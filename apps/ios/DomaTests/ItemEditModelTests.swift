@@ -155,6 +155,19 @@ struct ItemEditModelTests {
     #expect(written.isEmpty)
   }
 
+  @Test func aSecondSaveDuringASaveReportsThatItDidNotRun() async throws {
+    let model = try model()
+    model.draft.notes = "Firm ones"
+
+    var secondDidRun = true
+    let firstDidRun = try await model.save(properties: properties) { _ in
+      secondDidRun = try await model.save(properties: properties) { _ in }
+    }
+
+    #expect(firstDidRun)
+    #expect(!secondDidRun)
+  }
+
   @Test func aRetryAfterAPartialFailureSendsOnlyWhatRemains() async throws {
     let model = try model()
     model.draft.title = "Green apples"
