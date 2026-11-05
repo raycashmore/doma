@@ -6,5 +6,7 @@ set -euo pipefail
 scripts_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ticket_path=/tmp/doma-ios-sign-in-ticket
 
+"$scripts_dir/check-simulator-target.sh"
+
 (umask 077 && "$scripts_dir/mint-test-sign-in-ticket.sh" >"$ticket_path")
 echo "Ticket ready for the next simulator launch."

@@ -82,7 +82,7 @@ apps/ios/scripts/test-live.sh
 
 This runs the app-hosted tests in the simulator against the Convex URL in the root
 `.env.local` (normally the local `pnpm convex` backend), so contract drift between
-Swift and Convex fails a test. It refuses anything but Clerk development keys.
+Swift and Convex fails a test. It prints the test counts and fails if any test was skipped. It refuses anything but Clerk development keys.
 `scripts/mint-test-sign-in-ticket.sh` mints a 10-minute Clerk sign-in ticket for
 the development instance's Google-linked user (or `DOMA_IOS_TEST_CLERK_USER_ID`).
 The test creates its own personal fixture list, exercises it and deletes it, so
@@ -111,6 +111,21 @@ To exercise the real lock instead, run `agent-device settings faceid enroll` onc
 The bundle ID comes from `DOMA_BUNDLE_ID`; `Device.xcconfig` may override it. Confirm the built
 app uses a local Convex URL and a `pk_test_` key first, because `Device.xcconfig` also applies
 to Debug builds. Reset any changed text size afterwards.
+
+`simulator-sign-in.sh` runs `scripts/check-simulator-target.sh`, which refuses a build aimed at
+production. Hold any new sheet open for 2 minutes with unsaved edits: a timed session event once
+closed one, and a short walk-through passes by luck. Treat a failure that comes and goes as timed
+until the logs say otherwise, and rule a cause out only after a run longer than the interval:
+
+```sh
+xcrun simctl spawn booted log show --last 5m --info --debug --predicate 'subsystem == "com.doma.app"'
+```
+
+`agent-device` gotchas:
+
+- Press a menu `Picker` or a `Toggle` by the control's coordinates; a ref press lands mid-row and does nothing.
+- `keyboard dismiss` is unsupported, and a target behind the keyboard is refused. Scroll it clear first.
+- A snapshot can lag the screen, so take a screenshot before believing a stuck state.
 
 Compile tests with `xcodebuild build-for-testing`: `build` alone skips them. The app target
 defaults to main-actor isolation, so tests of its types need `@MainActor`.

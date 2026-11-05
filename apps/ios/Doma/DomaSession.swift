@@ -4,6 +4,7 @@ import Foundation
 @preconcurrency import ConvexMobile
 import DomaKit
 import Observation
+import OSLog
 
 /// Keeps the Convex client's authentication in step with the Clerk session.
 @Observable
@@ -27,6 +28,7 @@ final class DomaSession {
   private(set) var phase: Phase = .loading
   let lists: DomaListsClient
 
+  @ObservationIgnored private let logger = Logger(subsystem: "com.doma.app", category: "session")
   @ObservationIgnored private let convex: ConvexClientWithAuth<String>
   @ObservationIgnored private var authStateSubscription: AnyCancellable?
   @ObservationIgnored private var sessionSync: Task<Void, Never>?
@@ -58,7 +60,9 @@ final class DomaSession {
   }
 
   private func apply(_ state: AuthState<String>) {
-    phase = phase.next(after: state, isClerkLoaded: Clerk.shared.isLoaded)
+    let next = phase.next(after: state, isClerkLoaded: Clerk.shared.isLoaded)
+    if next != phase { logger.info("Phase \(String(describing: self.phase)) -> \(String(describing: next))") }
+    phase = next
   }
 
   private func syncWithClerk() async {
@@ -74,6 +78,7 @@ final class DomaSession {
     await authenticate(for: Clerk.shared.session)
     for await event in Clerk.shared.auth.events {
       if case .sessionChanged(_, let session) = event {
+        logger.debug("Clerk session changed")
         await authenticate(for: session)
       }
     }

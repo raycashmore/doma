@@ -16,8 +16,13 @@ if [[ "$publishable_key" != pk_test_* ]]; then
   exit 1
 fi
 
+results="$(mktemp -d)/live.xcresult"
+trap 'rm -rf "$(dirname "$results")"' EXIT
+
 cd "$repo_root/apps/ios"
 TEST_RUNNER_DOMA_CONVEX_URL="$convex_url" \
 TEST_RUNNER_DOMA_CLERK_PUBLISHABLE_KEY="$publishable_key" \
 TEST_RUNNER_DOMA_TEST_SIGN_IN_TICKET="$("$scripts_dir/mint-test-sign-in-ticket.sh")" \
-  xcodebuild test -project Doma.xcodeproj -scheme Doma -destination "$destination" -quiet "$@"
+  xcodebuild test -project Doma.xcodeproj -scheme Doma -destination "$destination" -quiet \
+    -resultBundlePath "$results" "$@"
+"$scripts_dir/report-test-results.py" "$results"
