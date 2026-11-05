@@ -125,6 +125,36 @@ struct ItemEditModelTests {
     #expect(model.changes(properties: properties).isEmpty)
   }
 
+  @Test func anOptionRemovedWhileEditingIsLeftOutSoOtherFieldsStillSave() throws {
+    let model = try model()
+    model.draft.values["select"]?.optionId = "low"
+    model.draft.notes = "Firm ones"
+    let liveProperties = try JSONDecoder().decode(
+      [DomaListProperty].self,
+      from: Data(#"[{"_id":"select","name":"Priority","type":"select","options":[{"id":"high","label":"High"}]}]"#.utf8))
+
+    #expect(model.changes(properties: liveProperties) == [.notes("Firm ones")])
+  }
+
+  @Test func theSameNumberWrittenDifferentlyIsNotAChange() throws {
+    let model = try model(values: #"{"listPropertyId":"number","numberValue":2}"#)
+
+    model.draft.values["number"]?.number = "2.0"
+
+    #expect(model.changes(properties: properties).isEmpty)
+  }
+
+  @Test func anInvalidNumberStillCountsAsUnsavedAndCannotClearTheValue() async throws {
+    let model = try model(values: #"{"listPropertyId":"number","numberValue":2}"#)
+    model.draft.values["number"]?.number = "12abc"
+
+    var written: [ItemChange] = []
+    try await model.save(properties: properties) { written.append($0) }
+
+    #expect(!model.changes(properties: properties).isEmpty)
+    #expect(written.isEmpty)
+  }
+
   @Test func aRetryAfterAPartialFailureSendsOnlyWhatRemains() async throws {
     let model = try model()
     model.draft.title = "Green apples"

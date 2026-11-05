@@ -12,6 +12,7 @@ struct ItemEditSheet: View {
   @State private var isConfirmingDelete = false
   @State private var isDeleting = false
   @State private var saveFailed = false
+  @State private var deleteFailed = false
 
   init(lists: DomaListsClient, item: DomaListItem, properties: [DomaListProperty], isCompleted: Bool) {
     self.lists = lists
@@ -78,7 +79,7 @@ struct ItemEditSheet: View {
           } label: {
             Text("Delete Item")
               .domaFont(.body)
-              .foregroundStyle(.red)
+              .foregroundStyle(DomaColor.destructive)
               .frame(maxWidth: .infinity)
           }
           .confirmationDialog("Delete this item?", isPresented: $isConfirmingDelete, titleVisibility: .visible) {
@@ -112,7 +113,12 @@ struct ItemEditSheet: View {
         Button("Discard Changes", role: .destructive) { dismiss() }
         Button("Keep Editing", role: .cancel) {}
       }
-      .domaSaveFailureAlert(isPresented: $saveFailed)
+      .domaSaveFailureAlert(isPresented: $deleteFailed)
+      .alert("Some changes were not saved", isPresented: $saveFailed) {
+        Button("OK", role: .cancel) {}
+      } message: {
+        Text("Tap Save to try again.")
+      }
     }
     .presentationDetents([.large])
     .presentationSizing(.form)
@@ -146,7 +152,7 @@ struct ItemEditSheet: View {
       try await lists.deleteItem(itemId: item.id)
       dismiss()
     } catch {
-      saveFailed = true
+      deleteFailed = true
     }
   }
 }

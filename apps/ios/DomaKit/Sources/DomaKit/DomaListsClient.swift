@@ -39,6 +39,8 @@ public struct DomaListItemPropertyValue: Decodable, Equatable, Sendable {
   public let selectOptionId: String?
   public let checkboxValue: Bool?
 
+  public var date: Date? { dateValue.map { Date(timeIntervalSince1970: $0 / 1000) } }
+
   enum CodingKeys: String, CodingKey {
     case propertyId = "listPropertyId"
     case textValue
