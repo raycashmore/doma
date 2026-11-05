@@ -53,6 +53,7 @@ struct LiveListsContractTests {
       // The server re-appends a restored item after the other active items.
       #expect(afterUncomplete.activeItems.map(\.title) == ListFixture.itemTitles.reversed())
 
+      try await editItemDetails(on: convex, lists: lists, items: items, listPublicId: fixture.publicId)
       try await manageItems(on: lists, items: items, listPublicId: fixture.publicId)
       try await manageLists(on: lists, visibleLists: visibleLists, fixturePublicId: fixture.publicId)
     } catch {
@@ -61,6 +62,49 @@ struct LiveListsContractTests {
     }
     try await fixture.delete(on: convex)
     await convex.logout()
+  }
+
+  private func editItemDetails(
+    on convex: ConvexClient, lists: DomaListsClient, items: LiveValues<DomaListItems?>, listPublicId: String
+  ) async throws {
+    let propertyIds = try await ListFixture.addProperties(on: convex, listPublicId: listPublicId)
+    let loaded = try #require(
+      try await items.next("list properties") { $0?.properties.count == propertyIds.count })
+    #expect(loaded.properties.map(\.kind) == [.text, .number, .date, .select, .checkbox])
+    #expect(loaded.properties[3].options?.map(\.label) == ["High", "Low"])
+    let item = try #require(loaded.activeItems.first)
+
+    try await lists.renameItem(itemId: item.id, title: "Renamed fixture item")
+    _ = try await items.next("renamed item") { $0?.activeItems.first?.title == "Renamed fixture item" }
+    try await lists.renameItem(itemId: item.id, title: item.title)
+    _ = try await items.next("restored title") { $0?.activeItems.first?.title == item.title }
+
+    try await lists.setItemNotes(itemId: item.id, notes: "Fixture notes")
+    _ = try await items.next("item notes") { $0?.activeItems.first?.notes == "Fixture notes" }
+    try await lists.setItemNotes(itemId: item.id, notes: "")
+    _ = try await items.next("cleared notes") { $0?.activeItems.first?.notes == nil }
+
+    let date = Date(timeIntervalSince1970: 1_790_000_000)
+    let values: [DomaListPropertyValue] = [
+      .text("Line one\nLine two"), .number(2.5), .date(date), .select(optionId: "high"), .checkbox(false),
+    ]
+    for (propertyId, value) in zip(propertyIds, values) {
+      try await lists.setItemPropertyValue(itemId: item.id, propertyId: propertyId, value: value)
+    }
+    let saved = try #require(
+      try await items.next("property values") { $0?.activeItems.first?.propertyValues.count == values.count })
+    let stored = try #require(saved.activeItems.first?.propertyValues)
+    #expect(stored.map(\.propertyId) == propertyIds)
+    #expect(stored[0].textValue == "Line one\nLine two")
+    #expect(stored[1].numberValue == 2.5)
+    #expect(stored[2].dateValue == date.timeIntervalSince1970 * 1000)
+    #expect(stored[3].selectOptionId == "high")
+    #expect(stored[4].checkboxValue == false)
+
+    for propertyId in propertyIds {
+      try await lists.clearItemPropertyValue(itemId: item.id, propertyId: propertyId)
+    }
+    _ = try await items.next("cleared values") { $0?.activeItems.first?.propertyValues.isEmpty == true }
   }
 
   private func manageItems(
@@ -157,6 +201,30 @@ struct ListFixture {
         "lists/mutations:createListItem", with: ["listPublicId": created.publicId, "title": title])
     }
     return ListFixture(publicId: created.publicId)
+  }
+
+  /// Definitions are managed on the web, so the client has no wrapper for creating them.
+  static func addProperties(on convex: ConvexClient, listPublicId: String) async throws -> [String] {
+    let options: [ConvexEncodable?] = [
+      ["id": "high", "label": "High"] as [String: ConvexEncodable?],
+      ["id": "low", "label": "Low"] as [String: ConvexEncodable?],
+    ]
+    var ids: [String] = []
+    for type in ["text", "number", "date", "select", "checkbox"] {
+      var args: [String: ConvexEncodable?] = ["listPublicId": listPublicId, "name": "Fixture \(type)", "type": type]
+      if type == "select" { args["options"] = options }
+      let created: CreatedProperty = try await convex.mutation("lists/mutations:createListProperty", with: args)
+      ids.append(created.id)
+    }
+    return ids
+  }
+
+  private struct CreatedProperty: Decodable {
+    let id: String
+
+    enum CodingKeys: String, CodingKey {
+      case id = "_id"
+    }
   }
 
   func delete(on convex: ConvexClient) async throws {

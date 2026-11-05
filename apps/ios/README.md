@@ -3,8 +3,9 @@
 A native SwiftUI app for iPhone and iPad (iOS 27 or newer). It is an independent
 Xcode project, not a pnpm workspace package or a Vercel deployment zone. So far it
 covers sign-in and Lists: create, rename and delete lists, set the default list, add,
-check off, reorder and delete items and clear completed ones, with changes arriving live
-from Convex. Destructive actions ask for confirmation, unlike the web app, because the
+check off, reorder and delete items, clear completed ones, and edit an item's title, notes
+and property values, with changes arriving live from Convex. Property definitions are
+still managed on the web. Destructive actions ask for confirmation, unlike the web app, because the
 app writes to the household's real lists. Face ID (or the device passcode) unlocks it on
 every cold launch and after 5 minutes in the background. The lock covers the
 interface only: the Clerk session stays stored while locked. A device without a
@@ -122,6 +123,10 @@ defaults to main-actor isolation, so tests of its types need `@MainActor`.
 - Controls keep a 44 pt tap target. Rows with `listRowBackground` draw their own selected state.
 - Session phases pass through `.signedOut` briefly on launch, so sign-out side effects belong
   in `DomaSession`, not on phase changes.
+- Clerk reports a session change about once a minute. Anything that rebuilds `ListsView` on
+  that event loses open sheets, so `DomaSession.Phase` stays `.signedIn` through a re-login.
+- The edit sheet saves one mutation per changed field and only sends what changed there, so a
+  failed save can be retried and another person's edit to a different field survives.
 
 ## Signing checks
 

@@ -10,6 +10,8 @@ struct ListItemsView: View {
   @State private var itemToDelete: DomaListItem?
   @State private var isConfirmingClear = false
   @State private var saveFailed = false
+  @State private var editingItem: DomaListItem?
+  @Environment(NavigationBarRefreshHold.self) private var refreshHold
 
   private var activeItems: [DomaListItem] { reorderedItems ?? items.activeItems }
 
@@ -68,18 +70,40 @@ struct ListItemsView: View {
     .domaScreenBackground()
     .scrollDismissesKeyboard(.interactively)
     .domaSaveFailureAlert(isPresented: $saveFailed)
+    .sheet(item: $editingItem) { item in
+      ItemEditSheet(lists: lists, item: item, properties: items.properties, isCompleted: isCompleted(item))
+    }
+    .onChange(of: editingItem?.id) { _, id in refreshHold.isHeld = id != nil }
+    .onChange(of: items) { closeSheetIfItemWasDeleted() }
+    .onDisappear { refreshHold.isHeld = false }
+  }
+
+  private func isCompleted(_ item: DomaListItem) -> Bool {
+    items.completedItems.contains { $0.id == item.id }
+  }
+
+  private func closeSheetIfItemWasDeleted() {
+    guard let editingItem else { return }
+    let exists = (items.activeItems + items.completedItems).contains { $0.id == editingItem.id }
+    if !exists { self.editingItem = nil }
   }
 
   private func row(_ item: DomaListItem, isCompleted: Bool) -> some View {
-    ListItemRow(title: item.title, isCompleted: isCompleted) {
-      await save {
-        if isCompleted {
-          try await lists.uncomplete(itemId: item.id)
-        } else {
-          try await lists.complete(itemId: item.id)
+    ListItemRow(
+      title: item.title,
+      valueSummary: PropertyValueFormat.summary(of: item, properties: items.properties),
+      isCompleted: isCompleted,
+      onToggle: {
+        await save {
+          if isCompleted {
+            try await lists.uncomplete(itemId: item.id)
+          } else {
+            try await lists.complete(itemId: item.id)
+          }
         }
-      }
-    }
+      },
+      onOpen: { editingItem = item }
+    )
     .swipeActions {
       // Not a destructive role: that removes the row before the confirmation is answered.
       Button("Delete", systemImage: "trash") { itemToDelete = item }
