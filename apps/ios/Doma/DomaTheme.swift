@@ -30,4 +30,10 @@ extension View {
       .controlSize(.large)
       .tint(DomaColor.warmTextPrimary)
   }
+
+  func domaSaveFailureAlert(isPresented: Binding<Bool>) -> some View {
+    alert("The change was not saved", isPresented: isPresented) {
+      Button("OK", role: .cancel) {}
+    }
+  }
 }

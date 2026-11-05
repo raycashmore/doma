@@ -3,6 +3,7 @@ import SwiftUI
 
 struct ListsSidebar: View {
   let lists: [DomaListSummary]
+  let defaultListId: DomaListSummary.ID?
   @Binding var selectedListId: DomaListSummary.ID?
 
   private var personalLists: [DomaListSummary] { lists.filter { $0.visibility != .shared } }
@@ -24,7 +25,9 @@ struct ListsSidebar: View {
   private func section(_ title: String, lists: [DomaListSummary]) -> some View {
     if !lists.isEmpty {
       Section {
-        ForEach(lists) { ListRow(list: $0, isSelected: $0.id == selectedListId) }
+        ForEach(lists) {
+          ListRow(list: $0, isSelected: $0.id == selectedListId, isDefault: $0.id == defaultListId)
+        }
       } header: {
         DomaSectionHeader(title: title)
       }

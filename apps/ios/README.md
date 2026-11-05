@@ -2,8 +2,10 @@
 
 A native SwiftUI app for iPhone and iPad (iOS 27 or newer). It is an independent
 Xcode project, not a pnpm workspace package or a Vercel deployment zone. So far it
-covers sign-in and Lists: see visible lists, open one, check and uncheck items, with
-changes arriving live from Convex. Face ID (or the device passcode) unlocks it on
+covers sign-in and Lists: create, rename and delete lists, set the default list, add,
+check off, reorder and delete items and clear completed ones, with changes arriving live
+from Convex. Destructive actions ask for confirmation, unlike the web app, because the
+app writes to the household's real lists. Face ID (or the device passcode) unlocks it on
 every cold launch and after 5 minutes in the background. The lock covers the
 interface only: the Clerk session stays stored while locked. A device without a
 passcode cannot authenticate, so the app does not lock there. It reopens on the last list
@@ -129,4 +131,5 @@ personal team can sign a capability, run `scripts/probe-entitlement.sh` (for exa
 `app-group group.<bundle id>`) rather than relying on Xcode's capability screen.
 
 ConvexMobile forwards subscription updates through a pass-through publisher:
-attach a subscriber before triggering a change, or the update is lost.
+attach a subscriber before triggering a change, or the update is lost. It also encodes
+Swift integers as int64, which `v.number()` rejects, so numeric arguments go as `Double`.

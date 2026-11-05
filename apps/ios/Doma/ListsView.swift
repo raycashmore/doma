@@ -7,6 +7,10 @@ struct ListsView: View {
   @State private var loadFailed = false
   @State private var selectedListId: DomaListSummary.ID?
   @State private var compactColumn: NavigationSplitViewColumn
+  @State private var defaultListId: DomaListSummary.ID?
+  @State private var isCreatingList = false
+  @State private var createdListId: DomaListSummary.ID?
+  @State private var deleteFailed = false
 
   private let lastOpenedList = LastOpenedList()
 
@@ -27,6 +31,7 @@ struct ListsView: View {
       sidebar
         .navigationTitle("Lists")
         .toolbar {
+          Button("New List", systemImage: "plus") { isCreatingList = true }
           Menu("More", systemImage: "ellipsis") {
             Button("Sign out") {
               Task { await session.signOut() }
@@ -37,6 +42,13 @@ struct ListsView: View {
       detail
     }
     .tint(DomaColor.warmTextPrimary)
+    .sheet(isPresented: $isCreatingList) {
+      NewListSheet(lists: session.lists) { id in
+        createdListId = id
+        openCreatedList()
+      }
+    }
+    .domaSaveFailureAlert(isPresented: $deleteFailed)
     .onChange(of: selectedListId) { _, id in
       if let id { lastOpenedList.remember(id) }
     }
@@ -46,9 +58,19 @@ struct ListsView: View {
           if lists == nil { restoreSelection(from: value) }
           lists = value
           loadFailed = false
+          openCreatedList()
         }
       } catch {
         loadFailed = true
+      }
+    }
+    .task {
+      do {
+        for try await value in session.lists.defaultList().values {
+          defaultListId = value?.publicId
+        }
+      } catch {
+        defaultListId = nil
       }
     }
   }
@@ -56,7 +78,7 @@ struct ListsView: View {
   @ViewBuilder
   private var sidebar: some View {
     if let lists {
-      ListsSidebar(lists: lists, selectedListId: $selectedListId)
+      ListsSidebar(lists: lists, defaultListId: defaultListId, selectedListId: $selectedListId)
     } else if loadFailed {
       DomaStateView(title: "Lists are unavailable", systemImage: "exclamationmark.triangle")
     } else {
@@ -67,8 +89,10 @@ struct ListsView: View {
   @ViewBuilder
   private var detail: some View {
     if let selectedList {
-      ListDetailView(lists: session.lists, list: selectedList)
-        .id(selectedList.id)
+      ListDetailView(lists: session.lists, list: selectedList, isDefault: selectedList.id == defaultListId) {
+        await delete(selectedList)
+      }
+      .id(selectedList.id)
     } else if lists == nil {
       if loadFailed {
         DomaStateView(title: "Lists are unavailable", systemImage: "exclamationmark.triangle")
@@ -79,6 +103,31 @@ struct ListsView: View {
       DomaStateView(title: "This list is unavailable", systemImage: "lock")
     } else {
       DomaStateView(title: "Choose a list", systemImage: "checklist")
+    }
+  }
+
+  /// A new list can reach this device after its mutation returns, so opening waits until it is visible.
+  private func openCreatedList() {
+    guard let createdListId, lists?.contains(where: { $0.id == createdListId }) == true else { return }
+    selectedListId = createdListId
+    compactColumn = .detail
+    self.createdListId = nil
+  }
+
+  /// Leaves the list first, so the live update does not show it as unavailable while it closes.
+  private func delete(_ list: DomaListSummary) async {
+    selectedListId = nil
+    compactColumn = .sidebar
+    do {
+      try await session.lists.deleteList(publicId: list.id)
+      if lastOpenedList.publicId == list.id { lastOpenedList.forget() }
+    } catch {
+      deleteFailed = true
+      // Someone who has opened another list meanwhile stays there.
+      if selectedListId == nil {
+        selectedListId = list.id
+        compactColumn = .detail
+      }
     }
   }
 

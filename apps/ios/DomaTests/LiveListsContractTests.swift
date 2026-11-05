@@ -52,12 +52,66 @@ struct LiveListsContractTests {
         try await items.next("uncompleted item") { $0?.completedItems.isEmpty == true })
       // The server re-appends a restored item after the other active items.
       #expect(afterUncomplete.activeItems.map(\.title) == ListFixture.itemTitles.reversed())
+
+      try await manageItems(on: lists, items: items, listPublicId: fixture.publicId)
+      try await manageLists(on: lists, visibleLists: visibleLists, fixturePublicId: fixture.publicId)
     } catch {
       try? await fixture.delete(on: convex)
       throw error
     }
     try await fixture.delete(on: convex)
     await convex.logout()
+  }
+
+  private func manageItems(
+    on lists: DomaListsClient, items: LiveValues<DomaListItems?>, listPublicId: String
+  ) async throws {
+    let added = "Fixture item C"
+    try await lists.createItem(listPublicId: listPublicId, title: added)
+    let afterAdd = try #require(
+      try await items.next("added item") { $0?.activeItems.last?.title == added })
+    let newItem = try #require(afterAdd.activeItems.last)
+
+    try await lists.reorderItem(itemId: newItem.id, targetIndex: 0)
+    _ = try await items.next("reordered item") { $0?.activeItems.first == newItem }
+
+    try await lists.deleteItem(itemId: newItem.id)
+    let afterDelete = try #require(
+      try await items.next("deleted item") { $0?.activeItems.contains(newItem) == false })
+
+    let toClear = try #require(afterDelete.activeItems.first)
+    try await lists.complete(itemId: toClear.id)
+    _ = try await items.next("item to clear") { $0?.completedItems == [toClear] }
+    try await lists.clearCompletedItems(listPublicId: listPublicId)
+    _ = try await items.next("cleared items") { $0?.completedItems.isEmpty == true }
+  }
+
+  private func manageLists(
+    on lists: DomaListsClient, visibleLists: LiveValues<[DomaListSummary]>, fixturePublicId: String
+  ) async throws {
+    let renamed = "iOS tracer fixture renamed"
+    try await lists.renameList(publicId: fixturePublicId, name: renamed)
+    _ = try await visibleLists.next("renamed list") { lists in
+      lists.contains { $0.publicId == fixturePublicId && $0.name == renamed }
+    }
+
+    let created = try await lists.createList(name: "iOS tracer shared fixture", visibility: .shared)
+    let afterCreate = try await visibleLists.next("created list") { lists in
+      lists.contains { $0.publicId == created }
+    }
+    #expect(afterCreate.first { $0.publicId == created }?.visibility == .shared)
+    try await lists.deleteList(publicId: created)
+    _ = try await visibleLists.next("deleted list") { lists in
+      !lists.contains { $0.publicId == created }
+    }
+
+    let defaults = LiveValues(lists.defaultList())
+    let previousDefault = try await defaults.next("current default") { _ in true }
+    try await lists.setDefaultList(publicId: fixturePublicId)
+    _ = try await defaults.next("new default") { $0?.publicId == fixturePublicId }
+    if let previousDefault {
+      try await lists.setDefaultList(publicId: previousDefault.publicId)
+    }
   }
 
   private func signIn(with environment: LiveEnvironment) async throws {

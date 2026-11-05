@@ -12,7 +12,7 @@ Doma is a Vercel Multi-Zones monorepo. `apps/home` owns the apex domain and rewr
 | `apps/lists`                 | SvelteKit            | `/lists` in production, root on port 3004 locally; native Svelte shell       |
 | `apps/meals`                 | TanStack Start       | Mounts at `/meals`, port 3005; household cookbook and weekday planning zone  |
 | `apps/android`               | Kotlin + Gradle      | Sideloaded companion and Glance list widget; outside Turbo and Vercel        |
-| `apps/ios`                   | SwiftUI + Xcode      | Native iOS/iPadOS app (Lists tracer so far); outside Turbo and Vercel        |
+| `apps/ios`                   | SwiftUI + Xcode      | Native iOS/iPadOS app (Lists so far); outside Turbo and Vercel               |
 | `apps/api-bot`               | Hono on Vercel       | Shared bot gateway for Telegram delivery and chat                            |
 | `apps/api-agent`             | Hono + Vercel AI SDK | Inspectable, independently deployed AI agents; port 3006                     |
 | `apps/api-*`                 | (per-experiment)     | Convention for non-Convex backends                                           |
