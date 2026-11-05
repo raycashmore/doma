@@ -12,6 +12,16 @@ final class DomaSession {
     case loading
     case signedOut
     case signedIn
+
+    /// Clerk reports a session change about once a minute, and each re-login passes through
+    /// `.loading`. Staying signed in keeps the screens, and any edit in progress, alive through it.
+    func next(after state: AuthState<String>, isClerkLoaded: Bool) -> Phase {
+      switch state {
+      case .authenticated: .signedIn
+      case .unauthenticated: isClerkLoaded ? .signedOut : .loading
+      case .loading: self == .signedIn ? .signedIn : .loading
+      }
+    }
   }
 
   private(set) var phase: Phase = .loading
@@ -48,11 +58,7 @@ final class DomaSession {
   }
 
   private func apply(_ state: AuthState<String>) {
-    switch state {
-    case .authenticated: phase = .signedIn
-    case .unauthenticated: phase = Clerk.shared.isLoaded ? .signedOut : .loading
-    case .loading: phase = .loading
-    }
+    phase = phase.next(after: state, isClerkLoaded: Clerk.shared.isLoaded)
   }
 
   private func syncWithClerk() async {
