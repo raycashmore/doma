@@ -8,8 +8,11 @@ and property values, with changes arriving live from Convex. Property definition
 still managed on the web. Destructive actions ask for confirmation, unlike the web app, because the
 app writes to the household's real lists. Face ID (or the device passcode) unlocks it on
 every cold launch and after 5 minutes in the background. The lock covers the
-interface only: the Clerk session stays stored while locked. A device without a
-passcode cannot authenticate, so the app does not lock there. It reopens on the last list
+interface only: the Clerk session stays stored while locked, and after the first unlock the
+app stays alive underneath, so an open sheet keeps its unsaved edits. Those edits are lost if iOS
+closes the app or its window; they are never written to disk. The lock and the app switcher cover
+sit in their own window (`SceneCover`) because sheets present above the app's view tree. A device
+without a passcode cannot authenticate, so the app does not lock there. It reopens on the last list
 opened, and iPhone keeps Lists one step back.
 
 ## Layout

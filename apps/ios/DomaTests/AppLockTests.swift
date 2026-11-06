@@ -9,6 +9,56 @@ struct AppLockTests {
     #expect(AppLock().isLocked)
   }
 
+  @Test func hasNotUnlockedOnColdLaunch() {
+    #expect(!AppLock().hasUnlocked)
+  }
+
+  @Test func remembersTheFirstUnlockThroughALaterLock() {
+    var lock = AppLock()
+    lock.unlock()
+    lock.enterBackground(at: start)
+
+    _ = lock.returnToForeground(at: start + .seconds(300))
+
+    #expect(lock.isLocked)
+    #expect(lock.hasUnlocked)
+  }
+
+  @Test func hidesContentFromBackgroundUntilTheLockIsRechecked() {
+    var lock = AppLock()
+    lock.unlock()
+    #expect(!lock.hidesContent)
+
+    lock.enterBackground(at: start)
+    #expect(lock.hidesContent)
+
+    _ = lock.returnToForeground(at: start + .seconds(10))
+    #expect(!lock.hidesContent)
+  }
+
+  @Test func keepsContentHiddenWhenTheRecheckLocks() {
+    var lock = AppLock()
+    lock.unlock()
+    lock.enterBackground(at: start)
+
+    _ = lock.returnToForeground(at: start + .seconds(300))
+
+    #expect(lock.hidesContent)
+  }
+
+  @Test func theLockCoversAnActiveSceneEvenWithNothingPrivate() {
+    #expect(AppLock().coversScene(isActive: true, hasPrivateContent: false))
+  }
+
+  @Test func coversAnInactiveSceneOnlyWhenItHasSomethingPrivate() {
+    var lock = AppLock()
+    lock.unlock()
+
+    #expect(lock.coversScene(isActive: false, hasPrivateContent: true))
+    #expect(!lock.coversScene(isActive: false, hasPrivateContent: false))
+    #expect(!lock.coversScene(isActive: true, hasPrivateContent: true))
+  }
+
   @Test func staysUnlockedAfterABriefTripToTheBackground() {
     var lock = AppLock()
     lock.unlock()

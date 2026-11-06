@@ -13,16 +13,21 @@ struct DomaApp: App {
   var body: some Scene {
     WindowGroup {
       if let session {
-        if lock.isLocked {
-          LockedView(lock: lock)
-        } else {
-          RootView(session: session)
-            // Keeps household data out of the app switcher and hidden until the lock is re-checked.
-            .overlay {
-              if scenePhase != .active {
-                PrivacyCover()
-              }
-            }
+        ZStack {
+          // No list data loads before the first unlock. After that the app stays alive under the lock.
+          if lock.hasUnlocked {
+            RootView(session: session)
+          } else {
+            PrivacyCover()
+          }
+        }
+        .background {
+          SceneCover(
+            lock: lock,
+            isLocked: lock.isLocked,
+            hidesContent: lock.hidesContent,
+            hasPrivateContent: session.phase != .signedOut
+          )
         }
       } else if !DomaApp.isHostingTests {
         ConfigurationMissingView()
