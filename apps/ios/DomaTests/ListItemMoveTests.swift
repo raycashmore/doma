@@ -8,7 +8,7 @@ import Testing
 struct ListItemMoveTests {
   private let items = try! JSONDecoder().decode(
     [DomaListItem].self,
-    from: Data(#"[{"_id":"a","title":"A"},{"_id":"b","title":"B"},{"_id":"c","title":"C"}]"#.utf8))
+    from: Data(#"[{"_id":"a","title":"A","propertyValues":[]},{"_id":"b","title":"B","propertyValues":[]},{"_id":"c","title":"C","propertyValues":[]}]"#.utf8))
 
   @Test func movingDownTargetsTheItemsNewPosition() throws {
     // onMove reports the offset before removal, so dropping A below B arrives as 2.

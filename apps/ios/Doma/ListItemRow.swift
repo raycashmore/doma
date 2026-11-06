@@ -2,14 +2,17 @@ import SwiftUI
 
 struct ListItemRow: View {
   let title: String
+  let valueSummary: String
   let isCompleted: Bool
   let onToggle: () async -> Void
+  let onOpen: () -> Void
+  @ScaledMetric(relativeTo: .title2) private var circleTapSize = 44
 
   var body: some View {
-    Button {
-      Task { await onToggle() }
-    } label: {
-      HStack(spacing: 12) {
+    HStack(spacing: 4) {
+      Button {
+        Task { await onToggle() }
+      } label: {
         Image(systemName: isCompleted ? "checkmark.circle.fill" : "circle")
           .font(.title2)
           .symbolRenderingMode(.palette)
@@ -18,20 +21,41 @@ struct ListItemRow: View {
             DomaColor.warmAccent
           )
           .contentTransition(.symbolEffect(.replace))
-          .accessibilityHidden(true)
-        Text(title)
-          .domaFont(isCompleted ? .body : .rowTitle)
-          .strikethrough(isCompleted)
-          .foregroundStyle(isCompleted ? DomaColor.warmTextSecondary : DomaColor.warmTextPrimary)
-        Spacer(minLength: 0)
+          .frame(width: circleTapSize, height: circleTapSize)
+          .contentShape(.rect)
       }
-      .frame(minHeight: 44)
-      .contentShape(.rect)
+      .buttonStyle(.plain)
+      .accessibilityLabel(isCompleted ? "Mark Not Completed" : "Mark Completed")
+      Button(action: onOpen) {
+        HStack(spacing: 12) {
+          Text(title)
+            .domaFont(isCompleted ? .body : .rowTitle)
+            .strikethrough(isCompleted)
+            .foregroundStyle(isCompleted ? DomaColor.warmTextSecondary : DomaColor.warmTextPrimary)
+          Spacer(minLength: 0)
+          if !valueSummary.isEmpty {
+            Text(valueSummary)
+              .domaFont(.supporting)
+              .foregroundStyle(DomaColor.warmTextSecondary)
+              .lineLimit(1)
+          }
+        }
+        .frame(minHeight: 44)
+        .contentShape(.rect)
+      }
+      .buttonStyle(.plain)
     }
-    .buttonStyle(.plain)
+    .listRowInsets(.leading, 8)
     .listRowBackground(DomaColor.warmBgCard)
     .listRowSeparatorTint(DomaColor.warmBorder)
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel(valueSummary.isEmpty ? title : "\(title), \(valueSummary)")
     .accessibilityValue(isCompleted ? "Completed" : "Not completed")
-    .accessibilityHint(isCompleted ? "Marks the item as not completed" : "Marks the item as completed")
+    .accessibilityHint("Opens the item")
+    .accessibilityAddTraits(.isButton)
+    .accessibilityAction(.default, onOpen)
+    .accessibilityAction(named: isCompleted ? "Mark Not Completed" : "Mark Completed") {
+      Task { await onToggle() }
+    }
   }
 }

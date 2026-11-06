@@ -1,5 +1,6 @@
 import Combine
 @preconcurrency import ConvexMobile
+import Foundation
 
 public struct DomaListSummary: Decodable, Hashable, Identifiable, Sendable {
   public let publicId: String
@@ -17,15 +18,86 @@ public struct DomaListSummary: Decodable, Hashable, Identifiable, Sendable {
 public struct DomaListItem: Decodable, Equatable, Identifiable, Sendable {
   public let id: String
   public let title: String
+  public let notes: String?
+  public let propertyValues: [DomaListItemPropertyValue]
 
   enum CodingKeys: String, CodingKey {
     case id = "_id"
     case title
+    case notes
+    case propertyValues
+  }
+}
+
+/// A stored value. Only the field matching the property's kind is set.
+public struct DomaListItemPropertyValue: Decodable, Equatable, Sendable {
+  public let propertyId: String
+  public let textValue: String?
+  public let numberValue: Double?
+  /// Milliseconds since 1970, as Convex stores it.
+  public let dateValue: Double?
+  public let selectOptionId: String?
+  public let checkboxValue: Bool?
+
+  enum CodingKeys: String, CodingKey {
+    case propertyId = "listPropertyId"
+    case textValue
+    case numberValue
+    case dateValue
+    case selectOptionId
+    case checkboxValue
+  }
+}
+
+public struct DomaListProperty: Decodable, Equatable, Identifiable, Sendable {
+  public let id: String
+  public let name: String
+  public let kind: Kind
+  public let options: [Option]?
+
+  public enum Kind: String, Decodable, Sendable {
+    case text
+    case number
+    case date
+    case select
+    case checkbox
+  }
+
+  public struct Option: Decodable, Equatable, Identifiable, Sendable {
+    public let id: String
+    public let label: String
+  }
+
+  enum CodingKeys: String, CodingKey {
+    case id = "_id"
+    case name
+    case kind = "type"
+    case options
+  }
+}
+
+/// A value to save, matching the union `setListItemPropertyValue` accepts.
+public enum DomaListPropertyValue: Equatable, Sendable {
+  case text(String)
+  case number(Double)
+  case date(Date)
+  case select(optionId: String)
+  case checkbox(Bool)
+
+  var convexValue: [String: ConvexEncodable?] {
+    switch self {
+    case .text(let text): ["type": "text", "text": text]
+    case .number(let number): ["type": "number", "number": number]
+    case .date(let date): ["type": "date", "date": date.timeIntervalSince1970 * 1000]
+    case .select(let optionId): ["type": "select", "optionId": optionId]
+    case .checkbox(let checked): ["type": "checkbox", "checked": checked]
+    }
   }
 }
 
 public struct DomaListItems: Decodable, Equatable, Sendable {
   public let list: DomaListSummary
+  public let properties: [DomaListProperty]
   public let activeItems: [DomaListItem]
   public let completedItems: [DomaListItem]
 }
@@ -101,6 +173,30 @@ public struct DomaListsClient: Sendable {
   public func createItem(listPublicId: String, title: String) async throws {
     let _: IgnoredResult = try await convex.mutation(
       "lists/mutations:createListItem", with: ["listPublicId": listPublicId, "title": title])
+  }
+
+  public func renameItem(itemId: String, title: String) async throws {
+    let _: IgnoredResult = try await convex.mutation(
+      "lists/mutations:renameListItem", with: ["itemId": itemId, "title": title])
+  }
+
+  /// Empty notes clear the field.
+  public func setItemNotes(itemId: String, notes: String) async throws {
+    let _: IgnoredResult = try await convex.mutation(
+      "lists/mutations:setListItemNotes", with: ["itemId": itemId, "notes": notes])
+  }
+
+  public func setItemPropertyValue(
+    itemId: String, propertyId: String, value: DomaListPropertyValue
+  ) async throws {
+    let _: IgnoredResult = try await convex.mutation(
+      "lists/mutations:setListItemPropertyValue",
+      with: ["itemId": itemId, "propertyId": propertyId, "value": value.convexValue])
+  }
+
+  public func clearItemPropertyValue(itemId: String, propertyId: String) async throws {
+    let _: IgnoredResult = try await convex.mutation(
+      "lists/mutations:clearListItemPropertyValue", with: ["itemId": itemId, "propertyId": propertyId])
   }
 
   public func deleteItem(itemId: String) async throws {
