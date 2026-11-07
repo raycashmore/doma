@@ -6,7 +6,7 @@ set -euo pipefail
 app="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/Doma"
 
 fonts="$(grep -rnE '\.custom\(|UIFont\(name:' "$app" --include='*.swift' --exclude='DomaFont.swift' || true)"
-colours="$(grep -rnE '0x[0-9A-Fa-f]{6}\b|"#[0-9A-Fa-f]{6}"|(UI)?Color\(red:' "$app" --include='*.swift' --exclude='DomaColor.swift' || true)"
+colours="$(grep -rnE '0x[0-9A-Fa-f]{6}\b|"#[0-9A-Fa-f]{6}"|(UI)?Color\(red:|(foregroundStyle|tint)\(\.(red|orange|yellow|green|blue|purple|pink|gray|black|white)\)' "$app" --include='*.swift' --exclude='DomaColor.swift' || true)"
 
 if [[ -n "$fonts$colours" ]]; then
   echo "Use domaFont(_:) and DomaColor instead of literal fonts and colours:" >&2

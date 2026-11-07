@@ -3,7 +3,8 @@ import Observation
 import SwiftUI
 
 /// Applies `AppLock` to the scene lifecycle and asks for Face ID with a passcode fallback.
-/// It gates the interface only: the Clerk session stays stored while locked.
+/// It gates the interface only: the Clerk session stays stored, and after the first unlock the
+/// app stays alive under the lock screen.
 @Observable
 final class AppLockController {
   private var lock = AppLock()
@@ -12,6 +13,12 @@ final class AppLockController {
   private(set) var isAuthenticating = false
 
   var isLocked: Bool { lock.isLocked }
+  var hasUnlocked: Bool { lock.hasUnlocked }
+  var hidesContent: Bool { lock.hidesContent }
+
+  func coversScene(isActive: Bool, hasPrivateContent: Bool) -> Bool {
+    lock.coversScene(isActive: isActive, hasPrivateContent: hasPrivateContent)
+  }
 
   init() {
     #if DEBUG && targetEnvironment(simulator)

@@ -29,8 +29,16 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		D0A000000000000000000301 /* Doma */ = {isa = PBXFileSystemSynchronizedRootGroup; path = Doma; sourceTree = "<group>"; };
-		D0A000000000000000000302 /* DomaTests */ = {isa = PBXFileSystemSynchronizedRootGroup; path = DomaTests; sourceTree = "<group>"; };
+		D0A000000000000000000301 /* Doma */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Doma;
+			sourceTree = "<group>";
+		};
+		D0A000000000000000000302 /* DomaTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = DomaTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -262,8 +270,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
-				INFOPLIST_FILE = "Config/Doma-Info.plist";
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/Doma-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = Doma;
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Doma uses Face ID to keep household information private.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -283,8 +291,8 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				INFOPLIST_FILE = "Config/Doma-Info.plist";
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/Doma-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = Doma;
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Doma uses Face ID to keep household information private.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

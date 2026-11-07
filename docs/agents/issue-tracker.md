@@ -100,7 +100,9 @@ At handoff, pause, material direction/acceptance change or closeout:
    [reporting conventions](progress-reporting.md).
    Linear rewrites issue links into `<issue>` tags on save, so take patch
    anchors from a fresh `get_document` or from link-free text.
-4. File ideas for new work as Backlog issues labelled `needs-triage`, within
+4. When a comment defers a decision to another issue, add it to that issue too,
+   so the slice that inherits it finds it.
+5. File ideas for new work as Backlog issues labelled `needs-triage`, within
    tracker write authority, for the next grooming. If Linear refuses a new issue,
    record the idea under grooming input in the handoff.
 

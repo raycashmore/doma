@@ -14,8 +14,9 @@ concurrency:
 
 jobs:
   build:
-    name: Build iOS app and tests
-    runs-on: macos-latest
+    name: Build and test iOS app
+    # A preview image, and the only one with Xcode 27 and an iOS 27 simulator.
+    runs-on: xcode-27
 
     steps:
       - name: Checkout
@@ -34,18 +35,19 @@ jobs:
       - name: Check screens use the theme
         run: apps/ios/scripts/check-theme.sh
 
-      # Compiles the app and the app-hosted tests without running them. Running needs an
-      # iOS 27 simulator, which the runner's newest Xcode (26.x) cannot provide; switch to
-      # `xcodebuild test` once runner images ship Xcode 27. Locally, scripts/test-live.sh
-      # runs every suite.
+      # Runs every suite but the live contract, which needs a Convex backend and a Clerk ticket.
+      # Locally, scripts/test-live.sh runs that too.
       # arm64 only: ConvexMobile's binary framework has no x86_64 simulator slice.
-      - name: Build for testing
+      - name: Test
         working-directory: apps/ios
         run: |
-          xcodebuild build-for-testing \
+          xcodebuild test \
             -project Doma.xcodeproj \
             -scheme Doma \
-            -destination 'generic/platform=iOS Simulator' \
+            -destination "$(scripts/simulator-destination.sh)" \
+            -skip-testing:DomaTests/LiveListsContractTests \
+            -resultBundlePath "$RUNNER_TEMP/tests.xcresult" \
             ARCHS=arm64 \
             CODE_SIGNING_ALLOWED=NO \
             -quiet
+          scripts/report-test-results.py "$RUNNER_TEMP/tests.xcresult"

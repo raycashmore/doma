@@ -65,8 +65,8 @@ struct NewListSheet: View {
     defer { isSaving = false }
     do {
       let id = try await lists.createList(name: trimmedName, visibility: visibility)
-      dismiss()
       onCreated(id)
+      dismiss()
     } catch {
       saveFailed = true
     }

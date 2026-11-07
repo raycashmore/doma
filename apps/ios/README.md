@@ -8,8 +8,14 @@ and property values, with changes arriving live from Convex. Property definition
 still managed on the web. Destructive actions ask for confirmation, unlike the web app, because the
 app writes to the household's real lists. Face ID (or the device passcode) unlocks it on
 every cold launch and after 5 minutes in the background. The lock covers the
-interface only: the Clerk session stays stored while locked. A device without a
-passcode cannot authenticate, so the app does not lock there. It reopens on the last list
+interface only: the Clerk session stays stored while locked, and after the first unlock the
+app stays alive underneath, so an open sheet keeps its unsaved edits. Those edits are lost if iOS
+closes the app or its window; they are never written to disk. The lock and the app switcher cover
+sit in their own window (`SceneCover`) because sheets present above the app's view tree. While
+covered, the app's window is transparent over a backdrop window, because the iPad simulator fades in a
+capture of it on return, under the cover. A view added to that window does not stop this. This has
+not been checked on a physical iPad. A device
+without a passcode cannot authenticate, so the app does not lock there. It reopens on the last list
 opened, and iPhone keeps Lists one step back.
 
 ## Layout
@@ -82,7 +88,7 @@ apps/ios/scripts/test-live.sh
 
 This runs the app-hosted tests in the simulator against the Convex URL in the root
 `.env.local` (normally the local `pnpm convex` backend), so contract drift between
-Swift and Convex fails a test. It refuses anything but Clerk development keys.
+Swift and Convex fails a test. It prints the test counts and fails if any test was skipped. It refuses anything but Clerk development keys.
 `scripts/mint-test-sign-in-ticket.sh` mints a 10-minute Clerk sign-in ticket for
 the development instance's Google-linked user (or `DOMA_IOS_TEST_CLERK_USER_ID`).
 The test creates its own personal fixture list, exercises it and deletes it, so
@@ -111,6 +117,36 @@ To exercise the real lock instead, run `agent-device settings faceid enroll` onc
 The bundle ID comes from `DOMA_BUNDLE_ID`; `Device.xcconfig` may override it. Confirm the built
 app uses a local Convex URL and a `pk_test_` key first, because `Device.xcconfig` also applies
 to Debug builds. Reset any changed text size afterwards.
+
+`simulator-sign-in.sh` runs `scripts/check-simulator-target.sh`, which refuses a build aimed at
+production. Hold any new sheet open for 2 minutes with unsaved edits: a timed session event once
+closed one, and a short walk-through passes by luck. Treat a failure that comes and goes as timed
+until the logs say otherwise, and rule a cause out only after a run longer than the interval:
+
+```sh
+xcrun simctl spawn booted log show --last 5m --info --debug --predicate 'subsystem == "com.doma.app"'
+```
+
+To check a lock or cover change, open a sheet, type a marker word into it, and leave it unsaved. Then
+run this on an iPhone and an iPad simulator:
+
+```sh
+AGENT_DEVICE=<agent-device command> apps/ios/scripts/check-lock-return.sh <bundle id> <marker>
+```
+
+It waits past the 5-minute lock by default, fails if the app restarted, and reads the recording for
+the marker showing before the return and for black frames. `check-return-frames.swift` does that
+reading, and was checked against recordings of a real leak. The marker must be readable to the
+script as you typed it, so use capitals and hyphens.
+
+`agent-device` gotchas:
+
+- Press a menu `Picker` or a `Toggle` by the control's coordinates; a ref press lands mid-row and does nothing.
+- `keyboard dismiss` is unsupported, and a target behind the keyboard is refused. Scroll it clear first.
+- A snapshot can lag the screen, so take a screenshot before believing a stuck state.
+- The simulator can restart mid-run. A new process ID after a lock test means a cold launch, not a re-lock.
+- After `main thread execution timed out`, queued `home` and `app-switcher` commands can replay and reopen the app. Wait, then leave the app with `open <another bundle id>`.
+- `Runner did not accept connection: this Xcode cannot start its simulator service` while Xcode is current: update macOS to match Xcode and restart. That cleared it once, on macOS 27.0.1 with Xcode 27.2.
 
 Compile tests with `xcodebuild build-for-testing`: `build` alone skips them. The app target
 defaults to main-actor isolation, so tests of its types need `@MainActor`.

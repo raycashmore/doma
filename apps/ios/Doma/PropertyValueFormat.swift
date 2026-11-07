@@ -40,7 +40,7 @@ enum PropertyValueFormat {
     switch property.kind {
     case .text: value.textValue
     case .number: value.numberValue.map { number($0) }
-    case .date: value.dateValue.map { date(Date(timeIntervalSince1970: $0 / 1000)) }
+    case .date: value.date.map { date($0) }
     case .select: property.options?.first { $0.id == value.selectOptionId }?.label
     case .checkbox: value.checkboxValue.map { $0 ? "Checked" : "Unchecked" }
     }

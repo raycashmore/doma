@@ -94,20 +94,14 @@ struct ListItemsView: View {
       valueSummary: PropertyValueFormat.summary(of: item, properties: items.properties),
       isCompleted: isCompleted,
       onToggle: {
-        await save {
-          if isCompleted {
-            try await lists.uncomplete(itemId: item.id)
-          } else {
-            try await lists.complete(itemId: item.id)
-          }
-        }
+        await save { try await lists.apply(.completion(!isCompleted), toItem: item.id) }
       },
       onOpen: { editingItem = item }
     )
     .swipeActions {
       // Not a destructive role: that removes the row before the confirmation is answered.
       Button("Delete", systemImage: "trash") { itemToDelete = item }
-        .tint(.red)
+        .tint(DomaColor.destructive)
     }
     .confirmationDialog("Delete this item?", isPresented: isConfirmingDelete(item), titleVisibility: .visible) {
       Button("Delete Item", role: .destructive) {
