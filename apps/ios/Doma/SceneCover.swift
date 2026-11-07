@@ -34,6 +34,10 @@ final class SceneCoverAnchor: UIView {
   private let lock: AppLockController
   private var coverWindow: UIWindow?
   private var isSceneActive = false
+  /// Always on screen behind the app, in the cover's colour. The iPad simulator fades in a capture of
+  /// the app's window on return, under the cover, so that window goes transparent while covered.
+  /// Without something behind it, the screen flashes black as the scene deactivates.
+  private var backdropWindow: UIWindow?
 
   init(lock: AppLockController) {
     self.lock = lock
@@ -55,6 +59,7 @@ final class SceneCoverAnchor: UIView {
     guard let coverWindow, let window else { return }
     let isCovered = lock.coversScene(isActive: isSceneActive, hasPrivateContent: hasPrivateContent)
     if isCovered { coverWindow.isHidden = false }
+    window.alpha = isCovered ? 0 : 1
     // Only the lock takes focus: Face ID and Control Centre also deactivate the scene.
     window.accessibilityElementsHidden = lock.isLocked
     let keyWindow = lock.isLocked ? coverWindow : window
@@ -66,6 +71,8 @@ final class SceneCoverAnchor: UIView {
     NotificationCenter.default.removeObserver(self)
     coverWindow?.isHidden = true
     coverWindow = nil
+    backdropWindow?.isHidden = true
+    backdropWindow = nil
   }
 
   private func install(in scene: UIWindowScene) {
@@ -76,6 +83,15 @@ final class SceneCoverAnchor: UIView {
     coverWindow.windowLevel = .alert + 1
     coverWindow.rootViewController = controller
     self.coverWindow = coverWindow
+
+    let backdropWindow = UIWindow(windowScene: scene)
+    backdropWindow.windowLevel = .normal - 1
+    backdropWindow.rootViewController = UIViewController()
+    backdropWindow.rootViewController?.view.backgroundColor = UIColor(DomaColor.warmBgCardSoft)
+    backdropWindow.isUserInteractionEnabled = false
+    backdropWindow.isHidden = false
+    self.backdropWindow = backdropWindow
+
     isSceneActive = scene.activationState == .foregroundActive
 
     // Notifications, not scenePhase: the cover must be up before the snapshot, and scenePhase can lag.

@@ -11,7 +11,10 @@ every cold launch and after 5 minutes in the background. The lock covers the
 interface only: the Clerk session stays stored while locked, and after the first unlock the
 app stays alive underneath, so an open sheet keeps its unsaved edits. Those edits are lost if iOS
 closes the app or its window; they are never written to disk. The lock and the app switcher cover
-sit in their own window (`SceneCover`) because sheets present above the app's view tree. A device
+sit in their own window (`SceneCover`) because sheets present above the app's view tree. While
+covered, the app's window is transparent over a backdrop window, because the iPad simulator fades in a
+capture of it on return, under the cover. A view added to that window does not stop this. This has
+not been checked on a physical iPad. A device
 without a passcode cannot authenticate, so the app does not lock there. It reopens on the last list
 opened, and iPhone keeps Lists one step back.
 
@@ -129,6 +132,9 @@ xcrun simctl spawn booted log show --last 5m --info --debug --predicate 'subsyst
 - Press a menu `Picker` or a `Toggle` by the control's coordinates; a ref press lands mid-row and does nothing.
 - `keyboard dismiss` is unsupported, and a target behind the keyboard is refused. Scroll it clear first.
 - A snapshot can lag the screen, so take a screenshot before believing a stuck state.
+- The simulator can restart mid-run, so compare the app's process ID before and after a lock test: a new one means a cold launch, not a re-lock.
+- After `main thread execution timed out`, queued `home` and `app-switcher` commands can replay and reopen the app. Wait, then leave the app with `open <another bundle id>`.
+- Check privacy on iPad as well as iPhone, frame by frame from a `record` run: the return transitions differ, and a brief leak shows in no screenshot.
 
 Compile tests with `xcodebuild build-for-testing`: `build` alone skips them. The app target
 defaults to main-actor isolation, so tests of its types need `@MainActor`.
