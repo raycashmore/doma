@@ -127,14 +127,26 @@ until the logs say otherwise, and rule a cause out only after a run longer than 
 xcrun simctl spawn booted log show --last 5m --info --debug --predicate 'subsystem == "com.doma.app"'
 ```
 
+To check a lock or cover change, open a sheet, type a marker word into it, and leave it unsaved. Then
+run this on an iPhone and an iPad simulator:
+
+```sh
+AGENT_DEVICE=<agent-device command> apps/ios/scripts/check-lock-return.sh <bundle id> <marker>
+```
+
+It waits past the 5-minute lock by default, fails if the app restarted, and reads the recording for
+the marker showing before the return and for black frames. `check-return-frames.swift` does that
+reading, and was checked against recordings of a real leak. The marker must be readable to the
+script as you typed it, so use capitals and hyphens.
+
 `agent-device` gotchas:
 
 - Press a menu `Picker` or a `Toggle` by the control's coordinates; a ref press lands mid-row and does nothing.
 - `keyboard dismiss` is unsupported, and a target behind the keyboard is refused. Scroll it clear first.
 - A snapshot can lag the screen, so take a screenshot before believing a stuck state.
-- The simulator can restart mid-run, so compare the app's process ID before and after a lock test: a new one means a cold launch, not a re-lock.
+- The simulator can restart mid-run. A new process ID after a lock test means a cold launch, not a re-lock.
 - After `main thread execution timed out`, queued `home` and `app-switcher` commands can replay and reopen the app. Wait, then leave the app with `open <another bundle id>`.
-- Check privacy on iPad as well as iPhone, frame by frame from a `record` run: the return transitions differ, and a brief leak shows in no screenshot.
+- `Runner did not accept connection: this Xcode cannot start its simulator service` while Xcode is current: update macOS to match Xcode and restart. That cleared it once, on macOS 27.0.1 with Xcode 27.2.
 
 Compile tests with `xcodebuild build-for-testing`: `build` alone skips them. The app target
 defaults to main-actor isolation, so tests of its types need `@MainActor`.

@@ -25,7 +25,8 @@ retain a compact handoff: selected task and brief, revision/branch/PR where
 relevant, environment/deployment, evidence link, remaining gates, existing
 authority with source and limits, and one resume action. Timestamp meaningful
 updates in Australia/Sydney, including local time and offset/zone when
-available. Keep dated history in its owning evidence record.
+available. Keep dated history in its owning evidence record. A checkpoint is done
+when the handoff names the current head, not when an issue comment does.
 
 ## Chat and closeout
 

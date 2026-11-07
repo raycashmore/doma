@@ -57,12 +57,22 @@ final class SceneCoverAnchor: UIView {
 
   func applyCover() {
     guard let coverWindow, let window else { return }
-    let isCovered = lock.coversScene(isActive: isSceneActive, hasPrivateContent: hasPrivateContent)
+    Self.apply(
+      isCovered: lock.coversScene(isActive: isSceneActive, hasPrivateContent: hasPrivateContent),
+      isLocked: lock.isLocked,
+      window: window,
+      coverWindow: coverWindow
+    )
+  }
+
+  /// The order matters: the cover goes up before the app's window empties, and comes down after it
+  /// is back, so the app never shows bare.
+  static func apply(isCovered: Bool, isLocked: Bool, window: UIWindow, coverWindow: UIWindow) {
     if isCovered { coverWindow.isHidden = false }
     window.alpha = isCovered ? 0 : 1
     // Only the lock takes focus: Face ID and Control Centre also deactivate the scene.
-    window.accessibilityElementsHidden = lock.isLocked
-    let keyWindow = lock.isLocked ? coverWindow : window
+    window.accessibilityElementsHidden = isLocked
+    let keyWindow = isLocked ? coverWindow : window
     if !keyWindow.isKeyWindow { keyWindow.makeKey() }
     if !isCovered { coverWindow.isHidden = true }
   }

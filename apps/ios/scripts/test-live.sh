@@ -16,6 +16,8 @@ if [[ "$publishable_key" != pk_test_* ]]; then
   exit 1
 fi
 
+"$scripts_dir/warn-macos-behind-xcode.sh"
+
 results="$(mktemp -d)/live.xcresult"
 trap 'rm -rf "$(dirname "$results")"' EXIT
 

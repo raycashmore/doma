@@ -5,6 +5,7 @@
 set -euo pipefail
 
 ios_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+"$ios_dir/scripts/warn-macos-behind-xcode.sh"
 plist="${1:-}"
 
 if [[ -z "$plist" ]]; then
