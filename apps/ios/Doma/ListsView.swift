@@ -9,8 +9,11 @@ struct ListsView: View {
   @State private var compactColumn: NavigationSplitViewColumn
   @State private var defaultListId: DomaListSummary.ID?
   @State private var isCreatingList = false
+  @State private var listCreatedInSheet: DomaListSummary.ID?
   @State private var createdListId: DomaListSummary.ID?
   @State private var deleteFailed = false
+  @State private var openItems: DomaListItems?
+  @State private var unavailableListId: DomaListSummary.ID?
 
   private let lastOpenedList = LastOpenedList()
 
@@ -42,16 +45,24 @@ struct ListsView: View {
       detail
     }
     .tint(DomaColor.warmTextPrimary)
-    .sheet(isPresented: $isCreatingList) {
+    .sheet(isPresented: $isCreatingList, onDismiss: openListCreatedInSheet) {
       NewListSheet(lists: session.lists) { id in
-        createdListId = id
-        openCreatedList()
+        // A save can outlive its sheet, and then no dismissal is left to open the list.
+        if isCreatingList {
+          listCreatedInSheet = id
+        } else {
+          createdListId = id
+          openCreatedList()
+        }
       }
     }
     .domaSaveFailureAlert(isPresented: $deleteFailed)
     .onChange(of: selectedListId) { _, id in
       if let id { lastOpenedList.remember(id) }
     }
+    // Here, not in the detail view: on iPhone, opening a new list can cancel the detail's `.task`
+    // or skip its `onAppear` while the screen stays up, which leaves its spinner there for good.
+    .task(id: selectedListId) { await watchOpenList() }
     .task {
       do {
         for try await value in session.lists.visibleLists().values {
@@ -89,7 +100,14 @@ struct ListsView: View {
   @ViewBuilder
   private var detail: some View {
     if let selectedList {
-      ListDetailView(lists: session.lists, list: selectedList, isDefault: selectedList.id == defaultListId) {
+      ListDetailView(
+        lists: session.lists,
+        list: selectedList,
+        // A frame can pass between selecting a list and its items loading.
+        items: openItems?.list.id == selectedList.id ? openItems : nil,
+        isUnavailable: unavailableListId == selectedList.id,
+        isDefault: selectedList.id == defaultListId
+      ) {
         await delete(selectedList)
       }
       .id(selectedList.id)
@@ -104,6 +122,27 @@ struct ListsView: View {
     } else {
       DomaStateView(title: "Choose a list", systemImage: "checklist")
     }
+  }
+
+  private func watchOpenList() async {
+    openItems = nil
+    unavailableListId = nil
+    guard let selectedListId else { return }
+    do {
+      for try await value in session.lists.items(listPublicId: selectedListId).values {
+        openItems = value
+        unavailableListId = value == nil ? selectedListId : nil
+      }
+    } catch {
+      unavailableListId = selectedListId
+    }
+  }
+
+  /// Waits for the sheet to go, because navigating while it closes can leave a screen that never updates.
+  private func openListCreatedInSheet() {
+    createdListId = listCreatedInSheet
+    listCreatedInSheet = nil
+    openCreatedList()
   }
 
   /// A new list can reach this device after its mutation returns, so opening waits until it is visible.

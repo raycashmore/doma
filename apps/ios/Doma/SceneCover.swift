@@ -113,19 +113,22 @@ final class SceneCoverAnchor: UIView {
     applyCover()
   }
 
+  /// The keyboard sits above every app window, and its suggestion bar shows what is being typed, so
+  /// it has to close before the app switcher shows it or a lock appears.
   @objc private func sceneWillDeactivate() {
     isSceneActive = false
+    window?.endEditing(true)
     applyCover()
+  }
+
+  /// Catches a field that took focus after the scene deactivated, such as a sheet that was opening.
+  @objc private func sceneDidEnterBackground() {
+    window?.endEditing(true)
   }
 
   @objc private func sceneDidActivate() {
     isSceneActive = true
     applyCover()
-  }
-
-  /// The keyboard sits above every app window, so it has to go before a lock can appear.
-  @objc private func sceneDidEnterBackground() {
-    window?.endEditing(true)
   }
 
   @objc private func sceneDidDisconnect() {
