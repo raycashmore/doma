@@ -43,6 +43,14 @@ production builds to Turbopack, which currently spawns/binds an internal worker
 endpoint that restricted agent sandboxes deny. Do not remove the webpack build
 flag unless sandboxed `pnpm ci:checks` has been verified with the replacement.
 
+## Local Convex
+
+`pnpm convex` starts `convex-local-backend` on port 3210 and pushes functions to it. Stop it with
+Ctrl-C. Killing only the `convex dev` process leaves the backend running old code, and the next
+`pnpm convex` refuses to start ("A local backend is still running on port 3210"). Stop the stray
+`convex-local-backend` process, then start again. Function logs, including `console.error`, print
+in the `pnpm convex` output.
+
 ## Convex Seeding
 
 Seed scripts run from the local machine and read a local excel spreadsheet. That

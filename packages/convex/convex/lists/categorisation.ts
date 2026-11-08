@@ -94,13 +94,23 @@ export async function categoriseListItems({
       options: input.options,
       items: input.items.map(({ title, notes }) => (notes ? { title, notes } : { title }))
     });
-  } catch {
+  } catch (error) {
+    // Item titles stay out of the log; the error says why the provider failed.
+    console.error('[lists.categorisation] List categorisation AI provider failed', {
+      itemCount: input.items.length,
+      error: error instanceof Error ? error.message : String(error)
+    });
     return { status: 'failed', reason: 'provider_failure' };
   }
 
   const optionIds = new Set(input.options.map((option) => option.id));
   const optionIdsByItem = parseAssignments(output, input.items.length, optionIds);
-  if (!optionIdsByItem) return { status: 'skipped', reason: 'invalid_response' };
+  if (!optionIdsByItem) {
+    console.error('[lists.categorisation] List categorisation AI output was invalid', {
+      itemCount: input.items.length
+    });
+    return { status: 'skipped', reason: 'invalid_response' };
+  }
 
   const assignments = input.items.flatMap((item, index) => {
     const optionId = optionIdsByItem[index];

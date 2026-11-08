@@ -113,6 +113,9 @@ out of device and release builds. Start `pnpm convex`, then:
    SIMCTL_CHILD_DOMA_SKIP_APP_LOCK=1 xcrun simctl launch booted <bundle id>
    ```
 
+For a list with properties, values and AI categorisation set up, run `scripts/seed-simulator-list.sh`.
+Property definitions are web-only, so the app cannot make one.
+
 To exercise the real lock instead, run `agent-device settings faceid enroll` once, then
 `agent-device settings faceid match` after launch.
 
@@ -146,6 +149,9 @@ script as you typed it, so use capitals and hyphens.
 - Press a menu `Picker` or a `Toggle` by the control's coordinates; a ref press lands mid-row and does nothing.
 - `keyboard dismiss` is unsupported, and a target behind the keyboard is refused. Scroll it clear first.
 - A snapshot can lag the screen, so take a screenshot before believing a stuck state.
+- Refs go stale when the screen changes; take a fresh snapshot before pressing one.
+- On iPad, `scroll --until` scrolls the detail column. Reach a sidebar row by swiping inside the sidebar.
+- A press while a menu is still closing is lost. Wait about 1.5 seconds before the next one.
 - The simulator can restart mid-run. A new process ID after a lock test means a cold launch, not a re-lock.
 - After `main thread execution timed out`, queued `home` and `app-switcher` commands can replay and reopen the app. Wait, then leave the app with `open <another bundle id>`.
 - `Runner did not accept connection: this Xcode cannot start its simulator service` while Xcode is current: update macOS to match Xcode and restart. That cleared it once, on macOS 27.0.1 with Xcode 27.2.
@@ -167,6 +173,8 @@ defaults to main-actor isolation, so tests of its types need `@MainActor`.
   that event loses open sheets, so `DomaSession.Phase` stays `.signedIn` through a re-login.
 - The edit sheet saves one mutation per changed field and only sends what changed there, so a
   failed save can be retried and another person's edit to a different field survives.
+- An optimistic value stays on screen until the live subscription confirms it, not just until
+  the mutation returns, and writes to one record wait for the one before, so quick changes land in order.
 
 ## Signing checks
 

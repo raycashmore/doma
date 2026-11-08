@@ -7,6 +7,7 @@
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "prod:status": "bash scripts/prod-status.sh",
+    "prepare": "git rev-parse --git-dir >/dev/null 2>&1 && git config core.hooksPath scripts/git-hooks || true",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,mjs,cjs,json,css,vue,svelte,md,yaml,yml}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mjs,cjs,json,css,vue,svelte,md,yaml,yml}\"",
     "check-types": "turbo run check-types",
