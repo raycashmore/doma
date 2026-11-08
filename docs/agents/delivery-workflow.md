@@ -55,6 +55,10 @@ main merge, production deployment and production data change are distinct
 actions; use the owner's grant for each. Attach any created PR to the chat
 through the app tool.
 
+Before reporting a PR as ready or complete, `scripts/check-pr-head.sh` passes: the
+tree is clean and the PR head matches the local head. Run it again after any
+later commit.
+
 ## Close out
 
 Review the scoped diff and checks, record the three

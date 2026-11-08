@@ -20,7 +20,7 @@ struct PropertyDraft: Equatable {
     case .number:
       number = value.numberValue.map { PropertyValueFormat.number($0) } ?? ""
     case .date:
-      date = value.dateValue.map { PropertyValueFormat.noon(of: Date(timeIntervalSince1970: $0 / 1000)) }
+      date = value.date.map { PropertyValueFormat.noon(of: $0) }
     case .select:
       optionId = property.options?.first { $0.id == value.selectOptionId }?.id
     case .checkbox:
@@ -35,9 +35,10 @@ struct PropertyDraft: Equatable {
   fileprivate func isSame(as other: PropertyDraft, for property: DomaListProperty) -> Bool {
     switch property.kind {
     case .text: trimmedText == other.trimmedText
-    case .number: trimmedNumber == other.trimmedNumber
+    case .number: isSameNumber(as: other)
     case .date: date == other.date
-    case .select: optionId == other.optionId
+    // An option removed elsewhere is left out of the save, as a removed property is.
+    case .select: optionId == other.optionId || (optionId != nil && !isLiveOption(of: property))
     case .checkbox: isChecked == other.isChecked
     }
   }
@@ -51,6 +52,19 @@ struct PropertyDraft: Equatable {
     case .select: optionId.map { .select(optionId: $0) }
     case .checkbox: isChecked.map { .checkbox($0) }
     }
+  }
+
+  private func isSameNumber(as other: PropertyDraft) -> Bool {
+    if let number = PropertyValueFormat.parseNumber(trimmedNumber),
+      let otherNumber = PropertyValueFormat.parseNumber(other.trimmedNumber)
+    {
+      return number == otherNumber
+    }
+    return trimmedNumber == other.trimmedNumber
+  }
+
+  private func isLiveOption(of property: DomaListProperty) -> Bool {
+    property.options?.contains { $0.id == optionId } ?? false
   }
 
   private var trimmedText: String { text.trimmingCharacters(in: .whitespacesAndNewlines) }
@@ -131,13 +145,17 @@ final class ItemEditModel {
   }
 
   /// Stops at the first failure and rethrows it, leaving the unsaved changes pending.
-  func save(properties: [DomaListProperty], using apply: (ItemChange) async throws -> Void) async throws {
+  /// Returns whether a save ran, because a second tap must not close the sheet on the first one.
+  @discardableResult
+  func save(properties: [DomaListProperty], using apply: (ItemChange) async throws -> Void) async throws -> Bool {
+    guard canSave(properties: properties) else { return false }
     isSaving = true
     defer { isSaving = false }
     for change in changes(properties: properties) {
       try await apply(change)
       record(change)
     }
+    return true
   }
 
   private func hasInvalidValue(properties: [DomaListProperty]) -> Bool {

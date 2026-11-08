@@ -4,10 +4,10 @@ import SwiftUI
 struct ListDetailView: View {
   let lists: DomaListsClient
   let list: DomaListSummary
+  let items: DomaListItems?
+  let isUnavailable: Bool
   let isDefault: Bool
   let onDelete: () async -> Void
-  @State private var items: DomaListItems?
-  @State private var isUnavailable = false
 
   var body: some View {
     Group {
@@ -23,16 +23,6 @@ struct ListDetailView: View {
     .navigationSubtitle(list.visibility == .shared ? "Shared" : "Personal")
     .toolbar {
       ListActionsMenu(lists: lists, list: list, isDefault: isDefault, onDelete: onDelete)
-    }
-    .task {
-      do {
-        for try await value in lists.items(listPublicId: list.publicId).values {
-          items = value
-          isUnavailable = value == nil
-        }
-      } catch {
-        isUnavailable = true
-      }
     }
   }
 }

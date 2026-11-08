@@ -10,6 +10,8 @@ enum DomaColor {
   static let warmTextPrimary = color(light: 0x3D2E22, dark: 0xF6EDE0)
   static let warmTextSecondary = color(light: 0x7C6755, dark: 0xBCAB97)
   static let warmAccent = color(light: 0xD85A36, dark: 0xF4744A)
+  /// System red, which keeps its contrast for small text where coral does not.
+  static let destructive = Color.red
 
   private static func color(light: UInt32, dark: UInt32) -> Color {
     Color(uiColor: UIColor { $0.userInterfaceStyle == .dark ? uiColor(dark) : uiColor(light) })

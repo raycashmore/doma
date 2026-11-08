@@ -24,7 +24,7 @@ struct PropertyValueField: View {
         if isInvalid {
           Text("Enter a number")
             .domaFont(.supporting)
-            .foregroundStyle(.red)
+            .foregroundStyle(DomaColor.destructive)
         }
       }
     case .date:
@@ -39,6 +39,7 @@ struct PropertyValueField: View {
         name
       }
       .pickerStyle(.menu)
+      .domaFont(.body)
       .tint(DomaColor.warmTextSecondary)
     case .checkbox:
       checkboxField
@@ -74,6 +75,7 @@ struct PropertyValueField: View {
         ) {
           name
         }
+        .domaFont(.body)
         clearButton { value.date = nil }
       }
     } else {

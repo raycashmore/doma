@@ -8,6 +8,8 @@ struct ListItemRow: View {
   let onOpen: () -> Void
   @ScaledMetric(relativeTo: .title2) private var circleTapSize = 44
 
+  private var completionAction: String { isCompleted ? "Mark Not Completed" : "Mark Completed" }
+
   var body: some View {
     HStack(spacing: 4) {
       Button {
@@ -25,7 +27,7 @@ struct ListItemRow: View {
           .contentShape(.rect)
       }
       .buttonStyle(.plain)
-      .accessibilityLabel(isCompleted ? "Mark Not Completed" : "Mark Completed")
+      .accessibilityLabel(completionAction)
       Button(action: onOpen) {
         HStack(spacing: 12) {
           Text(title)
@@ -54,7 +56,7 @@ struct ListItemRow: View {
     .accessibilityHint("Opens the item")
     .accessibilityAddTraits(.isButton)
     .accessibilityAction(.default, onOpen)
-    .accessibilityAction(named: isCompleted ? "Mark Not Completed" : "Mark Completed") {
+    .accessibilityAction(named: completionAction) {
       Task { await onToggle() }
     }
   }

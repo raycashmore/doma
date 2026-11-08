@@ -14,8 +14,8 @@ struct ListsSidebar: View {
       DomaStateView(title: "No lists yet", systemImage: "checklist")
     } else {
       List(selection: $selectedListId) {
-        section("Personal", lists: personalLists)
         section("Shared", lists: sharedLists)
+        section("Personal", lists: personalLists)
       }
       .domaScreenBackground()
     }

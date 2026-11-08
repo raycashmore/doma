@@ -19,3 +19,11 @@ that lock in specific classes.
 Backend behavior changes need targeted unit or integration tests around the
 changed contract. For bot gateway work, cover auth, provider parsing, storage
 state, and privacy-sensitive edges such as rejecting non-private Telegram chats.
+
+Name the commit or build each result ran on, in the PR and the tracker. A later
+change to that code path reopens the result, so re-run it or mark it as run
+on an earlier build.
+
+For iOS lock or privacy changes, verify on an iPhone and an iPad simulator with
+`check-lock-return.sh` from the [iOS app guide](../../apps/ios/README.md). Their
+transitions differ, and a brief leak shows in no screenshot.

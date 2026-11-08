@@ -41,8 +41,8 @@ Before designing a UI feature or adopting a shared pattern, read [the local patt
 Claude Code only: delegate to the subagents in `.claude/agents/` and `~/.claude/agents/` instead of doing this work in the main session. Other agents can ignore this section.
 
 - **Explore** (haiku): finding where code lives or what uses it. Use it before reading several files yourself. It returns paths, line numbers and one sentence each.
-- **test-runner** (haiku): running tests, lint, type checks and builds. Use it after changes. It returns PASS/FAIL and the failures only.
-- **reviewer** (sonnet): reviewing the diff. Use it once a change is finished and before committing or opening a PR.
+- **test-runner** (haiku): running tests, lint, type checks and builds. Use it after changes. It returns PASS/FAIL and the failures only. While fixing compile errors, build in the main session instead (`xcodebuild build-for-testing ... | grep error:` for iOS).
+- **reviewer** (sonnet): reviewing the diff. Use it once a change is finished and before committing or opening a PR. For a slice's Standards and Spec reviews, run it with `model: opus`.
 - **architect** (opus): checking a plan or a large, risky change before implementing it. Use it for multi-package work, data model, auth or shared pattern changes. Skip it for small tweaks.
 
 The main session keeps the editing and the decisions.
@@ -64,14 +64,3 @@ This repo uses the five canonical triage labels in Linear: `needs-triage`, `need
 ### Domain docs
 
 This repo is treated as a single-context repo. Skills should look for one root `CONTEXT.md` and one root `docs/adr/` when those files exist. See `docs/agents/domain.md`.
-
-<!-- BEGIN:turborepo-agent-rules -->
-
-# This is NOT the Turborepo you know
-
-Turborepo configuration, task behavior, and CLI commands can vary between installed versions and may differ from your training data. Resolve the `turbo` package from this file's directory or relevant workspace; in monorepos, it may not be visible from the repository root. For example, run `node -p "require.resolve('turbo/package.json')"` from a workspace that depends on `turbo`.
-
-Read `docs/README.md` inside that installed package first, then read the relevant pages from its `docs/` directory before changing Turborepo configuration or commands. Heed deprecation notices. These bundled docs match the installed package version and are available without network access.
-
-This block is written and re-added by `turbo` before repository-scoped commands when an AI agent is detected. In the Turborepo source repository, its template is defined in `crates/turborepo-cli/src/cli/agent_guidance.rs`. Removing the managed block while updates are enabled means a later qualifying invocation will add it again. Set `"agentGuidance": false` in the root `turbo.json` or `turbo.jsonc` to opt out; this does not remove an existing block. Keep the block committed with your work to avoid an uncommitted change on the next agent invocation.
-<!-- END:turborepo-agent-rules -->
