@@ -53,7 +53,8 @@ struct LiveListsContractTests {
       // The server re-appends a restored item after the other active items.
       #expect(afterUncomplete.activeItems.map(\.title) == ListFixture.itemTitles.reversed())
 
-      try await editItemDetails(on: convex, lists: lists, items: items, listPublicId: fixture.publicId)
+      let propertyIds = try await editItemDetails(on: convex, lists: lists, items: items, listPublicId: fixture.publicId)
+      try await groupAndAddSeveral(on: lists, items: items, listPublicId: fixture.publicId, propertyId: propertyIds[3])
       try await manageItems(on: lists, items: items, listPublicId: fixture.publicId)
       try await manageLists(on: lists, visibleLists: visibleLists, fixturePublicId: fixture.publicId)
     } catch {
@@ -64,9 +65,10 @@ struct LiveListsContractTests {
     await convex.logout()
   }
 
+  /// Returns the fixture's property IDs, in property order.
   private func editItemDetails(
     on convex: ConvexClient, lists: DomaListsClient, items: LiveValues<DomaListItems?>, listPublicId: String
-  ) async throws {
+  ) async throws -> [String] {
     let propertyIds = try await ListFixture.addProperties(on: convex, listPublicId: listPublicId)
     let loaded = try #require(
       try await items.next("list properties") { $0?.properties.count == propertyIds.count })
@@ -105,6 +107,27 @@ struct LiveListsContractTests {
       try await lists.clearItemPropertyValue(itemId: item.id, propertyId: propertyId)
     }
     _ = try await items.next("cleared values") { $0?.activeItems.first?.propertyValues.isEmpty == true }
+    return propertyIds
+  }
+
+  private func groupAndAddSeveral(
+    on lists: DomaListsClient, items: LiveValues<DomaListItems?>, listPublicId: String, propertyId: String
+  ) async throws {
+    let grouping = LiveValues(lists.groupingPropertyId(listPublicId: listPublicId))
+    _ = try await grouping.next("manual order") { $0 == nil }
+    try await lists.setGroupingProperty(listPublicId: listPublicId, propertyId: propertyId)
+    _ = try await grouping.next("saved grouping") { $0 == propertyId }
+    try await lists.setGroupingProperty(listPublicId: listPublicId, propertyId: nil)
+    _ = try await grouping.next("manual order again") { $0 == nil }
+
+    let pasted = ["Fixture pasted A", "Fixture pasted B"]
+    try await lists.createItems(listPublicId: listPublicId, titles: pasted)
+    let afterPaste = try #require(
+      try await items.next("pasted items") { $0?.activeItems.suffix(2).map(\.title) == pasted })
+    for item in afterPaste.activeItems.suffix(2) {
+      try await lists.deleteItem(itemId: item.id)
+    }
+    _ = try await items.next("removed pasted items") { $0?.activeItems.count == afterPaste.activeItems.count - 2 }
   }
 
   private func manageItems(

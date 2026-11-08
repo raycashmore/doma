@@ -4,8 +4,10 @@ A native SwiftUI app for iPhone and iPad (iOS 27 or newer). It is an independent
 Xcode project, not a pnpm workspace package or a Vercel deployment zone. So far it
 covers sign-in and Lists: create, rename and delete lists, set the default list, add,
 check off, reorder and delete items, clear completed ones, and edit an item's title, notes
-and property values, with changes arriving live from Convex. Property definitions are
-still managed on the web. Destructive actions ask for confirmation, unlike the web app, because the
+and property values, with changes arriving live from Convex. Active items can be grouped by a
+property (saved per person, as on the web), Auto Categorise sorts Unassigned items, and pasting
+several lines into Add an item previews them before adding them all. Property definitions and AI
+categorisation setup are still managed on the web. Destructive actions ask for confirmation, unlike the web app, because the
 app writes to the household's real lists. Face ID (or the device passcode) unlocks it on
 every cold launch and after 5 minutes in the background. The lock covers the
 interface only: the Clerk session stays stored while locked, and after the first unlock the
@@ -156,6 +158,8 @@ defaults to main-actor isolation, so tests of its types need `@MainActor`.
 - Screens use `domaFont(_:)` and `DomaColor`; `scripts/check-theme.sh` enforces this in iOS CI.
 - Text scales with Dynamic Type and honours Bold Text; fixed-size containers around text or
   symbols use `@ScaledMetric`.
+- Closures UIKit may call off the main thread, such as dynamic colours, are `nonisolated`: the app target defaults
+  to main-actor isolation, and a main-actor closure traps when SwiftUI resolves it during a transition.
 - Controls keep a 44 pt tap target. Rows with `listRowBackground` draw their own selected state.
 - Session phases pass through `.signedOut` briefly on launch, so sign-out side effects belong
   in `DomaSession`, not on phase changes.

@@ -13,11 +13,13 @@ enum DomaColor {
   /// System red, which keeps its contrast for small text where coral does not.
   static let destructive = Color.red
 
-  private static func color(light: UInt32, dark: UInt32) -> Color {
+  /// Nonisolated: SwiftUI can resolve a dynamic colour off the main thread while it renders a
+  /// transition, and a main-actor closure traps there (seen when a sheet closed).
+  private nonisolated static func color(light: UInt32, dark: UInt32) -> Color {
     Color(uiColor: UIColor { $0.userInterfaceStyle == .dark ? uiColor(dark) : uiColor(light) })
   }
 
-  private static func uiColor(_ hex: UInt32) -> UIColor {
+  private nonisolated static func uiColor(_ hex: UInt32) -> UIColor {
     UIColor(
       red: CGFloat((hex >> 16) & 0xFF) / 255,
       green: CGFloat((hex >> 8) & 0xFF) / 255,

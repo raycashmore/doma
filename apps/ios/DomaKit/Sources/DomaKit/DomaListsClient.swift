@@ -56,6 +56,8 @@ public struct DomaListProperty: Decodable, Equatable, Identifiable, Sendable {
   public let name: String
   public let kind: Kind
   public let options: [Option]?
+  /// Set on the one select property the server categorises new items into.
+  public let categorisationInstruction: String?
 
   public enum Kind: String, Decodable, Sendable {
     case text
@@ -75,6 +77,32 @@ public struct DomaListProperty: Decodable, Equatable, Identifiable, Sendable {
     case name
     case kind = "type"
     case options
+    case categorisationInstruction
+  }
+}
+
+/// What `autoCategoriseUnassignedItems` reports.
+public enum DomaCategorisationResult: Decodable, Equatable, Sendable {
+  /// No Unassigned items were waiting.
+  case idle
+  case applied(assignmentCount: Int)
+  case skipped(reason: String)
+  case failed
+
+  private enum CodingKeys: String, CodingKey {
+    case status
+    case assignmentCount
+    case reason
+  }
+
+  public init(from decoder: any Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    switch try container.decode(String.self, forKey: .status) {
+    case "applied": self = .applied(assignmentCount: Int(try container.decode(Double.self, forKey: .assignmentCount)))
+    case "skipped": self = .skipped(reason: try container.decode(String.self, forKey: .reason))
+    case "idle": self = .idle
+    default: self = .failed
+    }
   }
 }
 
@@ -175,6 +203,28 @@ public struct DomaListsClient: Sendable {
   public func createItem(listPublicId: String, title: String) async throws {
     let _: IgnoredResult = try await convex.mutation(
       "lists/mutations:createListItem", with: ["listPublicId": listPublicId, "title": title])
+  }
+
+  /// Blank titles are dropped by the server; the rest keep their order.
+  public func createItems(listPublicId: String, titles: [String]) async throws {
+    let _: IgnoredResult = try await convex.mutation(
+      "lists/mutations:createListItems",
+      with: ["listPublicId": listPublicId, "titles": titles.map { $0 as ConvexEncodable? }])
+  }
+
+  /// The signed-in person's grouping property for a list; `nil` means manual order.
+  public func groupingPropertyId(listPublicId: String) -> AnyPublisher<String?, ClientError> {
+    convex.subscribe(to: "lists/preferences:getActiveGroupingProperty", with: ["listPublicId": listPublicId])
+  }
+
+  /// Saves the grouping for the signed-in person only; `nil` returns the list to manual order.
+  public func setGroupingProperty(listPublicId: String, propertyId: String?) async throws {
+    let _: IgnoredResult = try await convex.mutation(
+      "lists/preferences:setActiveGroupingProperty", with: ["listPublicId": listPublicId, "propertyId": propertyId])
+  }
+
+  public func autoCategoriseUnassigned(listPublicId: String) async throws -> DomaCategorisationResult {
+    try await convex.action("lists/categorisation:autoCategoriseUnassignedItems", with: ["listPublicId": listPublicId])
   }
 
   public func renameItem(itemId: String, title: String) async throws {
