@@ -729,6 +729,8 @@
       const result = await store.autoCategoriseUnassigned({ listPublicId });
       if (result.status === 'applied' && result.assignmentCount > 0)
         await setActiveGroupingProperty(propertyId, listPublicId);
+      else if (result.status === 'failed' && result.reason === 'provider_out_of_credits')
+        itemMutationError = 'The AI account has run out of credits. Add credits to OpenAI, then try again.';
       else if (result.status === 'failed') itemMutationError = 'Unable to categorise items.';
       else if (result.status === 'skipped' && result.reason === 'missing_configuration')
         itemMutationError = 'Configure AI categorisation in List settings first.';

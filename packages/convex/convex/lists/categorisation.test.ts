@@ -176,6 +176,28 @@ describe('createOpenAiListCategorisationProvider', () => {
       enum: ['bread', 'frozen', null]
     });
   });
+
+  it('reports an account with no credits apart from a rate limit', async () => {
+    const categoriseAfter = (body: unknown) =>
+      categoriseListItems({
+        input,
+        provider: createOpenAiListCategorisationProvider({
+          apiKey: 'test-key',
+          model: 'test-model',
+          fetchImpl: async () => new Response(JSON.stringify(body), { status: 429 })
+        }),
+        applyAssignments: async () => ({ appliedCount: 0 })
+      });
+
+    // The body OpenAI sent when the account ran dry.
+    expect(
+      await categoriseAfter({ error: { type: 'insufficient_quota', code: 'credit_balance_exhausted', message: '' } })
+    ).toEqual({ status: 'failed', reason: 'provider_out_of_credits' });
+    expect(await categoriseAfter({ error: { type: 'requests', code: 'rate_limit_exceeded', message: '' } })).toEqual({
+      status: 'failed',
+      reason: 'provider_failure'
+    });
+  });
 });
 
 describe('applyCategorisationAssignments', () => {

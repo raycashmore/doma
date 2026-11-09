@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Prints an xcodebuild destination for an available iPhone simulator on the newest iOS
-# runtime installed, so scripts do not hard-code a device that may not exist. Fails when
-# no runtime meets the app's deployment target.
+# Prints an xcodebuild destination for the iPhone 17e simulator, the household's phone, on the
+# newest iOS runtime installed. Where there is none (CI runners), any iPhone on that runtime.
+# Fails when no runtime meets the app's deployment target.
 set -euo pipefail
 
 project="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/Doma.xcodeproj/project.pbxproj"
@@ -22,6 +22,6 @@ for runtime, devices in runtimes.items():
     candidates += [(version, d["name"], d["udid"]) for d in devices if d["name"].startswith("iPhone")]
 if not candidates:
     sys.exit("No available iPhone simulator on iOS " + os.environ["MINIMUM"] + " or newer.")
-version, name, udid = max(candidates, key=lambda c: c[0])
+version, name, udid = max(candidates, key=lambda c: (c[0], c[1] == "iPhone 17e"))
 print(f"platform=iOS Simulator,id={udid}")
 '

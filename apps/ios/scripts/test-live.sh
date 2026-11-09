@@ -11,6 +11,11 @@ convex_url="${DOMA_CONVEX_URL:-$(read_env VITE_CONVEX_URL)}"
 publishable_key="$(read_env VITE_CLERK_PUBLISHABLE_KEY)"
 destination="${DOMA_IOS_DESTINATION:-$("$scripts_dir/simulator-destination.sh")}"
 
+if ! curl -s -o /dev/null --max-time 5 "$convex_url/version"; then
+  echo "The Convex deployment for the live tests is not responding. Start it with \`pnpm convex\` first." >&2
+  exit 1
+fi
+
 if [[ "$publishable_key" != pk_test_* ]]; then
   echo "Refusing: VITE_CLERK_PUBLISHABLE_KEY in .env.local is not a Clerk development key." >&2
   exit 1

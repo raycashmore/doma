@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Commits in this repo carry no co-author trailers (owner rule). Enabled by `pnpm install` via `prepare`.
+set -euo pipefail
+
+if grep -qiE '^co-authored-by:' "$1"; then
+  echo "Remove the Co-Authored-By line: commits in this repo carry no co-author attribution." >&2
+  exit 1
+fi

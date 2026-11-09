@@ -44,7 +44,10 @@ export type CategorisationInput = {
 export type CategorisationResult =
   | { status: 'applied'; assignmentCount: number }
   | { status: 'skipped'; reason: 'invalid_response' }
-  | { status: 'failed'; reason: 'provider_failure' };
+  | { status: 'failed'; reason: 'provider_failure' | 'provider_out_of_credits' };
+
+/** OpenAI answers 429 with this code when the account has no credits left, unlike a rate limit. */
+export class ProviderOutOfCreditsError extends Error {}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -94,13 +97,24 @@ export async function categoriseListItems({
       options: input.options,
       items: input.items.map(({ title, notes }) => (notes ? { title, notes } : { title }))
     });
-  } catch {
+  } catch (error) {
+    // Item titles stay out of the log; the error says why the provider failed.
+    console.error('[lists.categorisation] List categorisation AI provider failed', {
+      itemCount: input.items.length,
+      error: error instanceof Error ? error.message : String(error)
+    });
+    if (error instanceof ProviderOutOfCreditsError) return { status: 'failed', reason: 'provider_out_of_credits' };
     return { status: 'failed', reason: 'provider_failure' };
   }
 
   const optionIds = new Set(input.options.map((option) => option.id));
   const optionIdsByItem = parseAssignments(output, input.items.length, optionIds);
-  if (!optionIdsByItem) return { status: 'skipped', reason: 'invalid_response' };
+  if (!optionIdsByItem) {
+    console.error('[lists.categorisation] List categorisation AI output was invalid', {
+      itemCount: input.items.length
+    });
+    return { status: 'skipped', reason: 'invalid_response' };
+  }
 
   const assignments = input.items.flatMap((item, index) => {
     const optionId = optionIdsByItem[index];
@@ -148,6 +162,12 @@ function openAiMessageContent(body: unknown): string | null {
   return typeof firstChoice.message.content === 'string' ? firstChoice.message.content : null;
 }
 
+async function isOutOfCredits(response: Response) {
+  const body = (await response.json().catch(() => null)) as unknown;
+  const error = isRecord(body) && isRecord(body.error) ? body.error : null;
+  return error?.type === 'insufficient_quota' || error?.code === 'insufficient_quota';
+}
+
 export function createOpenAiListCategorisationProvider({
   apiKey,
   model,
@@ -181,7 +201,12 @@ export function createOpenAiListCategorisationProvider({
         }
       })
     });
-    if (!response.ok) throw new Error(`List categorisation AI request failed with status ${response.status}`);
+    if (!response.ok) {
+      if (response.status === 429 && (await isOutOfCredits(response))) {
+        throw new ProviderOutOfCreditsError('List categorisation AI account has no credits left');
+      }
+      throw new Error(`List categorisation AI request failed with status ${response.status}`);
+    }
     const content = openAiMessageContent((await response.json()) as unknown);
     if (!content) throw new Error('List categorisation AI response did not include JSON content');
     return JSON.parse(content) as unknown;

@@ -13,6 +13,7 @@ struct ListsView: View {
   @State private var createdListId: DomaListSummary.ID?
   @State private var deleteFailed = false
   @State private var openItems: DomaListItems?
+  @State private var openGrouping: OpenGrouping?
   @State private var unavailableListId: DomaListSummary.ID?
 
   private let lastOpenedList = LastOpenedList()
@@ -63,26 +64,21 @@ struct ListsView: View {
     // Here, not in the detail view: on iPhone, opening a new list can cancel the detail's `.task`
     // or skip its `onAppear` while the screen stays up, which leaves its spinner there for good.
     .task(id: selectedListId) { await watchOpenList() }
+    .task(id: selectedListId) { await watchOpenGrouping() }
     .task {
-      do {
-        for try await value in session.lists.visibleLists().values {
-          if lists == nil { restoreSelection(from: value) }
-          lists = value
-          loadFailed = false
-          openCreatedList()
-        }
-      } catch {
+      await followLiveQuery("Visible lists", subscribe: session.lists.visibleLists) {
         loadFailed = true
+      } onValue: { value in
+        if lists == nil { restoreSelection(from: value) }
+        lists = value
+        loadFailed = false
+        openCreatedList()
       }
     }
     .task {
-      do {
-        for try await value in session.lists.defaultList().values {
-          defaultListId = value?.publicId
-        }
-      } catch {
+      await followLiveQuery("Default list", subscribe: session.lists.defaultList) {
         defaultListId = nil
-      }
+      } onValue: { defaultListId = $0?.publicId }
     }
   }
 
@@ -103,8 +99,10 @@ struct ListsView: View {
       ListDetailView(
         lists: session.lists,
         list: selectedList,
-        // A frame can pass between selecting a list and its items loading.
-        items: openItems?.list.id == selectedList.id ? openItems : nil,
+        // A frame can pass between selecting a list and its items loading. Waiting for the
+        // grouping too stops a grouped list showing in manual order first.
+        items: openItems?.list.id == selectedList.id && openGrouping?.listId == selectedList.id ? openItems : nil,
+        savedGroupingId: openGrouping?.propertyId,
         isUnavailable: unavailableListId == selectedList.id,
         isDefault: selectedList.id == defaultListId
       ) {
@@ -128,14 +126,23 @@ struct ListsView: View {
     openItems = nil
     unavailableListId = nil
     guard let selectedListId else { return }
-    do {
-      for try await value in session.lists.items(listPublicId: selectedListId).values {
-        openItems = value
-        unavailableListId = value == nil ? selectedListId : nil
-      }
-    } catch {
+    await followLiveQuery("List items", subscribe: { session.lists.items(listPublicId: selectedListId) }) {
       unavailableListId = selectedListId
+    } onValue: { value in
+      openItems = value
+      unavailableListId = value == nil ? selectedListId : nil
     }
+  }
+
+  private func watchOpenGrouping() async {
+    openGrouping = nil
+    guard let selectedListId else { return }
+    await followLiveQuery(
+      "List grouping", subscribe: { session.lists.groupingPropertyId(listPublicId: selectedListId) }
+    ) {
+      // Grouping is a view preference, so the list still opens, in manual order.
+      openGrouping = OpenGrouping(listId: selectedListId, propertyId: nil)
+    } onValue: { openGrouping = OpenGrouping(listId: selectedListId, propertyId: $0) }
   }
 
   /// Waits for the sheet to go, because navigating while it closes can leave a screen that never updates.
@@ -180,4 +187,9 @@ struct ListsView: View {
       compactColumn = .sidebar
     }
   }
+}
+
+private struct OpenGrouping {
+  let listId: DomaListSummary.ID
+  let propertyId: String?
 }

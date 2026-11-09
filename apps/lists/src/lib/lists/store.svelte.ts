@@ -26,7 +26,7 @@ export type AutoCategorisationResult =
   | { status: 'applied'; assignmentCount: number }
   | { status: 'idle' }
   | { status: 'skipped'; reason: 'invalid_response' | 'missing_configuration' }
-  | { status: 'failed'; reason: 'provider_failure' };
+  | { status: 'failed'; reason: 'provider_failure' | 'provider_out_of_credits' };
 
 function normalizePropertyOptions(
   type: VisibleListProperty['type'],

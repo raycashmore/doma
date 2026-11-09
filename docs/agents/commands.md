@@ -21,6 +21,7 @@ pnpm bot           # Start the bot gateway on :3002
 pnpm agent         # Start the agent API on :3006
 pnpm bot:test      # Run bot gateway tests
 pnpm convex        # Start Convex dev for @repo/convex
+pnpm convex:env-names [--prod]     # Convex env var names only; `convex env list` prints secret values
 pnpm seed          # Seed Convex data
 pnpm seed:clear    # Clear seeded Convex data
 pnpm seed:url -- <convex-url>       # Seed a specific Convex deployment
@@ -42,6 +43,14 @@ Schedule intentionally builds with `next build --webpack`. Next 16 defaults
 production builds to Turbopack, which currently spawns/binds an internal worker
 endpoint that restricted agent sandboxes deny. Do not remove the webpack build
 flag unless sandboxed `pnpm ci:checks` has been verified with the replacement.
+
+## Local Convex
+
+`pnpm convex` starts `convex-local-backend` on port 3210 and pushes functions to it. Stop it with
+Ctrl-C. Killing only the `convex dev` process leaves the backend running old code, and the next
+`pnpm convex` refuses to start ("A local backend is still running on port 3210"). Stop the stray
+`convex-local-backend` process, then start again. Function logs, including `console.error`, print
+in the `pnpm convex` output.
 
 ## Convex Seeding
 

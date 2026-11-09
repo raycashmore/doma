@@ -4,8 +4,11 @@ A native SwiftUI app for iPhone and iPad (iOS 27 or newer). It is an independent
 Xcode project, not a pnpm workspace package or a Vercel deployment zone. So far it
 covers sign-in and Lists: create, rename and delete lists, set the default list, add,
 check off, reorder and delete items, clear completed ones, and edit an item's title, notes
-and property values, with changes arriving live from Convex. Property definitions are
-still managed on the web. Destructive actions ask for confirmation, unlike the web app, because the
+and property values, with changes arriving live from Convex. Active items can be grouped by a
+property (saved per person, as on the web), Auto Categorise sorts Unassigned items, and pasting
+several lines into Add an item previews them before adding them all. Submitting text with commas
+or line breaks adds one item for each. Property definitions and AI
+categorisation setup are still managed on the web. Destructive actions ask for confirmation, unlike the web app, because the
 app writes to the household's real lists. Face ID (or the device passcode) unlocks it on
 every cold launch and after 5 minutes in the background. The lock covers the
 interface only: the Clerk session stays stored while locked, and after the first unlock the
@@ -95,7 +98,8 @@ The test creates its own personal fixture list, exercises it and deletes it, so
 household data is never read into assertions or changed.
 
 Set `DOMA_IOS_DESTINATION` to choose a simulator, for example
-`platform=iOS Simulator,name=iPhone 18 Pro,OS=27.2`; otherwise the script picks one.
+`platform=iOS Simulator,name=iPhone 18 Pro,OS=27.2`; otherwise it uses the iPhone 17e, the
+household's phone. Check UI on that simulator too.
 
 ## Checking the UI in the simulator
 
@@ -110,6 +114,9 @@ out of device and release builds. Start `pnpm convex`, then:
    agent-device open <bundle id> --relaunch --launch-args DOMA_SKIP_APP_LOCK=1
    SIMCTL_CHILD_DOMA_SKIP_APP_LOCK=1 xcrun simctl launch booted <bundle id>
    ```
+
+For a list with properties, values and AI categorisation set up, run `scripts/seed-simulator-list.sh`.
+Property definitions are web-only, so the app cannot make one.
 
 To exercise the real lock instead, run `agent-device settings faceid enroll` once, then
 `agent-device settings faceid match` after launch.
@@ -144,6 +151,9 @@ script as you typed it, so use capitals and hyphens.
 - Press a menu `Picker` or a `Toggle` by the control's coordinates; a ref press lands mid-row and does nothing.
 - `keyboard dismiss` is unsupported, and a target behind the keyboard is refused. Scroll it clear first.
 - A snapshot can lag the screen, so take a screenshot before believing a stuck state.
+- Refs go stale when the screen changes; take a fresh snapshot before pressing one.
+- On iPad, `scroll --until` scrolls the detail column. Reach a sidebar row by swiping inside the sidebar.
+- A press while a menu is still closing is lost. Wait about 1.5 seconds before the next one.
 - The simulator can restart mid-run. A new process ID after a lock test means a cold launch, not a re-lock.
 - After `main thread execution timed out`, queued `home` and `app-switcher` commands can replay and reopen the app. Wait, then leave the app with `open <another bundle id>`.
 - `Runner did not accept connection: this Xcode cannot start its simulator service` while Xcode is current: update macOS to match Xcode and restart. That cleared it once, on macOS 27.0.1 with Xcode 27.2.
@@ -156,6 +166,8 @@ defaults to main-actor isolation, so tests of its types need `@MainActor`.
 - Screens use `domaFont(_:)` and `DomaColor`; `scripts/check-theme.sh` enforces this in iOS CI.
 - Text scales with Dynamic Type and honours Bold Text; fixed-size containers around text or
   symbols use `@ScaledMetric`.
+- Closures UIKit may call off the main thread, such as dynamic colours, are `nonisolated`: the app target defaults
+  to main-actor isolation, and a main-actor closure traps when SwiftUI resolves it during a transition.
 - Controls keep a 44 pt tap target. Rows with `listRowBackground` draw their own selected state.
 - Session phases pass through `.signedOut` briefly on launch, so sign-out side effects belong
   in `DomaSession`, not on phase changes.
@@ -163,6 +175,11 @@ defaults to main-actor isolation, so tests of its types need `@MainActor`.
   that event loses open sheets, so `DomaSession.Phase` stays `.signedIn` through a re-login.
 - The edit sheet saves one mutation per changed field and only sends what changed there, so a
   failed save can be retried and another person's edit to a different field survives.
+- Live queries go through `followLiveQuery`, which logs a failed subscription and resubscribes;
+  `scripts/check-live-queries.sh` enforces this in iOS CI. Its failure handler runs only before the
+  first value, so a dropped connection keeps the last value on screen.
+- An optimistic value stays on screen until the live subscription confirms it, not just until
+  the mutation returns, and writes to one record wait for the one before, so quick changes land in order.
 
 ## Signing checks
 

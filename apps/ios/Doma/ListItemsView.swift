@@ -4,6 +4,9 @@ import SwiftUI
 struct ListItemsView: View {
   let lists: DomaListsClient
   let items: DomaListItems
+  /// `nil` shows manual order, which is the only order items can be dragged in.
+  let groupingProperty: DomaListProperty?
+  let isCategorising: Bool
   /// Holds a dragged order until the server confirms it, so the row does not snap back.
   @State private var reorderedItems: [DomaListItem]?
   @State private var movesInFlight = 0
@@ -11,6 +14,9 @@ struct ListItemsView: View {
   @State private var isConfirmingClear = false
   @State private var saveFailed = false
   @State private var editingItem: DomaListItem?
+  @State private var pastePreview: PastePreview?
+  /// Collapsed groups, by property and group, for as long as the list stays open.
+  @State private var collapsedGroups: Set<String> = []
   @Environment(NavigationBarRefreshHold.self) private var refreshHold
 
   private var activeItems: [DomaListItem] { reorderedItems ?? items.activeItems }
@@ -18,8 +24,20 @@ struct ListItemsView: View {
   var body: some View {
     List {
       Section {
-        AddItemField { title in
-          await save { try await lists.createItem(listPublicId: items.list.publicId, title: title) }
+        AddItemField { titles in
+          await save { try await lists.createItems(listPublicId: items.list.publicId, titles: titles) }
+        } onPaste: { pasted in
+          pastePreview = PastePreview(pasted: pasted)
+        }
+        if isCategorising {
+          HStack(spacing: 12) {
+            ProgressView()
+            Text("Categorising items…")
+              .domaFont(.supporting)
+              .foregroundStyle(DomaColor.warmTextSecondary)
+          }
+          .listRowBackground(Color.clear)
+          .accessibilityElement(children: .combine)
         }
       }
       if activeItems.isEmpty && items.completedItems.isEmpty {
@@ -27,7 +45,13 @@ struct ListItemsView: View {
           .listRowBackground(Color.clear)
           .listRowSeparator(.hidden)
       }
-      if !activeItems.isEmpty {
+      if let groupingProperty, !activeItems.isEmpty {
+        ForEach(ListItemGrouping.groups(of: activeItems, by: groupingProperty)) { group in
+          ItemGroupSection(group: group, isCollapsed: isCollapsed(group, of: groupingProperty)) { item in
+            row(item, isCompleted: false)
+          }
+        }
+      } else if !activeItems.isEmpty {
         Section {
           ForEach(activeItems) { item in
             row(item, isCompleted: false)
@@ -73,9 +97,27 @@ struct ListItemsView: View {
     .sheet(item: $editingItem) { item in
       ItemEditSheet(lists: lists, item: item, properties: items.properties, isCompleted: isCompleted(item))
     }
-    .onChange(of: editingItem?.id) { _, id in refreshHold.isHeld = id != nil }
+    .sheet(item: $pastePreview) { preview in
+      PastePreviewSheet(pasted: preview.pasted) { titles in
+        try await lists.createItems(listPublicId: items.list.publicId, titles: titles)
+      }
+    }
+    .onChange(of: editingItem?.id) { holdRefreshWhileSheetIsOpen() }
+    .onChange(of: pastePreview?.id) { holdRefreshWhileSheetIsOpen() }
     .onChange(of: items) { closeSheetIfItemWasDeleted() }
     .onDisappear { refreshHold.isHeld = false }
+  }
+
+  private func holdRefreshWhileSheetIsOpen() {
+    refreshHold.isHeld = editingItem != nil || pastePreview != nil
+  }
+
+  private func isCollapsed(_ group: ListItemGroup, of property: DomaListProperty) -> Binding<Bool> {
+    let key = "\(property.id):\(group.id)"
+    return Binding(
+      get: { collapsedGroups.contains(key) },
+      set: { if $0 { collapsedGroups.insert(key) } else { collapsedGroups.remove(key) } }
+    )
   }
 
   private func isCompleted(_ item: DomaListItem) -> Bool {
@@ -142,4 +184,9 @@ struct ListItemsView: View {
       return false
     }
   }
+}
+
+private struct PastePreview: Identifiable {
+  let id = UUID()
+  let pasted: PastedItems
 }

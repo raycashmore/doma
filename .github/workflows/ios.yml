@@ -35,6 +35,9 @@ jobs:
       - name: Check screens use the theme
         run: apps/ios/scripts/check-theme.sh
 
+      - name: Check live queries resubscribe
+        run: apps/ios/scripts/check-live-queries.sh
+
       # Runs every suite but the live contract, which needs a Convex backend and a Clerk ticket.
       # Locally, scripts/test-live.sh runs that too.
       # arm64 only: ConvexMobile's binary framework has no x86_64 simulator slice.
