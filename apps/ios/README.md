@@ -6,7 +6,8 @@ covers sign-in and Lists: create, rename and delete lists, set the default list,
 check off, reorder and delete items, clear completed ones, and edit an item's title, notes
 and property values, with changes arriving live from Convex. Active items can be grouped by a
 property (saved per person, as on the web), Auto Categorise sorts Unassigned items, and pasting
-several lines into Add an item previews them before adding them all. Property definitions and AI
+several lines into Add an item previews them before adding them all. Submitting text with commas
+or line breaks adds one item for each. Property definitions and AI
 categorisation setup are still managed on the web. Destructive actions ask for confirmation, unlike the web app, because the
 app writes to the household's real lists. Face ID (or the device passcode) unlocks it on
 every cold launch and after 5 minutes in the background. The lock covers the

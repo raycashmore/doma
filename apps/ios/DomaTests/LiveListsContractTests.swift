@@ -134,7 +134,7 @@ struct LiveListsContractTests {
     on lists: DomaListsClient, items: LiveValues<DomaListItems?>, listPublicId: String
   ) async throws {
     let added = "Fixture item C"
-    try await lists.createItem(listPublicId: listPublicId, title: added)
+    try await lists.createItems(listPublicId: listPublicId, titles: [added])
     let afterAdd = try #require(
       try await items.next("added item") { $0?.activeItems.last?.title == added })
     let newItem = try #require(afterAdd.activeItems.last)

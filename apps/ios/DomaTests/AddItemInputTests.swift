@@ -28,7 +28,13 @@ struct AddItemInputTests {
     #expect(input == .paste(PastedItems(parsing: "bread, milk, oats"), restoring: "eg"))
   }
 
-  @Test func pastingOneItemAcrossLinesJoinsThemAsText() {
-    #expect(AddItemInput(from: "", to: "Dairy\n☐milk") == .replace("Dairy ☐milk"))
+  @Test func pastingOneItemAcrossLinesKeepsItsLines() {
+    #expect(AddItemInput(from: "", to: "Dairy\n☐milk") == .typed)
+  }
+
+  @Test func returnKeepsLinesAlreadyInTheField() {
+    #expect(AddItemInput(from: "bread\nmilk", to: "bread\nmilk\n") == .submit("bread\nmilk"))
+    // Return pressed mid-text submits everything around it.
+    #expect(AddItemInput(from: "bread\nmilk", to: "bread\n\nmilk") == .submit("bread\nmilk"))
   }
 }

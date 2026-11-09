@@ -200,11 +200,6 @@ public struct DomaListsClient: Sendable {
     let _: IgnoredResult = try await convex.mutation("lists/bot:setDefaultList", with: ["publicId": publicId])
   }
 
-  public func createItem(listPublicId: String, title: String) async throws {
-    let _: IgnoredResult = try await convex.mutation(
-      "lists/mutations:createListItem", with: ["listPublicId": listPublicId, "title": title])
-  }
-
   /// Blank titles are dropped by the server; the rest keep their order.
   public func createItems(listPublicId: String, titles: [String]) async throws {
     let _: IgnoredResult = try await convex.mutation(

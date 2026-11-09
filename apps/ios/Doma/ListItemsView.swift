@@ -24,8 +24,8 @@ struct ListItemsView: View {
   var body: some View {
     List {
       Section {
-        AddItemField { title in
-          await save { try await lists.createItem(listPublicId: items.list.publicId, title: title) }
+        AddItemField { titles in
+          await save { try await lists.createItems(listPublicId: items.list.publicId, titles: titles) }
         } onPaste: { pasted in
           pastePreview = PastePreview(pasted: pasted)
         }

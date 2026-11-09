@@ -1,8 +1,8 @@
 import SwiftUI
 
 struct AddItemField: View {
-  /// Returns whether the item was saved.
-  let onAdd: (String) async -> Bool
+  /// Returns whether the items were saved.
+  let onAdd: ([String]) async -> Bool
   /// A paste that holds several items, which the field leaves for a preview.
   let onPaste: (PastedItems) -> Void
   @State private var title = ""
@@ -23,6 +23,7 @@ struct AddItemField: View {
         axis: .vertical
       )
       .lineLimit(1...4)
+      .frame(maxWidth: .infinity, alignment: .leading)
       .domaFont(.body)
       .foregroundStyle(DomaColor.warmTextPrimary)
       .focused($isFocused)
@@ -39,6 +40,9 @@ struct AddItemField: View {
     .padding(.horizontal, 20)
     .padding(.vertical, 8)
     .background(DomaColor.warmBgCard, in: .rect(cornerRadius: 26))
+    // The whole box takes focus, not only the text's own width.
+    .contentShape(.rect(cornerRadius: 26))
+    .onTapGesture { isFocused = true }
     .overlay {
       if isFocused {
         RoundedRectangle(cornerRadius: 26).strokeBorder(DomaColor.warmAccent, lineWidth: 2)
@@ -51,7 +55,6 @@ struct AddItemField: View {
   private func read(_ input: AddItemInput) {
     switch input {
     case .typed: break
-    case .replace(let text): title = text
     case .submit(let text):
       title = text
       add()
@@ -61,14 +64,15 @@ struct AddItemField: View {
     }
   }
 
-  /// Clears straight away so items can be typed in a row; a failed title comes back to retry.
+  /// Clears straight away so items can be typed in a row; failed text comes back to retry.
   private func add() {
     isFocused = true
     let submitted = trimmedTitle
-    guard !submitted.isEmpty else { return }
+    let titles = SubmittedItems.titles(in: submitted)
+    guard !titles.isEmpty else { return }
     title = ""
     Task {
-      let saved = await onAdd(submitted)
+      let saved = await onAdd(titles)
       if !saved && title.isEmpty { title = submitted }
     }
   }
