@@ -4,33 +4,31 @@ import SwiftUI
 struct ListRow: View {
   let list: DomaListSummary
   let isSelected: Bool
-  let isDefault: Bool
-  @ScaledMetric(relativeTo: .body) private var tileSize = 36
+  let isSidebar: Bool
 
   var body: some View {
     NavigationLink(value: list.id) {
-      HStack(spacing: 12) {
-        Image(systemName: "checklist")
-          .foregroundStyle(DomaColor.warmAccent)
-          .frame(width: tileSize, height: tileSize)
-          .background(DomaColor.warmBgCardSoft, in: .rect(cornerRadius: 11))
-          .overlay {
-            RoundedRectangle(cornerRadius: 11).stroke(DomaColor.warmBorder)
-          }
-          .accessibilityHidden(true)
-        VStack(alignment: .leading, spacing: 2) {
-          Text(list.name)
-            .domaFont(.rowTitle)
-            .foregroundStyle(DomaColor.warmTextPrimary)
-          if isDefault {
-            Text("Default")
-              .domaFont(.supporting)
-              .foregroundStyle(DomaColor.warmTextSecondary)
-          }
+      HStack(spacing: 6) {
+        Text(list.name)
+          .domaFont(.body)
+          .foregroundStyle(DomaColor.warmTextPrimary)
+        if list.visibility == .shared {
+          Image(systemName: "person.2")
+            .imageScale(.small)
+            .foregroundStyle(DomaColor.warmTextSecondary)
+            .accessibilityLabel("Shared")
         }
       }
+      .frame(minHeight: 28)
     }
-    .listRowBackground(isSelected ? DomaColor.warmSectionMortgage : DomaColor.warmBgCard)
+    .listRowInsets(.vertical, isSidebar ? 4 : 6)
+    // The sidebar leaves selection to the system, which merges it with the keyboard focus.
+    .listRowBackground(isSidebar ? nil : background)
+    .listRowSeparator(isSidebar ? .hidden : .automatic)
     .listRowSeparatorTint(DomaColor.warmBorder)
+  }
+
+  private var background: Color {
+    isSelected ? DomaColor.warmBorder : DomaColor.warmBgCard
   }
 }

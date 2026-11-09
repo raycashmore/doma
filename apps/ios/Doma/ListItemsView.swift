@@ -23,22 +23,16 @@ struct ListItemsView: View {
 
   var body: some View {
     List {
-      Section {
-        AddItemField { titles in
-          await save { try await lists.createItems(listPublicId: items.list.publicId, titles: titles) }
-        } onPaste: { pasted in
-          pastePreview = PastePreview(pasted: pasted)
+      if isCategorising {
+        HStack(spacing: 12) {
+          ProgressView()
+          Text("Categorising items…")
+            .domaFont(.supporting)
+            .foregroundStyle(DomaColor.warmTextSecondary)
         }
-        if isCategorising {
-          HStack(spacing: 12) {
-            ProgressView()
-            Text("Categorising items…")
-              .domaFont(.supporting)
-              .foregroundStyle(DomaColor.warmTextSecondary)
-          }
-          .listRowBackground(Color.clear)
-          .accessibilityElement(children: .combine)
-        }
+        .listRowBackground(Color.clear)
+        .listRowSeparator(.hidden)
+        .accessibilityElement(children: .combine)
       }
       if activeItems.isEmpty && items.completedItems.isEmpty {
         DomaStateView(title: "No items yet", systemImage: "checklist")
@@ -59,23 +53,22 @@ struct ListItemsView: View {
               .accessibilityAction(named: "Move Down") { move(item, by: 2) }
           }
           .onMove(perform: move)
-        } header: {
-          DomaSectionHeader(title: "Items", count: activeItems.count)
         }
+        .listSectionSeparator(.hidden)
       }
       if !items.completedItems.isEmpty {
         Section {
           ForEach(items.completedItems) { row($0, isCompleted: true) }
         } header: {
           HStack {
-            DomaSectionHeader(title: "Completed")
+            DomaSectionHeader(title: "Completed", count: items.completedItems.count)
             Spacer()
             Button {
               isConfirmingClear = true
             } label: {
               Text("Clear")
-                .domaFont(.sectionHeader)
-                .foregroundStyle(DomaColor.warmTextPrimary)
+                .domaFont(.supporting)
+                .foregroundStyle(DomaColor.warmAccent)
                 .frame(minWidth: 44, minHeight: 44)
                 .contentShape(.rect)
             }
@@ -88,11 +81,24 @@ struct ListItemsView: View {
               Text("This deletes every completed item in this list.")
             }
           }
+          .listRowInsets(DomaSectionHeader.insets)
         }
+        .listSectionSeparator(.hidden)
       }
     }
-    .domaScreenBackground()
+    .listStyle(.grouped)
+    .listSectionSpacing(0)
+    .environment(\.defaultMinListHeaderHeight, 0)
+    .contentMargins(.top, 6, for: .scrollContent)
+    .scrollContentBackground(.hidden)
     .scrollDismissesKeyboard(.interactively)
+    .safeAreaBar(edge: .bottom) {
+      AddItemField { titles in
+        await save { try await lists.createItems(listPublicId: items.list.publicId, titles: titles) }
+      } onPaste: { pasted in
+        pastePreview = PastePreview(pasted: pasted)
+      }
+    }
     .domaSaveFailureAlert(isPresented: $saveFailed)
     .sheet(item: $editingItem) { item in
       ItemEditSheet(lists: lists, item: item, properties: items.properties, isCompleted: isCompleted(item))
@@ -133,7 +139,7 @@ struct ListItemsView: View {
   private func row(_ item: DomaListItem, isCompleted: Bool) -> some View {
     ListItemRow(
       title: item.title,
-      valueSummary: PropertyValueFormat.summary(of: item, properties: items.properties),
+      details: PropertyValueFormat.rowDetails(of: item, properties: items.properties, excluding: groupingProperty?.id),
       isCompleted: isCompleted,
       onToggle: {
         await save { try await lists.apply(.completion(!isCompleted), toItem: item.id) }

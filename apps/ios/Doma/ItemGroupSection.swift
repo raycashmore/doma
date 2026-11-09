@@ -28,9 +28,11 @@ struct ItemGroupSection<Row: View>: View {
         .contentShape(.rect)
       }
       .buttonStyle(.plain)
+      .listRowInsets(DomaSectionHeader.insets)
       .accessibilityElement(children: .combine)
       .accessibilityValue(isCollapsed ? "Collapsed" : "Expanded")
       .accessibilityHint(isCollapsed ? "Shows the group's items" : "Hides the group's items")
     }
+    .listSectionSeparator(.hidden)
   }
 }

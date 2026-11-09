@@ -10,8 +10,9 @@ struct DomaColorTests {
   /// provider traps there, which closed the app when a sheet was dismissed.
   @Test func everyThemeColourResolvesOffTheMainThread() async {
     let colours = [
-      DomaColor.warmBgCardSoft, DomaColor.warmBgCard, DomaColor.warmBorder, DomaColor.warmSectionMortgage,
-      DomaColor.warmTextPrimary, DomaColor.warmTextSecondary, DomaColor.warmAccent,
+      DomaColor.warmBgCardSoft, DomaColor.warmBgCard, DomaColor.warmBorder, DomaColor.warmTextPrimary,
+      DomaColor.warmTextSecondary, DomaColor.warmTextTertiary, DomaColor.warmAccent, DomaColor.warmBgDark,
+      DomaColor.warmTextOnDark, DomaColor.onDarkHighlight, DomaColor.checkRing, DomaColor.sheetBackground,
     ]
     let resolved = await Task.detached {
       colours.flatMap { colour in

@@ -30,8 +30,8 @@ struct NewListSheet: View {
         .listRowBackground(DomaColor.warmBgCard)
         Section {
           Picker("Visibility", selection: $visibility) {
-            Text("Personal").tag(DomaListSummary.Visibility.personal)
             Text("Shared").tag(DomaListSummary.Visibility.shared)
+            Text("Personal").tag(DomaListSummary.Visibility.personal)
           }
           .pickerStyle(.segmented)
         } footer: {

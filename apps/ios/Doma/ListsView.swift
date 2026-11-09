@@ -15,6 +15,9 @@ struct ListsView: View {
   @State private var openItems: DomaListItems?
   @State private var openGrouping: OpenGrouping?
   @State private var unavailableListId: DomaListSummary.ID?
+  /// Shared first, unless the list being reopened is personal.
+  @State private var visibility = DomaListSummary.Visibility.shared
+  @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
   private let lastOpenedList = LastOpenedList()
 
@@ -35,7 +38,6 @@ struct ListsView: View {
       sidebar
         .navigationTitle("Lists")
         .toolbar {
-          Button("New List", systemImage: "plus") { isCreatingList = true }
           Menu("More", systemImage: "ellipsis") {
             Button("Sign out") {
               Task { await session.signOut() }
@@ -46,6 +48,7 @@ struct ListsView: View {
       detail
     }
     .tint(DomaColor.warmTextPrimary)
+    .environment(\.isSplitLayout, isSplit)
     .sheet(isPresented: $isCreatingList, onDismiss: openListCreatedInSheet) {
       NewListSheet(lists: session.lists) { id in
         // A save can outlive its sheet, and then no dismissal is left to open the list.
@@ -82,10 +85,42 @@ struct ListsView: View {
     }
   }
 
+  private var isSplit: Bool { horizontalSizeClass == .regular }
+
   @ViewBuilder
   private var sidebar: some View {
+    if isSplit {
+      // Dark in either appearance, so its content takes the dark palette over the header colour.
+      VStack(alignment: .leading, spacing: 0) {
+        Text("Lists")
+          .domaFont(.display)
+          .foregroundStyle(DomaColor.warmTextOnDark)
+          .accessibilityAddTraits(.isHeader)
+          .padding(.horizontal, 20)
+        sidebarContent
+          .scrollContentBackground(.hidden)
+          .environment(\.colorScheme, .dark)
+          // Rows scroll under the title otherwise.
+          .clipped()
+      }
+      .toolbarTitleDisplayMode(.inline)
+      .toolbar(removing: .title)
+      .domaDarkHeader()
+    } else {
+      sidebarContent
+        .domaHeaderedSheet(title: Text("Lists"))
+    }
+  }
+
+  @ViewBuilder
+  private var sidebarContent: some View {
     if let lists {
-      ListsSidebar(lists: lists, defaultListId: defaultListId, selectedListId: $selectedListId)
+      ListsSidebar(
+        lists: lists,
+        visibility: $visibility,
+        selectedListId: $selectedListId,
+        isSidebar: isSplit
+      ) { isCreatingList = true }
     } else if loadFailed {
       DomaStateView(title: "Lists are unavailable", systemImage: "exclamationmark.triangle")
     } else {
@@ -154,8 +189,9 @@ struct ListsView: View {
 
   /// A new list can reach this device after its mutation returns, so opening waits until it is visible.
   private func openCreatedList() {
-    guard let createdListId, lists?.contains(where: { $0.id == createdListId }) == true else { return }
-    selectedListId = createdListId
+    guard let createdList = lists?.first(where: { $0.id == createdListId }) else { return }
+    visibility = createdList.visibility
+    selectedListId = createdList.id
     compactColumn = .detail
     self.createdListId = nil
   }
@@ -182,7 +218,9 @@ struct ListsView: View {
   private func restoreSelection(from visibleLists: [DomaListSummary]) {
     guard selectedListId != nil else { return }
     selectedListId = lastOpenedList.restorableId(among: visibleLists.map(\.id))
-    if selectedListId == nil {
+    if let restored = visibleLists.first(where: { $0.id == selectedListId }) {
+      visibility = restored.visibility
+    } else {
       lastOpenedList.forget()
       compactColumn = .sidebar
     }
@@ -192,4 +230,10 @@ struct ListsView: View {
 private struct OpenGrouping {
   let listId: DomaListSummary.ID
   let propertyId: String?
+}
+
+extension EnvironmentValues {
+  /// Whether Lists shows its sidebar beside the open list, as on iPad. Columns and sheets report
+  /// their own, narrower size class, so they read this instead.
+  @Entry var isSplitLayout = false
 }

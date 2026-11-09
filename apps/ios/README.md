@@ -19,7 +19,8 @@ covered, the app's window is transparent over a backdrop window, because the iPa
 capture of it on return, under the cover. A view added to that window does not stop this. This has
 not been checked on a physical iPad. A device
 without a passcode cannot authenticate, so the app does not lock there. It reopens on the last list
-opened, and iPhone keeps Lists one step back.
+opened, and iPhone keeps Lists one step back. Lists sit under a dark header, as on the web, with a
+Shared / Personal filter; items are added from a capsule at the foot of the list.
 
 ## Layout
 
@@ -149,6 +150,9 @@ script as you typed it, so use capitals and hyphens.
 `agent-device` gotchas:
 
 - Press a menu `Picker` or a `Toggle` by the control's coordinates; a ref press lands mid-row and does nothing.
+- `DEVICE_IN_USE` means another thread's session holds the simulator. Do not close it; check another
+  device meanwhile. A simulator made with `simctl create` does not appear in the device tools. Tests
+  run on a held simulator fail in every suite, so point `DOMA_IOS_DESTINATION` at an idle one.
 - `keyboard dismiss` is unsupported, and a target behind the keyboard is refused. Scroll it clear first.
 - A snapshot can lag the screen, so take a screenshot before believing a stuck state.
 - Refs go stale when the screen changes; take a fresh snapshot before pressing one.
@@ -164,11 +168,20 @@ defaults to main-actor isolation, so tests of its types need `@MainActor`.
 ## Review standards
 
 - Screens use `domaFont(_:)` and `DomaColor`; `scripts/check-theme.sh` enforces this in iOS CI.
+- Screens under the dark header use `domaHeaderedSheet(title:)`, which draws the large title itself. iOS 27
+  draws a bar's large title inside the scrolling content, where the sheet's mask hides it, and that title
+  ignores the `UINavigationBar` appearance. A `toolbarBackground` colour resolves in the bar's dark
+  appearance, so the header colour sits behind a clear bar instead.
+- Split columns and sheets report a compact size class even on a full-screen iPad. Read `isSplitLayout`,
+  set by `ListsView`, to ask whether Lists shows side by side.
 - Text scales with Dynamic Type and honours Bold Text; fixed-size containers around text or
   symbols use `@ScaledMetric`.
 - Closures UIKit may call off the main thread, such as dynamic colours, are `nonisolated`: the app target defaults
   to main-actor isolation, and a main-actor closure traps when SwiftUI resolves it during a transition.
 - Controls keep a 44 pt tap target. Rows with `listRowBackground` draw their own selected state.
+- The iPad sidebar uses the system sidebar list style and draws no row background, so the system shows
+  selection and hardware-keyboard focus as one highlight. A custom row background brings back a separate
+  focus ring around the whole cell.
 - Session phases pass through `.signedOut` briefly on launch, so sign-out side effects belong
   in `DomaSession`, not on phase changes.
 - Clerk reports a session change about once a minute. Anything that rebuilds `ListsView` on
