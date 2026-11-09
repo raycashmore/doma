@@ -98,7 +98,8 @@ The test creates its own personal fixture list, exercises it and deletes it, so
 household data is never read into assertions or changed.
 
 Set `DOMA_IOS_DESTINATION` to choose a simulator, for example
-`platform=iOS Simulator,name=iPhone 18 Pro,OS=27.2`; otherwise the script picks one.
+`platform=iOS Simulator,name=iPhone 18 Pro,OS=27.2`; otherwise it uses the iPhone 17e, the
+household's phone. Check UI on that simulator too.
 
 ## Checking the UI in the simulator
 
@@ -174,6 +175,9 @@ defaults to main-actor isolation, so tests of its types need `@MainActor`.
   that event loses open sheets, so `DomaSession.Phase` stays `.signedIn` through a re-login.
 - The edit sheet saves one mutation per changed field and only sends what changed there, so a
   failed save can be retried and another person's edit to a different field survives.
+- Live queries go through `followLiveQuery`, which logs a failed subscription and resubscribes;
+  `scripts/check-live-queries.sh` enforces this in iOS CI. Its failure handler runs only before the
+  first value, so a dropped connection keeps the last value on screen.
 - An optimistic value stays on screen until the live subscription confirms it, not just until
   the mutation returns, and writes to one record wait for the one before, so quick changes land in order.
 

@@ -112,6 +112,8 @@ struct ListDetailView: View {
       case .skipped(reason: "missing_configuration"):
         categorisationProblem = "Set up AI categorisation for this list on the web first."
       case .skipped: categorisationProblem = "The AI gave an answer that could not be used. Try again."
+      case .failed(reason: "provider_out_of_credits"):
+        categorisationProblem = "The AI account has run out of credits. Add credits to OpenAI, then try again."
       case .failed: categorisationProblem = "The AI could not be reached. Try again later."
       }
     } catch {

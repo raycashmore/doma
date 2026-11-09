@@ -87,7 +87,7 @@ public enum DomaCategorisationResult: Decodable, Equatable, Sendable {
   case idle
   case applied(assignmentCount: Int)
   case skipped(reason: String)
-  case failed
+  case failed(reason: String)
 
   private enum CodingKeys: String, CodingKey {
     case status
@@ -101,7 +101,7 @@ public enum DomaCategorisationResult: Decodable, Equatable, Sendable {
     case "applied": self = .applied(assignmentCount: Int(try container.decode(Double.self, forKey: .assignmentCount)))
     case "skipped": self = .skipped(reason: try container.decode(String.self, forKey: .reason))
     case "idle": self = .idle
-    default: self = .failed
+    default: self = .failed(reason: try container.decodeIfPresent(String.self, forKey: .reason) ?? "unknown")
     }
   }
 }

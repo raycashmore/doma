@@ -66,25 +66,19 @@ struct ListsView: View {
     .task(id: selectedListId) { await watchOpenList() }
     .task(id: selectedListId) { await watchOpenGrouping() }
     .task {
-      do {
-        for try await value in session.lists.visibleLists().values {
-          if lists == nil { restoreSelection(from: value) }
-          lists = value
-          loadFailed = false
-          openCreatedList()
-        }
-      } catch {
+      await followLiveQuery("Visible lists", subscribe: session.lists.visibleLists) {
         loadFailed = true
+      } onValue: { value in
+        if lists == nil { restoreSelection(from: value) }
+        lists = value
+        loadFailed = false
+        openCreatedList()
       }
     }
     .task {
-      do {
-        for try await value in session.lists.defaultList().values {
-          defaultListId = value?.publicId
-        }
-      } catch {
+      await followLiveQuery("Default list", subscribe: session.lists.defaultList) {
         defaultListId = nil
-      }
+      } onValue: { defaultListId = $0?.publicId }
     }
   }
 
@@ -132,27 +126,23 @@ struct ListsView: View {
     openItems = nil
     unavailableListId = nil
     guard let selectedListId else { return }
-    do {
-      for try await value in session.lists.items(listPublicId: selectedListId).values {
-        openItems = value
-        unavailableListId = value == nil ? selectedListId : nil
-      }
-    } catch {
+    await followLiveQuery("List items", subscribe: { session.lists.items(listPublicId: selectedListId) }) {
       unavailableListId = selectedListId
+    } onValue: { value in
+      openItems = value
+      unavailableListId = value == nil ? selectedListId : nil
     }
   }
 
   private func watchOpenGrouping() async {
     openGrouping = nil
     guard let selectedListId else { return }
-    do {
-      for try await propertyId in session.lists.groupingPropertyId(listPublicId: selectedListId).values {
-        openGrouping = OpenGrouping(listId: selectedListId, propertyId: propertyId)
-      }
-    } catch {
+    await followLiveQuery(
+      "List grouping", subscribe: { session.lists.groupingPropertyId(listPublicId: selectedListId) }
+    ) {
       // Grouping is a view preference, so the list still opens, in manual order.
       openGrouping = OpenGrouping(listId: selectedListId, propertyId: nil)
-    }
+    } onValue: { openGrouping = OpenGrouping(listId: selectedListId, propertyId: $0) }
   }
 
   /// Waits for the sheet to go, because navigating while it closes can leave a screen that never updates.

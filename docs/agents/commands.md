@@ -21,6 +21,7 @@ pnpm bot           # Start the bot gateway on :3002
 pnpm agent         # Start the agent API on :3006
 pnpm bot:test      # Run bot gateway tests
 pnpm convex        # Start Convex dev for @repo/convex
+pnpm convex:env-names [--prod]     # Convex env var names only; `convex env list` prints secret values
 pnpm seed          # Seed Convex data
 pnpm seed:clear    # Clear seeded Convex data
 pnpm seed:url -- <convex-url>       # Seed a specific Convex deployment

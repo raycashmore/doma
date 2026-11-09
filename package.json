@@ -21,6 +21,7 @@
     "agent": "pnpm --filter api-agent dev",
     "bot:test": "pnpm --filter api-bot test",
     "convex": "pnpm --filter @repo/convex dev",
+    "convex:env-names": "scripts/convex-env-names.sh",
     "seed": "pnpm --filter @repo/convex seed",
     "seed:clear": "pnpm --filter @repo/convex seed:clear",
     "seed:url": "pnpm --filter @repo/convex seed",
