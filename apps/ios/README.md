@@ -20,7 +20,7 @@ capture of it on return, under the cover. A view added to that window does not s
 not been checked on a physical iPad. A device
 without a passcode cannot authenticate, so the app does not lock there. It reopens on the last list
 opened, and iPhone keeps Lists one step back. Lists sit under a dark header, as on the web, with a
-Personal / Shared filter; items are added from a capsule at the foot of the list.
+Shared / Personal filter; items are added from a capsule at the foot of the list.
 
 ## Layout
 
@@ -179,6 +179,9 @@ defaults to main-actor isolation, so tests of its types need `@MainActor`.
 - Closures UIKit may call off the main thread, such as dynamic colours, are `nonisolated`: the app target defaults
   to main-actor isolation, and a main-actor closure traps when SwiftUI resolves it during a transition.
 - Controls keep a 44 pt tap target. Rows with `listRowBackground` draw their own selected state.
+- The iPad sidebar uses the system sidebar list style and draws no row background, so the system shows
+  selection and hardware-keyboard focus as one highlight. A custom row background brings back a separate
+  focus ring around the whole cell.
 - Session phases pass through `.signedOut` briefly on launch, so sign-out side effects belong
   in `DomaSession`, not on phase changes.
 - Clerk reports a session change about once a minute. Anything that rebuilds `ListsView` on

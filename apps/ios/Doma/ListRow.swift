@@ -10,7 +10,7 @@ struct ListRow: View {
     NavigationLink(value: list.id) {
       HStack(spacing: 6) {
         Text(list.name)
-          .domaFont(isSelected && isSidebar ? .sectionHeader : .body)
+          .domaFont(.body)
           .foregroundStyle(DomaColor.warmTextPrimary)
         if list.visibility == .shared {
           Image(systemName: "person.2")
@@ -22,23 +22,13 @@ struct ListRow: View {
       .frame(minHeight: 28)
     }
     .listRowInsets(.vertical, isSidebar ? 4 : 6)
-    .listRowBackground(background)
+    // The sidebar leaves selection to the system, which merges it with the keyboard focus.
+    .listRowBackground(isSidebar ? nil : background)
     .listRowSeparator(isSidebar ? .hidden : .automatic)
     .listRowSeparatorTint(DomaColor.warmBorder)
   }
 
-  @ViewBuilder
-  private var background: some View {
-    if isSidebar {
-      if isSelected {
-        RoundedRectangle(cornerRadius: 10, style: .continuous)
-          .fill(DomaColor.onDarkHighlight)
-          .padding(.horizontal, 8)
-      } else {
-        Color.clear
-      }
-    } else {
-      isSelected ? DomaColor.warmBorder : DomaColor.warmBgCard
-    }
+  private var background: Color {
+    isSelected ? DomaColor.warmBorder : DomaColor.warmBgCard
   }
 }

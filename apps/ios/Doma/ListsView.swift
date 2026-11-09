@@ -15,8 +15,8 @@ struct ListsView: View {
   @State private var openItems: DomaListItems?
   @State private var openGrouping: OpenGrouping?
   @State private var unavailableListId: DomaListSummary.ID?
-  /// Personal first, as on the web, unless the list being reopened is shared.
-  @State private var visibility = DomaListSummary.Visibility.personal
+  /// Shared first, unless the list being reopened is personal.
+  @State private var visibility = DomaListSummary.Visibility.shared
   @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
   private let lastOpenedList = LastOpenedList()

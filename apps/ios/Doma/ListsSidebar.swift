@@ -16,26 +16,27 @@ struct ListsSidebar: View {
     List(selection: $selectedListId) {
       Section {
         Picker("Show", selection: $visibility) {
-          Text("Personal").tag(DomaListSummary.Visibility.personal)
           Text("Shared").tag(DomaListSummary.Visibility.shared)
+          Text("Personal").tag(DomaListSummary.Visibility.personal)
         }
         .pickerStyle(.segmented)
         .listRowBackground(Color.clear)
-        .listRowInsets(EdgeInsets(top: 4, leading: isSidebar ? 12 : 16, bottom: 4, trailing: isSidebar ? 12 : 16))
+        // In the sidebar, the switch spans the same width as the selection and the New list capsule.
+        .listRowInsets(EdgeInsets(top: isSidebar ? 16 : 4, leading: isSidebar ? 0 : 16, bottom: 4, trailing: isSidebar ? 0 : 16))
       }
       Section {
         if shownLists.isEmpty {
           Text(visibility == .shared ? "No shared lists" : "No personal lists")
             .domaFont(.body)
             .foregroundStyle(DomaColor.warmTextSecondary)
-            .listRowBackground(isSidebar ? Color.clear : DomaColor.warmBgCard)
+            .listRowBackground(isSidebar ? nil : DomaColor.warmBgCard)
         }
         ForEach(shownLists) {
           ListRow(list: $0, isSelected: $0.id == selectedListId, isSidebar: isSidebar)
         }
       }
     }
-    .listStyle(.insetGrouped)
+    .listStyle(sidebar: isSidebar)
     .listSectionSpacing(12)
     .environment(\.defaultMinListRowHeight, 44)
     .safeAreaBar(edge: .bottom) {
@@ -52,6 +53,19 @@ struct ListsSidebar: View {
       }
       .buttonStyle(.plain)
       .domaBottomCapsule()
+    }
+  }
+}
+
+private extension View {
+  /// The system sidebar on iPad draws selection and keyboard focus as one highlight, in the accent
+  /// when the sidebar has focus.
+  @ViewBuilder
+  func listStyle(sidebar: Bool) -> some View {
+    if sidebar {
+      listStyle(.sidebar).tint(DomaColor.warmAccent)
+    } else {
+      listStyle(.insetGrouped)
     }
   }
 }

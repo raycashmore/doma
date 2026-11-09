@@ -44,7 +44,8 @@ extension View {
     padding(.leading, 8)
       .padding(.trailing, 16)
       .frame(minHeight: 52)
-      .glassEffect(.regular.tint(DomaColor.warmBgCard.opacity(0.6)).interactive(), in: .capsule)
+      // Untinted, so the glass keeps the rim and shadow that lift it off the pale sheet.
+      .glassEffect(.regular.interactive(), in: .capsule)
       .frame(maxWidth: 560)
       .padding(.horizontal, 16)
       .padding(.bottom, 8)

@@ -33,7 +33,8 @@ struct AddItemField: View {
           .domaFont(.button)
           .buttonStyle(.borderedProminent)
           .buttonBorderShape(.capsule)
-          .controlSize(.large)
+          // Regular, so the button fits inside the empty capsule and the field keeps its height.
+          .controlSize(.regular)
           .tint(DomaColor.warmTextPrimary)
           .foregroundStyle(DomaColor.warmBgCardSoft)
       }
