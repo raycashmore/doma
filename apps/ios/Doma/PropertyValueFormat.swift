@@ -28,12 +28,20 @@ enum PropertyValueFormat {
     return date.formatted(isThisYear ? format : format.year())
   }
 
-  /// One short line for a list row, in property order.
-  static func summary(of item: DomaListItem, properties: [DomaListProperty]) -> String {
-    properties.compactMap { property in
-      item.propertyValues.first { $0.propertyId == property.id }.flatMap { describe($0, of: property) }
+  /// A list row's second line, in property order and then the notes. The property the list is
+  /// grouped by is left out, because the group's header already shows it.
+  static func rowDetails(
+    of item: DomaListItem, properties: [DomaListProperty], excluding groupingPropertyId: String? = nil
+  ) -> [RowDetail] {
+    let values = properties.filter { $0.id != groupingPropertyId }.compactMap { property in
+      item.propertyValues.first { $0.propertyId == property.id }.flatMap { value in
+        describe(value, of: property).map { RowDetail(text: $0, isDate: property.kind == .date) }
+      }
     }
-    .joined(separator: " · ")
+    let note = item.notes?.split(whereSeparator: \.isNewline).first
+      .map { $0.trimmingCharacters(in: .whitespaces) }
+    guard let note, !note.isEmpty else { return values }
+    return values + [RowDetail(text: note, isDate: false)]
   }
 
   private static func describe(_ value: DomaListItemPropertyValue, of property: DomaListProperty) -> String? {
@@ -42,7 +50,14 @@ enum PropertyValueFormat {
     case .number: value.numberValue.map { number($0) }
     case .date: value.date.map { date($0) }
     case .select: property.options?.first { $0.id == value.selectOptionId }?.label
-    case .checkbox: value.checkboxValue.map { $0 ? "Checked" : "Unchecked" }
+    // A ticked box reads as its name, such as Urgent; an unticked one says nothing.
+    case .checkbox: value.checkboxValue == true ? property.name : nil
     }
   }
+}
+
+struct RowDetail: Equatable {
+  let text: String
+  /// Dates show in the accent colour with a calendar symbol.
+  let isDate: Bool
 }

@@ -237,24 +237,30 @@ struct PropertyValueFormatTests {
     #expect(PropertyValueFormat.date(later, now: now, calendar: calendar, locale: australia).contains("2027"))
   }
 
-  @Test func theSummaryFollowsPropertyOrderAndSkipsMissingValues() throws {
+  @Test func rowDetailsFollowPropertyOrderThenNotesAndSkipTheGroupingProperty() throws {
     let properties = try JSONDecoder().decode(
       [DomaListProperty].self,
       from: Data(
         #"""
         [{"_id":"a","name":"Aisle","type":"text"},
          {"_id":"b","name":"Priority","type":"select","options":[{"id":"high","label":"High"}]},
-         {"_id":"c","name":"Urgent","type":"checkbox"}]
+         {"_id":"c","name":"Urgent","type":"checkbox"},
+         {"_id":"d","name":"Needed by","type":"date"}]
         """#.utf8))
     let item = try JSONDecoder().decode(
       DomaListItem.self,
       from: Data(
         #"""
-        {"_id":"i","title":"Apples","propertyValues":[
-          {"listPropertyId":"c","checkboxValue":false},
+        {"_id":"i","title":"Apples","notes":"Green ones\nNot red","propertyValues":[
+          {"listPropertyId":"c","checkboxValue":true},
+          {"listPropertyId":"d","dateValue":1794225600000},
           {"listPropertyId":"a","textValue":"Produce"}]}
         """#.utf8))
 
-    #expect(PropertyValueFormat.summary(of: item, properties: properties) == "Produce · Unchecked")
+    let details = PropertyValueFormat.rowDetails(of: item, properties: properties, excluding: "a")
+
+    #expect(details.map(\.text).first == "Urgent")
+    #expect(details.map(\.isDate) == [false, true, false])
+    #expect(details.last?.text == "Green ones")
   }
 }

@@ -4,13 +4,17 @@ import SwiftUI
 /// the system style it scales with and the heavier face used when Bold Text is on.
 enum DomaFont {
   case body
-  case rowTitle
+  case sheetTitle
   case supporting
+  /// A row's second line: its notes or property values.
+  case detail
   case sectionHeader
   case count
   case button
   case display
   case displaySmall
+  /// A title in the navigation bar once its large title has scrolled away.
+  case displayInline
 
   private struct Face {
     let name: String
@@ -25,15 +29,18 @@ enum DomaFont {
   private var face: Face {
     switch self {
     case .body: Face(name: "DMSans-Regular", boldName: "DMSans-SemiBold", size: 17, textStyle: .body)
-    case .rowTitle: Face(name: "DMSans-Medium", boldName: "DMSans-Bold", size: 17, textStyle: .body)
+    case .sheetTitle: Face(name: "DMSans-SemiBold", boldName: "DMSans-Bold", size: 20, textStyle: .title3)
     case .supporting: Face(name: "DMSans-Regular", boldName: "DMSans-SemiBold", size: 15, textStyle: .subheadline)
-    case .sectionHeader: Face(name: "DMSans-SemiBold", boldName: "DMSans-Bold", size: 15, textStyle: .subheadline)
-    case .count: Face(name: "DMSans-SemiBold", boldName: "DMSans-Bold", size: 12, textStyle: .caption)
+    case .detail: Face(name: "DMSans-Regular", boldName: "DMSans-SemiBold", size: 13, textStyle: .footnote)
+    case .sectionHeader: Face(name: "DMSans-SemiBold", boldName: "DMSans-Bold", size: 17, textStyle: .headline)
+    case .count: Face(name: "DMSans-Regular", boldName: "DMSans-SemiBold", size: 15, textStyle: .subheadline)
     case .button: Face(name: "DMSans-SemiBold", boldName: "DMSans-Bold", size: 17, textStyle: .headline)
     case .display:
       Face(name: Self.merriweatherBold, boldName: Self.merriweatherExtraBold, size: 34, textStyle: .largeTitle)
     case .displaySmall:
       Face(name: Self.merriweatherBold, boldName: Self.merriweatherExtraBold, size: 26, textStyle: .title)
+    case .displayInline:
+      Face(name: Self.merriweatherBold, boldName: Self.merriweatherExtraBold, size: 17, textStyle: .headline)
     }
   }
 

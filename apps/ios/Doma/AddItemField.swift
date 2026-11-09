@@ -11,15 +11,13 @@ struct AddItemField: View {
   private var trimmedTitle: String { title.trimmingCharacters(in: .whitespacesAndNewlines) }
 
   var body: some View {
-    HStack(spacing: 12) {
-      Image(systemName: "plus")
-        .foregroundStyle(DomaColor.warmAccent)
-        .accessibilityHidden(true)
+    HStack(spacing: 10) {
+      DomaPlusBadge()
       // Vertical, so a pasted list arrives with its line breaks; Return still adds the item.
       TextField(
         "Add an item",
         text: $title,
-        prompt: Text("Add an item").foregroundStyle(DomaColor.warmTextSecondary),
+        prompt: Text("Add an item or paste a list").foregroundStyle(DomaColor.warmTextTertiary),
         axis: .vertical
       )
       .lineLimit(1...4)
@@ -32,24 +30,19 @@ struct AddItemField: View {
       .onChange(of: title) { old, new in read(AddItemInput(from: old, to: new)) }
       if !trimmedTitle.isEmpty {
         Button("Add", action: add)
-          .domaPrimaryButton()
+          .domaFont(.button)
+          .buttonStyle(.borderedProminent)
+          .buttonBorderShape(.capsule)
+          .controlSize(.large)
+          .tint(DomaColor.warmTextPrimary)
+          .foregroundStyle(DomaColor.warmBgCardSoft)
       }
     }
-    // Matches the Add button, so the list does not shift when it appears.
-    .frame(minHeight: 52)
-    .padding(.horizontal, 20)
-    .padding(.vertical, 8)
-    .background(DomaColor.warmBgCard, in: .rect(cornerRadius: 26))
-    // The whole box takes focus, not only the text's own width.
-    .contentShape(.rect(cornerRadius: 26))
+    .padding(.vertical, 6)
+    // The whole capsule takes focus, not only the text's own width.
+    .contentShape(.capsule)
     .onTapGesture { isFocused = true }
-    .overlay {
-      if isFocused {
-        RoundedRectangle(cornerRadius: 26).strokeBorder(DomaColor.warmAccent, lineWidth: 2)
-      }
-    }
-    .listRowInsets(EdgeInsets())
-    .listRowBackground(Color.clear)
+    .domaBottomCapsule()
   }
 
   private func read(_ input: AddItemInput) {
@@ -75,5 +68,19 @@ struct AddItemField: View {
       let saved = await onAdd(titles)
       if !saved && title.isEmpty { title = submitted }
     }
+  }
+}
+
+/// The accent plus at the start of a bottom capsule.
+struct DomaPlusBadge: View {
+  @ScaledMetric(relativeTo: .body) private var size = 32
+
+  var body: some View {
+    Image(systemName: "plus")
+      .font(.body.weight(.semibold))
+      .foregroundStyle(DomaColor.warmTextOnDark)
+      .frame(width: size, height: size)
+      .background(DomaColor.warmAccent, in: .circle)
+      .accessibilityHidden(true)
   }
 }

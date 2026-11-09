@@ -17,6 +17,7 @@ struct ListDetailView: View {
   @State private var groupingSaveFailed = false
   @State private var isCategorising = false
   @State private var categorisationProblem: String?
+  @Environment(\.isSplitLayout) private var isSplitLayout
 
   private var groupingId: String? { pendingGroupingId ?? savedGroupingId }
 
@@ -36,23 +37,24 @@ struct ListDetailView: View {
         DomaLoadingView()
       }
     }
+    .domaHeaderedSheet(title: title, corners: isSplitLayout ? .topLeading : .top)
     .navigationTitle(list.name)
-    .navigationSubtitle(list.visibility == .shared ? "Shared" : "Personal")
     .toolbar {
-      if let items, !items.properties.isEmpty {
-        GroupByMenu(
-          properties: items.properties,
-          // A deleted property ticks Manual Order, which is how the list shows.
-          groupingPropertyId: Binding(
-            get: { items.properties.contains { $0.id == groupingId } ? groupingId : nil },
-            set: { saveGrouping($0) }
-          ),
-          unassignedCount: unassignedCount(in: items),
-          isCategorising: isCategorising,
-          onCategorise: { Task { await categorise(into: categorisationProperty(in: items)) } }
-        )
+      ListActionsMenu(lists: lists, list: list, isDefault: isDefault, onDelete: onDelete) {
+        if let items, !items.properties.isEmpty {
+          GroupByMenu(
+            properties: items.properties,
+            // A deleted property ticks Manual Order, which is how the list shows.
+            groupingPropertyId: Binding(
+              get: { items.properties.contains { $0.id == groupingId } ? groupingId : nil },
+              set: { saveGrouping($0) }
+            ),
+            unassignedCount: unassignedCount(in: items),
+            isCategorising: isCategorising,
+            onCategorise: { Task { await categorise(into: categorisationProperty(in: items)) } }
+          )
+        }
       }
-      ListActionsMenu(lists: lists, list: list, isDefault: isDefault, onDelete: onDelete)
     }
     .onChange(of: savedGroupingId) { clearPendingGroupingOnceSaved() }
     .domaSaveFailureAlert(isPresented: $groupingSaveFailed)
@@ -64,6 +66,18 @@ struct ListDetailView: View {
     } message: {
       Text(categorisationProblem ?? "")
     }
+  }
+
+  /// Shared lists carry the people symbol after their name, as on the web.
+  private var title: Text {
+    list.visibility == .shared
+      ? Text("\(list.name) \(sharedSymbol)").accessibilityLabel("\(list.name), shared")
+      : Text(list.name)
+  }
+
+  /// Quieter than the name, as on the web.
+  private var sharedSymbol: Text {
+    Text(Image(systemName: "person.2")).font(.title3).foregroundStyle(DomaColor.warmTextOnDark.opacity(0.6))
   }
 
   /// The select property the server categorises into, set up on the web.

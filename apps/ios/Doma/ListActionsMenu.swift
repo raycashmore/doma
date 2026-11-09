@@ -1,11 +1,13 @@
 import DomaKit
 import SwiftUI
 
-struct ListActionsMenu: View {
+/// The list's settings: how it groups, then the list itself.
+struct ListActionsMenu<Grouping: View>: View {
   let lists: DomaListsClient
   let list: DomaListSummary
   let isDefault: Bool
   let onDelete: () async -> Void
+  @ViewBuilder let grouping: () -> Grouping
   @State private var isRenaming = false
   @State private var draftName = ""
   @State private var isConfirmingDelete = false
@@ -14,7 +16,8 @@ struct ListActionsMenu: View {
   private var trimmedName: String { draftName.trimmingCharacters(in: .whitespacesAndNewlines) }
 
   var body: some View {
-    Menu("List Options", systemImage: "slider.horizontal.3") {
+    Menu("List Settings", systemImage: "gearshape") {
+      Section { grouping() }
       Button("Rename", systemImage: "pencil") {
         draftName = list.name
         isRenaming = true
