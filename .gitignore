@@ -56,3 +56,6 @@ packages/convex/scripts/README.md
 .playwright-mcp
 .claude
 .agents
+
+# Reference screenshots placed beside design files; they can hold personal app data.
+design/IMG_*.PNG
