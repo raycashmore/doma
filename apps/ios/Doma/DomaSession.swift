@@ -5,6 +5,7 @@ import Foundation
 import DomaKit
 import Observation
 import OSLog
+import WidgetKit
 
 /// Keeps the Convex client's authentication in step with the Clerk session.
 @Observable
@@ -27,6 +28,8 @@ final class DomaSession {
 
   private(set) var phase: Phase = .loading
   let lists: DomaListsClient
+  /// A list a widget asked to open, kept here so signing out drops it.
+  let openRequest = ListOpenRequest()
 
   @ObservationIgnored private let logger = Logger(subsystem: "com.doma.app", category: "session")
   @ObservationIgnored private let convex: ConvexClientWithAuth<String>
@@ -56,7 +59,9 @@ final class DomaSession {
 
   func signOut() async {
     LastOpenedList().forget()
+    openRequest.publicId = nil
     await convex.logout()
+    WidgetCenter.shared.reloadAllTimelines()
   }
 
   private func apply(_ state: AuthState<String>) {
@@ -90,8 +95,11 @@ final class DomaSession {
     } else {
       // Here rather than on the signed-out phase, which also appears briefly during a normal launch.
       LastOpenedList().forget()
+      openRequest.publicId = nil
       await convex.logout()
       phase = .signedOut
+      // The widgets share this session, so they show the sign-out at once rather than old lists.
+      WidgetCenter.shared.reloadAllTimelines()
     }
   }
 }

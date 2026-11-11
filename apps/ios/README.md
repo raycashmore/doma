@@ -34,9 +34,28 @@ Shared / Personal filter; items are added from a capsule at the foot of the list
 - `DomaKit/`: local Swift package with `DomaClerkConvexAuthProvider`,
   `DomaListsClient` (the typed wrappers for the Convex Lists functions), `DomaConfiguration`
   and `DomaConvexHTTPQuery`, which runs one query over HTTP for the widget.
-- `DomaWidget/`: the Home Screen widget extension (in progress, RAY-256). It shares the app's
-  Clerk session through the keychain access group in `Config/Doma.entitlements`, so it needs no
-  sign-in of its own. `Config/Signed.xcconfig` applies the entitlements to the app and the widget.
+- `DomaWidget/`: the Home Screen List widget extension. It shares the app's Clerk session
+  through the keychain access group in `Config/Doma.entitlements`, so it needs no sign-in of its
+  own, and reads lists with `DomaConvexHTTPQuery`. `Config/Signed.xcconfig` applies the
+  entitlements to the app and the widget. It compiles `DomaColor`, `DomaFont` and the fonts from
+  `Doma/` through a membership exception in the project file.
+
+## List widget
+
+Small, medium and large Home Screen sizes show one list: the default list unless the widget is
+edited to choose another. Widgets cannot scroll, so it shows as many active items as fit and then
+how many more there are; tapping opens the list in the app (`com.doma.app://lists/<publicId>`).
+
+`DomaWidgetContent` decides what it shows. A sign-in that Clerk or Convex rejects shows "Signed
+out" and forgets every list the widgets showed, so an old list never returns. Only a network
+failure keeps the last list, marked "Updated … ago"; a list also marks its age once 30 minutes pass
+without a refresh.
+
+iOS decides when widgets refresh. The widget asks for one every 15 minutes. The app asks for a
+redraw when it leaves the foreground and on sign-out; iOS holds redraw requests made while the app
+is open ("Throttling additional refresh request while foreground" in the `chronod` log), so the app
+does not follow lists live for the widget. Changes made elsewhere while Doma is closed reach the
+widget only on its own refresh until push updates (RAY-258) arrive with the paid developer program.
 - `DomaTests/`: app-hosted tests. They need the app host because Clerk stores its
   session in the keychain, which plain package tests in the simulator cannot reach.
 - `Config/`: build settings. Public client values go in the ignored `Local.xcconfig`

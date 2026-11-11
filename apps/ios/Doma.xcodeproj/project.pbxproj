@@ -55,9 +55,29 @@
 		D0A000000000000000000209 /* Doma.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Doma.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		D0A000000000000000000311 /* Exceptions for "Doma" folder in "DomaWidget" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				DomaColor.swift,
+				DomaFont.swift,
+				"Fonts/DMSans-Bold.ttf",
+				"Fonts/DMSans-Regular.ttf",
+				"Fonts/DMSans-SemiBold.ttf",
+				"Fonts/Merriweather-Bold.ttf",
+				"Fonts/Merriweather-ExtraBold.ttf",
+				Fonts/OFL.txt,
+			);
+			target = D0A000000000000000000503 /* DomaWidget */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		D0A000000000000000000301 /* Doma */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				D0A000000000000000000311 /* Exceptions for "Doma" folder in "DomaWidget" target */,
+			);
 			path = Doma;
 			sourceTree = "<group>";
 		};

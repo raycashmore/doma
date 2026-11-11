@@ -23,7 +23,7 @@ public struct DomaConvexHTTPQuery: Sendable {
     let status = (response as? HTTPURLResponse)?.statusCode ?? 0
     let outcome = try? JSONDecoder().decode(Outcome.self, from: data)
     guard status == 200, outcome?.status == "success" else {
-      throw DomaConvexHTTPQueryError.failed(status: status, message: outcome?.errorMessage)
+      throw DomaConvexHTTPQueryError(status: status, message: outcome?.errorMessage)
     }
     return try JSONDecoder().decode(Success<Value>.self, from: data).value
   }
@@ -45,5 +45,17 @@ public struct DomaConvexHTTPQuery: Sendable {
 }
 
 public enum DomaConvexHTTPQueryError: Error, Equatable {
-  case failed(status: Int, message: String?)
+  /// Convex rejected the token, or the function found no signed-in user.
+  case unauthenticated
+  case failed(status: Int)
+
+  /// Convex answers a token it cannot verify with 400 or 401, and a function that finds no
+  /// identity with a 200 error naming it (`requireUserId` in `lists/items.ts`).
+  public init(status: Int, message: String?) {
+    if [400, 401, 403].contains(status) || message?.contains("Not authenticated") == true {
+      self = .unauthenticated
+    } else {
+      self = .failed(status: status)
+    }
+  }
 }

@@ -8,6 +8,14 @@
 	<string>$(DOMA_CLERK_PUBLISHABLE_KEY)</string>
 	<key>DomaKeychainAccessGroup</key>
 	<string>$(AppIdentifierPrefix)$(DOMA_BUNDLE_ID).shared</string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>DMSans-Regular.ttf</string>
+		<string>DMSans-SemiBold.ttf</string>
+		<string>DMSans-Bold.ttf</string>
+		<string>Merriweather-Bold.ttf</string>
+		<string>Merriweather-ExtraBold.ttf</string>
+	</array>
 	<key>NSExtension</key>
 	<dict>
 		<key>NSExtensionPointIdentifier</key>
