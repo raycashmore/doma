@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		D0A000000000000000000101 /* DomaKit in Frameworks */ = {isa = PBXBuildFile; productRef = D0A000000000000000000901 /* DomaKit */; };
+		D0A000000000000000000102 /* DomaKit in Frameworks */ = {isa = PBXBuildFile; productRef = D0A000000000000000000903 /* DomaKit */; };
+		D0A000000000000000000103 /* DomaWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D0A000000000000000000206 /* DomaWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -18,7 +20,28 @@
 			remoteGlobalIDString = D0A000000000000000000501;
 			remoteInfo = Doma;
 		};
+		D0A000000000000000000803 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D0A000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D0A000000000000000000503;
+			remoteInfo = DomaWidget;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		D0A000000000000000000604 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				D0A000000000000000000103 /* DomaWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		D0A000000000000000000201 /* Doma.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Doma.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -26,17 +49,46 @@
 		D0A000000000000000000203 /* Doma.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Doma.xcconfig; sourceTree = "<group>"; };
 		D0A000000000000000000204 /* Doma-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Doma-Info.plist"; sourceTree = "<group>"; };
 		D0A000000000000000000205 /* DomaKit */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = DomaKit; sourceTree = "<group>"; };
+		D0A000000000000000000206 /* DomaWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DomaWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		D0A000000000000000000207 /* Signed.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signed.xcconfig; sourceTree = "<group>"; };
+		D0A000000000000000000208 /* DomaWidget-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "DomaWidget-Info.plist"; sourceTree = "<group>"; };
+		D0A000000000000000000209 /* Doma.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Doma.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		D0A000000000000000000311 /* Exceptions for "Doma" folder in "DomaWidget" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				DomaColor.swift,
+				DomaFont.swift,
+				"Fonts/DMSans-Bold.ttf",
+				"Fonts/DMSans-Regular.ttf",
+				"Fonts/DMSans-SemiBold.ttf",
+				"Fonts/Merriweather-Bold.ttf",
+				"Fonts/Merriweather-ExtraBold.ttf",
+				Fonts/OFL.txt,
+			);
+			target = D0A000000000000000000503 /* DomaWidget */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		D0A000000000000000000301 /* Doma */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				D0A000000000000000000311 /* Exceptions for "Doma" folder in "DomaWidget" target */,
+			);
 			path = Doma;
 			sourceTree = "<group>";
 		};
 		D0A000000000000000000302 /* DomaTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = DomaTests;
+			sourceTree = "<group>";
+		};
+		D0A000000000000000000303 /* DomaWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = DomaWidget;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -57,6 +109,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D0A000000000000000000621 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D0A000000000000000000102 /* DomaKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -65,6 +125,7 @@
 			children = (
 				D0A000000000000000000301 /* Doma */,
 				D0A000000000000000000302 /* DomaTests */,
+				D0A000000000000000000303 /* DomaWidget */,
 				D0A000000000000000000205 /* DomaKit */,
 				D0A000000000000000000403 /* Config */,
 				D0A000000000000000000402 /* Products */,
@@ -76,6 +137,7 @@
 			children = (
 				D0A000000000000000000201 /* Doma.app */,
 				D0A000000000000000000202 /* DomaTests.xctest */,
+				D0A000000000000000000206 /* DomaWidget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -85,6 +147,9 @@
 			children = (
 				D0A000000000000000000203 /* Doma.xcconfig */,
 				D0A000000000000000000204 /* Doma-Info.plist */,
+				D0A000000000000000000209 /* Doma.entitlements */,
+				D0A000000000000000000208 /* DomaWidget-Info.plist */,
+				D0A000000000000000000207 /* Signed.xcconfig */,
 			);
 			path = Config;
 			sourceTree = "<group>";
@@ -99,10 +164,12 @@
 				D0A000000000000000000602 /* Sources */,
 				D0A000000000000000000601 /* Frameworks */,
 				D0A000000000000000000603 /* Resources */,
+				D0A000000000000000000604 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				D0A000000000000000000804 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				D0A000000000000000000301 /* Doma */,
@@ -136,6 +203,29 @@
 			productReference = D0A000000000000000000202 /* DomaTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		D0A000000000000000000503 /* DomaWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D0A000000000000000000A04 /* Build configuration list for PBXNativeTarget "DomaWidget" */;
+			buildPhases = (
+				D0A000000000000000000622 /* Sources */,
+				D0A000000000000000000621 /* Frameworks */,
+				D0A000000000000000000623 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				D0A000000000000000000303 /* DomaWidget */,
+			);
+			name = DomaWidget;
+			packageProductDependencies = (
+				D0A000000000000000000903 /* DomaKit */,
+			);
+			productName = DomaWidget;
+			productReference = D0A000000000000000000206 /* DomaWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -152,6 +242,9 @@
 					D0A000000000000000000502 = {
 						CreatedOnToolsVersion = 27.2;
 						TestTargetID = D0A000000000000000000501;
+					};
+					D0A000000000000000000503 = {
+						CreatedOnToolsVersion = 27.2;
 					};
 				};
 			};
@@ -174,6 +267,7 @@
 			targets = (
 				D0A000000000000000000501 /* Doma */,
 				D0A000000000000000000502 /* DomaTests */,
+				D0A000000000000000000503 /* DomaWidget */,
 			);
 		};
 /* End PBXProject section */
@@ -187,6 +281,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		D0A000000000000000000613 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D0A000000000000000000623 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -210,6 +311,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D0A000000000000000000622 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -217,6 +325,11 @@
 			isa = PBXTargetDependency;
 			target = D0A000000000000000000501 /* Doma */;
 			targetProxy = D0A000000000000000000801 /* PBXContainerItemProxy */;
+		};
+		D0A000000000000000000804 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D0A000000000000000000503 /* DomaWidget */;
+			targetProxy = D0A000000000000000000803 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -266,6 +379,7 @@
 		};
 		D0A000000000000000000B11 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = D0A000000000000000000207 /* Signed.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -288,6 +402,7 @@
 		};
 		D0A000000000000000000B12 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = D0A000000000000000000207 /* Signed.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -333,6 +448,50 @@
 			};
 			name = Release;
 		};
+		D0A000000000000000000B31 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = D0A000000000000000000207 /* Signed.xcconfig */;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/DomaWidget-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Doma;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(DOMA_BUNDLE_ID).widget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		D0A000000000000000000B32 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = D0A000000000000000000207 /* Signed.xcconfig */;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/DomaWidget-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Doma;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(DOMA_BUNDLE_ID).widget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -363,6 +522,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		D0A000000000000000000A04 /* Build configuration list for PBXNativeTarget "DomaWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D0A000000000000000000B31 /* Debug */,
+				D0A000000000000000000B32 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
@@ -374,6 +542,11 @@
 
 /* Begin XCSwiftPackageProductDependency section */
 		D0A000000000000000000901 /* DomaKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D0A000000000000000000902 /* XCLocalSwiftPackageReference "DomaKit" */;
+			productName = DomaKit;
+		};
+		D0A000000000000000000903 /* DomaKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = D0A000000000000000000902 /* XCLocalSwiftPackageReference "DomaKit" */;
 			productName = DomaKit;

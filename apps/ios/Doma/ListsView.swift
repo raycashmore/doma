@@ -76,8 +76,10 @@ struct ListsView: View {
         lists = value
         loadFailed = false
         openCreatedList()
+        openRequestedList()
       }
     }
+    .onChange(of: session.openRequest.publicId) { openRequestedList() }
     .task {
       await followLiveQuery("Default list", subscribe: session.lists.defaultList) {
         defaultListId = nil
@@ -194,6 +196,16 @@ struct ListsView: View {
     selectedListId = createdList.id
     compactColumn = .detail
     self.createdListId = nil
+  }
+
+  /// A widget's list opens once Lists knows it. One that is gone opens as unavailable, as a
+  /// remembered list would.
+  private func openRequestedList() {
+    guard let lists, let publicId = session.openRequest.publicId else { return }
+    if let requested = lists.first(where: { $0.id == publicId }) { visibility = requested.visibility }
+    selectedListId = publicId
+    compactColumn = .detail
+    session.openRequest.publicId = nil
   }
 
   /// Leaves the list first, so the live update does not show it as unavailable while it closes.

@@ -1,0 +1,3 @@
+// Settings for the targets that carry entitlements: the app and the widget extension.
+// They share the Clerk session through this keychain access group.
+CODE_SIGN_ENTITLEMENTS = Config/Doma.entitlements

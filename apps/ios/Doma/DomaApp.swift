@@ -1,4 +1,6 @@
+import DomaKit
 import SwiftUI
+import WidgetKit
 
 @main
 struct DomaApp: App {
@@ -21,6 +23,7 @@ struct DomaApp: App {
             PrivacyCover()
           }
         }
+        .onOpenURL { session.openRequest.open($0) }
         .background {
           SceneCover(
             lock: lock,
@@ -35,6 +38,8 @@ struct DomaApp: App {
     }
     .onChange(of: scenePhase, initial: true) { _, phase in
       lock.scenePhaseChanged(to: phase)
+      // iOS holds widget redraws while the app is open, so ask once on leaving it.
+      if phase == .background { WidgetCenter.shared.reloadAllTimelines() }
     }
   }
 

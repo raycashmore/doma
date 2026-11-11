@@ -137,20 +137,36 @@ public struct DomaDefaultList: Decodable, Equatable, Sendable {
   public let name: String
 }
 
-public struct DomaWidgetSnapshot: Decodable, Equatable, Sendable {
-  public struct Item: Decodable, Equatable, Sendable {
+public struct DomaWidgetSnapshot: Codable, Equatable, Sendable {
+  public struct Item: Codable, Equatable, Sendable {
     public let id: String
     public let title: String
+
+    public init(id: String, title: String) {
+      self.id = id
+      self.title = title
+    }
   }
 
   public let list: DomaListSummaryReference
   public let activeItems: [Item]
+
+  public init(list: DomaListSummaryReference, activeItems: [Item]) {
+    self.list = list
+    self.activeItems = activeItems
+  }
 }
 
-public struct DomaListSummaryReference: Decodable, Equatable, Sendable {
+public struct DomaListSummaryReference: Codable, Equatable, Sendable {
   public let publicId: String
   public let name: String
   public let slug: String
+
+  public init(publicId: String, name: String, slug: String) {
+    self.publicId = publicId
+    self.name = name
+    self.slug = slug
+  }
 }
 
 /// Typed wrappers for the Convex Lists functions the iOS app uses.
