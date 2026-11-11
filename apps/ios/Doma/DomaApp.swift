@@ -1,3 +1,4 @@
+import DomaKit
 import SwiftUI
 
 @main

@@ -31,8 +31,12 @@ Shared / Personal filter; items are added from a capsule at the foot of the list
   cannot bundle `.woff2`. They are Latin subsets, so other scripts fall back to the system
   font. Merriweather is unpacked unchanged because the OFL reserves its name, so
   `DomaFont` uses its original PostScript names.
-- `DomaKit/`: local Swift package with `DomaClerkConvexAuthProvider` and
-  `DomaListsClient`, the typed wrappers for the Convex Lists functions.
+- `DomaKit/`: local Swift package with `DomaClerkConvexAuthProvider`,
+  `DomaListsClient` (the typed wrappers for the Convex Lists functions), `DomaConfiguration`
+  and `DomaConvexHTTPQuery`, which runs one query over HTTP for the widget.
+- `DomaWidget/`: the Home Screen widget extension (in progress, RAY-256). It shares the app's
+  Clerk session through the keychain access group in `Config/Doma.entitlements`, so it needs no
+  sign-in of its own. `Config/Signed.xcconfig` applies the entitlements to the app and the widget.
 - `DomaTests/`: app-hosted tests. They need the app host because Clerk stores its
   session in the keychain, which plain package tests in the simulator cannot reach.
 - `Config/`: build settings. Public client values go in the ignored `Local.xcconfig`
@@ -76,6 +80,10 @@ instance. A free Apple ID (personal team) is enough; apps it signs expire after
 6. On the first install, open Settings > General > VPN & Device Management and
    trust your developer certificate.
 7. Repeat step 5 within 7 days to keep the app working.
+
+The widget extension needs a second App ID (`<DOMA_BUNDLE_ID>.widget`) under the personal team,
+which Xcode registers on the first device build. Builds before the shared keychain group kept the
+Clerk session in the app's private keychain, so the first install with it asks for sign-in once.
 
 ## Authentication
 

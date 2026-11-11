@@ -6,7 +6,7 @@ set -euo pipefail
 project="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/Doma.xcodeproj/project.pbxproj"
 
 leaks="$(grep -nE 'DEVELOPMENT_TEAM|CODE_SIGN_ENTITLEMENTS|PRODUCT_BUNDLE_IDENTIFIER' "$project" \
-  | grep -vE 'PRODUCT_BUNDLE_IDENTIFIER = "\$\(DOMA_BUNDLE_ID\)(\.tests)?";' || true)"
+  | grep -vE 'PRODUCT_BUNDLE_IDENTIFIER = "\$\(DOMA_BUNDLE_ID\)(\.tests|\.widget)?";' || true)"
 
 if [[ -n "$leaks" ]]; then
   echo "project.pbxproj contains signing values that belong in Config/Device.xcconfig:" >&2

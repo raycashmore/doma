@@ -43,7 +43,7 @@ final class DomaSession {
   init(configuration: DomaConfiguration) {
     Clerk.configure(
       publishableKey: configuration.clerkPublishableKey,
-      options: .init(redirectConfig: Self.clerkRedirect)
+      options: .init(keychainConfig: configuration.clerkKeychain, redirectConfig: Self.clerkRedirect)
     )
     convex = ConvexClientWithAuth(deploymentUrl: configuration.convexURL, authProvider: DomaClerkConvexAuthProvider())
     lists = DomaListsClient(convex: convex)
