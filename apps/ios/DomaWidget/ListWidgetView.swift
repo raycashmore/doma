@@ -33,7 +33,9 @@ private struct ListWidgetListView: View {
   private var items: [DomaWidgetSnapshot.Item] { snapshot.activeItems }
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 6) {
+    // No spacing or spacer below the rows unless the age shows: each takes height the rows
+    // could fit in, as `ViewThatFits` only gets what its siblings leave.
+    VStack(alignment: .leading, spacing: 0) {
       HStack(alignment: .firstTextBaseline, spacing: 8) {
         Text(snapshot.list.name)
           .domaFont(.displayInline)
@@ -45,6 +47,7 @@ private struct ListWidgetListView: View {
           .foregroundStyle(DomaColor.warmAccent)
           .accessibilityLabel("\(items.count) active")
       }
+      .padding(.bottom, 6)
       if items.isEmpty {
         Text("All done")
           .domaFont(.supporting)
@@ -56,8 +59,8 @@ private struct ListWidgetListView: View {
           }
         }
       }
-      Spacer(minLength: 0)
       if showsAge {
+        Spacer(minLength: 4)
         Text("Updated \(Text(fetchedAt, style: .relative)) ago")
           .domaFont(.detail)
           .foregroundStyle(DomaColor.warmTextSecondary)
