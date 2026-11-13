@@ -3,10 +3,10 @@ name: iOS
 on:
   push:
     branches: [main]
-    paths: ['apps/ios/**', '.github/workflows/ios.yml']
+    paths: ['apps/ios/**', 'packages/tokens/generated/ios/**', '.github/workflows/ios.yml']
   pull_request:
     branches: [main]
-    paths: ['apps/ios/**', '.github/workflows/ios.yml']
+    paths: ['apps/ios/**', 'packages/tokens/generated/ios/**', '.github/workflows/ios.yml']
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

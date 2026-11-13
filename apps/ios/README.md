@@ -25,8 +25,10 @@ Shared / Personal filter; items are added from a capsule at the foot of the list
 ## Layout
 
 - `Doma/`: the app target (SwiftUI views and the session that links Clerk to Convex).
-  `DomaColor`, `DomaFont` and `DomaTheme` hold the hand-written theme. `Assets.xcassets`
-  holds the app icon and launch assets.
+  `DomaColor` names each colour role and reads its light and dark values from `DomaTokens`,
+  generated from `packages/tokens` (`pnpm --filter @repo/tokens generate`) and compiled into the app
+  and the widget from `packages/tokens/generated/ios/`. `DomaFont` and `DomaTheme` are hand-written.
+  `Assets.xcassets` holds the app icon and launch assets.
 - `Doma/Fonts/`: TTF versions of the web fonts in `packages/tokens/fonts/`, because iOS
   cannot bundle `.woff2`. They are Latin subsets, so other scripts fall back to the system
   font. Merriweather is unpacked unchanged because the OFL reserves its name, so

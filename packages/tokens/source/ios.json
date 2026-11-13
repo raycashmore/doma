@@ -1,0 +1,217 @@
+{
+  "color": {
+    "warmBgCardSoft": {
+      "light": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [1, 0.9882352941176471, 0.9647058823529412],
+          "alpha": 1
+        }
+      },
+      "dark": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.12156862745098039, 0.10196078431372549, 0.08235294117647059],
+          "alpha": 1
+        }
+      }
+    },
+    "warmBgCard": {
+      "light": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [1, 1, 1],
+          "alpha": 1
+        }
+      },
+      "dark": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.16862745098039217, 0.1411764705882353, 0.11372549019607843],
+          "alpha": 1
+        }
+      }
+    },
+    "warmBorder": {
+      "light": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.9372549019607843, 0.8901960784313725, 0.8235294117647058],
+          "alpha": 1
+        }
+      },
+      "dark": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.23921568627450981, 0.2, 0.1568627450980392],
+          "alpha": 1
+        }
+      }
+    },
+    "warmTextPrimary": {
+      "light": {
+        "$type": "color",
+        "$description": "Keeps the web value, so one shared change reaches both.",
+        "$value": "{foundation.color.webPrimary}"
+      },
+      "dark": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.9647058823529412, 0.9294117647058824, 0.8784313725490196],
+          "alpha": 1
+        }
+      }
+    },
+    "warmTextSecondary": {
+      "light": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.48627450980392156, 0.403921568627451, 0.3333333333333333],
+          "alpha": 1
+        }
+      },
+      "dark": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.7372549019607844, 0.6705882352941176, 0.592156862745098],
+          "alpha": 1
+        }
+      }
+    },
+    "warmTextTertiary": {
+      "light": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.6588235294117647, 0.6352941176470588, 0.6196078431372549],
+          "alpha": 1
+        }
+      },
+      "dark": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.5411764705882353, 0.4823529411764706, 0.4196078431372549],
+          "alpha": 1
+        }
+      }
+    },
+    "warmAccent": {
+      "light": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.8470588235294118, 0.35294117647058826, 0.21176470588235294],
+          "alpha": 1
+        }
+      },
+      "dark": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.9568627450980393, 0.4549019607843137, 0.2901960784313726],
+          "alpha": 1
+        }
+      }
+    },
+    "warmBgDark": {
+      "light": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.17647058823529413, 0.17647058823529413, 0.17647058823529413],
+          "alpha": 1
+        }
+      },
+      "dark": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.050980392156862744, 0.043137254901960784, 0.03529411764705882],
+          "alpha": 1
+        }
+      }
+    },
+    "warmTextOnDark": {
+      "light": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.9803921568627451, 0.9764705882352941, 0.9686274509803922],
+          "alpha": 1
+        }
+      },
+      "dark": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.9647058823529412, 0.9294117647058824, 0.8784313725490196],
+          "alpha": 1
+        }
+      }
+    },
+    "onDarkHighlight": {
+      "light": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [1, 1, 1],
+          "alpha": 0.12
+        }
+      },
+      "dark": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [1, 1, 1],
+          "alpha": 0.08
+        }
+      }
+    },
+    "checkRing": {
+      "light": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.788235294117647, 0.7333333333333333, 0.6588235294117647],
+          "alpha": 1
+        }
+      },
+      "dark": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.4196078431372549, 0.36470588235294116, 0.30980392156862746],
+          "alpha": 1
+        }
+      }
+    },
+    "sheetBackground": {
+      "light": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.9803921568627451, 0.9647058823529412, 0.9372549019607843],
+          "alpha": 1
+        }
+      },
+      "dark": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.09411764705882353, 0.0784313725490196, 0.06274509803921569],
+          "alpha": 1
+        }
+      }
+    }
+  }
+}
