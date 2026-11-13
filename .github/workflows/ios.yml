@@ -35,6 +35,9 @@ jobs:
       - name: Check screens use the theme
         run: apps/ios/scripts/check-theme.sh
 
+      - name: Check generated tokens are compiled in
+        run: apps/ios/scripts/check-generated-tokens.sh
+
       - name: Check live queries resubscribe
         run: apps/ios/scripts/check-live-queries.sh
 

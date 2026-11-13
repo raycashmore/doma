@@ -17,6 +17,7 @@ pnpm evals:test    # Run the local eval harness tests
 pnpm evals:weekly-meals # Run live weekly-meals agent evals (model credentials required)
 pnpm format        # Format with Prettier
 pnpm format:check  # Check formatting without writing (used in CI)
+npx prettier --write <paths>  # Format only the files you changed; `pnpm format` rewrites the whole repo
 pnpm bot           # Start the bot gateway on :3002
 pnpm agent         # Start the agent API on :3006
 pnpm bot:test      # Run bot gateway tests
