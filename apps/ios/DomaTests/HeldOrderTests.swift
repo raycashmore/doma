@@ -91,8 +91,9 @@ struct HeldOrderTests {
     await second.finish()
   }
 
-  @Test func letsGoWhenTheOnlyUpdateArrivedBeforeTheSaveReturned() async throws {
-    let held = HeldOrder(releaseDelay: .milliseconds(20))
+  @Test func letsGoWhenTheOnlyUpdateArrivedBeforeTheSaveReturned() async {
+    let releaseWait = PendingSave()
+    let held = HeldOrder(waitBeforeRelease: { try? await releaseWait.run() })
     let save = PendingSave()
     held.hold(["b", "a"], save: save.run, onFailure: {})
 
@@ -100,7 +101,7 @@ struct HeldOrderTests {
     await save.finish()
     #expect(held.ids == ["b", "a"])
 
-    try await Task.sleep(for: .milliseconds(200))
+    await releaseWait.finish()
     #expect(held.ids == nil)
   }
 

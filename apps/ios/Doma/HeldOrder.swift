@@ -8,15 +8,15 @@ final class HeldOrder {
   /// The order on screen while it waits for confirmation.
   private(set) var ids: [String]?
   /// How long a hold may wait for confirmation once every save has returned.
-  @ObservationIgnored private let releaseDelay: Duration
+  @ObservationIgnored private let waitBeforeRelease: () async -> Void
   @ObservationIgnored private var lastSave: Task<Void, Never>?
   @ObservationIgnored private var releaseTimer: Task<Void, Never>?
   @ObservationIgnored private var savesInFlight = 0
   /// Updates that arrived, all saves done, without the held order.
   @ObservationIgnored private var unconfirmedUpdates = 0
 
-  init(releaseDelay: Duration = .seconds(2)) {
-    self.releaseDelay = releaseDelay
+  init(waitBeforeRelease: @escaping () async -> Void = { try? await Task.sleep(for: .seconds(2)) }) {
+    self.waitBeforeRelease = waitBeforeRelease
   }
 
   /// The server's rows in the held order. Rows the hold does not know go last.
@@ -65,8 +65,8 @@ final class HeldOrder {
   /// The confirming update may have arrived before the last save returned, so none may follow.
   private func startReleaseTimer() {
     guard ids != nil else { return }
-    releaseTimer = Task { [releaseDelay] in
-      try? await Task.sleep(for: releaseDelay)
+    releaseTimer = Task { [waitBeforeRelease] in
+      await waitBeforeRelease()
       if !Task.isCancelled { release() }
     }
   }
