@@ -25,8 +25,10 @@ Shared / Personal filter; items are added from a capsule at the foot of the list
 ## Layout
 
 - `Doma/`: the app target (SwiftUI views and the session that links Clerk to Convex).
-  `DomaColor`, `DomaFont` and `DomaTheme` hold the hand-written theme. `Assets.xcassets`
-  holds the app icon and launch assets.
+  `DomaColor` names each colour role and reads its light and dark values from `DomaTokens`,
+  generated from `packages/tokens` (`pnpm --filter @repo/tokens generate`) and compiled into the app
+  and the widget from `packages/tokens/generated/ios/`. `DomaFont` and `DomaTheme` are hand-written.
+  `Assets.xcassets` holds the app icon and launch assets.
 - `Doma/Fonts/`: TTF versions of the web fonts in `packages/tokens/fonts/`, because iOS
   cannot bundle `.woff2`. They are Latin subsets, so other scripts fall back to the system
   font. Merriweather is unpacked unchanged because the OFL reserves its name, so
@@ -39,6 +41,10 @@ Shared / Personal filter; items are added from a capsule at the foot of the list
   own, and reads lists with `DomaConvexHTTPQuery`. `Config/Signed.xcconfig` applies the
   entitlements to the app and the widget. It compiles `DomaColor`, `DomaFont` and the fonts from
   `Doma/` through a membership exception in the project file.
+- `DomaTests/`: app-hosted tests. They need the app host because Clerk stores its
+  session in the keychain, which plain package tests in the simulator cannot reach.
+- `Config/`: build settings. Public client values go in the ignored `Local.xcconfig`
+  (simulator) and `Device.xcconfig` (physical devices).
 
 ## List widget
 
@@ -56,10 +62,6 @@ redraw when it leaves the foreground and on sign-out; iOS holds redraw requests 
 is open ("Throttling additional refresh request while foreground" in the `chronod` log), so the app
 does not follow lists live for the widget. Changes made elsewhere while Doma is closed reach the
 widget only on its own refresh until push updates (RAY-258) arrive with the paid developer program.
-- `DomaTests/`: app-hosted tests. They need the app host because Clerk stores its
-  session in the keychain, which plain package tests in the simulator cannot reach.
-- `Config/`: build settings. Public client values go in the ignored `Local.xcconfig`
-  (simulator) and `Device.xcconfig` (physical devices).
 
 ## Local configuration
 
@@ -110,6 +112,18 @@ Clerk session in the app's private keychain, so the first install with it asks f
 JWT template, as Android does. `clerk-convex-swift` is not used: it requests the
 default session token, which lacks the `aud: convex` claim Doma's Convex auth
 config requires. Tokens are never persisted or logged.
+
+## Running the tests
+
+```sh
+xcodebuild test -project Doma.xcodeproj -scheme Doma \
+  -destination "$(scripts/simulator-destination.sh)" \
+  -skip-testing:DomaTests/LiveListsContractTests -parallel-testing-enabled NO
+```
+
+Run serially: a parallel run can crash the test host and fail unrelated suites, differently each time.
+Known baseline on the iOS 27.2 simulator: `SceneCoverTests` fail on `main`. Anything else failing is
+yours; compare with `main` (`git stash -u`) before chasing a suite you did not touch.
 
 ## Live contract tests
 
@@ -222,6 +236,9 @@ defaults to main-actor isolation, so tests of its types need `@MainActor`.
   the mutation returns, and writes to one record wait for the one before, so quick changes land in order.
 
 ## Signing checks
+
+`scripts/check-generated-tokens.sh` fails unless the project compiles
+`packages/tokens/generated/ios/DomaTokens.swift` into both the app and the widget; iOS CI runs it.
 
 `scripts/check-project-signing.sh` fails if Xcode has written a team, entitlements file
 or literal bundle ID into `project.pbxproj`; iOS CI runs it. To learn whether the free

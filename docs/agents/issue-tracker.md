@@ -33,6 +33,10 @@ For new product work, use `/ray-next-feature` as the preferred discovery and pla
 
 Open the referenced Linear issue and read its title, description, labels, state, comments, and linked documents.
 
+List issues with a `state` filter (`Todo`, `In Progress`, `In Review`) rather than the
+whole project, whose Done history is large, and change documents with `patch` rather than
+re-reading them.
+
 Retrieve each shared source once per inspection, keeping the full response locally
 when it is large. Show only the relevant sections; follow comment pagination.
 Refresh when feedback or state may have changed. Record unavailable endpoints and

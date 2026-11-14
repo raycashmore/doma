@@ -32,6 +32,11 @@ test('pinned Style Dictionary resolves aliases into deterministic native output 
   assert.match(files['web/tokens.css']!, /--doma-space-list-item-content-gap: 8px;/);
   assert.match(files['android/DomaTokens.kt']!, /colorContentPrimary: Long = 0xFF2E1E19/);
   assert.match(files['android/DomaTokens.kt']!, /spaceListItemContentGap: Float = 7.0f/);
+  assert.match(
+    files['ios/DomaTokens.swift']!,
+    /warmTextPrimary = DomaColorPair\(light: 0x3D2E22, lightAlpha: 1, dark: 0xF6EDE0/
+  );
+  assert.match(files['ios/DomaTokens.swift']!, /onDarkHighlight = DomaColorPair\(light: 0xFFFFFF, lightAlpha: 0.12/);
   assert.doesNotMatch(Object.values(files).join(''), /generatedAt|timestamp|\{foundation/);
 });
 
@@ -51,9 +56,11 @@ for (const platform of ['web', 'android'] as const)
     });
     const changed = await tokenFiles(root);
     const native = platform === 'web' ? 'web/tokens.css' : 'android/DomaTokens.kt';
-    const other = platform === 'web' ? 'android/DomaTokens.kt' : 'web/tokens.css';
+    // iOS keeps the web text colour, so a web foundation change reaches it too; Android never shares it.
+    const unchanged = platform === 'web' ? ['android/DomaTokens.kt'] : ['web/tokens.css', 'ios/DomaTokens.swift'];
     assert.notEqual(changed[native], baseline[native]);
-    assert.equal(changed[other], baseline[other]);
+    for (const other of unchanged) assert.equal(changed[other], baseline[other]);
+    assert.equal(changed['ios/DomaTokens.swift'] !== baseline['ios/DomaTokens.swift'], platform === 'web');
     assert.match(changed[native]!, platform === 'web' ? /#33669980/ : /0x80336699/);
     assert.match(changed[native]!, platform === 'web' ? /11.5px/ : /11.5f/);
     const desired = (text: string) =>
@@ -67,6 +74,34 @@ for (const platform of ['web', 'android'] as const)
     // Re-check real committed baseline after disposable proof.
     await run('check');
   });
+
+test('a shared colour change reaches iOS as Swift, beside its own dark value', async (t) => {
+  const { root, edit } = fixture(t);
+  const baseline = (await tokenFiles(root))['ios/DomaTokens.swift']!;
+  edit('source/foundation.json', (value) => {
+    const foundation = value.foundation as { color: Record<string, { $value: { components: number[] } }> };
+    foundation.color.webPrimary!.$value.components = [0.2, 0.4, 0.6];
+  });
+  const changed = (await tokenFiles(root))['ios/DomaTokens.swift']!;
+  assert.match(baseline, /warmTextPrimary = DomaColorPair\(light: 0x3D2E22/);
+  assert.match(changed, /warmTextPrimary = DomaColorPair\(light: 0x336699, lightAlpha: 1, dark: 0xF6EDE0/);
+});
+
+test('rejects an iOS colour without both appearances', (t) => {
+  const { root, edit } = fixture(t);
+  edit('source/ios.json', (value) => {
+    delete (value.color as Record<string, Record<string, unknown>>).warmBorder!.dark;
+  });
+  assert.throws(() => loadTokens(root), /iOS colour color.warmBorder.dark/);
+});
+
+test('rejects two iOS colours that would share a Swift name', (t) => {
+  const { root, edit } = fixture(t);
+  edit('profile.json', (value) => {
+    (value.ios as { colors: string[] }).colors.push('color.other.warmBorder');
+  });
+  assert.throws(() => loadTokens(root), /Duplicate iOS colour names/);
+});
 
 for (const failure of ['stale', 'missing', 'extra'] as const)
   test(`non-mutating check rejects ${failure} output`, async (t) => {

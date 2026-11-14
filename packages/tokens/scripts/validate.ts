@@ -14,6 +14,7 @@ type Profile = {
   aliasPolicy: string;
   conversions: { web: string; android: string };
   platforms: { web: { sources: string[]; reason: string }; android: { sources: string[]; reason: string } };
+  ios: { sources: string[]; reason: string; conversion: string; colors: string[] };
   roles: { id: string; type: 'color' | 'dimension'; meaning: string; pencilNames: { web: string; android: string } }[];
 };
 const text = { type: 'string', minLength: 1 } as const;
@@ -32,7 +33,7 @@ const selection = {
 const schema = {
   type: 'object',
   additionalProperties: false,
-  required: ['schemaVersion', 'format', 'allowedTypes', 'aliasPolicy', 'conversions', 'platforms', 'roles'],
+  required: ['schemaVersion', 'format', 'allowedTypes', 'aliasPolicy', 'conversions', 'platforms', 'ios', 'roles'],
   properties: {
     schemaVersion: { type: 'integer', const: 1 },
     format: { type: 'string', const: 'DTCG 2025.10' },
@@ -50,6 +51,17 @@ const schema = {
       additionalProperties: false,
       required: ['web', 'android'],
       properties: { web: selection, android: selection }
+    },
+    ios: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['sources', 'reason', 'conversion', 'colors'],
+      properties: {
+        sources: selection.properties.sources,
+        reason: text,
+        conversion: text,
+        colors: { type: 'array', minItems: 1, uniqueItems: true, items: text }
+      }
     },
     roles: {
       type: 'array',
@@ -88,13 +100,17 @@ export function loadTokens(root: string) {
     profile.roles.flatMap((role) => Object.values(role.pencilNames)),
     'Pencil names'
   );
+  unique(
+    profile.ios.colors.map((id) => id.split('.').at(-1)!),
+    'iOS colour names'
+  );
   for (const role of profile.roles)
     for (const platform of ['web', 'android'] as const) {
       if (!new RegExp(`^doma-${platform}-[a-z][a-z0-9-]*$`).test(role.pencilNames[platform]))
         throw new Error(`Invalid managed Pencil name ${role.pencilNames[platform]}`);
     }
-  const tokens = new Map<Platform, Map<string, Token>>();
-  for (const platform of ['web', 'android'] as const) {
+  const tokens = new Map<Platform | 'ios', Map<string, Token>>();
+  for (const platform of ['web', 'android', 'ios'] as const) {
     const selected = new Map<string, Token>();
     const names = new Set<string>();
     function collect(group: unknown, prefix: string[]) {
@@ -120,7 +136,8 @@ export function loadTokens(root: string) {
         } else collect(child, [...prefix, key]);
       }
     }
-    for (const source of profile.platforms[platform].sources) {
+    const selection = platform === 'ios' ? profile.ios : profile.platforms[platform];
+    for (const source of selection.sources) {
       const data = readJson(localFile(root, `packages/tokens/${source}`));
       if (!validateDtcg(data)) throw new Error(`Invalid DTCG source ${source}: ${JSON.stringify(validateDtcg.errors)}`);
       collect(data, []);
@@ -160,10 +177,16 @@ export function loadTokens(root: string) {
       return literal;
     }
     for (const id of selected.keys()) resolve(id);
-    for (const role of profile.roles) {
-      if (selected.get(role.id)?.type !== role.type)
-        throw new Error(`Unknown or mistyped role ${role.id} (${platform})`);
-    }
+    if (platform === 'ios') {
+      for (const id of profile.ios.colors)
+        for (const appearance of ['light', 'dark'])
+          if (selected.get(`${id}.${appearance}`)?.type !== 'color')
+            throw new Error(`Unknown or mistyped iOS colour ${id}.${appearance}`);
+    } else
+      for (const role of profile.roles) {
+        if (selected.get(role.id)?.type !== role.type)
+          throw new Error(`Unknown or mistyped role ${role.id} (${platform})`);
+      }
     tokens.set(platform, selected);
   }
   return { profile, tokens };

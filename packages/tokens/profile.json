@@ -17,6 +17,25 @@
       "reason": "Preserve existing Glance title #2e1e19 and 7dp marker-to-title padding."
     }
   },
+  "ios": {
+    "sources": ["source/foundation.json", "source/ios.json"],
+    "reason": "The iOS theme keeps the web light value for text and adds its own warm dark palette.",
+    "conversion": "sRGB to 0xRRGGBB plus alpha, one light and dark pair per colour. No dimensions or typography.",
+    "colors": [
+      "color.warmAccent",
+      "color.warmBgCard",
+      "color.warmBgCardSoft",
+      "color.warmBgDark",
+      "color.warmBorder",
+      "color.warmTextOnDark",
+      "color.warmTextPrimary",
+      "color.warmTextSecondary",
+      "color.warmTextTertiary",
+      "color.onDarkHighlight",
+      "color.checkRing",
+      "color.sheetBackground"
+    ]
+  },
   "roles": [
     {
       "id": "color.content.primary",

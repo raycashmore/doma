@@ -10,6 +10,8 @@
 		D0A000000000000000000101 /* DomaKit in Frameworks */ = {isa = PBXBuildFile; productRef = D0A000000000000000000901 /* DomaKit */; };
 		D0A000000000000000000102 /* DomaKit in Frameworks */ = {isa = PBXBuildFile; productRef = D0A000000000000000000903 /* DomaKit */; };
 		D0A000000000000000000103 /* DomaWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D0A000000000000000000206 /* DomaWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		D0A000000000000000000104 /* DomaTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0A000000000000000000210 /* DomaTokens.swift */; };
+		D0A000000000000000000105 /* DomaTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0A000000000000000000210 /* DomaTokens.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -53,6 +55,7 @@
 		D0A000000000000000000207 /* Signed.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signed.xcconfig; sourceTree = "<group>"; };
 		D0A000000000000000000208 /* DomaWidget-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "DomaWidget-Info.plist"; sourceTree = "<group>"; };
 		D0A000000000000000000209 /* Doma.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Doma.entitlements; sourceTree = "<group>"; };
+		D0A000000000000000000210 /* DomaTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DomaTokens.swift; path = ../../packages/tokens/generated/ios/DomaTokens.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -127,6 +130,7 @@
 				D0A000000000000000000302 /* DomaTests */,
 				D0A000000000000000000303 /* DomaWidget */,
 				D0A000000000000000000205 /* DomaKit */,
+				D0A000000000000000000210 /* DomaTokens.swift */,
 				D0A000000000000000000403 /* Config */,
 				D0A000000000000000000402 /* Products */,
 			);
@@ -301,6 +305,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D0A000000000000000000104 /* DomaTokens.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -315,6 +320,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D0A000000000000000000105 /* DomaTokens.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

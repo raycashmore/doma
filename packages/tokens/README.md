@@ -1,12 +1,14 @@
 # Doma token proof
 
-Canonical values live in `source/`; `profile.json` selects explicit web/Android sets and the two adopted roles. The [vendored DTCG 2025.10 schema](schema/README.md), Ajv and the narrower profile reject unsupported types/conversions, alias errors and identifier collisions before Style Dictionary 5.7.1 resolves aliases. Custom adapters produce resolved CSS/sRGB, Kotlin/ARGB and the desired Pencil variable manifest. CSS aliases are resolved, so no emitted variable depends on an absent foundation.
+Canonical values live in `source/`; `profile.json` selects explicit web/Android sets and the two adopted roles. The [vendored DTCG 2025.10 schema](schema/README.md), Ajv and the narrower profile reject unsupported types/conversions, alias errors and identifier collisions before Style Dictionary 5.7.1 resolves aliases. Custom adapters produce resolved CSS/sRGB, Kotlin/ARGB, Swift and the desired Pencil variable manifest. CSS aliases are resolved, so no emitted variable depends on an absent foundation.
 
 ```sh
 pnpm --filter @repo/tokens generate
 pnpm --filter @repo/tokens check
 pnpm --filter @repo/tokens test
 ```
+
+iOS is a third source set (`source/ios.json`, selected by the `ios` section of `profile.json`). It holds a light and dark pair for each colour the app's `DomaColor` theme uses, and generates `generated/ios/DomaTokens.swift` as 0xRRGGBB plus alpha. Text colour aliases the web foundation value, so one shared change reaches web and iOS; the other values are iOS-only until the web has equivalents. The Xcode project compiles the generated file into the app and the widget. iOS is not yet in the Pencil manifest or the design-system pattern contracts.
 
 Only `generate` writes committed outputs. `check` and `build` render expected contents in memory and compare every allowlisted file and directory, without repairing stale/missing/extra artifacts. Generation also refuses unexpected artifacts. Tests use disposable canonical storage to demonstrate independent web/Android color and gap propagation, desired Pencil changes, and an unchanged real baseline.
 
