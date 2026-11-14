@@ -30,7 +30,8 @@
   // the rows are local state. A dropped order stays on screen while any save is
   // in flight; Convex has applied each mutation to the query by the time it
   // resolves, so the live order takes over once the last save returns. A
-  // different set of lists (another tab, or a list added or removed) shows at once.
+  // different set of lists (another tab, or a list added or removed) shows at
+  // once, except mid-drag, when the library's placeholder row is in `entries`.
   let entries = $state<Entry[]>([]);
   let isDragging = $state(false);
   let savesInFlight = $state(0);
@@ -38,12 +39,14 @@
 
   $effect(() => {
     // Read both flags on every run, so the effect also re-runs when a hold ends.
-    const holding = isDragging || savesInFlight > 0;
+    const dragging = isDragging;
+    const saving = savesInFlight > 0;
     const next = lists.map((list) => ({ id: list.publicId, list }));
+    if (dragging) return;
     const shown = new Set(untrack(() => entries).map((entry) => entry.id));
     const sameLists = next.length === shown.size && next.every((entry) => shown.has(entry.id));
     if (!sameLists) saveFailed = false;
-    if (sameLists && holding) return;
+    if (sameLists && saving) return;
     entries = next;
   });
 
@@ -84,29 +87,28 @@
     {#each entries as entry (entry.id)}
       {@const list = entry.list}
       {@const isMenuOpen = menuTargetPublicId === list.publicId}
-      <li
-        class={`relative flex w-full items-center gap-1 ${isMenuOpen ? 'z-30' : ''}`}
-        data-list-menu-open={isMenuOpen ? 'true' : undefined}
-      >
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <span
-          use:dragHandle
-          class="flex h-7 w-5 shrink-0 cursor-grab items-center justify-center text-warm-text-secondary active:cursor-grabbing"
-          aria-label={`Drag to reorder ${list.name}`}
-          onclick={(e) => e.stopPropagation()}
-          onkeydown={(e) => e.stopPropagation()}
+      <li class={`relative w-full ${isMenuOpen ? 'z-30' : ''}`} data-list-menu-open={isMenuOpen ? 'true' : undefined}>
+        <div
+          class={`relative flex items-center rounded-2xl border transition-colors ${
+            list.selected
+              ? 'border-warm-accent bg-warm-section-spend'
+              : 'border-warm-border bg-warm-bg-card hover:bg-warm-section-mortgage'
+          }`}
         >
-          <ListIcon name="grip" size={16} />
-        </span>
-        <div class="relative min-w-0 flex-1">
+          <!-- svelte-ignore a11y_no_static_element_interactions -->
+          <span
+            use:dragHandle
+            class="ml-2 flex h-7 w-5 shrink-0 cursor-grab items-center justify-center text-warm-text-secondary active:cursor-grabbing"
+            aria-label={`Drag to reorder ${list.name}`}
+            onclick={(e) => e.stopPropagation()}
+            onkeydown={(e) => e.stopPropagation()}
+          >
+            <ListIcon name="grip" size={16} />
+          </span>
           <button
             type="button"
             aria-label={`Open ${list.name} list`}
-            class={`w-full rounded-2xl border p-[14px] pr-12 text-left transition-colors ${
-              list.selected
-                ? 'border-warm-accent bg-warm-section-spend'
-                : 'border-warm-border bg-warm-bg-card hover:bg-warm-section-mortgage'
-            }`}
+            class="min-w-0 flex-1 rounded-2xl border-0 bg-transparent py-[14px] pl-2 pr-12 text-left"
             onclick={() => onOpen(list)}
           >
             <p
