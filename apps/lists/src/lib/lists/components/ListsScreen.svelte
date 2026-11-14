@@ -1353,33 +1353,16 @@
           >
         </div>
         <div class="mt-3 flex min-h-[180px] flex-1 flex-col gap-1.5 overflow-y-auto pr-1">
-          {#each filteredLists as list (list.publicId)}
-            <button
-              type="button"
-              class={`rounded-2xl border p-3 text-left ${list.selected ? 'border-warm-accent bg-warm-section-spend' : 'border-warm-border bg-warm-bg-card'}`}
-              onclick={() => {
-                showListSwitcher = false;
-                void navigateToList(list);
-              }}
-            >
-              <div class="flex min-w-0 items-center gap-2">
-                {#if list.visibility === 'shared'}
-                  <span class="shrink-0 text-warm-accent" title="Shared list">
-                    <ListIcon name="users" size={14} />
-                  </span>
-                {/if}
-                <p
-                  class={`min-w-0 truncate text-sm ${list.selected ? 'font-bold text-warm-text-primary' : 'font-semibold text-warm-text-secondary'}`}
-                >
-                  {list.name}
-                </p>
-              </div>
-              <p class="mt-0.5 text-[11px] text-warm-text-secondary">{list.description}</p>
-            </button>
-          {/each}
-          {#if !filteredLists.length}
-            <p class="text-sm text-warm-text-secondary">No {listFilter} lists yet.</p>
-          {/if}
+          <ListsSidebarNav
+            lists={filteredLists}
+            emptyLabel={`No ${listFilter} lists yet.`}
+            compact
+            onOpen={(list) => {
+              showListSwitcher = false;
+              void navigateToList(list);
+            }}
+            onReorder={(input) => store.reorderList(input)}
+          />
         </div>
         <button
           type="button"

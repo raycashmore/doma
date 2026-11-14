@@ -10,7 +10,8 @@
   let {
     lists,
     emptyLabel,
-    menuTargetPublicId = $bindable(),
+    compact = false,
+    menuTargetPublicId = $bindable(null),
     onOpen,
     onRename,
     onDelete,
@@ -19,12 +20,16 @@
     /** The lists in the current tab, in the person's order. */
     lists: PresentedList[];
     emptyLabel: string;
-    menuTargetPublicId: string | null;
+    /** The mobile list switcher: tighter rows, the shared icon, and no actions menu. */
+    compact?: boolean;
+    menuTargetPublicId?: string | null;
     onOpen: (list: PresentedList) => void;
-    onRename: (list: PresentedList) => void;
-    onDelete: (list: PresentedList) => void;
+    onRename?: (list: PresentedList) => void;
+    onDelete?: (list: PresentedList) => void;
     onReorder: (input: { publicId: string; targetIndex: number }) => Promise<void>;
   } = $props();
+
+  const hasMenu = $derived(Boolean(onRename && onDelete));
 
   // svelte-dnd-action needs its `items` replaced on every consider/finalize, so
   // the rows are local state. A dropped order stays on screen while any save is
@@ -78,7 +83,7 @@
 
 {#if entries.length}
   <ul
-    class="flex flex-col gap-2"
+    class={`flex flex-col ${compact ? 'gap-1.5' : 'gap-2'}`}
     aria-label="Lists"
     use:dragHandleZone={{ items: entries, flipDurationMs: 160, dropTargetStyle: {} }}
     onconsider={handleConsider}
@@ -92,13 +97,15 @@
           class={`relative flex items-center rounded-2xl border transition-colors ${
             list.selected
               ? 'border-warm-accent bg-warm-section-spend'
-              : 'border-warm-border bg-warm-bg-card hover:bg-warm-section-mortgage'
+              : `border-warm-border bg-warm-bg-card ${compact ? '' : 'hover:bg-warm-section-mortgage'}`
           }`}
         >
           <!-- svelte-ignore a11y_no_static_element_interactions -->
           <span
             use:dragHandle
-            class="ml-2 flex h-7 w-5 shrink-0 cursor-grab items-center justify-center text-warm-text-secondary active:cursor-grabbing"
+            class={`flex shrink-0 cursor-grab touch-none items-center justify-center text-warm-text-secondary active:cursor-grabbing ${
+              compact ? 'ml-1 h-11 w-8' : 'ml-2 h-7 w-5'
+            }`}
             aria-label={`Drag to reorder ${list.name}`}
             onclick={(e) => e.stopPropagation()}
             onkeydown={(e) => e.stopPropagation()}
@@ -108,63 +115,74 @@
           <button
             type="button"
             aria-label={`Open ${list.name} list`}
-            class="min-w-0 flex-1 rounded-2xl border-0 bg-transparent py-[14px] pl-2 pr-12 text-left"
+            class={`min-w-0 flex-1 rounded-2xl border-0 bg-transparent text-left ${
+              compact ? 'py-3 pl-1 pr-3' : 'py-[14px] pl-2 pr-12'
+            }`}
             onclick={() => onOpen(list)}
           >
-            <p
-              class={`truncate text-sm ${list.selected ? 'font-bold text-warm-text-primary' : 'font-semibold text-warm-text-secondary'}`}
-            >
-              {list.name}
-            </p>
-            <p class="mt-1 text-[11px] text-warm-text-secondary">{list.description}</p>
+            <div class="flex min-w-0 items-center gap-2">
+              {#if compact && list.visibility === 'shared'}
+                <span class="shrink-0 text-warm-accent" title="Shared list">
+                  <ListIcon name="users" size={14} />
+                </span>
+              {/if}
+              <p
+                class={`min-w-0 truncate text-sm ${list.selected ? 'font-bold text-warm-text-primary' : 'font-semibold text-warm-text-secondary'}`}
+              >
+                {list.name}
+              </p>
+            </div>
+            <p class={`${compact ? 'mt-0.5' : 'mt-1'} text-[11px] text-warm-text-secondary`}>{list.description}</p>
           </button>
-          <div class="absolute right-[14px] top-1/2 -translate-y-1/2">
-            <button
-              type="button"
-              class="rounded-full border-0 bg-transparent px-2 py-1 text-sm text-warm-text-secondary hover:text-warm-text-primary"
-              aria-label={`List actions for ${list.name}`}
-              onclick={(e) => {
-                e.stopPropagation();
-                menuTargetPublicId = isMenuOpen ? null : list.publicId;
-              }}
-            >
-              •••
-            </button>
-          </div>
-          {#if isMenuOpen}
-            <button
-              type="button"
-              aria-label="Close list actions menu"
-              class="fixed inset-0 z-10 cursor-default border-0 bg-transparent p-0"
-              onclick={(e) => {
-                e.stopPropagation();
-                menuTargetPublicId = null;
-              }}
-            ></button>
-            <div
-              class="absolute right-[14px] top-12 z-20 w-36 rounded-2xl border border-warm-border bg-warm-bg-card p-2 shadow-[0_20px_40px_rgba(61,46,34,0.16)]"
-            >
+          {#if hasMenu}
+            <div class="absolute right-[14px] top-1/2 -translate-y-1/2">
               <button
                 type="button"
-                class="flex w-full rounded-xl px-3 py-2 text-left text-sm text-warm-text-primary hover:bg-warm-bg"
+                class="rounded-full border-0 bg-transparent px-2 py-1 text-sm text-warm-text-secondary hover:text-warm-text-primary"
+                aria-label={`List actions for ${list.name}`}
                 onclick={(e) => {
                   e.stopPropagation();
-                  onRename(list);
+                  menuTargetPublicId = isMenuOpen ? null : list.publicId;
                 }}
               >
-                Rename
-              </button>
-              <button
-                type="button"
-                class="flex w-full rounded-xl px-3 py-2 text-left text-sm text-warm-accent hover:bg-warm-bg"
-                onclick={(e) => {
-                  e.stopPropagation();
-                  onDelete(list);
-                }}
-              >
-                Delete
+                •••
               </button>
             </div>
+            {#if isMenuOpen}
+              <button
+                type="button"
+                aria-label="Close list actions menu"
+                class="fixed inset-0 z-10 cursor-default border-0 bg-transparent p-0"
+                onclick={(e) => {
+                  e.stopPropagation();
+                  menuTargetPublicId = null;
+                }}
+              ></button>
+              <div
+                class="absolute right-[14px] top-12 z-20 w-36 rounded-2xl border border-warm-border bg-warm-bg-card p-2 shadow-[0_20px_40px_rgba(61,46,34,0.16)]"
+              >
+                <button
+                  type="button"
+                  class="flex w-full rounded-xl px-3 py-2 text-left text-sm text-warm-text-primary hover:bg-warm-bg"
+                  onclick={(e) => {
+                    e.stopPropagation();
+                    onRename?.(list);
+                  }}
+                >
+                  Rename
+                </button>
+                <button
+                  type="button"
+                  class="flex w-full rounded-xl px-3 py-2 text-left text-sm text-warm-accent hover:bg-warm-bg"
+                  onclick={(e) => {
+                    e.stopPropagation();
+                    onDelete?.(list);
+                  }}
+                >
+                  Delete
+                </button>
+              </div>
+            {/if}
           {/if}
         </div>
       </li>
