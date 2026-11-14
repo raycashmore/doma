@@ -47,7 +47,9 @@ test('on desktop, a list dragged by its handle moves above the list it is droppe
 });
 
 test.describe('on a phone', () => {
-  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  // A short screen puts the items list behind the switcher, under the drag, so a list row
+  // offered to the items list's drop zone would stop the switcher making space.
+  test.use({ viewport: { width: 390, height: 568 }, hasTouch: true, isMobile: true });
 
   test('a list dragged by touch in the list switcher moves above the other', async ({ page }) => {
     const errors = watchForRenderErrors(page);

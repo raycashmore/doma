@@ -1232,7 +1232,12 @@
                   {:else if activeDndItems.length}
                     <ul
                       class="mt-3 flex min-w-0 flex-col divide-y divide-warm-border/60"
-                      use:dragHandleZone={{ items: activeDndItems, flipDurationMs: 160, dropTargetStyle: {} }}
+                      use:dragHandleZone={{
+                        items: activeDndItems,
+                        type: 'list-items',
+                        flipDurationMs: 160,
+                        dropTargetStyle: {}
+                      }}
                       onconsider={handleActiveConsider}
                       onfinalize={handleActiveFinalize}
                     >

@@ -259,7 +259,7 @@
           </div>
           <ul
             class="divide-y divide-warm-border border-y border-warm-border"
-            use:dragHandleZone={{ items: dndItems, flipDurationMs: 160, dropTargetStyle: {} }}
+            use:dragHandleZone={{ items: dndItems, type: 'list-properties', flipDurationMs: 160, dropTargetStyle: {} }}
             onconsider={handleConsider}
             onfinalize={handleFinalize}
           >

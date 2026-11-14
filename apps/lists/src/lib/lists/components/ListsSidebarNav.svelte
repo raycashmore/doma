@@ -85,7 +85,7 @@
   <ul
     class={`flex flex-col ${compact ? 'gap-1.5' : 'gap-2'}`}
     aria-label="Lists"
-    use:dragHandleZone={{ items: entries, flipDurationMs: 160, dropTargetStyle: {} }}
+    use:dragHandleZone={{ items: entries, type: 'lists', flipDurationMs: 160, dropTargetStyle: {} }}
     onconsider={handleConsider}
     onfinalize={handleFinalize}
   >

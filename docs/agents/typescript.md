@@ -45,3 +45,7 @@ Prettier — see [`prettier.config.js`](../../prettier.config.js); don't hand-fo
   return.** Svelte tracks only the reads that actually run, so a value read
   behind `&&`, `||` or a `return` stops re-running the effect when it changes.
   _Convention._
+- **Every svelte-dnd-action drop zone sets its own `type`.** Zones share a
+  default type, so a row dragged over another zone, even one hidden behind a
+  sheet, is offered to it, and the zone it came from stops making space.
+  _Convention._
