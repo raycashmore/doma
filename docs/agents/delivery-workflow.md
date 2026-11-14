@@ -25,7 +25,9 @@ Follow [Git Workflow](git-workflow.md) for the pre-commit gate and
 [Commands](commands.md) for scripts. Run targeted behavioral checks while
 working, then one broader pass; repeat for new changes or unresolved failures.
 For UI work, add [browser verification](browser-verification.md) against the
-running app.
+running app. A review fix that changes state, lifecycle or interaction gets its
+own review pass and, for UI, a fresh browser or simulator run: such fixes open
+new failure paths.
 
 For documentation-only work, check changed Markdown formatting, links/anchors
 and the diff. Application checks are warranted when executable commands,

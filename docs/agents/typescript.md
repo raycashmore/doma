@@ -38,3 +38,10 @@ Prettier — see [`prettier.config.js`](../../prettier.config.js); don't hand-fo
 - **Import ordering is automatic.** _Enforced & autofixed:_
   `eslint-plugin-simple-import-sort`. Run `pnpm lint --fix` (or save in-editor)
   rather than ordering by hand.
+
+## Svelte
+
+- **An `$effect` reads every reactive value it depends on before any early
+  return.** Svelte tracks only the reads that actually run, so a value read
+  behind `&&`, `||` or a `return` stops re-running the effect when it changes.
+  _Convention._
