@@ -16,7 +16,12 @@ allowBuilds:
 # Security patches for transitive dependencies with stale upstream constraints.
 overrides:
   'cookie@<0.7.0': ^0.7.2
-  'seroval@<1.6.3': ^1.6.3
+  'seroval@<1.6.11': ^1.6.11
+  'undici@<6.29.1': ^6.29.1
+  'undici@>=7.0.0 <7.30.1': ^7.30.1
+  'zod@<4.6.6': ^4.6.6
+  'serialize-javascript@<7.1.3': ^7.1.3
+  'glob@>=9.0.0 <14.0.2': ^14.0.2
   # TanStack's config currently pulls ESLint 10 rules into an ESLint 9 workspace.
   '@tanstack/eslint-config>@eslint/js': ^9.39.5
 
