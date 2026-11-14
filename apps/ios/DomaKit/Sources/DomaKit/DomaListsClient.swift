@@ -212,6 +212,13 @@ public struct DomaListsClient: Sendable {
     let _: IgnoredResult = try await convex.mutation("lists/mutations:deleteList", with: ["publicId": publicId])
   }
 
+  /// Moves a list within its tab, for the signed-in person only. `targetIndex` is its position in
+  /// the tab's new order, sent as a Double for the same reason as `reorderItem`.
+  public func reorderList(publicId: String, targetIndex: Int) async throws {
+    let _: IgnoredResult = try await convex.mutation(
+      "lists/preferences:reorderList", with: ["publicId": publicId, "targetIndex": Double(targetIndex)])
+  }
+
   public func setDefaultList(publicId: String) async throws {
     let _: IgnoredResult = try await convex.mutation("lists/bot:setDefaultList", with: ["publicId": publicId])
   }

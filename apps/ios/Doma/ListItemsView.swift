@@ -7,9 +7,8 @@ struct ListItemsView: View {
   /// `nil` shows manual order, which is the only order items can be dragged in.
   let groupingProperty: DomaListProperty?
   let isCategorising: Bool
-  /// Holds a dragged order until the server confirms it, so the row does not snap back.
-  @State private var reorderedItems: [DomaListItem]?
-  @State private var movesInFlight = 0
+  /// Holds a dragged order until the live list confirms it, so the row does not snap back.
+  @State private var heldOrder = HeldOrder()
   @State private var itemToDelete: DomaListItem?
   @State private var isConfirmingClear = false
   @State private var saveFailed = false
@@ -19,7 +18,7 @@ struct ListItemsView: View {
   @State private var collapsedGroups: Set<String> = []
   @Environment(NavigationBarRefreshHold.self) private var refreshHold
 
-  private var activeItems: [DomaListItem] { reorderedItems ?? items.activeItems }
+  private var activeItems: [DomaListItem] { heldOrder.ordered(items.activeItems) }
 
   var body: some View {
     List {
@@ -111,6 +110,7 @@ struct ListItemsView: View {
     .onChange(of: editingItem?.id) { holdRefreshWhileSheetIsOpen() }
     .onChange(of: pastePreview?.id) { holdRefreshWhileSheetIsOpen() }
     .onChange(of: items) { closeSheetIfItemWasDeleted() }
+    .onChange(of: items.activeItems.map(\.id)) { _, ids in heldOrder.serverChanged(to: ids) }
     .onDisappear { refreshHold.isHeld = false }
   }
 
@@ -170,13 +170,11 @@ struct ListItemsView: View {
   }
 
   private func move(from source: IndexSet, to destination: Int) {
-    guard let move = ListItemMove(items: activeItems, from: source, to: destination) else { return }
-    reorderedItems = move.reorderedItems
-    movesInFlight += 1
-    Task {
-      await save { try await lists.reorderItem(itemId: move.itemId, targetIndex: move.targetIndex) }
-      movesInFlight -= 1
-      if movesInFlight == 0 { reorderedItems = nil }
+    guard let move = OrderMove(activeItems, from: source, to: destination) else { return }
+    heldOrder.hold(move.reordered.map(\.id)) {
+      try await lists.reorderItem(itemId: move.movedId, targetIndex: move.targetIndex)
+    } onFailure: {
+      saveFailed = true
     }
   }
 

@@ -13,6 +13,7 @@
   import ListIcon from '$lib/lists/components/ListIcon.svelte';
   import ListItemRow from '$lib/lists/components/ListItemRow.svelte';
   import ListSettingsPanel from '$lib/lists/components/ListSettingsPanel.svelte';
+  import ListsSidebarNav from '$lib/lists/components/ListsSidebarNav.svelte';
   import { groupActiveItemsByProperty } from '$lib/lists/grouping';
   import { parsePastedItems, type PasteEntry } from '$lib/lists/paste-parser';
   import {
@@ -1018,85 +1019,15 @@
       </div>
 
       <div class="mt-4 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1">
-        {#if filteredLists.length}
-          {#each filteredLists as list (list.publicId)}
-            {@const isMenuOpen = menuTargetPublicId === list.publicId}
-            <div
-              class={`relative w-full ${isMenuOpen ? 'z-30' : ''}`}
-              data-list-menu-open={isMenuOpen ? 'true' : undefined}
-            >
-              <button
-                type="button"
-                aria-label={`Open ${list.name} list`}
-                class={`w-full rounded-2xl border p-[14px] pr-12 text-left transition-colors ${
-                  list.selected
-                    ? 'border-warm-accent bg-warm-section-spend'
-                    : 'border-warm-border bg-warm-bg-card hover:bg-warm-section-mortgage'
-                }`}
-                onclick={() => void navigateToList(list)}
-              >
-                <p
-                  class={`truncate text-sm ${list.selected ? 'font-bold text-warm-text-primary' : 'font-semibold text-warm-text-secondary'}`}
-                >
-                  {list.name}
-                </p>
-                <p class="mt-1 text-[11px] text-warm-text-secondary">{list.description}</p>
-              </button>
-              <div class="absolute right-[14px] top-1/2 -translate-y-1/2">
-                <div class="relative">
-                  <button
-                    type="button"
-                    class="rounded-full border-0 bg-transparent px-2 py-1 text-sm text-warm-text-secondary hover:text-warm-text-primary"
-                    aria-label={`List actions for ${list.name}`}
-                    onclick={(e) => {
-                      e.stopPropagation();
-                      menuTargetPublicId = menuTargetPublicId === list.publicId ? null : list.publicId;
-                    }}
-                  >
-                    •••
-                  </button>
-                </div>
-              </div>
-              {#if isMenuOpen}
-                <button
-                  type="button"
-                  aria-label="Close list actions menu"
-                  class="fixed inset-0 z-10 cursor-default border-0 bg-transparent p-0"
-                  onclick={(e) => {
-                    e.stopPropagation();
-                    menuTargetPublicId = null;
-                  }}
-                ></button>
-                <div
-                  class="absolute right-[14px] top-12 z-20 w-36 rounded-2xl border border-warm-border bg-warm-bg-card p-2 shadow-[0_20px_40px_rgba(61,46,34,0.16)]"
-                >
-                  <button
-                    type="button"
-                    class="flex w-full rounded-xl px-3 py-2 text-left text-sm text-warm-text-primary hover:bg-warm-bg"
-                    onclick={(e) => {
-                      e.stopPropagation();
-                      beginRename(list);
-                    }}
-                  >
-                    Rename
-                  </button>
-                  <button
-                    type="button"
-                    class="flex w-full rounded-xl px-3 py-2 text-left text-sm text-warm-accent hover:bg-warm-bg"
-                    onclick={(e) => {
-                      e.stopPropagation();
-                      beginDelete(list);
-                    }}
-                  >
-                    Delete
-                  </button>
-                </div>
-              {/if}
-            </div>
-          {/each}
-        {:else}
-          <p class="text-sm text-warm-text-secondary">No {listFilter} lists yet.</p>
-        {/if}
+        <ListsSidebarNav
+          lists={filteredLists}
+          emptyLabel={`No ${listFilter} lists yet.`}
+          bind:menuTargetPublicId
+          onOpen={(list) => void navigateToList(list)}
+          onRename={beginRename}
+          onDelete={beginDelete}
+          onReorder={(input) => store.reorderList(input)}
+        />
       </div>
     </aside>
 

@@ -2,8 +2,8 @@
 
 A native SwiftUI app for iPhone and iPad (iOS 27 or newer). It is an independent
 Xcode project, not a pnpm workspace package or a Vercel deployment zone. So far it
-covers sign-in and Lists: create, rename and delete lists, set the default list, add,
-check off, reorder and delete items, clear completed ones, and edit an item's title, notes
+covers sign-in and Lists: create, rename, delete and reorder lists (each person keeps their own
+order), set the default list, add, check off, reorder and delete items, clear completed ones, and edit an item's title, notes
 and property values, with changes arriving live from Convex. Active items can be grouped by a
 property (saved per person, as on the web), Auto Categorise sorts Unassigned items, and pasting
 several lines into Add an item previews them before adding them all. Submitting text with commas

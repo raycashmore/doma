@@ -70,6 +70,8 @@ export type ListStore = {
   createList(input: { name: string; visibility: 'personal' | 'shared' }): Promise<ListRouteTarget>;
   renameList(input: { publicId: string; name: string }): Promise<ListRouteTarget>;
   deleteList(input: { publicId: string }): Promise<void>;
+  /** Move a list within its tab, in the signed-in person's order only. */
+  reorderList(input: { publicId: string; targetIndex: number }): Promise<void>;
   setDefaultList(input: { publicId: string }): Promise<void>;
   setActiveGroupingProperty(input: { listPublicId: string; propertyId: string | null }): Promise<void>;
 
@@ -260,7 +262,8 @@ export class InMemoryListStore implements ListStore {
       createdByUserId: 'preview-user'
     };
 
-    this.#lists = [created, ...this.#lists];
+    // New lists go at the end of their tab, as on the backend.
+    this.#lists = [...this.#lists, created];
     this.#itemsByPublicId = {
       ...this.#itemsByPublicId,
       [created.publicId]: { list: created, properties: [], activeItems: [], completedItems: [] }
@@ -280,6 +283,16 @@ export class InMemoryListStore implements ListStore {
       list: { ...current.list, name: resolvedName, slug }
     }));
     return { publicId, slug };
+  }
+
+  async reorderList({ publicId, targetIndex }: { publicId: string; targetIndex: number }): Promise<void> {
+    const moved = this.#lists.find((list) => list.publicId === publicId);
+    if (!moved) throw new Error('List unavailable');
+    const tab = this.#lists
+      .filter((list) => list.visibility === moved.visibility)
+      .map((list, index) => ({ _id: list._id, sortOrder: index, list }));
+    const reorderedTab = reorderByIndex(tab, moved._id, targetIndex).map((entry) => entry.list);
+    this.#lists = [...this.#lists.filter((list) => list.visibility !== moved.visibility), ...reorderedTab];
   }
 
   async deleteList({ publicId }: { publicId: string }): Promise<void> {
@@ -590,6 +603,7 @@ export class ConvexListStore implements ListStore {
   #createList = useMutation(api.lists.mutations.createList);
   #renameList = useMutation(api.lists.mutations.renameList);
   #deleteList = useMutation(api.lists.mutations.deleteList);
+  #reorderList = useMutation(api.lists.preferences.reorderList);
   #createListItem = useMutation(api.lists.mutations.createListItem);
   #createListItems = useMutation(api.lists.mutations.createListItems);
   #renameListItem = useMutation(api.lists.mutations.renameListItem);
@@ -674,6 +688,9 @@ export class ConvexListStore implements ListStore {
   }
   async deleteList(input: { publicId: string }): Promise<void> {
     await this.#deleteList(input);
+  }
+  async reorderList(input: { publicId: string; targetIndex: number }): Promise<void> {
+    await this.#reorderList(input);
   }
   async setDefaultList(input: { publicId: string }): Promise<void> {
     await this.#setDefaultListMutation(input);
@@ -911,6 +928,9 @@ export class ListStoreFacade implements ListStore {
   }
   deleteList(input: { publicId: string }): Promise<void> {
     return this.#active.deleteList(input);
+  }
+  reorderList(input: { publicId: string; targetIndex: number }): Promise<void> {
+    return this.#active.reorderList(input);
   }
   setDefaultList(input: { publicId: string }): Promise<void> {
     return this.#active.setDefaultList(input);

@@ -80,18 +80,26 @@ const personalList: TestListRow = {
   updatedAt: 1
 };
 
+type TestPreferenceRow = {
+  _id: string;
+  table: 'listGroupingPreferences' | 'listOrderPreferences';
+  listId: string;
+};
+
 function createMutationCtx(
   identity: { subject: string } | null,
   rows: readonly TestListRow[] = [],
   items: readonly TestListItemRow[] = [],
   properties: readonly TestListPropertyRow[] = [],
-  values: readonly TestListItemPropertyValueRow[] = []
+  values: readonly TestListItemPropertyValueRow[] = [],
+  preferences: readonly TestPreferenceRow[] = []
 ) {
   const state = {
     rows: [...rows],
     items: [...items],
     properties: [...properties],
-    values: [...values]
+    values: [...values],
+    preferences: [...preferences]
   };
   const insertedRows: Array<Record<string, unknown>> = [];
   const patchedRows: Array<{ id: string; patch: Record<string, unknown> }> = [];
@@ -124,6 +132,7 @@ function createMutationCtx(
         state.items = state.items.filter((row) => row._id !== id);
         state.properties = state.properties.filter((row) => row._id !== id);
         state.values = state.values.filter((row) => row._id !== id);
+        state.preferences = state.preferences.filter((row) => row._id !== id);
       },
       query: (table: string) => {
         if (table === 'lists') {
@@ -212,6 +221,25 @@ function createMutationCtx(
               });
               return {
                 collect: async () => state.values.filter((row) => row.listId === listId)
+              };
+            }
+          };
+        }
+
+        if (table === 'listGroupingPreferences' || table === 'listOrderPreferences') {
+          return {
+            withIndex: (index: string, apply: (q: { eq: (field: string, value: string) => unknown }) => unknown) => {
+              expect(index).toBe('by_list');
+              let listId = '';
+              apply({
+                eq: (field, value) => {
+                  expect(field).toBe('listId');
+                  listId = value;
+                  return value;
+                }
+              });
+              return {
+                collect: async () => state.preferences.filter((row) => row.table === table && row.listId === listId)
               };
             }
           };
@@ -528,6 +556,27 @@ describe('deleteList', () => {
     expect(state.items).toEqual([]);
     expect(state.properties).toEqual([]);
     expect(state.values).toEqual([]);
+  });
+
+  it('deletes everyone’s grouping and order preferences for the list', async () => {
+    const { ctx, deletedIds, state } = createMutationCtx(
+      { subject: 'user_a' },
+      [sharedList],
+      [],
+      [],
+      [],
+      [
+        { _id: 'grouping_user_b', table: 'listGroupingPreferences', listId: sharedList._id },
+        { _id: 'order_user_a', table: 'listOrderPreferences', listId: sharedList._id },
+        { _id: 'order_user_b', table: 'listOrderPreferences', listId: sharedList._id },
+        { _id: 'order_other_list', table: 'listOrderPreferences', listId: 'list_row_other' }
+      ]
+    );
+
+    await deleteListHandler(ctx as never, { publicId: sharedList.publicId });
+
+    expect(deletedIds).toEqual(['grouping_user_b', 'order_user_a', 'order_user_b', sharedList._id]);
+    expect(state.preferences.map((row) => row._id)).toEqual(['order_other_list']);
   });
 
   it('allows deleting a shared list owned by the current user', async () => {

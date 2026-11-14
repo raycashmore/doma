@@ -3,6 +3,7 @@ import { v } from 'convex/values';
 import { mutation, query } from '../_generated/server';
 import { readActiveGroupingPropertyForUser, setActiveGroupingPropertyForUser } from './groupingPreferences';
 import { requireUserId } from './items';
+import { reorderListForUser } from './orderPreferences';
 
 /** The signed-in user's active grouping for one visible list. */
 export const getActiveGroupingProperty = query({
@@ -22,5 +23,14 @@ export const setActiveGroupingProperty = mutation({
   handler: async (ctx, { listPublicId, propertyId }) => {
     const currentUserId = await requireUserId(ctx);
     return setActiveGroupingPropertyForUser(ctx, { currentUserId, listPublicId, propertyId });
+  }
+});
+
+/** Move one list within its tab, in the signed-in user's order only. */
+export const reorderList = mutation({
+  args: { publicId: v.string(), targetIndex: v.number() },
+  handler: async (ctx, { publicId, targetIndex }) => {
+    const currentUserId = await requireUserId(ctx);
+    await reorderListForUser(ctx, { currentUserId, publicId, targetIndex });
   }
 });
