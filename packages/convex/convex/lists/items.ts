@@ -139,6 +139,19 @@ export async function deleteListSubtree(ctx: Pick<ListsMutationCtx, 'db'>, listI
   for (const listProperty of listProperties) {
     await ctx.db.delete(listProperty._id);
   }
+
+  // Everyone's view preferences for the list go with it.
+  const groupingPreferences = await ctx.db
+    .query('listGroupingPreferences')
+    .withIndex('by_list', (q) => q.eq('listId', listId))
+    .collect();
+  const orderPreferences = await ctx.db
+    .query('listOrderPreferences')
+    .withIndex('by_list', (q) => q.eq('listId', listId))
+    .collect();
+  for (const preference of [...groupingPreferences, ...orderPreferences]) {
+    await ctx.db.delete(preference._id);
+  }
 }
 
 export async function requireVisibleList(ctx: ListsReadCtx, publicId: string) {

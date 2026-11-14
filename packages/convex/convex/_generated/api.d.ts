@@ -58,6 +58,7 @@ import type * as lists_groupingPreferences from "../lists/groupingPreferences.js
 import type * as lists_items from "../lists/items.js";
 import type * as lists_model from "../lists/model.js";
 import type * as lists_mutations from "../lists/mutations.js";
+import type * as lists_orderPreferences from "../lists/orderPreferences.js";
 import type * as lists_parse from "../lists/parse.js";
 import type * as lists_preferences from "../lists/preferences.js";
 import type * as lists_properties from "../lists/properties.js";
@@ -147,6 +148,7 @@ declare const fullApi: ApiFromModules<{
   "lists/items": typeof lists_items;
   "lists/model": typeof lists_model;
   "lists/mutations": typeof lists_mutations;
+  "lists/orderPreferences": typeof lists_orderPreferences;
   "lists/parse": typeof lists_parse;
   "lists/preferences": typeof lists_preferences;
   "lists/properties": typeof lists_properties;

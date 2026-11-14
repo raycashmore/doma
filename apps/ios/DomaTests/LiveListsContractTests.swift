@@ -162,6 +162,12 @@ struct LiveListsContractTests {
       lists.contains { $0.publicId == fixturePublicId && $0.name == renamed }
     }
 
+    // Moves only the fixture, so the account's other lists keep their order once it is deleted.
+    try await lists.reorderList(publicId: fixturePublicId, targetIndex: 0)
+    _ = try await visibleLists.next("reordered list") { lists in
+      lists.first { $0.visibility == .personal }?.publicId == fixturePublicId
+    }
+
     let created = try await lists.createList(name: "iOS tracer shared fixture", visibility: .shared)
     let afterCreate = try await visibleLists.next("created list") { lists in
       lists.contains { $0.publicId == created }

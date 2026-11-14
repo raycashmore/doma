@@ -8,9 +8,15 @@ struct ListsSidebar: View {
   @Binding var selectedListId: DomaListSummary.ID?
   /// Beside an open list, as on iPad, rather than a screen of its own.
   let isSidebar: Bool
+  /// Saves a list's new position in its tab.
+  let onReorder: (_ publicId: String, _ targetIndex: Int) async throws -> Void
   let onNewList: () -> Void
+  /// Each tab's dragged order, held until the live list confirms it.
+  @State private var sharedOrder = HeldOrder()
+  @State private var personalOrder = HeldOrder()
+  @State private var saveFailed = false
 
-  private var shownLists: [DomaListSummary] { lists.filter { $0.visibility == visibility } }
+  private var shownLists: [DomaListSummary] { heldOrder(visibility).ordered(tab(visibility)) }
 
   var body: some View {
     List(selection: $selectedListId) {
@@ -31,14 +37,22 @@ struct ListsSidebar: View {
             .foregroundStyle(DomaColor.warmTextSecondary)
             .listRowBackground(isSidebar ? nil : DomaColor.warmBgCard)
         }
-        ForEach(shownLists) {
-          ListRow(list: $0, isSelected: $0.id == selectedListId, isSidebar: isSidebar)
+        ForEach(shownLists) { list in
+          ListRow(list: list, isSelected: list.id == selectedListId, isSidebar: isSidebar)
+            .accessibilityAction(named: "Move Up") { move(list, by: -1) }
+            .accessibilityAction(named: "Move Down") { move(list, by: 2) }
         }
+        .onMove(perform: move)
       }
     }
     .listStyle(sidebar: isSidebar)
     .listSectionSpacing(12)
     .environment(\.defaultMinListRowHeight, 44)
+    .onChange(of: lists) {
+      sharedOrder.serverChanged(to: tab(.shared).map(\.id))
+      personalOrder.serverChanged(to: tab(.personal).map(\.id))
+    }
+    .domaSaveFailureAlert(isPresented: $saveFailed)
     .safeAreaBar(edge: .bottom) {
       Button(action: onNewList) {
         HStack(spacing: 10) {
@@ -53,6 +67,28 @@ struct ListsSidebar: View {
       }
       .buttonStyle(.plain)
       .domaBottomCapsule()
+    }
+  }
+
+  private func heldOrder(_ visibility: DomaListSummary.Visibility) -> HeldOrder {
+    visibility == .shared ? sharedOrder : personalOrder
+  }
+
+  private func tab(_ visibility: DomaListSummary.Visibility) -> [DomaListSummary] {
+    lists.filter { $0.visibility == visibility }
+  }
+
+  private func move(_ list: DomaListSummary, by offset: Int) {
+    guard let index = shownLists.firstIndex(of: list) else { return }
+    move(from: IndexSet(integer: index), to: index + offset)
+  }
+
+  private func move(from source: IndexSet, to destination: Int) {
+    guard let move = OrderMove(shownLists, from: source, to: destination) else { return }
+    heldOrder(visibility).hold(move.reordered.map(\.id)) {
+      try await onReorder(move.movedId, move.targetIndex)
+    } onFailure: {
+      saveFailed = true
     }
   }
 }

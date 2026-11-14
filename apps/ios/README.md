@@ -2,8 +2,8 @@
 
 A native SwiftUI app for iPhone and iPad (iOS 27 or newer). It is an independent
 Xcode project, not a pnpm workspace package or a Vercel deployment zone. So far it
-covers sign-in and Lists: create, rename and delete lists, set the default list, add,
-check off, reorder and delete items, clear completed ones, and edit an item's title, notes
+covers sign-in and Lists: create, rename, delete and reorder lists (each person keeps their own
+order), set the default list, add, check off, reorder and delete items, clear completed ones, and edit an item's title, notes
 and property values, with changes arriving live from Convex. Active items can be grouped by a
 property (saved per person, as on the web), Auto Categorise sorts Unassigned items, and pasting
 several lines into Add an item previews them before adding them all. Submitting text with commas
@@ -102,6 +102,10 @@ instance. A free Apple ID (personal team) is enough; apps it signs expire after
    trust your developer certificate.
 7. Repeat step 5 within 7 days to keep the app working.
 
+A branch that calls new Convex functions fails on a device until they reach production, and shows
+the save-failure alert. Check each new call with `pnpm prod:status <module>.js:<function>` before
+installing.
+
 The widget extension needs a second App ID (`<DOMA_BUNDLE_ID>.widget`) under the personal team,
 which Xcode registers on the first device build. Builds before the shared keychain group kept the
 Clerk session in the app's private keychain, so the first install with it asks for sign-in once.
@@ -122,8 +126,7 @@ xcodebuild test -project Doma.xcodeproj -scheme Doma \
 ```
 
 Run serially: a parallel run can crash the test host and fail unrelated suites, differently each time.
-Known baseline on the iOS 27.2 simulator: `SceneCoverTests` fail on `main`. Anything else failing is
-yours; compare with `main` (`git stash -u`) before chasing a suite you did not touch.
+A failure in a suite you did not touch: compare with `main` (`git stash -u`) before chasing it.
 
 ## Live contract tests
 
@@ -198,6 +201,8 @@ script as you typed it, so use capitals and hyphens.
 - A snapshot can lag the screen, so take a screenshot before believing a stuck state.
 - Refs go stale when the screen changes; take a fresh snapshot before pressing one.
 - On iPad, `scroll --until` scrolls the detail column. Reach a sidebar row by swiping inside the sidebar.
+- Dragging an iPad sidebar row needs a longer hold than iPhone: `gesture drag <from> <to> 1800 1500 600`.
+  The 1200 ms hold that works on iPhone leaves the row in place.
 - A press while a menu is still closing is lost. Wait about 1.5 seconds before the next one.
 - The simulator can restart mid-run. A new process ID after a lock test means a cold launch, not a re-lock.
 - After `main thread execution timed out`, queued `home` and `app-switcher` commands can replay and reopen the app. Wait, then leave the app with `open <another bundle id>`.

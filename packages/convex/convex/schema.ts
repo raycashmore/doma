@@ -290,7 +290,20 @@ export default defineSchema({
     propertyId: v.id('listProperties'),
     createdAt: v.number(),
     updatedAt: v.number()
-  }).index('by_user_and_list', ['userId', 'listId']),
+  })
+    .index('by_user_and_list', ['userId', 'listId'])
+    .index('by_list', ['listId']),
+  // Per-household-user order of lists within each tab. Lists without a row
+  // follow, in creation order, so new lists land at the end of their tab.
+  listOrderPreferences: defineTable({
+    userId: v.string(),
+    listId: v.id('lists'),
+    sortOrder: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number()
+  })
+    .index('by_user_and_list', ['userId', 'listId'])
+    .index('by_list', ['listId']),
   listItemPropertyValues: defineTable({
     listId: v.id('lists'),
     listItemId: v.id('listItems'),

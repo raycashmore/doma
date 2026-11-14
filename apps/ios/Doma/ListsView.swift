@@ -121,7 +121,8 @@ struct ListsView: View {
         lists: lists,
         visibility: $visibility,
         selectedListId: $selectedListId,
-        isSidebar: isSplit
+        isSidebar: isSplit,
+        onReorder: { try await session.lists.reorderList(publicId: $0, targetIndex: $1) }
       ) { isCreatingList = true }
     } else if loadFailed {
       DomaStateView(title: "Lists are unavailable", systemImage: "exclamationmark.triangle")

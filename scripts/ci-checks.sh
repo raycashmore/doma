@@ -19,6 +19,7 @@ pnpm turbo run test --force
 pnpm turbo run build --force
 
 pnpm --filter design-guide test:browser
+pnpm --filter lists test:browser
 
 git diff --no-ext-diff --no-textconv --binary HEAD > "$final_diff"
 if ! cmp -s "$initial_diff" "$final_diff"; then

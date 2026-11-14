@@ -100,6 +100,10 @@ _Avoid_: Replacement plan, generated meal plan, shopping draft
 The manual ordering of active **list items**. A new active item is placed after the highest existing order (one past the current maximum), so completing or deleting items may leave gaps in the order numbers without affecting how items read. Gaps are harmless: items show in ascending order, ties broken by creation time. A reorder renumbers the active items densely from the top. Placing a new item by active count rather than highest-order-plus-one is a bug, because it can slot the item into an existing gap instead of the end.
 _Avoid_: Sort index, position field, dense rank
 
+**List order**:
+Each **household user**'s own order of the lists in a tab (Shared or Personal). Moving a list changes only that person's order, on every device they use. Lists they have never placed follow in creation order, so a new list lands at the end of its tab. Deleting a list removes it from everyone's order.
+_Avoid_: Household list order, list rank
+
 **Completed list item**:
 A **list item** that has been marked done but remains part of the list until it is explicitly cleared or removed. Completion is a visible state, not automatic deletion; completed list items are shown separately in completion-time order.
 _Avoid_: Deleted item, archived item

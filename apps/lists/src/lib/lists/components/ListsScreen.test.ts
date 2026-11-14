@@ -141,15 +141,14 @@ describe('ListsScreen mobile details', () => {
 });
 
 describe('ListsScreen list actions', () => {
-  it('uses a full-card hit target for list navigation', async () => {
+  it('opens the list from anywhere on the card’s name and description', async () => {
     const target = await renderScreen('home-reset');
     await provideLiveData('home-reset');
 
     const listButton = target.querySelector<HTMLButtonElement>('button[aria-label="Open Home reset list"]');
 
-    expect(listButton).not.toBeNull();
-    expect(listButton?.className).toContain('w-full');
-    expect(listButton?.className).toContain('p-[14px]');
+    expect(listButton?.textContent).toContain('Home reset');
+    expect(listButton?.textContent).toMatch(/(Personal|Shared) list/);
   });
 
   it('opens rename from the list actions menu', async () => {

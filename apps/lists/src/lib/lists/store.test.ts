@@ -64,6 +64,32 @@ describe('InMemoryListStore active item order', () => {
   });
 });
 
+describe('InMemoryListStore list order', () => {
+  const tab = (store: InMemoryListStore, visibility: 'personal' | 'shared') =>
+    store.lists.filter((list) => list.visibility === visibility).map((list) => list.publicId);
+
+  it('moves a list within its own tab and leaves the other tab alone', async () => {
+    const { store } = makeStore(null);
+    await store.createList({ name: 'Second shared', visibility: 'shared' });
+    const shared = tab(store, 'shared');
+    const personal = tab(store, 'personal');
+    const last = shared.at(-1)!;
+
+    await store.reorderList({ publicId: last, targetIndex: 0 });
+
+    expect(tab(store, 'shared')).toEqual([last, ...shared.slice(0, -1)]);
+    expect(tab(store, 'personal')).toEqual(personal);
+  });
+
+  it('adds a new list at the end of its tab', async () => {
+    const { store } = makeStore(null);
+
+    const created = await store.createList({ name: 'Camping', visibility: 'personal' });
+
+    expect(tab(store, 'personal').at(-1)).toBe(created.publicId);
+  });
+});
+
 describe('InMemoryListStore list lifecycle', () => {
   it('creates a list with a slugified route target and makes it selectable', async () => {
     const { store, select } = makeStore(null);

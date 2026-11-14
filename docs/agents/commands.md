@@ -28,6 +28,7 @@ pnpm seed:clear    # Clear seeded Convex data
 pnpm seed:url -- <convex-url>       # Seed a specific Convex deployment
 pnpm seed:url:clear -- <convex-url> # Clear seeded data from a specific Convex deployment
 pnpm prod:status <module>...       # Read-only: is this Convex function on production?
+pnpm --filter lists test:browser   # Real-pointer drag test on the preview store; no backend needed
 ```
 
 ## Package Manager
@@ -36,8 +37,8 @@ Use the pnpm version declared in `package.json`. If `pnpm --version` does not
 match that declaration, run `corepack enable pnpm` before running repo commands.
 
 `pnpm ci:local` checks the pnpm version first, installs with the frozen
-lockfile, installs the guide Chromium browser, then runs `pnpm ci:checks`. `pnpm ci:checks` is the same format, lint,
-typecheck, test, build and guide browser-smoke sequence used by CI, and it forces Turbo tasks so a
+lockfile, installs Playwright's Chromium, then runs `pnpm ci:checks`. `pnpm ci:checks` is the same format, lint,
+typecheck, test, build and browser-test sequence (guide and Lists) used by CI, and it forces Turbo tasks so a
 warm local cache cannot hide missing dependencies or broken scripts. It also fails if verification changes tracked files relative to the starting diff. Before running checks without installation, install Chromium once with `pnpm --filter design-guide exec playwright install chromium`.
 
 Schedule intentionally builds with `next build --webpack`. Next 16 defaults
@@ -46,6 +47,10 @@ endpoint that restricted agent sandboxes deny. Do not remove the webpack build
 flag unless sandboxed `pnpm ci:checks` has been verified with the replacement.
 
 ## Local Convex
+
+After adding a Convex module, run `npx convex codegen` in `packages/convex` and commit the
+refreshed `convex/_generated/`. It pushes functions to the deployment named in the root env file,
+which should be the local backend.
 
 `pnpm convex` starts `convex-local-backend` on port 3210 and pushes functions to it. Stop it with
 Ctrl-C. Killing only the `convex dev` process leaves the backend running old code, and the next

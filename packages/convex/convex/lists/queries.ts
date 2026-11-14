@@ -2,6 +2,7 @@ import { v } from 'convex/values';
 
 import { query, type QueryCtx } from '../_generated/server';
 import { readVisibleListItemsByPublicId } from './items';
+import { orderListsForUser, readListOrderPreferences } from './orderPreferences';
 
 export function filterVisibleLists<T extends { visibility: 'personal' | 'shared'; createdByUserId: string }>(
   rows: T[],
@@ -25,8 +26,9 @@ async function requireUserId(ctx: Pick<QueryCtx, 'auth'>) {
 export async function readVisibleLists(ctx: Pick<QueryCtx, 'auth' | 'db'>) {
   const currentUserId = await requireUserId(ctx);
   const rows = await ctx.db.query('lists').collect();
+  const preferences = await readListOrderPreferences(ctx, currentUserId);
 
-  return filterVisibleLists(rows, currentUserId);
+  return orderListsForUser(filterVisibleLists(rows, currentUserId), preferences);
 }
 
 export async function readVisibleListByPublicId(

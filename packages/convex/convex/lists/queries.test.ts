@@ -24,7 +24,8 @@ const personalList = {
 
 function createQueryCtx(
   identity: { subject: string } | null,
-  rows: readonly (typeof sharedList | typeof personalList)[]
+  rows: readonly (typeof sharedList | typeof personalList)[],
+  preferences: readonly { userId: string; listId: string; sortOrder: number }[] = []
 ) {
   let requestedPublicId: string | null = null;
 
@@ -34,6 +35,22 @@ function createQueryCtx(
     },
     db: {
       query: (table: string) => {
+        if (table === 'listOrderPreferences') {
+          return {
+            withIndex: (index: string, apply: (q: { eq: (field: string, value: string) => unknown }) => unknown) => {
+              expect(index).toBe('by_user_and_list');
+              let userId = '';
+              apply({
+                eq: (field, value) => {
+                  expect(field).toBe('userId');
+                  userId = value;
+                  return value;
+                }
+              });
+              return { collect: async () => preferences.filter((row) => row.userId === userId) };
+            }
+          };
+        }
         expect(table).toBe('lists');
         return {
           collect: async () => [...rows],
@@ -85,6 +102,19 @@ describe('readVisibleLists', () => {
     await expect(
       readVisibleLists(createQueryCtx({ subject: 'user_b' }, [sharedList, personalList]) as never)
     ).resolves.toEqual([sharedList]);
+  });
+
+  it('returns lists in the caller’s own order', async () => {
+    const shared = { ...sharedList, _id: 'row_shared' };
+    const personal = { ...personalList, _id: 'row_personal' };
+    const preferences = [
+      { userId: 'user_a', listId: 'row_personal', sortOrder: 0 },
+      { userId: 'user_b', listId: 'row_shared', sortOrder: 0 }
+    ];
+
+    await expect(
+      readVisibleLists(createQueryCtx({ subject: 'user_a' }, [shared, personal], preferences) as never)
+    ).resolves.toEqual([personal, shared]);
   });
 });
 
