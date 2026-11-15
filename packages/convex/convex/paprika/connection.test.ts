@@ -58,19 +58,19 @@ describe('connect', () => {
       await connectHandler(
         refused.ctx,
         { email: 'a', password: 'b' },
-        { login: async () => ({ status: 'rejected' }), fetchGroceryLists: notCalled }
+        { login: async () => ({ status: 'rejected', reason: 'Account not found.' }), fetchGroceryLists: notCalled }
       )
-    ).toEqual({ status: 'rejected' });
+    ).toEqual({ status: 'rejected', reason: 'Account not found.' });
     expect(
       await connectHandler(
         unreachable.ctx,
         { email: 'a', password: 'b' },
         {
           login: async () => ({ status: 'ok', token: 't' }),
-          fetchGroceryLists: async () => ({ status: 'unavailable' })
+          fetchGroceryLists: async () => ({ status: 'unavailable', httpStatus: 403 })
         }
       )
-    ).toEqual({ status: 'unavailable' });
+    ).toEqual({ status: 'unavailable', httpStatus: 403 });
     expect([...refused.calls, ...unreachable.calls]).toEqual([]);
   });
 
@@ -87,10 +87,10 @@ describe('checkConnection', () => {
     const { ctx, calls } = createCtx({ token: 'stale' });
     const result = await checkConnectionHandler(ctx, {
       login: notCalled,
-      fetchGroceryLists: async () => ({ status: 'rejected' })
+      fetchGroceryLists: async () => ({ status: 'rejected', reason: 'Invalid or expired credentials.' })
     });
 
-    expect(result).toEqual({ status: 'rejected' });
+    expect(result).toEqual({ status: 'rejected', reason: 'Invalid or expired credentials.' });
     expect(calls.at(-1)).toEqual({ kind: 'mutation', args: { userId: 'user_a' } });
   });
 
@@ -108,9 +108,9 @@ describe('checkConnection', () => {
     expect(
       await checkConnectionHandler(offline.ctx, {
         login: notCalled,
-        fetchGroceryLists: async () => ({ status: 'unavailable' })
+        fetchGroceryLists: async () => ({ status: 'unavailable', httpStatus: 403 })
       })
-    ).toEqual({ status: 'unavailable' });
+    ).toEqual({ status: 'unavailable', httpStatus: 403 });
     expect(offline.calls.filter((call) => call.kind === 'mutation')).toEqual([]);
   });
 

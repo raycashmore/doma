@@ -6,10 +6,13 @@ const paprikaApiBase = 'https://www.paprikaapp.com/api';
 
 export type PaprikaGroceryList = { uid: string; name: string; isDefault: boolean };
 
-/** Paprika refused the email and password, or the stored token. */
-type Rejected = { status: 'rejected' };
-/** Paprika could not be reached or answered with something unexpected. */
-type Unavailable = { status: 'unavailable' };
+/** Paprika itself refused the email and password, or the stored token. `reason` is Paprika's own message. */
+type Rejected = { status: 'rejected'; reason: string | null };
+/**
+ * Paprika could not be reached or answered with something other than its own API reply, such as a
+ * block page. `httpStatus` is null when no response arrived.
+ */
+type Unavailable = { status: 'unavailable'; httpStatus: number | null };
 
 export type PaprikaLoginResult = { status: 'ok'; token: string } | Rejected | Unavailable;
 export type PaprikaGroceryListsResult = { status: 'ok'; lists: PaprikaGroceryList[] } | Rejected | Unavailable;
@@ -28,11 +31,17 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-// The API is undocumented, so a refusal is recognised by status code or by an
-// `error` body without a result, whichever Paprika sends.
-function isRefusal(response: Response, body: unknown) {
-  if (response.status === 401 || response.status === 403) return true;
-  return isRecord(body) && 'error' in body && !('result' in body);
+// Paprika refuses with its own JSON `{"error": {"message": ...}}`: HTTP 200 for a bad sign-in,
+// 401 for a bad token. A 401 or 403 without that body comes from something in front of Paprika,
+// such as a firewall blocking Doma's server, so it is not read as a wrong password.
+function readRefusal(body: unknown): Rejected | null {
+  if (!isRecord(body) || !('error' in body) || 'result' in body) return null;
+  const message = isRecord(body.error) ? body.error.message : body.error;
+  return { status: 'rejected', reason: typeof message === 'string' && message ? message : null };
+}
+
+function unavailable(response?: Response): Unavailable {
+  return { status: 'unavailable', httpStatus: response?.status ?? null };
 }
 
 export async function loginToPaprika(
@@ -47,15 +56,16 @@ export async function loginToPaprika(
       body: new URLSearchParams({ email, password }).toString()
     });
   } catch {
-    return { status: 'unavailable' };
+    return unavailable();
   }
 
   const body = await readJson(response);
-  if (isRefusal(response, body)) return { status: 'rejected' };
-  if (!response.ok || !isRecord(body) || !isRecord(body.result)) return { status: 'unavailable' };
+  const refusal = readRefusal(body);
+  if (refusal) return refusal;
+  if (!response.ok || !isRecord(body) || !isRecord(body.result)) return unavailable(response);
 
   const { token } = body.result;
-  if (typeof token !== 'string' || !token) return { status: 'unavailable' };
+  if (typeof token !== 'string' || !token) return unavailable(response);
   return { status: 'ok', token };
 }
 
@@ -76,12 +86,13 @@ export async function fetchPaprikaGroceryLists(
       headers: { Authorization: `Bearer ${token}` }
     });
   } catch {
-    return { status: 'unavailable' };
+    return unavailable();
   }
 
   const body = await readJson(response);
-  if (isRefusal(response, body)) return { status: 'rejected' };
-  if (!response.ok || !isRecord(body) || !Array.isArray(body.result)) return { status: 'unavailable' };
+  const refusal = readRefusal(body);
+  if (refusal) return refusal;
+  if (!response.ok || !isRecord(body) || !Array.isArray(body.result)) return unavailable(response);
 
   const lists = body.result.map(parseGroceryList).filter((list): list is PaprikaGroceryList => list !== null);
   return { status: 'ok', lists };

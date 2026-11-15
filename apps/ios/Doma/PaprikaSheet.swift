@@ -118,7 +118,7 @@ private struct PaprikaSignInForm: View {
       problem = PaprikaConnectionCopy.connectProblem(result)
       if problem == nil { password = "" }
     } catch {
-      problem = PaprikaConnectionCopy.connectProblem(.unavailable)
+      problem = PaprikaConnectionCopy.connectProblem(.unavailable(httpStatus: nil))
     }
   }
 }
@@ -219,7 +219,7 @@ private struct PaprikaConnectedForm: View {
       problem = PaprikaConnectionCopy.checkProblem(result)
       checkedAt = problem == nil ? Date() : nil
     } catch {
-      problem = PaprikaConnectionCopy.checkProblem(.unavailable)
+      problem = PaprikaConnectionCopy.checkProblem(.unavailable(httpStatus: nil))
     }
   }
 

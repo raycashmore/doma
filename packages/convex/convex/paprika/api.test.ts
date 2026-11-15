@@ -22,16 +22,24 @@ describe('loginToPaprika', () => {
     expect(new URLSearchParams(String(request?.init?.body)).get('email')).toBe('person@example.com');
   });
 
-  it('treats a 401 as a refused sign-in', async () => {
+  it('treats a 401 carrying Paprika’s error as a refused sign-in', async () => {
     const result = await loginToPaprika(credentials, async () => jsonResponse({ error: 'Unauthorized' }, 401));
-    expect(result).toEqual({ status: 'rejected' });
+    expect(result).toEqual({ status: 'rejected', reason: 'Unauthorized' });
+  });
+
+  it('does not read a block page in front of Paprika as a wrong password', async () => {
+    const blocked = await loginToPaprika(
+      credentials,
+      async () => new Response('<html>Access denied</html>', { status: 403 })
+    );
+    expect(blocked).toEqual({ status: 'unavailable', httpStatus: 403 });
   });
 
   it('treats an error body without a result as a refused sign-in, even with a 200', async () => {
     const result = await loginToPaprika(credentials, async () =>
       jsonResponse({ error: { code: 0, message: 'Invalid email or password' } })
     );
-    expect(result).toEqual({ status: 'rejected' });
+    expect(result).toEqual({ status: 'rejected', reason: 'Invalid email or password' });
   });
 
   it('reports Paprika unavailable when the request fails, the server errors or the reply is malformed', async () => {
@@ -42,9 +50,9 @@ describe('loginToPaprika', () => {
     const noToken = await loginToPaprika(credentials, async () => jsonResponse({ result: {} }));
 
     expect([offline, serverError, noToken]).toEqual([
-      { status: 'unavailable' },
-      { status: 'unavailable' },
-      { status: 'unavailable' }
+      { status: 'unavailable', httpStatus: null },
+      { status: 'unavailable', httpStatus: 502 },
+      { status: 'unavailable', httpStatus: 200 }
     ]);
   });
 
@@ -83,13 +91,15 @@ describe('fetchPaprikaGroceryLists', () => {
     });
   });
 
-  it('treats a refused token as rejected', async () => {
-    const result = await fetchPaprikaGroceryLists('stale', async () => new Response('Unauthorized', { status: 401 }));
-    expect(result).toEqual({ status: 'rejected' });
+  it('treats a token Paprika refuses as rejected', async () => {
+    const result = await fetchPaprikaGroceryLists('stale', async () =>
+      jsonResponse({ error: { code: 0, message: 'Invalid or expired credentials.' } }, 401)
+    );
+    expect(result).toEqual({ status: 'rejected', reason: 'Invalid or expired credentials.' });
   });
 
   it('reports Paprika unavailable for a malformed reply', async () => {
     const result = await fetchPaprikaGroceryLists('token-1', async () => jsonResponse({ result: 'nope' }));
-    expect(result).toEqual({ status: 'unavailable' });
+    expect(result).toEqual({ status: 'unavailable', httpStatus: 200 });
   });
 });

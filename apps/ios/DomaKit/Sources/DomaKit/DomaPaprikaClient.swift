@@ -25,18 +25,24 @@ public struct DomaPaprikaConnection: Decodable, Equatable, Sendable {
 }
 
 /// What a call to Paprika reports. Paprika's own outcomes never throw.
-public enum DomaPaprikaCallResult: String, Decodable, Equatable, Sendable {
+public enum DomaPaprikaCallResult: Decodable, Equatable, Sendable {
   case connected
-  /// Paprika refused the email and password, or the stored sign-in.
-  case rejected
-  case unavailable
-  case notConnected = "not_connected"
+  /// Paprika itself refused the email and password, or the stored sign-in. `reason` is Paprika's message.
+  case rejected(reason: String?)
+  /// No usable reply. `httpStatus` is set when something answered, such as a firewall blocking Doma's server.
+  case unavailable(httpStatus: Int?)
+  case notConnected
 
-  private enum CodingKeys: String, CodingKey { case status }
+  private enum CodingKeys: String, CodingKey { case status, reason, httpStatus }
 
   public init(from decoder: any Decoder) throws {
-    let status = try decoder.container(keyedBy: CodingKeys.self).decode(String.self, forKey: .status)
-    self = Self(rawValue: status) ?? .unavailable
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    switch try container.decode(String.self, forKey: .status) {
+    case "connected": self = .connected
+    case "rejected": self = .rejected(reason: try container.decodeIfPresent(String.self, forKey: .reason))
+    case "not_connected": self = .notConnected
+    default: self = .unavailable(httpStatus: (try container.decodeIfPresent(Double.self, forKey: .httpStatus)).map { Int($0) })
+    }
   }
 }
 

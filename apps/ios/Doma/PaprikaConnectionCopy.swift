@@ -25,8 +25,9 @@ enum PaprikaConnectionCopy {
   static func connectProblem(_ result: DomaPaprikaCallResult) -> String? {
     switch result {
     case .connected: nil
-    case .rejected: "Paprika didn't accept that email and password."
-    case .unavailable, .notConnected: unreachable
+    case .rejected(let reason): "Paprika didn't accept that email and password." + paprikaSaid(reason)
+    case .unavailable(let httpStatus): unreachable(httpStatus)
+    case .notConnected: unreachable(nil)
     }
   }
 
@@ -35,10 +36,21 @@ enum PaprikaConnectionCopy {
     switch result {
     // The sheet swaps to the reconnect form, which says why.
     case .connected, .rejected: nil
-    case .unavailable: unreachable
+    case .unavailable(let httpStatus): unreachable(httpStatus)
     case .notConnected: "Paprika isn't connected."
     }
   }
 
-  private static let unreachable = "Couldn't reach Paprika. Check your connection and try again."
+  private static func paprikaSaid(_ reason: String?) -> String {
+    reason.map { " Paprika said: \"\($0)\"" } ?? ""
+  }
+
+  /// A 401 or 403 that isn't Paprika's own reply means something in front of Paprika turned Doma away.
+  private static func unreachable(_ httpStatus: Int?) -> String {
+    switch httpStatus {
+    case 401?, 403?: "Paprika turned away Doma's server (HTTP \(httpStatus ?? 0)). Your email and password weren't checked."
+    case let status?: "Couldn't reach Paprika (HTTP \(status)). Try again in a moment."
+    case nil: "Couldn't reach Paprika. Check your connection and try again."
+    }
+  }
 }

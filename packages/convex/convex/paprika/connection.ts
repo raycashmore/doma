@@ -45,6 +45,16 @@ export const getConnection = query({
   handler: async (ctx) => readConnectionViewForUser(ctx, await requireUserId(ctx))
 });
 
+/** A call to Paprika that did not work, as the app sees it. Never carries the token or password. */
+type PaprikaFailure =
+  { status: 'rejected'; reason: string | null } | { status: 'unavailable'; httpStatus: number | null };
+
+/** Records why a call to Paprika failed: its HTTP status and Paprika's own message, nothing else. */
+function reportFailure(step: string, failure: PaprikaFailure): PaprikaFailure {
+  console.warn(`Paprika ${step} ${failure.status}`, failure);
+  return failure;
+}
+
 type PaprikaCalls = { login: typeof loginToPaprika; fetchGroceryLists: typeof fetchPaprikaGroceryLists };
 type PaprikaActionCtx = Pick<ActionCtx, 'auth' | 'runMutation' | 'runQuery'>;
 
@@ -54,13 +64,13 @@ export async function connectHandler(
   ctx: PaprikaActionCtx,
   { email, password }: { email: string; password: string },
   calls: PaprikaCalls = paprikaCalls
-): Promise<{ status: 'connected' | 'rejected' | 'unavailable' }> {
+): Promise<{ status: 'connected' } | PaprikaFailure> {
   const userId = await requireUserId(ctx);
   const login = await calls.login({ email: email.trim(), password });
-  if (login.status !== 'ok') return { status: login.status };
+  if (login.status !== 'ok') return reportFailure('sign-in', login);
 
   const lists = await calls.fetchGroceryLists(login.token);
-  if (lists.status !== 'ok') return { status: lists.status };
+  if (lists.status !== 'ok') return reportFailure('grocery lists after sign-in', lists);
 
   await ctx.runMutation(paprikaRefs.saveConnection, { userId, token: login.token, groceryLists: lists.lists });
   return { status: 'connected' };
@@ -69,17 +79,14 @@ export async function connectHandler(
 export async function checkConnectionHandler(
   ctx: PaprikaActionCtx,
   calls: PaprikaCalls = paprikaCalls
-): Promise<{ status: 'connected' | 'rejected' | 'unavailable' | 'not_connected' }> {
+): Promise<{ status: 'connected' | 'not_connected' } | PaprikaFailure> {
   const userId = await requireUserId(ctx);
   const token = await ctx.runQuery(paprikaRefs.readToken, { userId });
   if (!token) return { status: 'not_connected' };
 
   const lists = await calls.fetchGroceryLists(token);
-  if (lists.status === 'rejected') {
-    await ctx.runMutation(paprikaRefs.markNeedsReconnect, { userId });
-    return { status: 'rejected' };
-  }
-  if (lists.status === 'unavailable') return { status: 'unavailable' };
+  if (lists.status === 'rejected') await ctx.runMutation(paprikaRefs.markNeedsReconnect, { userId });
+  if (lists.status !== 'ok') return reportFailure('check', lists);
 
   await ctx.runMutation(paprikaRefs.refreshGroceryLists, { userId, groceryLists: lists.lists });
   return { status: 'connected' };

@@ -27,11 +27,12 @@ struct PaprikaConnectionTests {
     #expect(unset.groceriesList == nil)
   }
 
-  @Test func decodesEveryCallOutcomeAndTreatsAnUnknownOneAsUnavailable() throws {
+  @Test func decodesEveryCallOutcomeWithPaprikasReason() throws {
     #expect(try result(#"{"status":"connected"}"#) == .connected)
-    #expect(try result(#"{"status":"rejected"}"#) == .rejected)
+    #expect(try result(#"{"status":"rejected","reason":"Account not found."}"#) == .rejected(reason: "Account not found."))
+    #expect(try result(#"{"status":"unavailable","httpStatus":403}"#) == .unavailable(httpStatus: 403))
     #expect(try result(#"{"status":"not_connected"}"#) == .notConnected)
-    #expect(try result(#"{"status":"something_new"}"#) == .unavailable)
+    #expect(try result(#"{"status":"something_new"}"#) == .unavailable(httpStatus: nil))
   }
 
   @Test func showsSignInUntilConnectedAndAgainWhenPaprikaRefusesTheSignIn() throws {
@@ -45,11 +46,15 @@ struct PaprikaConnectionTests {
     #expect(PaprikaConnectionCopy.screen(for: .some(connected)) == .connected(connected))
   }
 
-  @Test func tellsAWrongPasswordApartFromPaprikaBeingUnreachable() {
+  @Test func tellsAWrongPasswordApartFromBeingTurnedAway() {
     #expect(PaprikaConnectionCopy.connectProblem(.connected) == nil)
-    #expect(PaprikaConnectionCopy.connectProblem(.rejected)?.contains("email and password") == true)
-    #expect(PaprikaConnectionCopy.connectProblem(.unavailable)?.contains("Couldn't reach") == true)
-    #expect(PaprikaConnectionCopy.checkProblem(.rejected) == nil)
+    #expect(
+      PaprikaConnectionCopy.connectProblem(.rejected(reason: "Account not found."))
+        == "Paprika didn't accept that email and password. Paprika said: \"Account not found.\""
+    )
+    #expect(PaprikaConnectionCopy.connectProblem(.unavailable(httpStatus: 403))?.contains("turned away") == true)
+    #expect(PaprikaConnectionCopy.connectProblem(.unavailable(httpStatus: nil))?.contains("Couldn't reach") == true)
+    #expect(PaprikaConnectionCopy.checkProblem(.rejected(reason: nil)) == nil)
     #expect(PaprikaConnectionCopy.checkProblem(.connected) == nil)
   }
 }
