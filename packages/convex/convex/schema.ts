@@ -21,6 +21,7 @@ import {
 import { boardArchivesTable, manualNotesTable } from './home/schema';
 import { spendingInsightDeliveryAttemptsTable, spendingInsightsTable } from './insights/schema';
 import { recipesTable, weeklyMealAgentRunsTable, weeklyMealPlansTable } from './meals/schema';
+import { paprikaConnectionsTable } from './paprika/schema';
 import { scheduleEventsTable, scheduleReminderAttemptsTable, scheduleSyncMetaTable } from './schedule/schema';
 
 export default defineSchema({
@@ -319,5 +320,6 @@ export default defineSchema({
     .index('by_list_id', ['listId'])
     .index('by_item_id', ['listItemId'])
     .index('by_property_id', ['listPropertyId'])
-    .index('by_item_id_and_property_id', ['listItemId', 'listPropertyId'])
+    .index('by_item_id_and_property_id', ['listItemId', 'listPropertyId']),
+  paprikaConnections: paprikaConnectionsTable
 });

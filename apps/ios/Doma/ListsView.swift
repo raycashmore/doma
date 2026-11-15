@@ -9,6 +9,7 @@ struct ListsView: View {
   @State private var compactColumn: NavigationSplitViewColumn
   @State private var defaultListId: DomaListSummary.ID?
   @State private var isCreatingList = false
+  @State private var isShowingPaprika = false
   @State private var listCreatedInSheet: DomaListSummary.ID?
   @State private var createdListId: DomaListSummary.ID?
   @State private var deleteFailed = false
@@ -39,6 +40,7 @@ struct ListsView: View {
         .navigationTitle("Lists")
         .toolbar {
           Menu("More", systemImage: "ellipsis") {
+            Button("Paprika", systemImage: "basket") { isShowingPaprika = true }
             Button("Sign out") {
               Task { await session.signOut() }
             }
@@ -49,6 +51,9 @@ struct ListsView: View {
     }
     .tint(DomaColor.warmTextPrimary)
     .environment(\.isSplitLayout, isSplit)
+    .sheet(isPresented: $isShowingPaprika) {
+      PaprikaSheet(paprika: session.paprika, lists: session.lists)
+    }
     .sheet(isPresented: $isCreatingList, onDismiss: openListCreatedInSheet) {
       NewListSheet(lists: session.lists) { id in
         // A save can outlive its sheet, and then no dismissal is left to open the list.

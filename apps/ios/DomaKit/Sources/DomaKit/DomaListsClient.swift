@@ -299,6 +299,6 @@ private struct CreatedList: Decodable {
 }
 
 /// Accepts any mutation result; ConvexMobile's void overload only tolerates a string or null.
-private struct IgnoredResult: Decodable {
+struct IgnoredResult: Decodable {
   init(from decoder: any Decoder) throws {}
 }

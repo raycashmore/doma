@@ -7,7 +7,9 @@ order), set the default list, add, check off, reorder and delete items, clear co
 and property values, with changes arriving live from Convex. Active items can be grouped by a
 property (saved per person, as on the web), Auto Categorise sorts Unassigned items, and pasting
 several lines into Add an item previews them before adding them all. Submitting text with commas
-or line breaks adds one item for each. Property definitions and AI
+or line breaks adds one item for each. Each person can connect their own Paprika account (More > Paprika): Doma keeps
+Paprika's sign-in token on the server, never the password, and remembers which Paprika grocery list
+and which Doma list to use. Importing items is not built yet. Property definitions and AI
 categorisation setup are still managed on the web. Destructive actions ask for confirmation, unlike the web app, because the
 app writes to the household's real lists. Face ID (or the device passcode) unlocks it on
 every cold launch and after 5 minutes in the background. The lock covers the

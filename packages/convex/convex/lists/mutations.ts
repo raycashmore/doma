@@ -10,6 +10,7 @@ import {
   createListItemsHandler,
   deleteListItemHandler,
   deleteListSubtree,
+  findSharedShoppingList,
   renameListItemHandler,
   reorderListItemHandler,
   setListItemNotesHandler,
@@ -106,13 +107,8 @@ export async function sendItemsToSharedShoppingListHandler(
     throw new Error('Shopping cart items must be non-empty and normalized');
   }
 
-  const sharedLists = await ctx.db
-    .query('lists')
-    .withIndex('by_visibility', (q) => q.eq('visibility', 'shared'))
-    .collect();
-  const matches = sharedLists.filter((list) => list.name === 'Shopping list');
-  const [match] = matches;
-  if (!match || matches.length !== 1) return { status: 'unavailable' as const };
+  const match = await findSharedShoppingList(ctx);
+  if (!match) return { status: 'unavailable' as const };
 
   const items = await createItems(ctx, { listPublicId: match.publicId, titles: args.titles });
   return { status: 'created' as const, count: items.length };
