@@ -41,7 +41,8 @@ export function ShoppingReview({ rows, sending, error, onRemove, onSend, onClose
         )}
       </div>
       <p className="text-[10px] leading-4 text-warm-text-secondary">
-        Exact ingredient lines from this week. Remove anything you do not need, then send the cart to Shopping.
+        Exact ingredient lines from this week. Remove anything you do not need, then send the cart to your Groceries
+        list.
       </p>
       <div className="min-h-0 flex-1 overflow-y-auto">
         {rows.length ? (

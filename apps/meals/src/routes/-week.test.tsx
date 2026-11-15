@@ -310,7 +310,7 @@ describe('WeekRoute', () => {
     });
 
     expect(onSendToLists).toHaveBeenCalledWith(['4 wraps', '1 carrot', '200 g hummus', '4 wraps', '1 tomato']);
-    expect(screen.getByRole('status').textContent).toContain('Added 5 items to Shopping.');
+    expect(screen.getByRole('status').textContent).toContain('Added 5 items to your Groceries list.');
   });
 
   it('keeps the mobile shopping cart open when sending fails', async () => {
@@ -348,7 +348,7 @@ describe('WeekRoute', () => {
 
     const failedReview = screen.getByLabelText('Shopping review');
     expect(within(failedReview).getByRole('alert').textContent).toContain(
-      'Items could not be added to Shopping. Try again.'
+      'Items could not be added to your Groceries list. Try again.'
     );
   });
 
@@ -384,7 +384,7 @@ describe('WeekRoute', () => {
     });
 
     expect(within(screen.getByLabelText('Shopping review')).getByRole('alert').textContent).toContain(
-      'Set up exactly one shared list named Shopping before sending.'
+      'Choose a Groceries list in the Doma app, or name one shared list "Shopping list", before sending.'
     );
     expect(screen.queryByRole('status')).toBeNull();
   });

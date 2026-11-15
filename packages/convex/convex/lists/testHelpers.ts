@@ -212,3 +212,47 @@ export function getFutureHandler<THandler extends AsyncHandler>(
     return (handler as THandler)(...args);
   }) as THandler;
 }
+
+export type FakeRow = Record<string, unknown> & { _id: string };
+
+/** An in-memory db for handlers that use get, insert, patch, delete and equality indexes. */
+export function createFakeDb(seed: Record<string, FakeRow[]>) {
+  const tables: Record<string, FakeRow[]> = structuredClone(seed);
+  let nextId = 1;
+  const all = () => Object.values(tables).flat();
+
+  const db = {
+    get: async (id: string) => all().find((row) => row._id === id) ?? null,
+    insert: async (table: string, row: Record<string, unknown>) => {
+      const _id = `${table}_${nextId++}`;
+      (tables[table] ??= []).push({ ...row, _id });
+      return _id;
+    },
+    patch: async (id: string, patch: Record<string, unknown>) => {
+      const row = all().find((candidate) => candidate._id === id);
+      if (row) Object.assign(row, patch);
+    },
+    delete: async (id: string) => {
+      for (const table of Object.keys(tables)) tables[table] = tables[table]!.filter((row) => row._id !== id);
+    },
+    query: (table: string) => ({
+      withIndex: (_index: string, apply: (q: { eq: (field: string, value: unknown) => unknown }) => void) => {
+        const eqs: Record<string, unknown> = {};
+        const builder = {
+          eq: (field: string, value: unknown) => {
+            eqs[field] = value;
+            return builder;
+          }
+        };
+        apply(builder);
+        const matches = (row: FakeRow) => Object.entries(eqs).every(([field, value]) => row[field] === value);
+        return {
+          unique: async () => (tables[table] ?? []).find(matches) ?? null,
+          collect: async () => (tables[table] ?? []).filter(matches)
+        };
+      }
+    })
+  };
+
+  return { db, tables };
+}

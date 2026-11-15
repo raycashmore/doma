@@ -28,6 +28,7 @@ final class DomaSession {
 
   private(set) var phase: Phase = .loading
   let lists: DomaListsClient
+  let paprika: DomaPaprikaClient
   /// A list a widget asked to open, kept here so signing out drops it.
   let openRequest = ListOpenRequest()
 
@@ -50,6 +51,7 @@ final class DomaSession {
     )
     convex = ConvexClientWithAuth(deploymentUrl: configuration.convexURL, authProvider: DomaClerkConvexAuthProvider())
     lists = DomaListsClient(convex: convex)
+    paprika = DomaPaprikaClient(convex: convex)
 
     authStateSubscription = convex.authState
       .receive(on: DispatchQueue.main)

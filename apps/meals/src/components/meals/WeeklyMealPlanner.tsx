@@ -128,12 +128,12 @@ export function WeeklyMealPlanner({
     try {
       const createdCount = await onSendToLists(shoppingRows.map((row) => row.line));
       setCartOpen(false);
-      setStatus(`Added ${createdCount} ${createdCount === 1 ? 'item' : 'items'} to Shopping.`);
+      setStatus(`Added ${createdCount} ${createdCount === 1 ? 'item' : 'items'} to your Groceries list.`);
     } catch (error) {
       const message =
         error instanceof SharedShoppingListUnavailableError
-          ? 'Set up exactly one shared list named Shopping before sending.'
-          : 'Items could not be added to Shopping. Try again.';
+          ? 'Choose a Groceries list in the Doma app, or name one shared list "Shopping list", before sending.'
+          : 'Items could not be added to your Groceries list. Try again.';
       setSendToListsError(message);
     } finally {
       sendingToListsRef.current = false;

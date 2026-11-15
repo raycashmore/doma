@@ -34,6 +34,16 @@ export async function findListByPublicId(ctx: Pick<ListsReadCtx, 'db'>, publicId
     .unique();
 }
 
+/** The one shared list named "Shopping list", or null when there is none or more than one. */
+export async function findSharedShoppingList(ctx: Pick<ListsReadCtx, 'db'>) {
+  const sharedLists = await ctx.db
+    .query('lists')
+    .withIndex('by_visibility', (q) => q.eq('visibility', 'shared'))
+    .collect();
+  const matches = sharedLists.filter((list) => list.name === 'Shopping list');
+  return matches.length === 1 ? (matches[0] ?? null) : null;
+}
+
 export async function readListItems(ctx: Pick<ListsReadCtx, 'db'>, listId: Id<'lists'>) {
   return ctx.db
     .query('listItems')

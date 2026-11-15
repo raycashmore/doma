@@ -8,7 +8,9 @@ struct ListsView: View {
   @State private var selectedListId: DomaListSummary.ID?
   @State private var compactColumn: NavigationSplitViewColumn
   @State private var defaultListId: DomaListSummary.ID?
+  @State private var groceriesListId: DomaListSummary.ID?
   @State private var isCreatingList = false
+  @State private var isShowingPaprika = false
   @State private var listCreatedInSheet: DomaListSummary.ID?
   @State private var createdListId: DomaListSummary.ID?
   @State private var deleteFailed = false
@@ -39,6 +41,7 @@ struct ListsView: View {
         .navigationTitle("Lists")
         .toolbar {
           Menu("More", systemImage: "ellipsis") {
+            Button("Paprika", systemImage: "basket") { isShowingPaprika = true }
             Button("Sign out") {
               Task { await session.signOut() }
             }
@@ -49,6 +52,9 @@ struct ListsView: View {
     }
     .tint(DomaColor.warmTextPrimary)
     .environment(\.isSplitLayout, isSplit)
+    .sheet(isPresented: $isShowingPaprika) {
+      PaprikaSheet(paprika: session.paprika)
+    }
     .sheet(isPresented: $isCreatingList, onDismiss: openListCreatedInSheet) {
       NewListSheet(lists: session.lists) { id in
         // A save can outlive its sheet, and then no dismissal is left to open the list.
@@ -84,6 +90,11 @@ struct ListsView: View {
       await followLiveQuery("Default list", subscribe: session.lists.defaultList) {
         defaultListId = nil
       } onValue: { defaultListId = $0?.publicId }
+    }
+    .task {
+      await followLiveQuery("Groceries list", subscribe: session.lists.groceriesList) {
+        groceriesListId = nil
+      } onValue: { groceriesListId = $0?.publicId }
     }
   }
 
@@ -142,7 +153,8 @@ struct ListsView: View {
         items: openItems?.list.id == selectedList.id && openGrouping?.listId == selectedList.id ? openItems : nil,
         savedGroupingId: openGrouping?.propertyId,
         isUnavailable: unavailableListId == selectedList.id,
-        isDefault: selectedList.id == defaultListId
+        isDefault: selectedList.id == defaultListId,
+        isGroceries: selectedList.id == groceriesListId
       ) {
         await delete(selectedList)
       }
