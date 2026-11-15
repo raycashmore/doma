@@ -13,7 +13,12 @@ enum DomaFont {
   case button
   case display
   case displaySmall
-  /// A title in the navigation bar once its large title has scrolled away.
+  /// The Today card's headline on the noticeboard.
+  case cardHeadline
+  /// A noticeboard card's small capitals line saying why it is there.
+  case kicker
+  /// A serif title at body size: a noticeboard card's title, or the navigation bar title once
+  /// its large title has scrolled away.
   case displayInline
 
   private struct Face {
@@ -39,6 +44,9 @@ enum DomaFont {
       Face(name: Self.merriweatherBold, boldName: Self.merriweatherExtraBold, size: 34, textStyle: .largeTitle)
     case .displaySmall:
       Face(name: Self.merriweatherBold, boldName: Self.merriweatherExtraBold, size: 26, textStyle: .title)
+    case .cardHeadline:
+      Face(name: Self.merriweatherBold, boldName: Self.merriweatherExtraBold, size: 20, textStyle: .title3)
+    case .kicker: Face(name: "DMSans-SemiBold", boldName: "DMSans-Bold", size: 12, textStyle: .caption)
     case .displayInline:
       Face(name: Self.merriweatherBold, boldName: Self.merriweatherExtraBold, size: 17, textStyle: .headline)
     }

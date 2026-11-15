@@ -6,6 +6,8 @@ struct RootView: View {
   @Environment(\.legibilityWeight) private var legibilityWeight
   @State private var navigationBarRevision = 0
   @State private var refreshHold = NavigationBarRefreshHold()
+  /// Here, so rebuilding the navigation bars below keeps the open tab.
+  @State private var tab = AppTab.home
 
   var body: some View {
     Group {
@@ -16,7 +18,7 @@ struct RootView: View {
         SignInView()
       case .signedIn:
         // Navigation bars read their font when created, so a text setting change needs new ones.
-        ListsView(session: session)
+        MainTabView(session: session, selection: $tab)
           .id(navigationBarRevision)
           .environment(refreshHold)
       }
