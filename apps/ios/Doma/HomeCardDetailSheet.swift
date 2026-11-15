@@ -34,6 +34,8 @@ struct HomeCardDetailSheet: View {
       }
     }
     .tint(DomaColor.warmTextPrimary)
+    // Closing mid-archive would hide a failure.
+    .interactiveDismissDisabled(isArchiving)
     .confirmationDialog(
       "Archive this card?", isPresented: $isConfirmingArchive, titleVisibility: .visible
     ) {
@@ -142,6 +144,7 @@ struct HomeCardDetailSheet: View {
     VStack(spacing: 10) {
       if case .note(let note) = item {
         Button { onEdit(note) } label: { actionLabel("Edit note") }
+          .disabled(isArchiving)
       }
       Button { isConfirmingArchive = true } label: { actionLabel(isArchiving ? "Archiving…" : "Archive") }
         .disabled(isArchiving)

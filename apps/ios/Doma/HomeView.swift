@@ -6,10 +6,11 @@ struct HomeView: View {
   let session: DomaSession
   @State private var board: DomaHomeBoard?
   @State private var loadFailed = false
-  /// Goes up each minute, on return to the app and on Retry. The server works out today, what is
-  /// overdue and what is still to come when the query runs, and runs it again only when its data or
-  /// arguments change, so a new token keeps the board current as time passes.
-  @State private var refreshToken = 0
+  /// The current minute, set on appear, each minute and on return to the app; Retry moves it on.
+  /// The server works out today, what is overdue and what is still to come when the query runs, and
+  /// Convex reuses a result until its data or arguments change. A token from the clock never repeats
+  /// an old one (the web counts from 0), so the board is at most a minute behind.
+  @State private var refreshToken = HomeView.currentMinute()
   @State private var openItem: DomaBoardItem?
   @State private var editor: EditorRequest?
   /// A note to edit once its detail sheet has gone, since two sheets can't show at once.
@@ -43,6 +44,7 @@ struct HomeView: View {
         }
     }
     .tint(DomaColor.warmTextPrimary)
+    .onAppear { refreshToken = Self.currentMinute() }
     .task(id: refreshToken) {
       await followLiveQuery("Noticeboard", subscribe: { session.home.board(refreshToken: Double(refreshToken)) }) {
         loadFailed = true
@@ -56,11 +58,11 @@ struct HomeView: View {
     .task {
       while !Task.isCancelled {
         try? await Task.sleep(for: .seconds(60))
-        refreshToken += 1
+        refreshToken = Self.currentMinute()
       }
     }
     .onChange(of: scenePhase) { _, phase in
-      if phase == .active { refreshToken += 1 }
+      if phase == .active { refreshToken = Self.currentMinute() }
     }
     .sheet(item: $openItem, onDismiss: openPendingEditor) { item in
       if let board {
@@ -149,6 +151,10 @@ struct HomeView: View {
       HomeCard(item: item, presentation: presentation)
     }
     .buttonStyle(.plain)
+  }
+
+  private static func currentMinute() -> Int {
+    Int(Date.now.timeIntervalSince1970 / 60)
   }
 
   private func openPendingEditor() {
