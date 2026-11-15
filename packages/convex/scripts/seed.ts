@@ -5,8 +5,7 @@
  *       or: pnpm seed   (root convenience alias)
  *       or: pnpm seed:url -- https://<preview>.convex.cloud
  *
- * Uses the first positional argument, or loads env from ../../.env.local
- * (CONVEX_URL or NEXT_PUBLIC_CONVEX_URL or VITE_CONVEX_URL).
+ * Calls the internal seed functions through the Convex CLI (see convexRun.ts).
  * Every money column is converted to integer cents via toCents().
  */
 
@@ -14,20 +13,18 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { api } from '@repo/convex';
+import { internal } from '@repo/convex';
 import { toCents } from '@repo/convex/helpers';
-import { ConvexHttpClient } from 'convex/browser';
 import XLSX from 'xlsx';
 
 import { budgetCaptureDatesFromCaptureDate } from '../convex/budgetDisplayMonth';
 import { parseSpendingSummaryRows } from '../convex/spendingSummary';
-import { getTargetConvexUrl } from './targetUrl';
+import { runInternalMutation } from './convexRun';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 XLSX.set_fs(fs);
 
-const client = new ConvexHttpClient(getTargetConvexUrl());
 const XLSX_PATH = path.resolve(__dirname, 'CREAM.xlsx');
 
 type SpreadsheetRow = unknown[];
@@ -144,7 +141,7 @@ async function main() {
     'cryptoTransactions',
     'cryptoSummaries'
   ] as const) {
-    const { deleted } = await client.mutation(api.seed.clearTable, { table });
+    const { deleted } = runInternalMutation(internal.seed.clearTable, { table });
     console.log(`  cleared ${table}: ${deleted}`);
   }
 
@@ -169,7 +166,7 @@ async function main() {
 
     for (let i = 0; i < rows.length; i += 100) {
       const batch = rows.slice(i, i + 100);
-      const result = await client.mutation(api.seed.seedCurrentAccounts, {
+      const result = runInternalMutation(internal.seed.seedCurrentAccounts, {
         rows: batch
       });
       console.log(`  currentAccounts: inserted ${result.inserted} (batch ${Math.floor(i / 100) + 1})`);
@@ -193,7 +190,7 @@ async function main() {
 
     for (let i = 0; i < rows.length; i += 100) {
       const batch = rows.slice(i, i + 100);
-      const result = await client.mutation(api.seed.seedCashAccounts, {
+      const result = runInternalMutation(internal.seed.seedCashAccounts, {
         rows: batch
       });
       console.log(`  cashAccounts: inserted ${result.inserted} (batch ${Math.floor(i / 100) + 1})`);
@@ -222,7 +219,7 @@ async function main() {
 
     for (let i = 0; i < rows.length; i += 100) {
       const batch = rows.slice(i, i + 100);
-      const result = await client.mutation(api.seed.seedUkAccounts, {
+      const result = runInternalMutation(internal.seed.seedUkAccounts, {
         rows: batch
       });
       console.log(`  ukAccounts: inserted ${result.inserted} (batch ${Math.floor(i / 100) + 1})`);
@@ -250,7 +247,7 @@ async function main() {
 
     for (let i = 0; i < rows.length; i += 100) {
       const batch = rows.slice(i, i + 100);
-      const result = await client.mutation(api.seed.seedSuperAccounts, {
+      const result = runInternalMutation(internal.seed.seedSuperAccounts, {
         rows: batch
       });
       console.log(`  superAccounts: inserted ${result.inserted} (batch ${Math.floor(i / 100) + 1})`);
@@ -284,7 +281,7 @@ async function main() {
 
     for (let i = 0; i < rows.length; i += 100) {
       const batch = rows.slice(i, i + 100);
-      const result = await client.mutation(api.seed.seedInvestmentAccounts, {
+      const result = runInternalMutation(internal.seed.seedInvestmentAccounts, {
         rows: batch
       });
       console.log(`  investmentAccounts: inserted ${result.inserted} (batch ${Math.floor(i / 100) + 1})`);
@@ -303,7 +300,7 @@ async function main() {
     }, undefined);
 
     if (latestRow) {
-      const result = await client.mutation(api.seed.seedMortgageConfig, {
+      const result = runInternalMutation(internal.seed.seedMortgageConfig, {
         config: {
           key: 'default',
           price: toCents(num(latestRow[16])),
@@ -342,7 +339,7 @@ async function main() {
 
     for (let i = 0; i < rows.length; i += 100) {
       const batch = rows.slice(i, i + 100);
-      const result = await client.mutation(api.seed.seedMortgage, {
+      const result = runInternalMutation(internal.seed.seedMortgage, {
         rows: batch
       });
       console.log(`  mortgage: inserted ${result.inserted} (batch ${Math.floor(i / 100) + 1})`);
@@ -356,7 +353,7 @@ async function main() {
 
     for (let i = 0; i < rows.length; i += 100) {
       const batch = rows.slice(i, i + 100);
-      const result = await client.mutation(api.seed.seedBudget, {
+      const result = runInternalMutation(internal.seed.seedBudget, {
         rows: batch
       });
       console.log(`  budget: inserted ${result.inserted} (batch ${Math.floor(i / 100) + 1})`);
@@ -372,7 +369,7 @@ async function main() {
 
     for (let i = 0; i < rows.length; i += 100) {
       const batch = rows.slice(i, i + 100);
-      const result = await client.mutation(api.seed.seedSpendCategoryBreakdown, {
+      const result = runInternalMutation(internal.seed.seedSpendCategoryBreakdown, {
         rows: batch
       });
       console.log(`  spendCategoryBreakdown: inserted ${result.inserted} (batch ${Math.floor(i / 100) + 1})`);
@@ -418,7 +415,7 @@ async function main() {
     }
 
     if (txns.length > 0) {
-      const result = await client.mutation(api.seed.seedCryptoTransactions, {
+      const result = runInternalMutation(internal.seed.seedCryptoTransactions, {
         rows: txns
       });
       console.log(`  cryptoTransactions (platform_a): inserted ${result.inserted}`);
@@ -481,7 +478,7 @@ async function main() {
       }
     }
 
-    const result = await client.mutation(api.seed.seedCryptoSummaries, {
+    const result = runInternalMutation(internal.seed.seedCryptoSummaries, {
       rows: summaries
     });
     console.log(`  cryptoSummaries: inserted ${result.inserted}`);

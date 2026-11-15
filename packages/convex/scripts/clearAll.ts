@@ -4,12 +4,9 @@
  *       or: pnpm seed:url:clear -- https://<preview>.convex.cloud
  */
 
-import { api } from '@repo/convex';
-import { ConvexHttpClient } from 'convex/browser';
+import { internal } from '@repo/convex';
 
-import { getTargetConvexUrl } from './targetUrl';
-
-const client = new ConvexHttpClient(getTargetConvexUrl());
+import { runInternalMutation } from './convexRun';
 
 const tables = [
   'currentAccounts',
@@ -27,7 +24,7 @@ const tables = [
 
 async function main() {
   for (const table of tables) {
-    const { deleted } = await client.mutation(api.seed.clearTable, { table });
+    const { deleted } = runInternalMutation(internal.seed.clearTable, { table });
     console.log(`  ${table}: deleted ${deleted}`);
   }
   console.log('\nClear complete.');

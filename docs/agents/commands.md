@@ -67,8 +67,12 @@ workbook is ignored by git and must exist locally before seeding.
 Use `pnpm seed` for the local Convex deployment configured by `.env.local`.
 The seed script clears seedable tables before inserting workbook data.
 
-Use `pnpm seed:url` for an ephemeral Convex Preview deployment. Pass the Convex
-cloud URL as the first argument:
+The seed functions are internal, so the scripts call them through `convex run`,
+which acts as an admin of the deployment. A signed-out HTTP call cannot reach
+them. Seeding a cloud deployment needs a Convex CLI login with access to it.
+
+Use `pnpm seed:url` for another deployment. Pass its Convex cloud URL, deployment
+name or reference (such as `prod`) as the first argument:
 
 ```bash
 pnpm seed:url -- https://dynamic-kingfisher-926.convex.cloud

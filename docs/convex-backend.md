@@ -8,6 +8,10 @@ Seed scripts run locally and read a local excel spreadsheet, which is
 ignored by git. The seed command clears seedable finance tables on the target
 deployment before inserting workbook data.
 
+The seed functions in `convex/seed.ts` are internal. The scripts call them with
+`convex run`, which acts as an admin of the target deployment. A cloud target needs
+a Convex CLI login with access to it.
+
 For a local Convex deployment:
 
 ```bash
