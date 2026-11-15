@@ -41,6 +41,7 @@ import type * as email_triage from "../email/triage.js";
 import type * as helpers from "../helpers.js";
 import type * as home_activeBoard from "../home/activeBoard.js";
 import type * as home_archives from "../home/archives.js";
+import type * as home_devFixtures from "../home/devFixtures.js";
 import type * as home_manualNotes from "../home/manualNotes.js";
 import type * as insights_ai from "../insights/ai.js";
 import type * as insights_assembly from "../insights/assembly.js";
@@ -138,6 +139,7 @@ declare const fullApi: ApiFromModules<{
   helpers: typeof helpers;
   "home/activeBoard": typeof home_activeBoard;
   "home/archives": typeof home_archives;
+  "home/devFixtures": typeof home_devFixtures;
   "home/manualNotes": typeof home_manualNotes;
   "insights/ai": typeof insights_ai;
   "insights/assembly": typeof insights_assembly;

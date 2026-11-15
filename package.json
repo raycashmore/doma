@@ -24,6 +24,7 @@
     "convex:env-names": "scripts/convex-env-names.sh",
     "seed": "pnpm --filter @repo/convex seed",
     "seed:clear": "pnpm --filter @repo/convex seed:clear",
+    "seed:home": "pnpm --filter @repo/convex seed:home",
     "seed:url": "pnpm --filter @repo/convex seed",
     "seed:url:clear": "pnpm --filter @repo/convex seed:clear"
   },
