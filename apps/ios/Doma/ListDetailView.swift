@@ -9,6 +9,7 @@ struct ListDetailView: View {
   let savedGroupingId: String?
   let isUnavailable: Bool
   let isDefault: Bool
+  let isGroceries: Bool
   let onDelete: () async -> Void
   /// A choice still saving, shown in place of the saved one so the menu does not flick back.
   @State private var pendingGroupingId: String??
@@ -40,7 +41,7 @@ struct ListDetailView: View {
     .domaHeaderedSheet(title: title, corners: isSplitLayout ? .topLeading : .top)
     .navigationTitle(list.name)
     .toolbar {
-      ListActionsMenu(lists: lists, list: list, isDefault: isDefault, onDelete: onDelete) {
+      ListActionsMenu(lists: lists, list: list, isDefault: isDefault, isGroceries: isGroceries, onDelete: onDelete) {
         if let items, !items.properties.isEmpty {
           GroupByMenu(
             properties: items.properties,

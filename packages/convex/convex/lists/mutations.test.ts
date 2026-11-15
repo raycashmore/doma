@@ -92,7 +92,8 @@ function createMutationCtx(
   items: readonly TestListItemRow[] = [],
   properties: readonly TestListPropertyRow[] = [],
   values: readonly TestListItemPropertyValueRow[] = [],
-  preferences: readonly TestPreferenceRow[] = []
+  preferences: readonly TestPreferenceRow[] = [],
+  groceriesDefaults: ReadonlyArray<{ userId: string; listId: string }> = []
 ) {
   const state = {
     rows: [...rows],
@@ -118,6 +119,7 @@ function createMutationCtx(
       }
     },
     db: {
+      get: async (id: string) => state.rows.find((row) => row._id === id) ?? null,
       insert: async (table: string, row: Record<string, unknown>) => {
         expect(table).toBe('lists');
         insertedRows.push(row);
@@ -165,6 +167,21 @@ function createMutationCtx(
               return {
                 unique: async () => state.rows.find((row) => row.publicId === requestedPublicId) ?? null
               };
+            }
+          };
+        }
+
+        if (table === 'groceriesListDefaults') {
+          return {
+            withIndex: (_index: string, apply: (q: { eq: (field: string, value: string) => unknown }) => unknown) => {
+              let userId = '';
+              apply({
+                eq: (_field, value) => {
+                  userId = value;
+                  return value;
+                }
+              });
+              return { unique: async () => groceriesDefaults.find((row) => row.userId === userId) ?? null };
             }
           };
         }
@@ -379,6 +396,23 @@ describe('sendItemsToSharedShoppingList', () => {
       status: 'unavailable'
     });
     expect(createItems).not.toHaveBeenCalled();
+  });
+
+  it('writes to the person’s chosen Groceries list ahead of the list named "Shopping list"', async () => {
+    const weekly = { ...sharedList, _id: 'list_row_weekly', publicId: 'list_weekly', name: 'Weekly shop' };
+    const { ctx } = createMutationCtx(
+      { subject: 'user_123' },
+      [shoppingList, weekly],
+      [],
+      [],
+      [],
+      [],
+      [{ userId: 'user_123', listId: weekly._id }]
+    );
+    const createItems = vi.fn().mockResolvedValue(titles.map((title) => ({ title })));
+
+    await sendItemsToSharedShoppingListHandler(ctx as never, { titles }, createItems);
+    expect(createItems).toHaveBeenCalledWith(ctx, { listPublicId: 'list_weekly', titles });
   });
 
   it('writes the exact ordered titles to the single matching shared list', async () => {

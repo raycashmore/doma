@@ -3,6 +3,7 @@ import { customAlphabet } from 'nanoid/non-secure';
 
 import { mutation, type MutationCtx } from '../_generated/server';
 import { scheduleListCategorisation } from './categorisation';
+import { readGroceriesListForUser } from './groceries';
 import {
   clearCompletedListItemsHandler,
   completeListItemHandler,
@@ -10,7 +11,6 @@ import {
   createListItemsHandler,
   deleteListItemHandler,
   deleteListSubtree,
-  findSharedShoppingList,
   renameListItemHandler,
   reorderListItemHandler,
   setListItemNotesHandler,
@@ -107,7 +107,7 @@ export async function sendItemsToSharedShoppingListHandler(
     throw new Error('Shopping cart items must be non-empty and normalized');
   }
 
-  const match = await findSharedShoppingList(ctx);
+  const match = await readGroceriesListForUser(ctx, identity.subject);
   if (!match) return { status: 'unavailable' as const };
 
   const items = await createItems(ctx, { listPublicId: match.publicId, titles: args.titles });

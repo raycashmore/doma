@@ -7,8 +7,8 @@ public struct DomaPaprikaConnection: Decodable, Equatable, Sendable {
   public let status: Status
   public let groceryLists: [GroceryList]
   public let sourceListUid: String?
-  /// `nil` when no Doma list is chosen, or the chosen one was deleted or is no longer visible.
-  public let targetList: DomaDefaultList?
+  /// Where items go: the person's Groceries list, or `nil` when they have none.
+  public let groceriesList: DomaDefaultList?
 
   public enum Status: String, Decodable, Sendable {
     case connected
@@ -65,11 +65,6 @@ public struct DomaPaprikaClient: Sendable {
 
   public func setSourceList(uid: String) async throws {
     let _: IgnoredResult = try await convex.mutation("paprika/connection:setSourceList", with: ["uid": uid])
-  }
-
-  public func setTargetList(publicId: String) async throws {
-    let _: IgnoredResult = try await convex.mutation(
-      "paprika/connection:setTargetList", with: ["publicId": publicId])
   }
 
   public func disconnect() async throws {

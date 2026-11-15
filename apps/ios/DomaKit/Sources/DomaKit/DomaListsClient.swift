@@ -219,6 +219,16 @@ public struct DomaListsClient: Sendable {
       "lists/preferences:reorderList", with: ["publicId": publicId, "targetIndex": Double(targetIndex)])
   }
 
+  /// Where recipe ingredients and Paprika items go. Publishes the chosen list, else the one shared
+  /// list named "Shopping list", else `nil`.
+  public func groceriesList() -> AnyPublisher<DomaDefaultList?, ClientError> {
+    convex.subscribe(to: "lists/groceries:getGroceriesList")
+  }
+
+  public func setGroceriesList(publicId: String) async throws {
+    let _: IgnoredResult = try await convex.mutation("lists/groceries:setGroceriesList", with: ["publicId": publicId])
+  }
+
   public func setDefaultList(publicId: String) async throws {
     let _: IgnoredResult = try await convex.mutation("lists/bot:setDefaultList", with: ["publicId": publicId])
   }

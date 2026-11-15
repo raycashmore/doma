@@ -283,6 +283,15 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number()
   }).index('by_user', ['userId']),
+  // Per-household-user Groceries list, alongside the default (inbox) list:
+  // where recipe ingredients and Paprika items go. Stored by list id; when
+  // unset, the single shared list named "Shopping list" stands in.
+  groceriesListDefaults: defineTable({
+    userId: v.string(),
+    listId: v.id('lists'),
+    createdAt: v.number(),
+    updatedAt: v.number()
+  }).index('by_user', ['userId']),
   // Per-household-user view preference. This is deliberately separate from
   // Lists so people can group the same shared list differently.
   listGroupingPreferences: defineTable({

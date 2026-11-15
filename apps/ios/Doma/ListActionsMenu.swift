@@ -6,6 +6,8 @@ struct ListActionsMenu<Grouping: View>: View {
   let lists: DomaListsClient
   let list: DomaListSummary
   let isDefault: Bool
+  /// Where recipe ingredients and Paprika items go.
+  let isGroceries: Bool
   let onDelete: () async -> Void
   @ViewBuilder let grouping: () -> Grouping
   @State private var isRenaming = false
@@ -26,6 +28,10 @@ struct ListActionsMenu<Grouping: View>: View {
         Task { await save { try await lists.setDefaultList(publicId: list.publicId) } }
       }
       .disabled(isDefault)
+      Button(isGroceries ? "Groceries List" : "Set as Groceries List", systemImage: isGroceries ? "checkmark" : "cart") {
+        Task { await save { try await lists.setGroceriesList(publicId: list.publicId) } }
+      }
+      .disabled(isGroceries)
       Button("Delete List", systemImage: "trash", role: .destructive) { isConfirmingDelete = true }
     }
     .alert("Rename List", isPresented: $isRenaming) {

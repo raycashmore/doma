@@ -54,6 +54,7 @@ import type * as lists_auth from "../lists/auth.js";
 import type * as lists_bot from "../lists/bot.js";
 import type * as lists_botModel from "../lists/botModel.js";
 import type * as lists_categorisation from "../lists/categorisation.js";
+import type * as lists_groceries from "../lists/groceries.js";
 import type * as lists_groupingPreferences from "../lists/groupingPreferences.js";
 import type * as lists_items from "../lists/items.js";
 import type * as lists_model from "../lists/model.js";
@@ -147,6 +148,7 @@ declare const fullApi: ApiFromModules<{
   "lists/bot": typeof lists_bot;
   "lists/botModel": typeof lists_botModel;
   "lists/categorisation": typeof lists_categorisation;
+  "lists/groceries": typeof lists_groceries;
   "lists/groupingPreferences": typeof lists_groupingPreferences;
   "lists/items": typeof lists_items;
   "lists/model": typeof lists_model;

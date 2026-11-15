@@ -12,8 +12,7 @@ import {
   readTokenForUser,
   refreshGroceryListsForUser,
   saveConnectionForUser,
-  setSourceListForUser,
-  setTargetListForUser
+  setSourceListForUser
 } from './model';
 
 // Calls to Paprika happen only when the person taps Connect or Check
@@ -100,11 +99,6 @@ export const checkConnection = action({
 export const setSourceList = mutation({
   args: { uid: v.string() },
   handler: async (ctx, { uid }) => setSourceListForUser(ctx, { userId: await requireUserId(ctx), uid })
-});
-
-export const setTargetList = mutation({
-  args: { publicId: v.string() },
-  handler: async (ctx, { publicId }) => setTargetListForUser(ctx, { userId: await requireUserId(ctx), publicId })
 });
 
 export const disconnect = mutation({

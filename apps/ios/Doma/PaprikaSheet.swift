@@ -1,14 +1,12 @@
 import DomaKit
 import SwiftUI
 
-/// Connect the signed-in person's own Paprika account, and choose where its items come from and go.
+/// Connect the signed-in person's own Paprika account and choose which Paprika list items come from.
 struct PaprikaSheet: View {
   let paprika: DomaPaprikaClient
-  let lists: DomaListsClient
   @Environment(\.dismiss) private var dismiss
   @State private var connection: DomaPaprikaConnection??
   @State private var loadFailed = false
-  @State private var doma: [DomaListSummary] = []
 
   var body: some View {
     NavigationStack {
@@ -23,7 +21,7 @@ struct PaprikaSheet: View {
         case .signIn(let isReconnect):
           PaprikaSignInForm(paprika: paprika, isReconnect: isReconnect)
         case .connected(let connection):
-          PaprikaConnectedForm(paprika: paprika, connection: connection, domaLists: doma)
+          PaprikaConnectedForm(paprika: paprika, connection: connection)
         }
       }
       .domaScreenBackground()
@@ -41,9 +39,6 @@ struct PaprikaSheet: View {
       await followLiveQuery(
         "paprika connection", subscribe: paprika.connection, onFailure: { loadFailed = true }
       ) { connection = .some($0) }
-    }
-    .task {
-      await followLiveQuery("lists for paprika", subscribe: lists.visibleLists, onFailure: {}) { doma = $0 }
     }
   }
 }
@@ -131,10 +126,8 @@ private struct PaprikaSignInForm: View {
 private struct PaprikaConnectedForm: View {
   let paprika: DomaPaprikaClient
   let connection: DomaPaprikaConnection
-  let domaLists: [DomaListSummary]
   /// A choice still saving, shown until the live connection confirms it.
   @State private var pendingSource: String?
-  @State private var pendingTarget: String?
   @State private var lastSave: Task<Void, Never>?
   @State private var savesInFlight = 0
   @State private var isChecking = false
@@ -154,20 +147,18 @@ private struct PaprikaConnectedForm: View {
           }
         }
         .domaFont(.body)
-        Picker("Into", selection: targetSelection) {
-          if connection.targetList == nil && pendingTarget == nil {
-            Text("Choose a list").tag(String?.none)
-          }
-          // Shared lists first: the household shops from a shared list.
-          ForEach(domaLists.filter { $0.visibility == .shared } + domaLists.filter { $0.visibility == .personal }) { list in
-            Text(list.name).tag(String?.some(list.publicId))
-          }
+        LabeledContent("Into") {
+          Text(connection.groceriesList?.name ?? "No Groceries list")
+            .foregroundStyle(DomaColor.warmTextSecondary)
         }
         .domaFont(.body)
       } header: {
         Text("Grocery items")
       } footer: {
-        Text("Your own Paprika account. Others in the household connect theirs separately.")
+        Text(
+          "Items go to your Groceries list. To change it, open a list's settings and choose Set as Groceries List. "
+            + "This is your own Paprika account; others in the household connect theirs separately."
+        )
           .domaFont(.supporting)
           .foregroundStyle(DomaColor.warmTextSecondary)
       }
@@ -195,7 +186,6 @@ private struct PaprikaConnectedForm: View {
     }
     .onChange(of: connection) {
       if pendingSource == connection.sourceListUid { pendingSource = nil }
-      if pendingTarget == connection.targetList?.publicId { pendingTarget = nil }
     }
     .alert(
       "Paprika didn't answer",
@@ -216,19 +206,6 @@ private struct PaprikaConnectedForm: View {
         pendingSource = uid == connection.sourceListUid && savesInFlight == 0 ? nil : uid
         enqueueSave(clearing: { if pendingSource == uid { pendingSource = nil } }) {
           try await paprika.setSourceList(uid: uid)
-        }
-      }
-    )
-  }
-
-  private var targetSelection: Binding<String?> {
-    Binding(
-      get: { pendingTarget ?? connection.targetList?.publicId },
-      set: { publicId in
-        guard let publicId else { return }
-        pendingTarget = publicId == connection.targetList?.publicId && savesInFlight == 0 ? nil : publicId
-        enqueueSave(clearing: { if pendingTarget == publicId { pendingTarget = nil } }) {
-          try await paprika.setTargetList(publicId: publicId)
         }
       }
     )
