@@ -141,6 +141,7 @@ struct ListItemsView: View {
       title: item.title,
       details: PropertyValueFormat.rowDetails(of: item, properties: items.properties, excluding: groupingProperty?.id),
       isCompleted: isCompleted,
+      isFromPaprika: item.isFromPaprika,
       onToggle: {
         await save { try await lists.apply(.completion(!isCompleted), toItem: item.id) }
       },

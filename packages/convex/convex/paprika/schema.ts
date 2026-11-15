@@ -18,3 +18,12 @@ export const paprikaConnectionsTable = defineTable({
   createdAt: v.number(),
   updatedAt: v.number()
 }).index('by_user', ['userId']);
+
+// Every Paprika grocery item a person has imported, by Paprika's item uid. An item
+// is never imported twice, even when removing it from Paprika failed or the Doma
+// item has since been cleared.
+export const paprikaImportedItemsTable = defineTable({
+  userId: v.string(),
+  paprikaUid: v.string(),
+  importedAt: v.number()
+}).index('by_user_and_uid', ['userId', 'paprikaUid']);

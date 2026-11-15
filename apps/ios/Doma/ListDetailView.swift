@@ -10,6 +10,8 @@ struct ListDetailView: View {
   let isUnavailable: Bool
   let isDefault: Bool
   let isGroceries: Bool
+  /// Set on the Groceries list when the person has connected Paprika.
+  let paprika: DomaPaprikaClient?
   let onDelete: () async -> Void
   /// A choice still saving, shown in place of the saved one so the menu does not flick back.
   @State private var pendingGroupingId: String??
@@ -18,6 +20,7 @@ struct ListDetailView: View {
   @State private var groupingSaveFailed = false
   @State private var isCategorising = false
   @State private var categorisationProblem: String?
+  @State private var isGettingPaprikaItems = false
   @Environment(\.isSplitLayout) private var isSplitLayout
 
   private var groupingId: String? { pendingGroupingId ?? savedGroupingId }
@@ -41,6 +44,9 @@ struct ListDetailView: View {
     .domaHeaderedSheet(title: title, corners: isSplitLayout ? .topLeading : .top)
     .navigationTitle(list.name)
     .toolbar {
+      if paprika != nil {
+        Button("Get Paprika Items", systemImage: "basket") { isGettingPaprikaItems = true }
+      }
       ListActionsMenu(lists: lists, list: list, isDefault: isDefault, isGroceries: isGroceries, onDelete: onDelete) {
         if let items, !items.properties.isEmpty {
           GroupByMenu(
@@ -56,6 +62,9 @@ struct ListDetailView: View {
           )
         }
       }
+    }
+    .sheet(isPresented: $isGettingPaprikaItems) {
+      if let paprika { PaprikaImportSheet(paprika: paprika) }
     }
     .onChange(of: savedGroupingId) { clearPendingGroupingOnceSaved() }
     .domaSaveFailureAlert(isPresented: $groupingSaveFailed)

@@ -249,17 +249,29 @@ async function insertListItems(ctx: ListsMutationCtx, listPublicId: string, titl
   if (!visible) throw new Error('List unavailable');
 
   assertCanEditList(visible.list, visible.currentUserId);
+  return appendListItems(
+    ctx,
+    visible.list._id,
+    titles.map((title) => ({ title }))
+  );
+}
+
+/** Fields a new item can start with besides its title. */
+export type ListItemDraft = { title: string; notes?: string; source?: Doc<'listItems'>['source'] };
+
+/** Appends items after the list's active items. Callers check the person may edit the list. */
+export async function appendListItems(ctx: Pick<ListsMutationCtx, 'db'>, listId: Id<'lists'>, drafts: ListItemDraft[]) {
   const now = Date.now();
   // Continue past the highest existing active order. Using the active count
   // would collide with existing orders once completed/deleted items leave gaps.
-  const activeItems = sortActiveItems(await readListItems(ctx, visible.list._id));
+  const activeItems = sortActiveItems(await readListItems(ctx, listId));
   const baseSortOrder = nextActiveSortOrder(activeItems);
 
   const created = [];
-  for (const [index, title] of titles.entries()) {
+  for (const [index, draft] of drafts.entries()) {
     const row = {
-      listId: visible.list._id,
-      title,
+      listId,
+      ...draft,
       sortOrder: baseSortOrder + index,
       createdAt: now,
       updatedAt: now

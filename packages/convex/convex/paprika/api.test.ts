@@ -1,6 +1,8 @@
+import { gunzipSync, gzipSync } from 'node:zlib';
+
 import { describe, expect, it } from 'vitest';
 
-import { fetchPaprikaGroceryLists, loginToPaprika } from './api';
+import { deletePaprikaGroceries, fetchPaprikaGroceries, fetchPaprikaGroceryLists, loginToPaprika } from './api';
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -101,5 +103,71 @@ describe('fetchPaprikaGroceryLists', () => {
   it('reports Paprika unavailable for a malformed reply', async () => {
     const result = await fetchPaprikaGroceryLists('token-1', async () => jsonResponse({ result: 'nope' }));
     expect(result).toEqual({ status: 'unavailable', httpStatus: 200 });
+  });
+});
+
+describe('fetchPaprikaGroceries', () => {
+  it('reads each item with its full line, recipe and purchased state, keeping the whole item', async () => {
+    const raw = {
+      uid: 'G1',
+      list_uid: 'P1',
+      name: '100g frozen spinach',
+      ingredient: 'frozen spinach',
+      recipe: 'Spinach pie',
+      purchased: false,
+      aisle: ''
+    };
+    const result = await fetchPaprikaGroceries('token-1', async (url, init) => {
+      expect(String(url)).toBe('https://www.paprikaapp.com/api/v2/sync/groceries/');
+      expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer token-1');
+      return jsonResponse({ result: [raw, { uid: 'G2', list_uid: 'P1', name: '  ', purchased: false }, 'junk'] });
+    });
+
+    expect(result).toEqual({
+      status: 'ok',
+      items: [{ uid: 'G1', listUid: 'P1', name: '100g frozen spinach', recipe: 'Spinach pie', purchased: false, raw }]
+    });
+  });
+
+  it('reports a refused token and an unreachable Paprika apart', async () => {
+    expect(await fetchPaprikaGroceries('t', async () => jsonResponse({ error: 'Unauthorized' }, 401))).toEqual({
+      status: 'rejected',
+      reason: 'Unauthorized'
+    });
+    expect(
+      await fetchPaprikaGroceries('t', async () => {
+        throw new Error('offline');
+      })
+    ).toEqual({ status: 'unavailable', httpStatus: null });
+  });
+});
+
+describe('deletePaprikaGroceries', () => {
+  it('posts the whole items back with deleted set, gzipped in the data field', async () => {
+    const raw = { uid: 'G1', list_uid: 'P1', name: 'Milk', purchased: false };
+    let sent: Uint8Array | undefined;
+    const result = await deletePaprikaGroceries(
+      'token-1',
+      [{ uid: 'G1', listUid: 'P1', name: 'Milk', recipe: null, purchased: false, raw }],
+      (data) => new Uint8Array(gzipSync(data)),
+      async (url, init) => {
+        expect(String(url)).toBe('https://www.paprikaapp.com/api/v2/sync/groceries/');
+        expect(init?.method).toBe('POST');
+        const file = (init?.body as FormData).get('data') as Blob;
+        sent = new Uint8Array(await file.arrayBuffer());
+        return jsonResponse({ result: true });
+      }
+    );
+
+    expect(result).toEqual({ status: 'ok' });
+    expect(JSON.parse(gunzipSync(sent!).toString())).toEqual([{ ...raw, deleted: true }]);
+  });
+
+  it('treats anything but Paprika’s own success as a failed removal', async () => {
+    const gzip = (data: Uint8Array) => new Uint8Array(data);
+    expect(await deletePaprikaGroceries('t', [], gzip, async () => jsonResponse({ result: false }))).toEqual({
+      status: 'unavailable',
+      httpStatus: 200
+    });
   });
 });

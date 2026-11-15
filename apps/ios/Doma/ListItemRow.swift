@@ -4,6 +4,8 @@ struct ListItemRow: View {
   let title: String
   let details: [RowDetail]
   let isCompleted: Bool
+  /// Shows a small Paprika mark after the title.
+  var isFromPaprika = false
   let onToggle: () async -> Void
   let onOpen: () -> Void
   @ScaledMetric(relativeTo: .body) private var checkTapSize = 44
@@ -25,7 +27,7 @@ struct ListItemRow: View {
       .accessibilityLabel(completionAction)
       Button(action: onOpen) {
         VStack(alignment: .leading, spacing: 2) {
-          Text(title)
+          titleText
             .domaFont(.body)
             .strikethrough(isCompleted)
             .foregroundStyle(isCompleted ? DomaColor.warmTextTertiary : DomaColor.warmTextPrimary)
@@ -46,7 +48,7 @@ struct ListItemRow: View {
     .listRowBackground(Color.clear)
     .listRowSeparatorTint(DomaColor.warmBorder)
     .accessibilityElement(children: .ignore)
-    .accessibilityLabel(details.isEmpty ? title : "\(title), \(spokenDetails)")
+    .accessibilityLabel(details.isEmpty ? spokenTitle : "\(spokenTitle), \(spokenDetails)")
     .accessibilityValue(isCompleted ? "Completed" : "Not completed")
     .accessibilityHint("Opens the item")
     .accessibilityAddTraits(.isButton)
@@ -54,6 +56,14 @@ struct ListItemRow: View {
     .accessibilityAction(named: completionAction) {
       Task { await onToggle() }
     }
+  }
+
+  private var spokenTitle: String { isFromPaprika ? "\(title), from Paprika" : title }
+
+  private var titleText: Text {
+    guard isFromPaprika else { return Text(title) }
+    let mark = Text(Image(systemName: "basket")).font(.caption2).foregroundStyle(DomaColor.warmTextTertiary)
+    return Text("\(title) \(mark)")
   }
 
   private var detailLine: Text {
