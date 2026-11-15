@@ -17,7 +17,7 @@ describe('loginToPaprika', () => {
     });
 
     expect(result).toEqual({ status: 'ok', token: 'token-1' });
-    expect(request?.url).toBe('https://www.paprikaapp.com/api/v2/account/login/');
+    expect(request?.url).toBe('https://www.paprikaapp.com/api/v1/account/login/');
     expect(request?.init?.method).toBe('POST');
     expect(new URLSearchParams(String(request?.init?.body)).get('email')).toBe('person@example.com');
   });

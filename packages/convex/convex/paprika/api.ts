@@ -50,7 +50,9 @@ export async function loginToPaprika(
 ): Promise<PaprikaLoginResult> {
   let response: Response;
   try {
-    response = await fetchImpl(`${paprikaApiBase}/v2/account/login/`, {
+    // v1, not v2: v2's login answers "Unrecognized client." to anything but Paprika's own apps
+    // (checked 15 November 2026). v1 accepts any client and its token works with the v2 sync reads.
+    response = await fetchImpl(`${paprikaApiBase}/v1/account/login/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({ email, password }).toString()
