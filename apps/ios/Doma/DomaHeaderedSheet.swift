@@ -4,27 +4,38 @@ extension View {
   /// A cream sheet under the dark header, as on the web, with the large serif title on the header.
   /// The title moves into the navigation bar once the sheet scrolls. It is drawn here, not by the
   /// bar: iOS draws the bar's large title inside the scrolling content, where the sheet would hide it.
-  func domaHeaderedSheet(title: Text, corners: DomaSheetCorners = .top) -> some View {
-    modifier(DomaHeaderedSheet(title: title, corners: corners))
+  /// `kicker` is a small line above the title, such as the date, which scrolls away with it.
+  func domaHeaderedSheet(title: Text, kicker: Text? = nil, corners: DomaSheetCorners = .top) -> some View {
+    modifier(DomaHeaderedSheet(title: title, kicker: kicker, corners: corners))
   }
 }
 
 private struct DomaHeaderedSheet: ViewModifier {
   let title: Text
+  let kicker: Text?
   let corners: DomaSheetCorners
   @State private var isScrolled = false
 
   func body(content: Content) -> some View {
     VStack(alignment: .leading, spacing: 0) {
       if !isScrolled {
-        title
-          .domaFont(.display)
-          .foregroundStyle(DomaColor.warmTextOnDark)
-          .accessibilityAddTraits(.isHeader)
-          .padding(.horizontal, 20)
-          .padding(.top, 4)
-          .padding(.bottom, 14)
-          .transition(.opacity.combined(with: .move(edge: .top)))
+        VStack(alignment: .leading, spacing: 2) {
+          if let kicker {
+            kicker
+              .domaFont(.kicker)
+              .tracking(1)
+              .textCase(.uppercase)
+              .foregroundStyle(DomaColor.warmTextOnDark.opacity(0.7))
+          }
+          title
+            .domaFont(.display)
+            .foregroundStyle(DomaColor.warmTextOnDark)
+            .accessibilityAddTraits(.isHeader)
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 4)
+        .padding(.bottom, 14)
+        .transition(.opacity.combined(with: .move(edge: .top)))
       }
       content
         .scrollContentBackground(.hidden)

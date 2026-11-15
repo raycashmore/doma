@@ -2,7 +2,7 @@
 
 A native SwiftUI app for iPhone and iPad (iOS 27 or newer). It is an independent
 Xcode project, not a pnpm workspace package or a Vercel deployment zone. So far it
-covers sign-in and Lists: create, rename, delete and reorder lists (each person keeps their own
+covers sign-in, the Home noticeboard and Lists, in two tabs; it opens on Home. Lists covers: create, rename, delete and reorder lists (each person keeps their own
 order), set the default list and the Groceries list (where recipe ingredients and Paprika items go; until one is
 chosen, the shared list named "Shopping list"), add, check off, reorder and delete items, clear completed ones, and edit an item's title, notes
 and property values, with changes arriving live from Convex. Active items can be grouped by a
@@ -30,6 +30,19 @@ without a passcode cannot authenticate, so the app does not lock there. It reope
 opened, and iPhone keeps Lists one step back. Lists sit under a dark header, as on the web, with a
 Shared / Personal filter; items are added from a capsule at the foot of the list.
 
+## Home noticeboard
+
+Home shows the household board from `home/activeBoard`, as the web Home does: Today's briefing,
+Today's Meals, shared notes and forwarded-email and spending notices. Each card shows a little and
+opens a detail sheet with the rest. Today is hidden when there is no briefing and nothing later
+today, and Meals when neither meal is planned. Notes can be added and edited (they cannot be
+deleted), and any card can be archived, which hides it for the whole household. iPad lays the cards
+out as a bento with the web board's flex weights and its 1120 px breakpoint (`BoardBentoLayout`).
+The server reads the clock when the query runs, so the app passes the current minute as `refreshToken` every minute
+and on return to the app, so it never reuses a result cached for an older token. Saving a note replaces its title, detail and due date together, as on the
+web, so two people editing different fields of one note at once keep only the last save.
+Settings, from the Home header, holds Sign out; Lists keeps its own Sign out and Paprika.
+
 ## Layout
 
 - `Doma/`: the app target (SwiftUI views and the session that links Clerk to Convex).
@@ -42,7 +55,8 @@ Shared / Personal filter; items are added from a capsule at the foot of the list
   font. Merriweather is unpacked unchanged because the OFL reserves its name, so
   `DomaFont` uses its original PostScript names.
 - `DomaKit/`: local Swift package with `DomaClerkConvexAuthProvider`,
-  `DomaListsClient` (the typed wrappers for the Convex Lists functions), `DomaConfiguration`
+  `DomaListsClient` (the typed wrappers for the Convex Lists functions), `DomaHomeClient` (the board,
+  notes and archive), `DomaConfiguration`
   and `DomaConvexHTTPQuery`, which runs one query over HTTP for the widget.
 - `DomaWidget/`: the Home Screen List widget extension. It shares the app's Clerk session
   through the keychain access group in `Config/Doma.entitlements`, so it needs no sign-in of its
@@ -134,6 +148,9 @@ xcodebuild test -project Doma.xcodeproj -scheme Doma \
 ```
 
 Run serially: a parallel run can crash the test host and fail unrelated suites, differently each time.
+CI also fails on any Swift warning in Doma's own code. To check locally, prefix the command with
+`DOMA_STRICT_WARNINGS=YES` and add `DOMA_STRICT_WARNINGS=YES` as a build setting too: the variable
+reaches DomaKit, the setting reaches the app targets.
 A failure in a suite you did not touch: compare with `main` (`git stash -u`) before chasing it.
 
 ## Live contract tests
@@ -232,6 +249,8 @@ defaults to main-actor isolation, so tests of its types need `@MainActor`.
   symbols use `@ScaledMetric`.
 - Closures UIKit may call off the main thread, such as dynamic colours, are `nonisolated`: the app target defaults
   to main-actor isolation, and a main-actor closure traps when SwiftUI resolves it during a transition.
+  A custom `Layout`'s `LayoutValueKey` and its value type are `nonisolated` for the same reason: `Layout`
+  reads them off the main actor, so a main-actor conformance does not compile.
 - Controls keep a 44 pt tap target. Rows with `listRowBackground` draw their own selected state.
 - The iPad sidebar uses the system sidebar list style and draws no row background, so the system shows
   selection and hardware-keyboard focus as one highlight. A custom row background brings back a separate

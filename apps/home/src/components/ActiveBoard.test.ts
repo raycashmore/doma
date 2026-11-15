@@ -60,7 +60,7 @@ const completeBoard = {
       sourceApp: 'meals' as const,
       destination: '/meals',
       schoolLunch: 'Pasta salad',
-      dinner: 'Not planned'
+      dinner: null
     },
     {
       kind: 'manualNote' as const,
@@ -295,8 +295,8 @@ describe('ActiveBoard', () => {
               sourceKind: 'meals',
               sourceApp: 'meals',
               destination: '/meals',
-              schoolLunch: 'Not planned',
-              dinner: 'Not planned'
+              schoolLunch: null,
+              dinner: null
             }
           ]
         },
@@ -337,9 +337,9 @@ describe('ActiveBoard', () => {
 
   it.each([
     ['Pasta salad', 'Vegetable bake'],
-    ['Pasta salad', 'Not planned'],
-    ['Not planned', 'Vegetable bake'],
-    ['Not planned', 'Not planned']
+    ['Pasta salad', null],
+    [null, 'Vegetable bake'],
+    [null, null]
   ])('shows lunch %s and dinner %s independently', (schoolLunch, dinner) => {
     renderBoard({
       props: {
@@ -352,7 +352,7 @@ describe('ActiveBoard', () => {
       }
     });
 
-    expect(screen.getByText(`School lunch · ${schoolLunch}`)).not.toBeNull();
-    expect(screen.getByText(`Dinner · ${dinner}`)).not.toBeNull();
+    expect(screen.getByText(`School lunch · ${schoolLunch ?? 'Not planned'}`)).not.toBeNull();
+    expect(screen.getByText(`Dinner · ${dinner ?? 'Not planned'}`)).not.toBeNull();
   });
 });

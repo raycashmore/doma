@@ -150,8 +150,8 @@ function dueStateLabel(
       <p class="card-kicker">TODAY'S MEALS</p>
       <h3 :id="`${meals.id}-title`" class="sr-only">Today’s Meals</h3>
       <div class="meal-summary">
-        <p>School lunch · {{ meals.schoolLunch }}</p>
-        <p>Dinner · {{ meals.dinner }}</p>
+        <p>School lunch · {{ meals.schoolLunch ?? 'Not planned' }}</p>
+        <p>Dinner · {{ meals.dinner ?? 'Not planned' }}</p>
       </div>
       <p class="card-detail">From this week’s meal plan</p>
       <CardOverflowMenu :item-id="meals.id" label="Today’s Meals" @archive="$emit('archive', meals)" />

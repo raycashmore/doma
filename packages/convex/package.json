@@ -27,7 +27,8 @@
     "check-types": "tsc --noEmit",
     "test": "vitest run",
     "seed": "tsx scripts/seed.ts",
-    "seed:clear": "tsx scripts/clearAll.ts"
+    "seed:clear": "tsx scripts/clearAll.ts",
+    "seed:home": "dotenv -e ../../.env.local -- convex run home/devFixtures:seedNoticeboard"
   },
   "dependencies": {
     "convex": "^1.46.0",

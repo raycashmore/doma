@@ -25,6 +25,7 @@ pnpm convex        # Start Convex dev for @repo/convex
 pnpm convex:env-names [--prod]     # Convex env var names only; `convex env list` prints secret values
 pnpm seed          # Seed Convex data
 pnpm seed:clear    # Clear seeded Convex data
+pnpm seed:home     # Fill the local noticeboard with placeholder cards
 pnpm seed:url -- <convex-url>       # Seed a specific Convex deployment
 pnpm seed:url:clear -- <convex-url> # Clear seeded data from a specific Convex deployment
 pnpm prod:status <module>...       # Read-only: is this Convex function on production?
@@ -78,6 +79,11 @@ To clear a target deployment without re-seeding it:
 ```bash
 pnpm seed:url:clear -- https://dynamic-kingfisher-926.convex.cloud
 ```
+
+`pnpm seed:home` gives the local deployment a full noticeboard for checking Home on
+the web or iOS: today's briefing, an overdue school email notice and last month's
+spending insight, all placeholder content. It refuses any deployment that is not
+local, keeps rows that already exist, and needs `pnpm convex` running.
 
 Before running any seed command against a shared or remote deployment, confirm
 the target URL with the user. Seeding replaces the existing seedable finance

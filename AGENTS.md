@@ -41,7 +41,7 @@ Before designing a UI feature or adopting a shared pattern, read [the local patt
 Claude Code only: delegate to the subagents in `.claude/agents/` and `~/.claude/agents/` instead of doing this work in the main session. Other agents can ignore this section.
 
 - **Explore** (haiku): finding where code lives or what uses it. Use it before reading several files yourself. It returns paths, line numbers and one sentence each.
-- **test-runner** (haiku): running tests, lint, type checks and builds. Use it after changes. It returns PASS/FAIL and the failures only. While fixing compile errors, build in the main session instead (`xcodebuild build-for-testing ... | grep error:` for iOS).
+- **test-runner** (haiku): running tests, lint, type checks and builds. Use it after changes. It returns PASS/FAIL and the failures only. While fixing compile errors, build in the main session instead (`xcodebuild build-for-testing ... | grep -E "error:|warning:"` for iOS).
 - **reviewer** (sonnet by default; **opus** for a slice's Standards and Spec reviews): reviewing the diff. Use it once a change is finished and before committing or opening a PR. Pass `model: opus` explicitly for slice reviews, since the agent file defaults to sonnet.
 - **architect** (opus): checking a plan or a large, risky change before implementing it. Use it for multi-package work, data model, auth or shared pattern changes. Skip it for small tweaks.
 

@@ -57,6 +57,7 @@ struct LiveListsContractTests {
       try await groupAndAddSeveral(on: lists, items: items, listPublicId: fixture.publicId, propertyId: propertyIds[3])
       try await manageItems(on: lists, items: items, listPublicId: fixture.publicId)
       try await manageLists(on: lists, visibleLists: visibleLists, fixturePublicId: fixture.publicId)
+      try await checkNoticeboardNote(on: convex)
     } catch {
       try? await fixture.delete(on: convex)
       throw error

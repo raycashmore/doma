@@ -46,7 +46,8 @@ Linear owns planning; the repository owns reusable operating guidance.
 
 ## Planning records
 
-Find these with the Linear tools by the reference shown.
+Find these with the Linear tools by the reference shown. `list_documents` filters by
+`projectId` (the project name works there); it rejects `project`.
 
 | Record                                    | Linear reference                              |
 | ----------------------------------------- | --------------------------------------------- |

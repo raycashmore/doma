@@ -109,7 +109,7 @@ export async function readActiveBoard(ctx: ActiveBoardQueryCtx, options: ActiveB
 
   const mealName = (meal: 'schoolLunch' | 'dinner') => {
     const assignment = assignments.find((candidate) => candidate.meal === meal);
-    return (assignment && recipeNames.get(assignment.recipePublicId)) || 'Not planned';
+    return (assignment && recipeNames.get(assignment.recipePublicId)) || null;
   };
 
   const emailNoticeItems = emailNotices
