@@ -1,6 +1,6 @@
 import { v } from 'convex/values';
 
-import { query, type QueryCtx } from './_generated/server';
+import { internalQuery, query, type QueryCtx } from './_generated/server';
 import { summarizeBudgetForPeriod, type SummaryPeriod } from './budgetSummary';
 import {
   budgetMortgagePortion,
@@ -28,6 +28,7 @@ import {
 import { pickLatestSpendingInsight } from './insights/latest';
 import { shapeMonthDetail } from './monthDetail';
 import { buildMonthlyBreakdown, buildMortgageByMonth, utcYearMonthKey } from './monthlyBreakdown';
+import { requireSignedIn } from './signedIn';
 import { monthKeyFromTimestamp } from './spendingSummary';
 
 async function getDefaultMortgageConfig(ctx: QueryCtx) {
@@ -40,7 +41,7 @@ async function getDefaultMortgageConfig(ctx: QueryCtx) {
 // ============================================================
 // CURRENT ACCOUNTS
 // ============================================================
-export const listCurrentAccounts = query({
+export const listCurrentAccounts = internalQuery({
   args: {
     limit: v.optional(v.number())
   },
@@ -58,7 +59,7 @@ export const listCurrentAccounts = query({
   }
 });
 
-export const getCurrentAccountByDate = query({
+export const getCurrentAccountByDate = internalQuery({
   args: { date: v.number() },
   handler: async (ctx, args) => {
     const row = await ctx.db
@@ -73,7 +74,7 @@ export const getCurrentAccountByDate = query({
 // ============================================================
 // CASH ACCOUNTS
 // ============================================================
-export const listCashAccounts = query({
+export const listCashAccounts = internalQuery({
   args: {
     limit: v.optional(v.number())
   },
@@ -94,7 +95,7 @@ export const listCashAccounts = query({
 // ============================================================
 // UK ACCOUNTS
 // ============================================================
-export const listUkAccounts = query({
+export const listUkAccounts = internalQuery({
   args: {
     limit: v.optional(v.number())
   },
@@ -117,7 +118,7 @@ export const listUkAccounts = query({
 // ============================================================
 // SUPER ACCOUNTS
 // ============================================================
-export const listSuperAccounts = query({
+export const listSuperAccounts = internalQuery({
   args: {
     limit: v.optional(v.number())
   },
@@ -139,7 +140,7 @@ export const listSuperAccounts = query({
 // ============================================================
 // INVESTMENT ACCOUNTS
 // ============================================================
-export const listInvestmentAccounts = query({
+export const listInvestmentAccounts = internalQuery({
   args: {
     limit: v.optional(v.number())
   },
@@ -161,7 +162,7 @@ export const listInvestmentAccounts = query({
 // ============================================================
 // MORTGAGE
 // ============================================================
-export const listMortgage = query({
+export const listMortgage = internalQuery({
   args: {
     limit: v.optional(v.number())
   },
@@ -188,7 +189,7 @@ export const listMortgage = query({
 // ============================================================
 // BUDGET
 // ============================================================
-export const listBudget = query({
+export const listBudget = internalQuery({
   args: {
     limit: v.optional(v.number())
   },
@@ -211,7 +212,7 @@ export const listBudget = query({
 // ============================================================
 // CRYPTO
 // ============================================================
-export const listCryptoTransactions = query({
+export const listCryptoTransactions = internalQuery({
   args: {
     platform: v.optional(v.union(v.literal('platform_a'), v.literal('platform_b')))
   },
@@ -226,7 +227,7 @@ export const listCryptoTransactions = query({
   }
 });
 
-export const listCryptoSummaries = query({
+export const listCryptoSummaries = internalQuery({
   handler: async (ctx) => {
     const rows = await ctx.db.query('cryptoSummaries').collect();
     return rows.map((row) => ({
@@ -241,6 +242,7 @@ export const listCryptoSummaries = query({
 // ============================================================
 export const listBudgetChart = query({
   handler: async (ctx) => {
+    await requireSignedIn(ctx);
     const [budgetRows, mortgageRows] = await Promise.all([
       ctx.db.query('budget').withIndex('by_date').order('asc').collect(),
       ctx.db.query('mortgage').withIndex('by_date').order('asc').collect()
@@ -263,7 +265,7 @@ export const listBudgetChart = query({
 // TOTALS — Aggregate view across all tables
 // Replicates the TOTALS sheet by joining latest rows from each table
 // ============================================================
-export const getLatestTotals = query({
+export const getLatestTotals = internalQuery({
   handler: async (ctx) => {
     const [superRow, ukRow, investRow, mortgageRow, mortgageConfig, cashRow, currentRow] = await Promise.all([
       ctx.db.query('superAccounts').withIndex('by_date').order('desc').first(),
@@ -295,7 +297,7 @@ export const getLatestTotals = query({
 // TOTALS HISTORY — Time series of totals for charting
 // Joins all tables by date to replicate the TOTALS sheet
 // ============================================================
-export const getTotalsHistory = query({
+export const getTotalsHistory = internalQuery({
   args: {
     limit: v.optional(v.number())
   },
@@ -370,6 +372,7 @@ export const getTotalsHistory = query({
 export const getMonthlyBreakdown = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
+    await requireSignedIn(ctx);
     const [budgetRows, mortgageRows] = await Promise.all([
       ctx.db.query('budget').withIndex('by_date').order('asc').collect(),
       ctx.db.query('mortgage').withIndex('by_date').order('asc').collect()
@@ -384,6 +387,7 @@ export const getMonthlyBreakdown = query({
 export const getMonthlyDetail = query({
   args: { date: v.number() },
   handler: async (ctx, args) => {
+    await requireSignedIn(ctx);
     const [budget, mortgageConfig, spendCategories] = await Promise.all([
       ctx.db
         .query('budget')
@@ -428,6 +432,7 @@ export const getMonthlyDetail = query({
 // ============================================================
 export const getLatestSpendingInsight = query({
   handler: async (ctx) => {
+    await requireSignedIn(ctx);
     const rows = await ctx.db.query('spendingInsights').withIndex('by_month_key').collect();
     const latest = pickLatestSpendingInsight(rows);
     if (!latest) return null;
@@ -450,6 +455,7 @@ export const getBudgetPageSummary = query({
     period: v.union(v.literal('3M'), v.literal('6M'), v.literal('12M'), v.literal('ALL'))
   },
   handler: async (ctx, args) => {
+    await requireSignedIn(ctx);
     const [rows, mortgageRows] = await Promise.all([
       ctx.db.query('budget').withIndex('by_date').order('asc').collect(),
       ctx.db.query('mortgage').withIndex('by_date').order('asc').collect()

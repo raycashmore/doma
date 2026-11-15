@@ -102,7 +102,7 @@ tables on that deployment.
 pnpm --filter home dev          # Home app on :3000
 pnpm --filter home dev:no-auth  # Home app on :3000 without Clerk auth
 pnpm --filter budget dev        # Budget app on :3001
-pnpm --filter budget dev:no-auth # Budget app on :3001 without Clerk auth
+pnpm --filter budget dev:no-auth # Budget app on :3001 with generic fixture data and no Clerk auth
 pnpm --filter budget test       # Budget app Vitest suite
 pnpm --filter schedule dev      # Schedule app on :3003
 pnpm --filter schedule dev:no-auth # Schedule app on :3003 with generic fixture data and no Clerk auth

@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
-import { useQuery } from 'convex/react';
-import { api } from '@repo/convex';
 import type { TimePeriod } from '@/lib/budget';
+import { useBudgetData } from '@/lib/useBudgetData';
 import { BudgetBreakdownTable } from '@/components/budget/BudgetBreakdownTable';
 import { BudgetChart } from '@/components/budget/BudgetChart';
 import { BudgetChartFilters } from '@/components/budget/BudgetChartFilters';
@@ -32,14 +31,7 @@ function BudgetPage() {
 
   useBudgetHeaderActions(headerActions);
 
-  const summary = useQuery(api.queries.getBudgetPageSummary, { period });
-  const chartData = useQuery(api.queries.listBudgetChart);
-  const periodLimit = period === '3M' ? 3 : period === '6M' ? 6 : period === '12M' ? 12 : undefined;
-  const rows = useQuery(api.queries.getMonthlyBreakdown, {
-    limit: periodLimit
-  });
-  const detail = useQuery(api.queries.getMonthlyDetail, openMonth !== null ? { date: openMonth } : 'skip');
-  const insight = useQuery(api.queries.getLatestSpendingInsight);
+  const { summary, chartData, rows, detail, insight } = useBudgetData(period, openMonth);
   const adjacentMonths = useMemo(() => {
     if (!rows || openMonth === null) {
       return { previous: null, next: null };

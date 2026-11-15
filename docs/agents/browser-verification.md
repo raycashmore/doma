@@ -8,7 +8,7 @@ pnpm --filter budget dev:no-auth
 pnpm --filter meals dev:no-auth
 ```
 
-These scripts start the apps with `VITE_CLERK_PUBLISHABLE_KEY` unset, which makes `@repo/shell`'s `AuthGate` pass through in local development.
+These scripts start the apps with `VITE_CLERK_PUBLISHABLE_KEY` unset, which makes `@repo/shell`'s `AuthGate` pass through in local development. Budget and Meals then show generic fixture data, not the local database.
 
 Another dev server may already hold an app's port, and Vite then picks the next free one. Open the
 `Local:` URL the server prints, not the port in the script.
