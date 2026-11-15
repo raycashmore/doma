@@ -152,7 +152,7 @@ describe('readActiveBoard', () => {
           sourceApp: 'meals',
           destination: '/meals',
           schoolLunch: 'Pasta salad',
-          dinner: 'Not planned'
+          dinner: null
         }
       ]
     });
@@ -186,8 +186,8 @@ describe('readActiveBoard', () => {
         sourceKind: 'meals',
         sourceApp: 'meals',
         destination: '/meals',
-        schoolLunch: 'Not planned',
-        dinner: 'Not planned'
+        schoolLunch: null,
+        dinner: null
       }
     ]);
   });

@@ -38,7 +38,7 @@ export const PREVIEW_BOARD = {
       sourceApp: 'meals',
       destination: '/meals',
       schoolLunch: 'Pasta salad',
-      dinner: 'Not planned'
+      dinner: null
     },
     {
       kind: 'manualNote',
