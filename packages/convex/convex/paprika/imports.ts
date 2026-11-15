@@ -42,23 +42,29 @@ export type RecordImportResult =
 
 /**
  * Adds the items to the person's Groceries list and remembers each one, all in one transaction.
- * Items already imported are skipped, so a repeated or overlapping import adds nothing twice.
+ * Items already imported are skipped, so a repeated or overlapping import adds nothing twice,
+ * unless the person asked to re-import them (`reimportUids`).
  * Categorisation and the widget refresh run once for the whole import.
  */
 export async function recordImportForUser(
   ctx: Pick<MutationCtx, 'db' | 'scheduler'>,
-  { userId, items }: { userId: string; items: PaprikaImportCandidate[] }
+  { userId, items, reimportUids = [] }: { userId: string; items: PaprikaImportCandidate[]; reimportUids?: string[] }
 ): Promise<RecordImportResult> {
+  const reimport = new Set(reimportUids);
   const list = await readGroceriesListForUser(ctx, userId);
   if (!list) return { status: 'no_groceries_list' };
   assertCanEditList(list, userId);
 
   const fresh: PaprikaImportCandidate[] = [];
+  const unrecorded = new Set<string>();
   const seen = new Set<string>();
   for (const item of items) {
-    if (seen.has(item.uid) || (await isImported(ctx, userId, item.uid))) continue;
+    if (seen.has(item.uid)) continue;
+    const imported = await isImported(ctx, userId, item.uid);
+    if (imported && !reimport.has(item.uid)) continue;
     seen.add(item.uid);
     fresh.push(item);
+    if (!imported) unrecorded.add(item.uid);
   }
 
   const created = await appendListItems(
@@ -72,8 +78,8 @@ export async function recordImportForUser(
   );
 
   const now = Date.now();
-  for (const item of fresh) {
-    await ctx.db.insert('paprikaImportedItems', { userId, paprikaUid: item.uid, importedAt: now });
+  for (const uid of unrecorded) {
+    await ctx.db.insert('paprikaImportedItems', { userId, paprikaUid: uid, importedAt: now });
   }
 
   if (created.length) {
@@ -90,6 +96,6 @@ export const importContext = internalQuery({
 });
 
 export const recordImport = internalMutation({
-  args: { userId: v.string(), items: v.array(importCandidateValidator) },
+  args: { userId: v.string(), items: v.array(importCandidateValidator), reimportUids: v.optional(v.array(v.string())) },
   handler: async (ctx, args) => recordImportForUser(ctx, args)
 });

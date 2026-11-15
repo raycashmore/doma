@@ -18,9 +18,18 @@ struct PaprikaImportTests {
   @Test func decodesThePreviewAndItsFailures() throws {
     let preview = try decode(
       DomaPaprikaImportPreview.self, #"{"status":"ok","items":[{"uid":"G1","title":"100g spinach","recipe":"Pie"}]}"#)
-    guard case .items(let items) = preview else { Issue.record("expected items"); return }
+    guard case .items(let items, let alreadyImported) = preview else { Issue.record("expected items"); return }
     #expect(items.map(\.title) == ["100g spinach"])
     #expect(items.map(\.recipe) == ["Pie"])
+    #expect(alreadyImported.isEmpty)
+
+    let withEarlier = try decode(
+      DomaPaprikaImportPreview.self,
+      #"{"status":"ok","items":[],"alreadyImported":[{"uid":"G2","title":"Milk","recipe":null}]}"#)
+    guard case .items(let none, let earlier) = withEarlier else { Issue.record("expected items"); return }
+    #expect(none.isEmpty)
+    #expect(earlier.map(\.uid) == ["G2"])
+    #expect(PaprikaImportCopy.showAlreadyImported(earlier.count) == "Show 1 Item Already Brought In")
     #expect(
       try decode(DomaPaprikaImportPreview.self, #"{"status":"rejected","reason":null}"#) == .failed(.rejected(reason: nil)))
     #expect(try decode(DomaPaprikaImportPreview.self, #"{"status":"not_connected"}"#) == .failed(.notConnected))

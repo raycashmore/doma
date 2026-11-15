@@ -2,22 +2,32 @@ import DomaKit
 import SwiftUI
 
 /// Get Paprika Items: shows what's coming from the person's Paprika list, grouped by recipe, and
-/// imports the ticked items into their Groceries list. One read of Paprika when it opens.
+/// imports the ticked items into their Groceries list. Items brought in before but still in Paprika
+/// can be shown and added again. One read of Paprika when it opens.
 struct PaprikaImportSheet: View {
   let paprika: DomaPaprikaClient
   @Environment(\.dismiss) private var dismiss
   @State private var preview: DomaPaprikaImportPreview?
   @State private var loadFailed = false
+  /// New items start ticked; these are the ones the person unticked.
   @State private var unticked: Set<String> = []
+  /// Items brought in before start unticked; these are the ones the person ticked to add again.
+  @State private var reticked: Set<String> = []
+  @State private var showsAlreadyImported = false
   @State private var removeFromPaprika = true
   @State private var isImporting = false
   @State private var outcome: (title: String, message: String, isProblem: Bool)?
 
   private var items: [DomaPaprikaImportItem] {
-    if case .items(let items) = preview { items } else { [] }
+    if case .items(let items, _) = preview { items } else { [] }
+  }
+
+  private var alreadyImported: [DomaPaprikaImportItem] {
+    if case .items(_, let alreadyImported) = preview { alreadyImported } else { [] }
   }
 
   private var tickedUids: [String] { items.map(\.uid).filter { !unticked.contains($0) } }
+  private var reimportUids: [String] { alreadyImported.map(\.uid).filter { reticked.contains($0) } }
 
   var body: some View {
     NavigationStack {
@@ -32,9 +42,9 @@ struct PaprikaImportSheet: View {
           ToolbarItem(placement: .confirmationAction) {
             if isImporting {
               ProgressView()
-            } else if !items.isEmpty {
+            } else if !items.isEmpty || !alreadyImported.isEmpty {
               Button("Import") { Task { await importTicked() } }
-                .disabled(tickedUids.isEmpty)
+                .disabled(tickedUids.isEmpty && reimportUids.isEmpty)
             }
           }
         }
@@ -56,7 +66,7 @@ struct PaprikaImportSheet: View {
     if let preview {
       if let problem = PaprikaImportCopy.previewProblem(preview) {
         message(problem, systemImage: "exclamationmark.triangle")
-      } else if items.isEmpty {
+      } else if items.isEmpty && alreadyImported.isEmpty {
         message(PaprikaImportCopy.nothingNew, systemImage: "basket")
       } else {
         itemsForm
@@ -70,6 +80,12 @@ struct PaprikaImportSheet: View {
 
   private var itemsForm: some View {
     Form {
+      if items.isEmpty {
+        Section {
+          Text(PaprikaImportCopy.nothingNew).domaFont(.body)
+        }
+        .listRowBackground(DomaColor.warmBgCard)
+      }
       ForEach(PaprikaImportCopy.groups(items)) { group in
         Section {
           ForEach(group.items) { item in
@@ -83,6 +99,7 @@ struct PaprikaImportSheet: View {
         }
         .listRowBackground(DomaColor.warmBgCard)
       }
+      alreadyImportedSection
       Section {
         Toggle("Remove from Paprika", isOn: $removeFromPaprika).domaFont(.body)
       } footer: {
@@ -93,6 +110,33 @@ struct PaprikaImportSheet: View {
       .listRowBackground(DomaColor.warmBgCard)
     }
     .disabled(isImporting)
+  }
+
+  @ViewBuilder
+  private var alreadyImportedSection: some View {
+    if showsAlreadyImported {
+      Section {
+        ForEach(alreadyImported) { item in
+          Toggle(isOn: isReticked(item)) {
+            Text(item.title).domaFont(.body)
+          }
+          .toggleStyle(PaprikaTickStyle())
+        }
+      } header: {
+        Text("Already Brought In").domaFont(.supporting)
+      } footer: {
+        Text(PaprikaImportCopy.alreadyImportedFootnote)
+          .domaFont(.supporting)
+          .foregroundStyle(DomaColor.warmTextSecondary)
+      }
+      .listRowBackground(DomaColor.warmBgCard)
+    } else if !alreadyImported.isEmpty {
+      Section {
+        Button(PaprikaImportCopy.showAlreadyImported(alreadyImported.count)) { showsAlreadyImported = true }
+          .domaFont(.body)
+      }
+      .listRowBackground(DomaColor.warmBgCard)
+    }
   }
 
   private func message(_ text: String, systemImage: String) -> some View {
@@ -106,6 +150,13 @@ struct PaprikaImportSheet: View {
     )
   }
 
+  private func isReticked(_ item: DomaPaprikaImportItem) -> Binding<Bool> {
+    Binding(
+      get: { reticked.contains(item.uid) },
+      set: { if $0 { reticked.insert(item.uid) } else { reticked.remove(item.uid) } }
+    )
+  }
+
   private func load() async {
     do {
       preview = try await paprika.previewImport()
@@ -115,11 +166,12 @@ struct PaprikaImportSheet: View {
   }
 
   private func importTicked() async {
-    guard !isImporting, !tickedUids.isEmpty else { return }
+    guard !isImporting, !tickedUids.isEmpty || !reimportUids.isEmpty else { return }
     isImporting = true
     defer { isImporting = false }
     do {
-      let result = try await paprika.importItems(uids: tickedUids, removeFromPaprika: removeFromPaprika)
+      let result = try await paprika.importItems(
+        uids: tickedUids, reimportUids: reimportUids, removeFromPaprika: removeFromPaprika)
       outcome = PaprikaImportCopy.outcome(result)
     } catch {
       outcome = (

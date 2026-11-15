@@ -14,7 +14,8 @@ to bring items from. Once connected, the Groceries list shows Get Paprika Items:
 Paprika lists the items still to buy, grouped by recipe, and the ticked ones are added with a
 small basket mark and the recipe in their notes, then removed from Paprika unless that is turned
 off. Doma remembers every Paprika item it has imported, so none is added twice, even if removing it
-from Paprika failed. Property definitions and AI
+from Paprika failed, unless the person shows the items already brought in that are still in Paprika
+and ticks one to add it again. Property definitions and AI
 categorisation setup are still managed on the web. Destructive actions ask for confirmation, unlike the web app, because the
 app writes to the household's real lists. Face ID (or the device passcode) unlocks it on
 every cold launch and after 5 minutes in the background. The lock covers the

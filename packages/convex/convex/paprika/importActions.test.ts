@@ -50,7 +50,11 @@ describe('previewImport', () => {
       deleteGroceries: notCalled
     });
 
-    expect(result).toEqual({ status: 'ok', items: [{ uid: 'G1', title: 'G1 line', recipe: 'Spinach pie' }] });
+    expect(result).toEqual({
+      status: 'ok',
+      items: [{ uid: 'G1', title: 'G1 line', recipe: 'Spinach pie' }],
+      alreadyImported: [{ uid: 'G2', title: 'G2 line', recipe: null }]
+    });
     expect(reads).toBe(1);
   });
 
@@ -106,8 +110,53 @@ describe('importItems', () => {
         items: [
           { uid: 'G1', title: 'G1 line', recipe: 'Spinach pie' },
           { uid: 'G3', title: 'G3 line', recipe: null }
-        ]
+        ],
+        reimportUids: []
       }
+    });
+  });
+
+  it('re-imports only the already-imported items the person picked, and removes them from Paprika', async () => {
+    const { ctx, calls } = createCtx({ importedUids: ['G2', 'G3'] });
+    const removed: string[] = [];
+    const result = await importItemsHandler(
+      ctx,
+      // G3 sent as new is ignored: it was imported before and not picked for re-import.
+      { uids: ['G1', 'G3'], reimportUids: ['G2'], removeFromPaprika: true },
+      {
+        fetchGroceries: groceries,
+        deleteGroceries: async (_token, items) => {
+          removed.push(...items.map((candidate) => candidate.uid));
+          return { status: 'ok' };
+        }
+      }
+    );
+
+    expect(result).toEqual({ status: 'imported', count: 2, listName: 'Shopping list', removal: 'removed' });
+    expect(removed).toEqual(['G1', 'G2']);
+    expect(calls).toContainEqual({
+      kind: 'mutation',
+      args: {
+        userId: 'user_a',
+        items: [
+          { uid: 'G1', title: 'G1 line', recipe: 'Spinach pie' },
+          { uid: 'G2', title: 'G2 line', recipe: null }
+        ],
+        reimportUids: ['G2']
+      }
+    });
+  });
+
+  it('never passes an item read as new through as a re-import', async () => {
+    const { ctx, calls } = createCtx();
+    await importItemsHandler(
+      ctx,
+      { uids: ['G1'], reimportUids: ['G1'], removeFromPaprika: false },
+      { fetchGroceries: groceries, deleteGroceries: notCalled }
+    );
+    expect(calls).toContainEqual({
+      kind: 'mutation',
+      args: { userId: 'user_a', items: [{ uid: 'G1', title: 'G1 line', recipe: 'Spinach pie' }], reimportUids: [] }
     });
   });
 

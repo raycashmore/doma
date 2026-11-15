@@ -25,7 +25,7 @@ type ImportRefs = {
   recordImport: FunctionReference<
     'mutation',
     'internal',
-    { userId: string; items: PaprikaImportCandidate[] },
+    { userId: string; items: PaprikaImportCandidate[]; reimportUids?: string[] },
     RecordImportResult
   >;
 };
@@ -74,14 +74,14 @@ async function readImportable(ctx: ImportActionCtx, userId: string, calls: Impor
     uids: groceries.items.map((item) => item.uid)
   });
   if (!context.hasGroceriesList) return { status: 'no_groceries_list' as const };
-  return { status: 'ok' as const, token, items: selectImportableItems(groceries.items, context) };
+  return { status: 'ok' as const, token, ...selectImportableItems(groceries.items, context) };
 }
 
 export async function previewImportHandler(
   ctx: ImportActionCtx,
   calls: ImportCalls = importCalls
 ): Promise<
-  | { status: 'ok'; items: PaprikaImportCandidate[] }
+  | { status: 'ok'; items: PaprikaImportCandidate[]; alreadyImported: PaprikaImportCandidate[] }
   | { status: 'not_connected' }
   | { status: 'no_groceries_list' }
   | PaprikaFailure
@@ -89,7 +89,11 @@ export async function previewImportHandler(
   const userId = await requireUserId(ctx);
   const result = await readImportable(ctx, userId, calls, 'import preview');
   if (result.status !== 'ok') return result;
-  return { status: 'ok', items: result.items.map(toCandidate) };
+  return {
+    status: 'ok',
+    items: result.newItems.map(toCandidate),
+    alreadyImported: result.importedItems.map(toCandidate)
+  };
 }
 
 type ImportOutcome =
@@ -106,7 +110,11 @@ type ImportOutcome =
 
 export async function importItemsHandler(
   ctx: ImportActionCtx,
-  { uids, removeFromPaprika }: { uids: string[]; removeFromPaprika: boolean },
+  {
+    uids,
+    reimportUids = [],
+    removeFromPaprika
+  }: { uids: string[]; reimportUids?: string[]; removeFromPaprika: boolean },
   calls: ImportCalls = importCalls
 ): Promise<ImportOutcome> {
   const userId = await requireUserId(ctx);
@@ -116,10 +124,14 @@ export async function importItemsHandler(
   if (result.status !== 'ok') return result;
 
   const wanted = new Set(uids);
-  const selected = result.items.filter((item) => wanted.has(item.uid));
+  const reimport = new Set(reimportUids);
+  // A re-import is only an item Paprika still has that was imported before, never one read as new.
+  const reimported = result.importedItems.filter((item) => reimport.has(item.uid));
+  const selected = [...result.newItems.filter((item) => wanted.has(item.uid)), ...reimported];
   const recorded = await ctx.runMutation(paprikaInternal.imports.recordImport, {
     userId,
-    items: selected.map(toCandidate)
+    items: selected.map(toCandidate),
+    reimportUids: reimported.map((item) => item.uid)
   });
   if (recorded.status !== 'imported') return recorded;
 
@@ -142,14 +154,17 @@ export async function importItemsHandler(
   return { status: 'imported', count: toRemove.length, listName: recorded.listName, removal };
 }
 
-/** The person's Paprika items that are still to buy and not yet imported. */
+/** The person's Paprika items still to buy: new ones, and ones imported before that are still in Paprika. */
 export const previewImport = action({
   args: {},
   handler: async (ctx) => previewImportHandler(ctx)
 });
 
-/** Adds the chosen items to the person's Groceries list, then removes them from Paprika when asked. */
+/**
+ * Adds the chosen items to the person's Groceries list, then removes them from Paprika when asked.
+ * `reimportUids` are items imported before that the person chose to bring in again.
+ */
 export const importItems = action({
-  args: { uids: v.array(v.string()), removeFromPaprika: v.boolean() },
+  args: { uids: v.array(v.string()), reimportUids: v.optional(v.array(v.string())), removeFromPaprika: v.boolean() },
   handler: async (ctx, args) => importItemsHandler(ctx, args)
 });

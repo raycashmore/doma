@@ -56,19 +56,24 @@ public struct DomaPaprikaImportItem: Decodable, Equatable, Identifiable, Sendabl
   public var id: String { uid }
 }
 
-/// Paprika's items that are still to buy and not yet imported, or why they couldn't be read.
+/// Paprika's items that are still to buy, or why they couldn't be read.
 public enum DomaPaprikaImportPreview: Decodable, Equatable, Sendable {
-  case items([DomaPaprikaImportItem])
+  /// `items` are new. `alreadyImported` were brought in before but are still in Paprika, so they can be re-imported.
+  case items([DomaPaprikaImportItem], alreadyImported: [DomaPaprikaImportItem])
   /// The person has no Groceries list to bring items into.
   case noGroceriesList
   case failed(DomaPaprikaCallResult)
 
-  private enum CodingKeys: String, CodingKey { case status, items }
+  private enum CodingKeys: String, CodingKey { case status, items, alreadyImported }
 
   public init(from decoder: any Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     switch try container.decode(String.self, forKey: .status) {
-    case "ok": self = .items(try container.decode([DomaPaprikaImportItem].self, forKey: .items))
+    case "ok":
+      self = .items(
+        try container.decode([DomaPaprikaImportItem].self, forKey: .items),
+        alreadyImported: try container.decodeIfPresent([DomaPaprikaImportItem].self, forKey: .alreadyImported) ?? []
+      )
     case "no_groceries_list": self = .noGroceriesList
     default: self = .failed(try DomaPaprikaCallResult(from: decoder))
     }
@@ -141,11 +146,18 @@ public struct DomaPaprikaClient: Sendable {
   }
 
   /// Adds the chosen items to the Groceries list, then removes them from Paprika when asked.
-  public func importItems(uids: [String], removeFromPaprika: Bool) async throws -> DomaPaprikaImportResult {
+  /// `reimportUids` are items brought in before that the person chose to add again.
+  public func importItems(
+    uids: [String], reimportUids: [String], removeFromPaprika: Bool
+  ) async throws -> DomaPaprikaImportResult {
     try await convex.action(
       "paprika/importActions:importItems",
       // ConvexMobile encodes arrays of optional values.
-      with: ["uids": uids.map { $0 as ConvexEncodable? }, "removeFromPaprika": removeFromPaprika])
+      with: [
+        "uids": uids.map { $0 as ConvexEncodable? },
+        "reimportUids": reimportUids.map { $0 as ConvexEncodable? },
+        "removeFromPaprika": removeFromPaprika,
+      ])
   }
 
   public func disconnect() async throws {

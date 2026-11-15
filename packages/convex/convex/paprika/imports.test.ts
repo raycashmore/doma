@@ -58,6 +58,17 @@ describe('recordImportForUser', () => {
     expect(tables.listItems!.map((item) => item.title)).toEqual(['Milk']);
   });
 
+  it('adds an imported item again only when the person asks to re-import it', async () => {
+    const { ctx, tables } = createCtx();
+    await recordImportForUser(ctx, { userId: 'user_a', items: [spinach] });
+
+    const again = await recordImportForUser(ctx, { userId: 'user_a', items: [spinach, milk], reimportUids: ['G1'] });
+
+    expect(again).toEqual({ status: 'imported', importedUids: ['G1', 'G2'], listName: 'Shopping list' });
+    expect(tables.listItems!.map((item) => item.title)).toEqual(['100g frozen spinach', '100g frozen spinach', 'Milk']);
+    expect(tables.paprikaImportedItems!.map((row) => row.paprikaUid)).toEqual(['G1', 'G2']);
+  });
+
   it('schedules one categorisation and one widget refresh per import, and none when nothing is new', async () => {
     const { ctx, scheduled } = createCtx();
     await recordImportForUser(ctx, { userId: 'user_a', items: [spinach, milk] });
@@ -92,7 +103,7 @@ describe('recordImportForUser', () => {
 });
 
 describe('selectImportableItems', () => {
-  it('keeps only items on the chosen Paprika list that are still to buy and not imported', () => {
+  it('splits the chosen Paprika list’s items still to buy into new and already imported', () => {
     const item = (uid: string, listUid: string, purchased = false) => ({
       uid,
       listUid,
@@ -102,8 +113,8 @@ describe('selectImportableItems', () => {
       raw: {}
     });
     const items = [item('A', 'P1'), item('B', 'P2'), item('C', 'P1', true), item('D', 'P1')];
-    expect(
-      selectImportableItems(items, { sourceListUid: 'P1', importedUids: ['D'] }).map((candidate) => candidate.uid)
-    ).toEqual(['A']);
+    const { newItems, importedItems } = selectImportableItems(items, { sourceListUid: 'P1', importedUids: ['D'] });
+    expect(newItems.map((candidate) => candidate.uid)).toEqual(['A']);
+    expect(importedItems.map((candidate) => candidate.uid)).toEqual(['D']);
   });
 });

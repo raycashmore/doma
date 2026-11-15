@@ -24,8 +24,13 @@ enum PaprikaImportCopy {
   }
 
   static let noGroceriesList = "Choose a Groceries list first: open a list's settings and tap Set as Groceries List."
-  static let nothingNew = "Nothing new in Paprika. Items you've already brought in aren't shown again."
-  static let removalFootnote = "Keeps Paprika's list tidy. Items already brought in are never added twice either way."
+  static let nothingNew = "Nothing new in Paprika."
+  static let alreadyImportedFootnote = "These came in before and are still in Paprika. Tick one to add it again."
+
+  static func showAlreadyImported(_ count: Int) -> String {
+    count == 1 ? "Show 1 Item Already Brought In" : "Show \(count) Items Already Brought In"
+  }
+  static let removalFootnote = "Keeps Paprika's list tidy. Items already brought in are only added again if you tick them."
 
   /// Why the items couldn't be read, or `nil` when they were.
   static func previewProblem(_ preview: DomaPaprikaImportPreview) -> String? {
