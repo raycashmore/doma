@@ -57,7 +57,7 @@ enum DomaFont {
   }
 
   /// Navigation bars take UIKit fonts, set once at launch rather than per view.
-  static func navigationTitle(size: CGFloat, style: UIFont.TextStyle) -> UIFont {
+  @MainActor static func navigationTitle(size: CGFloat, style: UIFont.TextStyle) -> UIFont {
     let name = UIAccessibility.isBoldTextEnabled ? merriweatherExtraBold : merriweatherBold
     guard let font = UIFont(name: name, size: size) else { return .preferredFont(forTextStyle: style) }
     return UIFontMetrics(forTextStyle: style).scaledFont(for: font)
