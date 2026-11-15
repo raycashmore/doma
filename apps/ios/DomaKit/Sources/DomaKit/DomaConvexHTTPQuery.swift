@@ -12,7 +12,7 @@ public struct DomaConvexHTTPQuery: Sendable {
     self.session = session
   }
 
-  public func run<Value: Decodable>(_ path: String, args: [String: String], token: String) async throws -> Value {
+  public nonisolated(nonsending) func run<Value: Decodable>(_ path: String, args: [String: String], token: String) async throws -> Value {
     var request = URLRequest(url: endpoint)
     request.httpMethod = "POST"
     request.setValue("application/json", forHTTPHeaderField: "Content-Type")

@@ -148,6 +148,9 @@ xcodebuild test -project Doma.xcodeproj -scheme Doma \
 ```
 
 Run serially: a parallel run can crash the test host and fail unrelated suites, differently each time.
+CI also fails on any Swift warning in Doma's own code. To check locally, prefix the command with
+`DOMA_STRICT_WARNINGS=YES` and add `DOMA_STRICT_WARNINGS=YES` as a build setting too: the variable
+reaches DomaKit, the setting reaches the app targets.
 A failure in a suite you did not touch: compare with `main` (`git stash -u`) before chasing it.
 
 ## Live contract tests
@@ -246,6 +249,8 @@ defaults to main-actor isolation, so tests of its types need `@MainActor`.
   symbols use `@ScaledMetric`.
 - Closures UIKit may call off the main thread, such as dynamic colours, are `nonisolated`: the app target defaults
   to main-actor isolation, and a main-actor closure traps when SwiftUI resolves it during a transition.
+  A custom `Layout`'s `LayoutValueKey` and its value type are `nonisolated` for the same reason: `Layout`
+  reads them off the main actor, so a main-actor conformance does not compile.
 - Controls keep a 44 pt tap target. Rows with `listRowBackground` draw their own selected state.
 - The iPad sidebar uses the system sidebar list style and draws no row background, so the system shows
   selection and hardware-keyboard focus as one highlight. A custom row background brings back a separate

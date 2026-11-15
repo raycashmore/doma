@@ -3,5 +3,9 @@
 // iPad (copy Device.example.xcconfig). Never put a secret key in any of them.
 DOMA_BUNDLE_ID = com.doma.app
 ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon
+// CI passes DOMA_STRICT_WARNINGS=YES so a Swift warning in Doma's own targets fails the build.
+// A plain SWIFT_TREAT_WARNINGS_AS_ERRORS on the command line would also reach the Clerk package,
+// whose suppressed warnings then conflict.
+DOMA_STRICT_WARNINGS = NO
 #include? "Local.xcconfig"
 #include? "Device.xcconfig"

@@ -2,6 +2,10 @@
 
 import PackageDescription
 
+// CI sets DOMA_STRICT_WARNINGS=YES so a warning in DomaKit fails the build, as in the app.
+let strictWarnings: [SwiftSetting] =
+  Context.environment["DOMA_STRICT_WARNINGS"] == "YES" ? [.treatAllWarnings(as: .error)] : []
+
 let package = Package(
   name: "DomaKit",
   platforms: [
@@ -20,7 +24,8 @@ let package = Package(
       dependencies: [
         .product(name: "ClerkKit", package: "clerk-ios"),
         .product(name: "ConvexMobile", package: "convex-swift"),
-      ]
+      ],
+      swiftSettings: strictWarnings
     ),
   ]
 )
