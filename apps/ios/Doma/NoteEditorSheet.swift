@@ -51,6 +51,8 @@ struct NoteEditorSheet: View {
       .toolbar {
         ToolbarItem(placement: .cancellationAction) {
           Button("Cancel") { dismiss() }
+            // Closing mid-save would hide a failure.
+            .disabled(isSaving)
         }
         ToolbarItem(placement: .confirmationAction) {
           Button("Save") { save() }

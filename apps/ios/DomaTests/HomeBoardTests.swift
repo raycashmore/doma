@@ -86,6 +86,9 @@ struct HomeBoardTests {
     #expect(!presentation.isUrgent(items[3]))
     guard case .spendingInsight(let insight) = items[4] else { Issue.record("expected insight"); return }
     #expect(presentation.spendingTitle(insight) == "September spending")
+    let lastYear = HomeBoardPresentation(board: try board(replacing(#""period":"2026-09""#, with: #""period":"2025-12""#)))
+    guard case .spendingInsight(let older) = lastYear.board.items[4] else { Issue.record("expected insight"); return }
+    #expect(lastYear.spendingTitle(older) == "December 2025 spending")
   }
 
   @Test func listsTodayInBriefingOrder() throws {
@@ -111,6 +114,33 @@ struct HomeBoardTests {
     #expect(draft.problem != nil)
     draft.detail = "   "
     #expect(draft.trimmedDetail == nil)
+    // The server counts UTF-16 units, so 41 emoji are 82 and too long.
+    draft.title = String(repeating: "🧺", count: 41)
+    #expect(draft.problem != nil)
+    draft.title = String(repeating: "🧺", count: 40)
+    #expect(draft.problem == nil)
+  }
+
+  @Test func bentoFillsRowsLikeTheWebBoard() {
+    let today = BentoSize(weight: 2, basis: 520, narrowBasis: 420)
+    let note = BentoSize(weight: 1, basis: 300, narrowBasis: 300)
+    let spending = BentoSize(weight: 2, basis: 600, narrowBasis: 480)
+    let sizes = [today, note, spending]
+
+    // iPad landscape: Today and the note share a row, by weight; spending wraps and fills its row.
+    let landscape = BentoRows.rows(of: sizes, width: 1130, spacing: 16)
+    #expect(landscape.map { $0.map(\.index) } == [[0, 1], [2]])
+    // 1130 − 16 − 520 − 300 = 294 pt to share, two thirds to Today.
+    let expected: [CGFloat] = [716, 398]
+    #expect(landscape[0].map(\.width) == expected)
+    #expect(landscape[1].map(\.width) == [1130])
+
+    // iPad portrait uses the web's narrower bases, so Today and the note still fit together.
+    let portrait = BentoRows.rows(of: sizes, width: 770, spacing: 16)
+    #expect(portrait.map { $0.map(\.index) } == [[0, 1], [2]])
+
+    // A lone card wider than the row shrinks to fit it.
+    #expect(BentoRows.rows(of: [today], width: 358, spacing: 16) == [[BentoRows.Card(index: 0, width: 358)]])
   }
 
   @Test func noteDraftKeepsTheSavedDueDay() throws {

@@ -73,7 +73,7 @@ All monetary values remain integer cents. Rate fields remain floats.
 
 ## Home noticeboard
 
-The `home/` module exposes an authenticated active-board read model. It derives cards at query time from schedule briefing data, weekly meal plans, active forwarded-email notices, monthly spending insights, and shared manual notes. Expired or superseded notices and payload-free archived occurrences are removed before the result reaches the client.
+The `home/` module exposes an authenticated active-board read model. It derives cards at query time from schedule briefing data, weekly meal plans, active forwarded-email notices, monthly spending insights, and shared manual notes. Expired or superseded notices and payload-free archived occurrences are removed before the result reaches the client. An unplanned school lunch or dinner is `null`, and each client words it. The query reads the clock when it runs, so clients pass a changing `refreshToken` to keep today, overdue and later-today current; the web and iOS apps both do.
 
 `manualNotes` stores household-authored title, optional detail/due date, author user id, and timestamps; its Convex document id identifies the note. `boardArchives` stores no source payload: only the occurrence id, source kind, archiving user id, and archive timestamp. Archive mutations validate that the requested occurrence is currently visible and are idempotent, so a new source occurrence can appear later without restoring the archived one.
 

@@ -11,7 +11,7 @@ extension LiveListsContractTests {
   func checkNoticeboardNote(on convex: ConvexClient) async throws {
     let home = DomaHomeClient(convex: convex)
     let title = "iOS fixture note \(UUID().uuidString.prefix(8))"
-    let boards = LiveValues(home.board())
+    let boards = LiveValues(home.board(refreshToken: 0))
     _ = try await boards.next("noticeboard") { _ in true }
 
     try await home.createNote(title: title, detail: "Fixture detail", dueDate: "2026-01-02")

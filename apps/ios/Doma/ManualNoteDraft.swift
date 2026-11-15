@@ -38,11 +38,14 @@ struct ManualNoteDraft: Equatable {
     return trimmed.isEmpty ? nil : trimmed
   }
 
-  /// Why the note can't be saved yet, or `nil` when it can.
+  /// Why the note can't be saved yet, or `nil` when it can. Lengths are counted in UTF-16 units,
+  /// as the server's JavaScript `length` counts them, so an emoji counts as two.
   var problem: String? {
     if trimmedTitle.isEmpty { return "Add a title." }
-    if trimmedTitle.count > Self.titleLimit { return "Keep the title to \(Self.titleLimit) characters." }
-    if (trimmedDetail?.count ?? 0) > Self.detailLimit { return "Keep the detail to \(Self.detailLimit) characters." }
+    if trimmedTitle.utf16.count > Self.titleLimit { return "Keep the title to \(Self.titleLimit) characters." }
+    if (trimmedDetail?.utf16.count ?? 0) > Self.detailLimit {
+      return "Keep the detail to \(Self.detailLimit) characters."
+    }
     return nil
   }
 

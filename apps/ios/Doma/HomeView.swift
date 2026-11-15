@@ -6,13 +6,17 @@ struct HomeView: View {
   let session: DomaSession
   @State private var board: DomaHomeBoard?
   @State private var loadFailed = false
-  @State private var subscription = 0
+  /// Goes up each minute, on return to the app and on Retry. The server works out today, what is
+  /// overdue and what is still to come when the query runs, and runs it again only when its data or
+  /// arguments change, so a new token keeps the board current as time passes.
+  @State private var refreshToken = 0
   @State private var openItem: DomaBoardItem?
   @State private var editor: EditorRequest?
   /// A note to edit once its detail sheet has gone, since two sheets can't show at once.
   @State private var noteToEdit: DomaBoardNote?
   @State private var isShowingSettings = false
   @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+  @Environment(\.scenePhase) private var scenePhase
 
   private struct EditorRequest: Identifiable {
     let id = UUID()
@@ -32,22 +36,39 @@ struct HomeView: View {
             Button("Add note", systemImage: "plus") {
               editor = EditorRequest(draft: ManualNoteDraft(timeZone: timeZone))
             }
+            // The household's time zone comes with the board.
+            .disabled(board == nil)
             Button("Settings", systemImage: "gearshape") { isShowingSettings = true }
           }
         }
     }
     .tint(DomaColor.warmTextPrimary)
-    .task(id: subscription) {
-      await followLiveQuery("Noticeboard", subscribe: session.home.board) {
+    .task(id: refreshToken) {
+      await followLiveQuery("Noticeboard", subscribe: { session.home.board(refreshToken: Double(refreshToken)) }) {
         loadFailed = true
       } onValue: { value in
         board = value
         loadFailed = false
+        // Archived elsewhere, or a new day began: its detail has nothing left to show.
+        if let open = openItem, !value.items.contains(where: { $0.id == open.id }) { openItem = nil }
       }
+    }
+    .task {
+      while !Task.isCancelled {
+        try? await Task.sleep(for: .seconds(60))
+        refreshToken += 1
+      }
+    }
+    .onChange(of: scenePhase) { _, phase in
+      if phase == .active { refreshToken += 1 }
     }
     .sheet(item: $openItem, onDismiss: openPendingEditor) { item in
       if let board {
-        HomeCardDetailSheet(item: item, presentation: HomeBoardPresentation(board: board), home: session.home) {
+        // The live item, so an edit made elsewhere shows here and Edit starts from it.
+        HomeCardDetailSheet(
+          item: board.items.first { $0.id == item.id } ?? item, presentation: HomeBoardPresentation(board: board),
+          home: session.home
+        ) {
           noteToEdit = $0
           openItem = nil
         }
@@ -74,11 +95,15 @@ struct HomeView: View {
         Text("Household noticeboard is unavailable")
           .domaFont(.sectionHeader)
           .foregroundStyle(DomaColor.warmTextPrimary)
-        Button("Retry") {
+        Button {
           loadFailed = false
-          subscription += 1
+          refreshToken += 1
+        } label: {
+          Text("Retry")
+            .domaFont(.button)
+            .frame(minWidth: 88, minHeight: 44)
+            .contentShape(.rect)
         }
-        .domaFont(.button)
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity)
     } else {

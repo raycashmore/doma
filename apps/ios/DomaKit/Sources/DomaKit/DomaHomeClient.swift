@@ -190,9 +190,10 @@ public struct DomaHomeClient: Sendable {
     self.convex = convex
   }
 
-  /// The live board. `refreshToken` only exists to let the web force a refetch.
-  public func board() -> AnyPublisher<DomaHomeBoard, ClientError> {
-    convex.subscribe(to: "home/activeBoard:activeBoard", with: ["refreshToken": 0.0])
+  /// The live board. The server reads the clock when the query runs, so callers pass a new
+  /// `refreshToken` from time to time to have today, overdue and later-today worked out again.
+  public func board(refreshToken: Double) -> AnyPublisher<DomaHomeBoard, ClientError> {
+    convex.subscribe(to: "home/activeBoard:activeBoard", with: ["refreshToken": refreshToken])
   }
 
   public func createNote(title: String, detail: String?, dueDate: String?) async throws {

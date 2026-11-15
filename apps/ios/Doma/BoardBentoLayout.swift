@@ -63,32 +63,46 @@ struct BoardBentoLayout: Layout {
   }
 
   private func rows(width: CGFloat, subviews: Subviews) -> [Row] {
+    let sizes = subviews.map { $0[BentoSizeKey.self] }
+    return BentoRows.rows(of: sizes, width: width, spacing: spacing).map { row in
+      let height = row.map { card in
+        subviews[card.index].sizeThatFits(ProposedViewSize(width: card.width, height: nil)).height
+      }.max() ?? 0
+      return Row(indices: row.map(\.index), widths: row.map(\.width), height: height)
+    }
+  }
+}
+
+/// Where the bento's cards go: which share a row, and how wide each is.
+nonisolated enum BentoRows {
+  struct Card: Equatable {
+    let index: Int
+    let width: CGFloat
+  }
+
+  static func rows(of sizes: [BentoSize], width: CGFloat, spacing: CGFloat) -> [[Card]] {
     // The web switches at a 1120 px window; the board sits 32 pt in from each side.
     let isNarrow = width <= 1120 - 64
     let basis = { (size: BentoSize) in isNarrow ? size.narrowBasis : size.basis }
     var groups: [[Int]] = []
     var used: CGFloat = 0
-    for index in subviews.indices {
-      let cardBasis = basis(subviews[index][BentoSizeKey.self])
-      if let last = groups.indices.last, used + spacing + cardBasis <= width {
+    for (index, size) in sizes.enumerated() {
+      if let last = groups.indices.last, used + spacing + basis(size) <= width {
         groups[last].append(index)
-        used += spacing + cardBasis
+        used += spacing + basis(size)
       } else {
         groups.append([index])
-        used = cardBasis
+        used = basis(size)
       }
     }
     return groups.map { indices in
-      let sizes = indices.map { subviews[$0][BentoSizeKey.self] }
-      let gaps = spacing * CGFloat(indices.count - 1)
-      let free = width - gaps - sizes.reduce(0) { $0 + basis($1) }
-      let weights = sizes.reduce(0) { $0 + $1.weight }
-      // A lone card wider than the row shrinks to fit it.
-      let widths = sizes.map { min(width, max(0, basis($0) + free * $0.weight / weights)) }
-      let height = zip(indices, widths).map { index, cardWidth in
-        subviews[index].sizeThatFits(ProposedViewSize(width: cardWidth, height: nil)).height
-      }.max() ?? 0
-      return Row(indices: indices, widths: widths, height: height)
+      let row = indices.map { sizes[$0] }
+      let free = width - spacing * CGFloat(indices.count - 1) - row.reduce(0) { $0 + basis($1) }
+      let weights = row.reduce(0) { $0 + $1.weight }
+      return zip(indices, row).map { index, size in
+        // A lone card wider than the row shrinks to fit it.
+        Card(index: index, width: min(width, max(0, basis(size) + free * size.weight / weights)))
+      }
     }
   }
 }

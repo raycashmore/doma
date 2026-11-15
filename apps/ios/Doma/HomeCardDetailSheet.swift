@@ -29,6 +29,7 @@ struct HomeCardDetailSheet: View {
       .toolbar {
         ToolbarItem(placement: .confirmationAction) {
           Button("Done") { dismiss() }
+            .disabled(isArchiving)
         }
       }
     }
