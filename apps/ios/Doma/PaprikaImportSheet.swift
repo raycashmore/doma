@@ -14,7 +14,8 @@ struct PaprikaImportSheet: View {
   /// Items brought in before start unticked; these are the ones the person ticked to add again.
   @State private var reticked: Set<String> = []
   @State private var showsAlreadyImported = false
-  @State private var removeFromPaprika = true
+  /// Off by default (Ray, 15 November 2026): removal is proven on Paprika's server, not yet on the phone.
+  @State private var removeFromPaprika = false
   @State private var isImporting = false
   @State private var outcome: (title: String, message: String, isProblem: Bool)?
 

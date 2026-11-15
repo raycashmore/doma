@@ -12,8 +12,8 @@ or line breaks adds one item for each. Each person can connect their own Paprika
 Paprika's sign-in token on the server, never the password, and remembers which Paprika grocery list
 to bring items from. Once connected, the Groceries list shows Get Paprika Items: one read of
 Paprika lists the items still to buy, grouped by recipe, and the ticked ones are added with a
-small basket mark and the recipe in their notes, then removed from Paprika unless that is turned
-off. Doma remembers every Paprika item it has imported, so none is added twice, even if removing it
+small basket mark and the recipe in their notes. Remove from Paprika is off by default; when turned
+on, the imported items are removed from Paprika. Doma remembers every Paprika item it has imported, so none is added twice, even if removing it
 from Paprika failed, unless the person shows the items already brought in that are still in Paprika
 and ticks one to add it again. Property definitions and AI
 categorisation setup are still managed on the web. Destructive actions ask for confirmation, unlike the web app, because the
