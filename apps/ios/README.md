@@ -10,7 +10,12 @@ property (saved per person, as on the web), Auto Categorise sorts Unassigned ite
 several lines into Add an item previews them before adding them all. Submitting text with commas
 or line breaks adds one item for each. Each person can connect their own Paprika account (More > Paprika): Doma keeps
 Paprika's sign-in token on the server, never the password, and remembers which Paprika grocery list
-to bring items from. Importing items is not built yet. Property definitions and AI
+to bring items from. Once connected, the Groceries list shows Get Paprika Items: one read of
+Paprika lists the items still to buy, grouped by recipe, and the ticked ones are added with a
+small basket mark and the recipe in their notes. Remove from Paprika is off by default; when turned
+on, the imported items are removed from Paprika. Doma remembers every Paprika item it has imported, so none is added twice, even if removing it
+from Paprika failed, unless the person shows the items already brought in that are still in Paprika
+and ticks one to add it again. Property definitions and AI
 categorisation setup are still managed on the web. Destructive actions ask for confirmation, unlike the web app, because the
 app writes to the household's real lists. Face ID (or the device passcode) unlocks it on
 every cold launch and after 5 minutes in the background. The lock covers the

@@ -29,10 +29,17 @@ private final class PendingSave {
 
 private struct SaveFailed: Error {}
 
+/// A hold whose release wait never ends by itself. The real one is 2 seconds of wall-clock time, which
+/// a busy CI runner can use up between two lines of a test and so release the hold early.
+@MainActor
+private func heldWithoutTimer() -> HeldOrder {
+  HeldOrder(waitBeforeRelease: { try? await Task.sleep(for: .seconds(3600)) })
+}
+
 @MainActor
 struct HeldOrderTests {
   @Test func keepsTheDraggedOrderAfterTheSaveReturnsUntilTheLiveUpdateShowsIt() async {
-    let held = HeldOrder()
+    let held = heldWithoutTimer()
     let save = PendingSave()
     held.hold(["b", "a", "c"], save: save.run, onFailure: {})
 
@@ -46,7 +53,7 @@ struct HeldOrderTests {
   }
 
   @Test func quickDragsSaveInOrder() async {
-    let held = HeldOrder()
+    let held = heldWithoutTimer()
     let first = PendingSave()
     let second = PendingSave()
     held.hold(["b", "a", "c"], save: first.run, onFailure: {})
@@ -67,7 +74,7 @@ struct HeldOrderTests {
   }
 
   @Test func aFailedSavePutsTheSavedOrderBackAndReportsIt() async {
-    let held = HeldOrder()
+    let held = heldWithoutTimer()
     let save = PendingSave()
     var failed = false
     held.hold(["b", "a"], save: save.run, onFailure: { failed = true })
@@ -79,7 +86,7 @@ struct HeldOrderTests {
   }
 
   @Test func aFailedSaveDropsALaterDragWorkedOutFromIt() async {
-    let held = HeldOrder()
+    let held = heldWithoutTimer()
     let first = PendingSave()
     let second = PendingSave()
     held.hold(["b", "a", "c"], save: first.run, onFailure: {})
@@ -106,7 +113,7 @@ struct HeldOrderTests {
   }
 
   @Test func letsGoWhenSomeoneElseAddsARow() async {
-    let held = HeldOrder()
+    let held = heldWithoutTimer()
     let save = PendingSave()
     held.hold(["b", "a"], save: save.run, onFailure: {})
     await save.finish()
@@ -117,7 +124,7 @@ struct HeldOrderTests {
   }
 
   @Test func letsGoAfterASecondUpdateWithoutTheHeldOrder() async {
-    let held = HeldOrder()
+    let held = heldWithoutTimer()
     let save = PendingSave()
     held.hold(["b", "a"], save: save.run, onFailure: {})
     await save.finish()
@@ -129,7 +136,7 @@ struct HeldOrderTests {
   }
 
   @Test func showsRowsTheHoldDoesNotKnowAtTheEnd() {
-    let held = HeldOrder()
+    let held = heldWithoutTimer()
     held.hold(["b", "a"], save: {}, onFailure: {})
 
     #expect(held.ordered(rows("a", "b", "new")).map(\.id) == ["b", "a", "new"])

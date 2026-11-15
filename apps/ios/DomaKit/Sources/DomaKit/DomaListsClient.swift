@@ -19,12 +19,17 @@ public struct DomaListItem: Decodable, Equatable, Identifiable, Sendable {
   public let id: String
   public let title: String
   public let notes: String?
+  /// The app that added the item, such as `"paprika"`; `nil` for items added in Doma.
+  public let source: String?
   public let propertyValues: [DomaListItemPropertyValue]
+
+  public var isFromPaprika: Bool { source == "paprika" }
 
   enum CodingKeys: String, CodingKey {
     case id = "_id"
     case title
     case notes
+    case source
     case propertyValues
   }
 }

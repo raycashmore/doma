@@ -9,8 +9,11 @@ struct ListsView: View {
   @State private var compactColumn: NavigationSplitViewColumn
   @State private var defaultListId: DomaListSummary.ID?
   @State private var groceriesListId: DomaListSummary.ID?
+  /// Whether the server has said which list is the Groceries list, so `nil` means there is none.
+  @State private var hasGroceriesAnswer = false
   @State private var isCreatingList = false
   @State private var isShowingPaprika = false
+  @State private var isPaprikaConnected = false
   @State private var listCreatedInSheet: DomaListSummary.ID?
   @State private var createdListId: DomaListSummary.ID?
   @State private var deleteFailed = false
@@ -94,7 +97,15 @@ struct ListsView: View {
     .task {
       await followLiveQuery("Groceries list", subscribe: session.lists.groceriesList) {
         groceriesListId = nil
-      } onValue: { groceriesListId = $0?.publicId }
+      } onValue: {
+        groceriesListId = $0?.publicId
+        hasGroceriesAnswer = true
+      }
+    }
+    .task {
+      await followLiveQuery("Paprika connection", subscribe: session.paprika.connection) {
+        isPaprikaConnected = false
+      } onValue: { isPaprikaConnected = $0 != nil }
     }
   }
 
@@ -154,7 +165,12 @@ struct ListsView: View {
         savedGroupingId: openGrouping?.propertyId,
         isUnavailable: unavailableListId == selectedList.id,
         isDefault: selectedList.id == defaultListId,
-        isGroceries: selectedList.id == groceriesListId
+        isGroceries: selectedList.id == groceriesListId,
+        // Once Paprika is connected, items come in on the Groceries list. With none chosen, every
+        // list offers it, and the sheet explains how to choose one.
+        paprika: isPaprikaConnected
+          && (selectedList.id == groceriesListId || (hasGroceriesAnswer && groceriesListId == nil))
+          ? session.paprika : nil
       ) {
         await delete(selectedList)
       }

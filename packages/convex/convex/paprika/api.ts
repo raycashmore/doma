@@ -99,3 +99,84 @@ export async function fetchPaprikaGroceryLists(
   const lists = body.result.map(parseGroceryList).filter((list): list is PaprikaGroceryList => list !== null);
   return { status: 'ok', lists };
 }
+
+/** A grocery item as Paprika sends it. `raw` is kept whole: Paprika removes an item only when it is posted back complete. */
+export type PaprikaGroceryItem = {
+  uid: string;
+  listUid: string;
+  /** Paprika's full line, such as "100g frozen spinach". */
+  name: string;
+  recipe: string | null;
+  purchased: boolean;
+  raw: Record<string, unknown>;
+};
+
+export type PaprikaGroceriesResult = { status: 'ok'; items: PaprikaGroceryItem[] } | Rejected | Unavailable;
+export type PaprikaWriteResult = { status: 'ok' } | Rejected | Unavailable;
+
+function parseGroceryItem(value: unknown): PaprikaGroceryItem | null {
+  if (!isRecord(value)) return null;
+  const { uid, list_uid: listUid, name, recipe, purchased } = value;
+  if (typeof uid !== 'string' || typeof listUid !== 'string' || typeof name !== 'string') return null;
+  const title = name.trim();
+  if (!title) return null;
+  return {
+    uid,
+    listUid,
+    name: title,
+    recipe: typeof recipe === 'string' && recipe.trim() ? recipe.trim() : null,
+    purchased: purchased === true,
+    raw: value
+  };
+}
+
+export async function fetchPaprikaGroceries(token: string, fetchImpl: Fetch = fetch): Promise<PaprikaGroceriesResult> {
+  let response: Response;
+  try {
+    response = await fetchImpl(`${paprikaApiBase}/v2/sync/groceries/`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+  } catch {
+    return unavailable();
+  }
+
+  const body = await readJson(response);
+  const refusal = readRefusal(body);
+  if (refusal) return refusal;
+  if (!response.ok || !isRecord(body) || !Array.isArray(body.result)) return unavailable(response);
+
+  const items = body.result.map(parseGroceryItem).filter((item): item is PaprikaGroceryItem => item !== null);
+  return { status: 'ok', items };
+}
+
+/**
+ * Removes items from Paprika by posting them back whole with `deleted: true`, as a gzipped JSON
+ * array in the multipart field `data`. `gzip` is passed in because compression needs Node.
+ */
+export async function deletePaprikaGroceries(
+  token: string,
+  items: PaprikaGroceryItem[],
+  gzip: (data: Uint8Array) => Uint8Array<ArrayBuffer>,
+  fetchImpl: Fetch = fetch
+): Promise<PaprikaWriteResult> {
+  const payload = JSON.stringify(items.map((item) => ({ ...item.raw, deleted: true })));
+  const form = new FormData();
+  form.append('data', new Blob([gzip(new TextEncoder().encode(payload))]), 'data');
+
+  let response: Response;
+  try {
+    response = await fetchImpl(`${paprikaApiBase}/v2/sync/groceries/`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: form
+    });
+  } catch {
+    return unavailable();
+  }
+
+  const body = await readJson(response);
+  const refusal = readRefusal(body);
+  if (refusal) return refusal;
+  if (!response.ok || !isRecord(body) || body.result !== true) return unavailable(response);
+  return { status: 'ok' };
+}

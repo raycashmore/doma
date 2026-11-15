@@ -21,7 +21,7 @@ import {
 import { boardArchivesTable, manualNotesTable } from './home/schema';
 import { spendingInsightDeliveryAttemptsTable, spendingInsightsTable } from './insights/schema';
 import { recipesTable, weeklyMealAgentRunsTable, weeklyMealPlansTable } from './meals/schema';
-import { paprikaConnectionsTable } from './paprika/schema';
+import { paprikaConnectionsTable, paprikaImportedItemsTable } from './paprika/schema';
 import { scheduleEventsTable, scheduleReminderAttemptsTable, scheduleSyncMetaTable } from './schedule/schema';
 
 export default defineSchema({
@@ -232,6 +232,8 @@ export default defineSchema({
     listId: v.id('lists'),
     title: v.string(),
     notes: v.optional(v.string()),
+    // Where the item came from when another app added it, for a small marker on the item.
+    source: v.optional(v.literal('paprika')),
     sortOrder: v.number(),
     completedAt: v.optional(v.number()),
     createdAt: v.number(),
@@ -330,5 +332,6 @@ export default defineSchema({
     .index('by_item_id', ['listItemId'])
     .index('by_property_id', ['listPropertyId'])
     .index('by_item_id_and_property_id', ['listItemId', 'listPropertyId']),
-  paprikaConnections: paprikaConnectionsTable
+  paprikaConnections: paprikaConnectionsTable,
+  paprikaImportedItems: paprikaImportedItemsTable
 });
