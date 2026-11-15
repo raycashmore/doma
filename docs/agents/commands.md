@@ -59,6 +59,9 @@ Ctrl-C. Killing only the `convex dev` process leaves the backend running old cod
 `convex-local-backend` process, then start again. Function logs, including `console.error`, print
 in the `pnpm convex` output.
 
+`convex dev` watches the checkout, so switching branches pushes that branch's functions to the
+local backend. Before switching, check for a running watcher (`ps -ax | grep "convex dev"`).
+
 ## Convex Seeding
 
 Seed scripts run from the local machine and read a local excel spreadsheet. That

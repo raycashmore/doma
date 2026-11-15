@@ -12,5 +12,5 @@
     "declaration": false,
     "declarationMap": false
   },
-  "include": ["convex/**/*"]
+  "include": ["convex/**/*", "scripts/**/*.ts"]
 }

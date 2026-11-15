@@ -6,7 +6,9 @@
 
 import { internal } from '@repo/convex';
 
-import { runInternalMutation } from './convexRun';
+import { createInternalMutationRunner } from './convexRun';
+
+const runInternalMutation = createInternalMutationRunner(process.argv.slice(2));
 
 const tables = [
   'currentAccounts',
