@@ -2,11 +2,24 @@
 
 Backend code lives in `packages/convex/convex/`.
 
+## Access
+
+Every public query, mutation and action rejects a signed-out caller before it reads or writes
+anything. User functions throw `Not authenticated`. Bot functions throw `Unauthorized` without
+their service token. Clerk runs in restricted mode, so a signed-in identity is an approved household
+member. `convex/publicAccess.test.ts` calls every public function signed out and fails on one that
+skips its check. Make a function internal when no client calls it. Only the five queries Budget reads
+are public in `convex/queries.ts`.
+
 ## Seeding
 
 Seed scripts run locally and read a local excel spreadsheet, which is
 ignored by git. The seed command clears seedable finance tables on the target
 deployment before inserting workbook data.
+
+The seed functions in `convex/seed.ts` are internal. The scripts call them with
+`convex run`, which acts as an admin of the target deployment. A cloud target needs
+a Convex CLI login with access to it.
 
 For a local Convex deployment:
 

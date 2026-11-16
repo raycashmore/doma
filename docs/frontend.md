@@ -35,6 +35,12 @@ React zones configure Convex in their root route. Home retains `convex-vue` behi
 
 Home forms and confirmation dialogs expose pending and recoverable error states, trap focus, and restore focus to their triggers. The shell reports offline, connecting, query-error, and connected states without implying offline writes. Routes live in `src/router.ts`; auth and Convex integration live under `src/integrations/`. See `apps/home/README.md` for the adapter decision, PWA boundary, verification coverage, and local commands.
 
+## Budget
+
+`apps/budget` is a TanStack Start zone mounted at `/budget` that reads five signed-in finance queries.
+The page waits for Convex to accept the Clerk token (`ConvexAuthGate`), and says so inside the app
+frame if it never does. Local no-auth mode uses generic fixtures (`src/lib/budgetFixtures.ts`).
+
 ## Schedule
 
 `apps/schedule` is a Next.js App Router app mounted as the Schedule zone. Its

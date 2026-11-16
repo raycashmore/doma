@@ -5,8 +5,7 @@
  *       or: pnpm seed   (root convenience alias)
  *       or: pnpm seed:url -- https://<preview>.convex.cloud
  *
- * Uses the first positional argument, or loads env from ../../.env.local
- * (CONVEX_URL or NEXT_PUBLIC_CONVEX_URL or VITE_CONVEX_URL).
+ * Calls the internal seed functions through the Convex CLI (see convexRun.ts).
  * Every money column is converted to integer cents via toCents().
  */
 
@@ -14,23 +13,30 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { api } from '@repo/convex';
+import { internal } from '@repo/convex';
 import { toCents } from '@repo/convex/helpers';
-import { ConvexHttpClient } from 'convex/browser';
 import XLSX from 'xlsx';
 
 import { budgetCaptureDatesFromCaptureDate } from '../convex/budgetDisplayMonth';
 import { parseSpendingSummaryRows } from '../convex/spendingSummary';
-import { getTargetConvexUrl } from './targetUrl';
+import { createInternalMutationRunner } from './convexRun';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const runInternalMutation = createInternalMutationRunner(process.argv.slice(2));
 
 XLSX.set_fs(fs);
 
-const client = new ConvexHttpClient(getTargetConvexUrl());
 const XLSX_PATH = path.resolve(__dirname, 'CREAM.xlsx');
 
 type SpreadsheetRow = unknown[];
+
+const REQUIRED_SHEETS = ['Sink or Swim', 'Current', 'Cash', 'UK', 'Super', 'Investments', 'Mortgage', 'Crypto'];
+
+function requireSheet(wb: XLSX.WorkBook, name: string): XLSX.WorkSheet {
+  const ws = wb.Sheets[name];
+  if (!ws) throw new Error(`CREAM.xlsx has no "${name}" sheet`);
+  return ws;
+}
 
 function excelDateToTimestamp(excelDate: number): number {
   const MS_PER_DAY = 86400000;
@@ -77,7 +83,7 @@ function readBudgetRows(wb: XLSX.WorkBook): {
   budgetRows: BudgetRow[];
   mortgageFieldsByDate: MortgageFields[];
 } {
-  const ws = wb.Sheets['Sink or Swim'];
+  const ws = requireSheet(wb, 'Sink or Swim');
   const data = XLSX.utils.sheet_to_json<SpreadsheetRow>(ws, { header: 1 });
   // Columns: Date(0) | Credit 2(1) | Credit 1(2) | Spend(3=derived) | Sink or swim(4) |
   //          Income Primary(5) | Income Secondary(6) | Variable(7) | Fixed(8) | Rent(9) |
@@ -128,6 +134,8 @@ function findMortgageFieldsAtOrBefore(mortgageFields: MortgageFields[], date: nu
 async function main() {
   console.log('Reading CREAM.xlsx...');
   const wb = XLSX.readFile(XLSX_PATH);
+  // Check every sheet before clearing, so a missing one leaves the deployment intact.
+  for (const name of REQUIRED_SHEETS) requireSheet(wb, name);
   const { budgetRows, mortgageFieldsByDate } = readBudgetRows(wb);
 
   console.log('Clearing existing tables...');
@@ -144,13 +152,13 @@ async function main() {
     'cryptoTransactions',
     'cryptoSummaries'
   ] as const) {
-    const { deleted } = await client.mutation(api.seed.clearTable, { table });
+    const { deleted } = runInternalMutation(internal.seed.clearTable, { table });
     console.log(`  cleared ${table}: ${deleted}`);
   }
 
   // ── Current Accounts ──────────────────────────────────────
   {
-    const ws = wb.Sheets['Current'];
+    const ws = requireSheet(wb, 'Current');
     const data = XLSX.utils.sheet_to_json<SpreadsheetRow>(ws, { header: 1 });
     // Columns: Date(0) | Current Secondary(1) | Shared(2) | Current Primary(3) |
     //          Other(4) | Total(5=derived) | Currency(6)
@@ -169,7 +177,7 @@ async function main() {
 
     for (let i = 0; i < rows.length; i += 100) {
       const batch = rows.slice(i, i + 100);
-      const result = await client.mutation(api.seed.seedCurrentAccounts, {
+      const result = runInternalMutation(internal.seed.seedCurrentAccounts, {
         rows: batch
       });
       console.log(`  currentAccounts: inserted ${result.inserted} (batch ${Math.floor(i / 100) + 1})`);
@@ -179,7 +187,7 @@ async function main() {
 
   // ── Cash Accounts ─────────────────────────────────────────
   {
-    const ws = wb.Sheets['Cash'];
+    const ws = requireSheet(wb, 'Cash');
     const data = XLSX.utils.sheet_to_json<SpreadsheetRow>(ws, { header: 1 });
     const rows = data
       .slice(1)
@@ -193,7 +201,7 @@ async function main() {
 
     for (let i = 0; i < rows.length; i += 100) {
       const batch = rows.slice(i, i + 100);
-      const result = await client.mutation(api.seed.seedCashAccounts, {
+      const result = runInternalMutation(internal.seed.seedCashAccounts, {
         rows: batch
       });
       console.log(`  cashAccounts: inserted ${result.inserted} (batch ${Math.floor(i / 100) + 1})`);
@@ -203,7 +211,7 @@ async function main() {
 
   // ── UK Accounts ───────────────────────────────────────────
   {
-    const ws = wb.Sheets['UK'];
+    const ws = requireSheet(wb, 'UK');
     const data = XLSX.utils.sheet_to_json<SpreadsheetRow>(ws, { header: 1 });
     const rows = data
       .slice(1)
@@ -222,7 +230,7 @@ async function main() {
 
     for (let i = 0; i < rows.length; i += 100) {
       const batch = rows.slice(i, i + 100);
-      const result = await client.mutation(api.seed.seedUkAccounts, {
+      const result = runInternalMutation(internal.seed.seedUkAccounts, {
         rows: batch
       });
       console.log(`  ukAccounts: inserted ${result.inserted} (batch ${Math.floor(i / 100) + 1})`);
@@ -232,7 +240,7 @@ async function main() {
 
   // ── Super Accounts ────────────────────────────────────────
   {
-    const ws = wb.Sheets['Super'];
+    const ws = requireSheet(wb, 'Super');
     const data = XLSX.utils.sheet_to_json<SpreadsheetRow>(ws, { header: 1 });
     const rows = data
       .slice(1)
@@ -250,7 +258,7 @@ async function main() {
 
     for (let i = 0; i < rows.length; i += 100) {
       const batch = rows.slice(i, i + 100);
-      const result = await client.mutation(api.seed.seedSuperAccounts, {
+      const result = runInternalMutation(internal.seed.seedSuperAccounts, {
         rows: batch
       });
       console.log(`  superAccounts: inserted ${result.inserted} (batch ${Math.floor(i / 100) + 1})`);
@@ -260,7 +268,7 @@ async function main() {
 
   // ── Investment Accounts ───────────────────────────────────
   {
-    const ws = wb.Sheets['Investments'];
+    const ws = requireSheet(wb, 'Investments');
     const data = XLSX.utils.sheet_to_json<SpreadsheetRow>(ws, { header: 1 });
     const rows = data
       .slice(1)
@@ -284,7 +292,7 @@ async function main() {
 
     for (let i = 0; i < rows.length; i += 100) {
       const batch = rows.slice(i, i + 100);
-      const result = await client.mutation(api.seed.seedInvestmentAccounts, {
+      const result = runInternalMutation(internal.seed.seedInvestmentAccounts, {
         rows: batch
       });
       console.log(`  investmentAccounts: inserted ${result.inserted} (batch ${Math.floor(i / 100) + 1})`);
@@ -294,7 +302,7 @@ async function main() {
 
   // ── Mortgage ──────────────────────────────────────────────
   {
-    const ws = wb.Sheets['Mortgage'];
+    const ws = requireSheet(wb, 'Mortgage');
     const data = XLSX.utils.sheet_to_json<SpreadsheetRow>(ws, { header: 1 });
     const datedRows = data.slice(1).filter((r: SpreadsheetRow) => r[0] && typeof r[0] === 'number');
     const latestRow = datedRows.reduce<SpreadsheetRow | undefined>((latest, r) => {
@@ -303,7 +311,7 @@ async function main() {
     }, undefined);
 
     if (latestRow) {
-      const result = await client.mutation(api.seed.seedMortgageConfig, {
+      const result = runInternalMutation(internal.seed.seedMortgageConfig, {
         config: {
           key: 'default',
           price: toCents(num(latestRow[16])),
@@ -342,7 +350,7 @@ async function main() {
 
     for (let i = 0; i < rows.length; i += 100) {
       const batch = rows.slice(i, i + 100);
-      const result = await client.mutation(api.seed.seedMortgage, {
+      const result = runInternalMutation(internal.seed.seedMortgage, {
         rows: batch
       });
       console.log(`  mortgage: inserted ${result.inserted} (batch ${Math.floor(i / 100) + 1})`);
@@ -356,7 +364,7 @@ async function main() {
 
     for (let i = 0; i < rows.length; i += 100) {
       const batch = rows.slice(i, i + 100);
-      const result = await client.mutation(api.seed.seedBudget, {
+      const result = runInternalMutation(internal.seed.seedBudget, {
         rows: batch
       });
       console.log(`  budget: inserted ${result.inserted} (batch ${Math.floor(i / 100) + 1})`);
@@ -372,7 +380,7 @@ async function main() {
 
     for (let i = 0; i < rows.length; i += 100) {
       const batch = rows.slice(i, i + 100);
-      const result = await client.mutation(api.seed.seedSpendCategoryBreakdown, {
+      const result = runInternalMutation(internal.seed.seedSpendCategoryBreakdown, {
         rows: batch
       });
       console.log(`  spendCategoryBreakdown: inserted ${result.inserted} (batch ${Math.floor(i / 100) + 1})`);
@@ -382,7 +390,7 @@ async function main() {
 
   // ── Crypto Transactions ───────────────────────────────────
   {
-    const ws = wb.Sheets['Crypto'];
+    const ws = requireSheet(wb, 'Crypto');
     const data = XLSX.utils.sheet_to_json<SpreadsheetRow>(ws, { header: 1 });
 
     const txns: Array<{
@@ -418,7 +426,7 @@ async function main() {
     }
 
     if (txns.length > 0) {
-      const result = await client.mutation(api.seed.seedCryptoTransactions, {
+      const result = runInternalMutation(internal.seed.seedCryptoTransactions, {
         rows: txns
       });
       console.log(`  cryptoTransactions (platform_a): inserted ${result.inserted}`);
@@ -428,28 +436,12 @@ async function main() {
 
   // ── Crypto Summaries ──────────────────────────────────────
   {
-    const ws = wb.Sheets['Crypto'];
+    const ws = requireSheet(wb, 'Crypto');
     const data = XLSX.utils.sheet_to_json<SpreadsheetRow>(ws, { header: 1 });
 
-    const summaries: Array<{
-      platform: 'platform_a' | 'platform_b';
-      totalDeposited: number;
-      totalWithdrawn: number;
-      currentValue: number;
-    }> = [
-      {
-        platform: 'platform_a',
-        totalDeposited: 0,
-        totalWithdrawn: 0,
-        currentValue: 0
-      },
-      {
-        platform: 'platform_b',
-        totalDeposited: 0,
-        totalWithdrawn: 0,
-        currentValue: 0
-      }
-    ];
+    const platformA = { platform: 'platform_a' as const, totalDeposited: 0, totalWithdrawn: 0, currentValue: 0 };
+    const platformB = { platform: 'platform_b' as const, totalDeposited: 0, totalWithdrawn: 0, currentValue: 0 };
+    const summaries = [platformA, platformB];
 
     // Parse summary rows dynamically
     let inPlatformB = false;
@@ -461,7 +453,7 @@ async function main() {
         continue;
       }
 
-      const target = inPlatformB ? summaries[1] : summaries[0];
+      const target = inPlatformB ? platformB : platformA;
 
       if (r[0] === 'Total' && !inPlatformB) {
         target.totalDeposited = toCents(num(r[1]));
@@ -481,7 +473,7 @@ async function main() {
       }
     }
 
-    const result = await client.mutation(api.seed.seedCryptoSummaries, {
+    const result = runInternalMutation(internal.seed.seedCryptoSummaries, {
       rows: summaries
     });
     console.log(`  cryptoSummaries: inserted ${result.inserted}`);

@@ -1,11 +1,11 @@
 import { v } from 'convex/values';
 
-import { mutation } from './_generated/server';
+import { internalMutation } from './_generated/server';
 
 // ============================================================
 // CLEAR: Delete all rows from a table
 // ============================================================
-export const clearTable = mutation({
+export const clearTable = internalMutation({
   args: {
     table: v.union(
       v.literal('currentAccounts'),
@@ -33,7 +33,7 @@ export const clearTable = mutation({
 // ============================================================
 // SEED: Current Accounts
 // ============================================================
-export const seedCurrentAccounts = mutation({
+export const seedCurrentAccounts = internalMutation({
   args: {
     rows: v.array(
       v.object({
@@ -64,7 +64,7 @@ export const seedCurrentAccounts = mutation({
 // ============================================================
 // SEED: Cash Accounts
 // ============================================================
-export const seedCashAccounts = mutation({
+export const seedCashAccounts = internalMutation({
   args: {
     rows: v.array(
       v.object({
@@ -89,7 +89,7 @@ export const seedCashAccounts = mutation({
 // ============================================================
 // SEED: UK Accounts
 // ============================================================
-export const seedUkAccounts = mutation({
+export const seedUkAccounts = internalMutation({
   args: {
     rows: v.array(
       v.object({
@@ -120,7 +120,7 @@ export const seedUkAccounts = mutation({
 // ============================================================
 // SEED: Super Accounts
 // ============================================================
-export const seedSuperAccounts = mutation({
+export const seedSuperAccounts = internalMutation({
   args: {
     rows: v.array(
       v.object({
@@ -151,7 +151,7 @@ export const seedSuperAccounts = mutation({
 // ============================================================
 // SEED: Investment Accounts
 // ============================================================
-export const seedInvestmentAccounts = mutation({
+export const seedInvestmentAccounts = internalMutation({
   args: {
     rows: v.array(
       v.object({
@@ -194,7 +194,7 @@ export const seedInvestmentAccounts = mutation({
 // ============================================================
 // SEED: Mortgage
 // ============================================================
-export const seedMortgage = mutation({
+export const seedMortgage = internalMutation({
   args: {
     rows: v.array(
       v.object({
@@ -230,7 +230,7 @@ export const seedMortgage = mutation({
   }
 });
 
-export const seedMortgageConfig = mutation({
+export const seedMortgageConfig = internalMutation({
   args: {
     config: v.object({
       key: v.literal('default'),
@@ -260,7 +260,7 @@ export const seedMortgageConfig = mutation({
 // ============================================================
 // SEED: Budget
 // ============================================================
-export const seedBudget = mutation({
+export const seedBudget = internalMutation({
   args: {
     rows: v.array(
       v.object({
@@ -301,7 +301,7 @@ export const seedBudget = mutation({
 // ============================================================
 // SEED: Spend Category Breakdown
 // ============================================================
-export const seedSpendCategoryBreakdown = mutation({
+export const seedSpendCategoryBreakdown = internalMutation({
   args: {
     rows: v.array(
       v.object({
@@ -328,7 +328,7 @@ export const seedSpendCategoryBreakdown = mutation({
 // ============================================================
 // SEED: Crypto Transactions
 // ============================================================
-export const seedCryptoTransactions = mutation({
+export const seedCryptoTransactions = internalMutation({
   args: {
     rows: v.array(
       v.object({
@@ -355,7 +355,7 @@ export const seedCryptoTransactions = mutation({
 // ============================================================
 // SEED: Crypto Summaries
 // ============================================================
-export const seedCryptoSummaries = mutation({
+export const seedCryptoSummaries = internalMutation({
   args: {
     rows: v.array(
       v.object({

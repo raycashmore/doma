@@ -10,6 +10,8 @@ import type { ReactNode } from 'react';
 import { AuthGate } from '@/integrations/auth/AuthGate';
 import { BudgetHeaderActionsProvider } from '@/components/budget/BudgetHeaderActionsContext';
 import { getBudgetBaseUrl } from '@/config/basePath';
+import { FIXTURE_MODE } from '@/config/runtime';
+import { ConvexAuthGate } from '@/integrations/convex/ConvexAuthGate';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CLERK_KEY = (import.meta as any).env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -69,7 +71,9 @@ function RootDocument() {
                 actions={headerActions}
                 headerClassName="px-4 pt-2 pb-3"
               >
-                <Outlet />
+                <ConvexAuthGate required={!FIXTURE_MODE}>
+                  <Outlet />
+                </ConvexAuthGate>
               </AppFrame>
             </BudgetHeaderActionsProvider>
             <TanStackDevtools

@@ -9,6 +9,7 @@ import {
   findItemPropertyValue,
   readListItems,
   readListProperties,
+  requireUserId,
   requireVisibleList
 } from './items';
 
@@ -409,6 +410,7 @@ export const prepareListCategorisation = internalMutation({
 export const autoCategoriseUnassignedItems = action({
   args: { listPublicId: v.string() },
   handler: async (ctx, args) => {
+    await requireUserId(ctx);
     const request = await ctx.runMutation(categorisationRefs.prepareListCategorisation, args);
     if (!request.itemIds.length) return { status: 'idle' as const };
     return await ctx.runAction(categorisationRefs.runCategorisation, request);

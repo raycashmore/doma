@@ -78,7 +78,6 @@ import type * as meals_mutations from "../meals/mutations.js";
 import type * as meals_queries from "../meals/queries.js";
 import type * as monthDetail from "../monthDetail.js";
 import type * as monthlyBreakdown from "../monthlyBreakdown.js";
-import type * as mutations from "../mutations.js";
 import type * as paprika_api from "../paprika/api.js";
 import type * as paprika_connection from "../paprika/connection.js";
 import type * as paprika_importActions from "../paprika/importActions.js";
@@ -97,6 +96,7 @@ import type * as schedule_sync from "../schedule/sync.js";
 import type * as schedule_syncPolicy from "../schedule/syncPolicy.js";
 import type * as schedule_week from "../schedule/week.js";
 import type * as seed from "../seed.js";
+import type * as signedIn from "../signedIn.js";
 import type * as spendingSummary from "../spendingSummary.js";
 
 import type {
@@ -176,7 +176,6 @@ declare const fullApi: ApiFromModules<{
   "meals/queries": typeof meals_queries;
   monthDetail: typeof monthDetail;
   monthlyBreakdown: typeof monthlyBreakdown;
-  mutations: typeof mutations;
   "paprika/api": typeof paprika_api;
   "paprika/connection": typeof paprika_connection;
   "paprika/importActions": typeof paprika_importActions;
@@ -195,6 +194,7 @@ declare const fullApi: ApiFromModules<{
   "schedule/syncPolicy": typeof schedule_syncPolicy;
   "schedule/week": typeof schedule_week;
   seed: typeof seed;
+  signedIn: typeof signedIn;
   spendingSummary: typeof spendingSummary;
 }>;
 

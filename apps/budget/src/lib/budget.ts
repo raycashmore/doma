@@ -1,5 +1,9 @@
 export type TimePeriod = '3M' | '6M' | '12M' | 'ALL';
 
+export function periodMonthLimit(period: TimePeriod): number | undefined {
+  return period === '3M' ? 3 : period === '6M' ? 6 : period === '12M' ? 12 : undefined;
+}
+
 export type BudgetDataPoint = {
   date: number;
   spend: number; // discretionary spend (excludes mortgage)
