@@ -4,6 +4,7 @@ import { query, type QueryCtx } from '../_generated/server';
 import { localDateRangeMs, morningBriefingKey, sourceIdForEvent } from '../briefing/morning';
 import { calendarDateInTimeZone, weekFactsForCalendarDate } from '../calendarDate';
 import { pickLatestSpendingInsight } from '../insights/latest';
+import { dueStateFor, dueStateRank, isActiveEmailNotice } from './boardRules';
 
 type ActiveBoardQueryCtx = Pick<QueryCtx, 'auth' | 'db'>;
 
@@ -113,22 +114,11 @@ export async function readActiveBoard(ctx: ActiveBoardQueryCtx, options: ActiveB
   };
 
   const emailNoticeItems = emailNotices
-    .filter(
-      (notice) =>
-        notice.archivedAt === undefined &&
-        notice.supersededAt === undefined &&
-        (notice.expiresAt === undefined || notice.expiresAt > options.now.getTime())
-    )
+    .filter((notice) => isActiveEmailNotice(notice, options.now.getTime()))
     .sort((left, right) => right.createdAt - left.createdAt)
     .map((notice) => {
       const dueDate = notice.obligation?.dueOn;
-      const dueState = !dueDate
-        ? ('none' as const)
-        : dueDate < localDate
-          ? ('overdue' as const)
-          : dueDate === localDate
-            ? ('dueToday' as const)
-            : ('upcoming' as const);
+      const dueState = dueStateFor(dueDate, localDate);
       return {
         kind: 'sourceNotice' as const,
         id: `emailNotice:${notice._id}`,
@@ -172,13 +162,7 @@ export async function readActiveBoard(ctx: ActiveBoardQueryCtx, options: ActiveB
     : [];
   const manualNoteItems = manualNotes
     .map((note) => {
-      const dueState = !note.dueDate
-        ? ('none' as const)
-        : note.dueDate < localDate
-          ? ('overdue' as const)
-          : note.dueDate === localDate
-            ? ('dueToday' as const)
-            : ('upcoming' as const);
+      const dueState = dueStateFor(note.dueDate, localDate);
       return {
         kind: 'manualNote' as const,
         id: `manualNote:${note._id}`,
@@ -198,9 +182,8 @@ export async function readActiveBoard(ctx: ActiveBoardQueryCtx, options: ActiveB
       };
     })
     .sort((left, right) => {
-      const rank = { overdue: 0, dueToday: 1, upcoming: 2, none: 3 };
       return (
-        rank[left.dueState] - rank[right.dueState] ||
+        dueStateRank[left.dueState] - dueStateRank[right.dueState] ||
         (left.dueDate ?? '').localeCompare(right.dueDate ?? '') ||
         right.updatedAt - left.updatedAt
       );
