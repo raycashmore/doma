@@ -57,7 +57,8 @@ which should be the local backend.
 Ctrl-C. Killing only the `convex dev` process leaves the backend running old code, and the next
 `pnpm convex` refuses to start ("A local backend is still running on port 3210"). Stop the stray
 `convex-local-backend` process, then start again. Function logs, including `console.error`, print
-in the `pnpm convex` output.
+in the `pnpm convex` output. From another terminal, `npx convex logs --history 20` in `packages/convex`
+shows them too, including the error behind a client's "Server Error".
 
 `convex dev` watches the checkout, so switching branches pushes that branch's functions to the
 local backend. Before switching, check for a running watcher (`ps -ax | grep "convex dev"`).
