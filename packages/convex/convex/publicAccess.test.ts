@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 // Every public query, mutation and action must reject a signed-out caller before it reads or writes
 // anything. User functions throw 'Not authenticated'; bot functions throw 'Unauthorized' without a
@@ -11,6 +11,7 @@ type ExportedField = { fieldType: ExportedValidator; optional: boolean };
 
 type RegisteredFunction = {
   isPublic?: boolean;
+  isQuery?: boolean;
   exportArgs: () => string;
   _handler: (ctx: unknown, args: unknown) => unknown;
 };
@@ -86,7 +87,46 @@ function signedOutCtx() {
   );
 }
 
+// A signed-in caller over an empty database: every read resolves to nothing, so a handler runs as far as it can.
+function signedInEmptyCtx() {
+  const empty: Record<string, unknown> = {
+    collect: [],
+    take: [],
+    unique: null,
+    first: null,
+    get: null,
+    paginate: { page: [], isDone: true, continueCursor: '' }
+  };
+  const chain: object = new Proxy(() => chain, {
+    get(_target, prop) {
+      if (prop === 'then') return undefined;
+      if (typeof prop === 'string' && prop in empty) return async () => empty[prop];
+      return () => chain;
+    }
+  });
+  return { auth: { getUserIdentity: async () => ({ subject: 'user_sample' }) }, db: chain };
+}
+
+// Counts clock reads (`Date.now()` and `new Date()` with no arguments) while a handler runs.
+const RealDate = Date;
+let clockReads = 0;
+class CountingDate extends RealDate {
+  constructor(...args: ConstructorParameters<typeof Date> | []) {
+    if (args.length === 0) clockReads += 1;
+    super(...(args as ConstructorParameters<typeof Date>));
+  }
+  static override now() {
+    clockReads += 1;
+    return RealDate.now();
+  }
+}
+
 describe('public Convex functions', () => {
+  afterEach(() => {
+    globalThis.Date = RealDate;
+    vi.unstubAllEnvs();
+  });
+
   it('finds the registered functions', () => {
     const ids = publicFunctions.map(([id]) => id);
     expect(ids).toContain('queries:getBudgetPageSummary');
@@ -109,4 +149,27 @@ describe('public Convex functions', () => {
       /^(Not authenticated|Unauthorized)$/
     );
   });
+
+  // Convex caches a query result until its arguments or the data it read change. A query that reads the
+  // clock must take a `refreshToken` that clients change, or it can return a result computed hours ago.
+  // See "Queries that read the clock" in docs/convex-backend.md.
+  it.each(publicFunctions.filter(([, fn]) => fn.isQuery))(
+    '%s takes a refreshToken if it reads the clock',
+    async (_id, fn) => {
+      const validator = JSON.parse(fn.exportArgs()) as ExportedValidator;
+      const args = sampleValue(validator);
+      // Bot functions check a service token first; accept the sample one so they reach their clock reads.
+      vi.stubEnv('BOT_SERVICE_TOKEN', 'sample');
+      vi.stubEnv('AGENT_SERVICE_TOKEN', 'sample');
+      clockReads = 0;
+      globalThis.Date = CountingDate as DateConstructor;
+      await Promise.resolve()
+        .then(() => fn._handler(signedInEmptyCtx(), args))
+        .catch(() => undefined);
+      globalThis.Date = RealDate;
+
+      const argNames = validator.type === 'object' ? Object.keys(validator.value as object) : [];
+      if (clockReads > 0) expect(argNames).toContain('refreshToken');
+    }
+  );
 });

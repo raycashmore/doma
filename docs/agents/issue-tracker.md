@@ -39,7 +39,8 @@ re-reading them.
 
 Retrieve each shared source once per inspection, keeping the full response locally
 when it is large. Show only the relevant sections; follow comment pagination.
-Refresh when feedback or state may have changed. Record unavailable endpoints and
+Refresh when feedback or state may have changed. An empty Linear MCP error is usually
+transient: retry once before treating the source as unavailable. Record unavailable endpoints and
 the working access route in the handoff; retry after an access change or new evidence.
 
 Linear owns planning; the repository owns reusable operating guidance.

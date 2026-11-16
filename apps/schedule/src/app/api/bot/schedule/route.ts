@@ -75,7 +75,8 @@ export async function POST(request: Request) {
   const client = new ConvexHttpClient(convexUrl);
   const result = await handleScheduleCapabilityRequest(capabilityRequest, {
     timeZone: process.env.SCHEDULE_TZ,
-    loadCurrentWeek: () => client.query(api.schedule.queries.currentWeekForBot, { serviceToken }),
+    loadCurrentWeek: () =>
+      client.query(api.schedule.queries.currentWeekForBot, { serviceToken, refreshToken: Date.now() }),
     loadMorningBriefing: async ({ localDate }) => {
       const briefing = await client.query(api.briefing.generation.briefingForBot, {
         serviceToken,

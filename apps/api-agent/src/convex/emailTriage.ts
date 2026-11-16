@@ -7,7 +7,7 @@ import type { AgentConfig } from '../config.js';
 
 const claimedInput = makeFunctionReference<
   'query',
-  { serviceToken: string; capturedEmailId: string },
+  { serviceToken: string; capturedEmailId: string; refreshToken: number },
   EmailTriageRunInput | null
 >('email/agentContext:claimedInput');
 
@@ -23,7 +23,8 @@ export function createEmailTriageConvex(config: AgentConfig, capturedEmailId: st
     loadInput: () =>
       client.query(claimedInput, {
         serviceToken: config.agentServiceToken,
-        capturedEmailId
+        capturedEmailId,
+        refreshToken: Date.now()
       }),
     saveTrace: async (trace: EmailTriageRunTrace) => {
       await client.mutation(recordRun, {
