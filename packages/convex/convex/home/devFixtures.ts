@@ -3,12 +3,24 @@ import { morningBriefingKey } from '../briefing/morning';
 import { calendarDateInTimeZone, shiftCalendarDate } from '../calendarDate';
 
 const FIXTURE_MESSAGE_ID = 'noticeboard-fixture';
+const FIXTURE_CALENDAR_ID = 'noticeboard-fixture';
+const HOUR_MS = 3_600_000;
 const DAY_MS = 86_400_000;
+
+/** A busy week for the Home widget: hours from now, then title and optional detail. */
+const FIXTURE_EVENTS = [
+  { inHours: 1.5, title: 'Pick up from dancing', detail: 'Dancing' },
+  { inHours: 3, title: 'Bins out' },
+  { inHours: 26, title: 'Swimming' },
+  { inHours: 74, title: 'Swim meet' },
+  { inHours: 100, title: 'Dentist' }
+];
 
 /**
  * Gives a local deployment a full noticeboard: today's briefing, an overdue school email
- * notice and last month's spending insight, all placeholder content. Safe to rerun: rows that
- * exist are kept. Run with `pnpm --filter @repo/convex seed:home`.
+ * notice, last month's spending insight and a week of calendar events, all placeholder content.
+ * Safe to rerun: rows that exist are kept, except the events, which move to start from now.
+ * Run with `pnpm --filter @repo/convex seed:home`.
  */
 export const seedNoticeboard = internalMutation({
   args: {},
@@ -116,6 +128,27 @@ export const seedNoticeboard = internalMutation({
       });
       inserted.push('email notice');
     }
+
+    const staleEvents = (await ctx.db.query('scheduleEvents').collect()).filter(
+      (event) => event.calendarId === FIXTURE_CALENDAR_ID
+    );
+    await Promise.all(staleEvents.map((event) => ctx.db.delete(event._id)));
+    for (const [index, event] of FIXTURE_EVENTS.entries()) {
+      const start = now + event.inHours * HOUR_MS;
+      await ctx.db.insert('scheduleEvents', {
+        googleEventId: `noticeboard-fixture-${index}`,
+        calendarId: FIXTURE_CALENDAR_ID,
+        start,
+        end: start + HOUR_MS,
+        allDay: false,
+        title: event.title,
+        ...(event.detail ? { description: event.detail } : {}),
+        who: [],
+        recurring: false,
+        htmlLink: 'https://calendar.google.com/'
+      });
+    }
+    inserted.push('calendar events');
 
     return { localDate, inserted };
   }

@@ -14,3 +14,11 @@ if [[ -n "$fonts$colours" ]]; then
   printf '%s\n%s\n' "$fonts" "$colours" | sed '/^$/d' >&2
   exit 1
 fi
+
+# A fixed radius inside a widget drifts from the widget's own corner, which varies by device.
+corners="$(grep -rnE 'cornerRadius' "$root/DomaWidget" --include='*.swift' || true)"
+if [[ -n "$corners" ]]; then
+  echo "Widget tiles use ContainerRelativeShape, so their corners stay concentric with the widget's:" >&2
+  echo "$corners" >&2
+  exit 1
+fi

@@ -82,6 +82,31 @@ finished events leave and "Wed" becomes today without another fetch. It refreshe
 widget below. A rejected sign-in shows "Signed out" and forgets the last summary; only a network
 failure reuses it.
 
+Widget gotchas, each learned in the simulator:
+
+- A live countdown is `Text(.currentDate, format: .reference(to: start, allowedFields: [.hour, .minute]))`.
+  With the dates the other way round, `Text(start, format: .reference(to: .now))` reads "2 hours ago".
+  `.reference` rounds to one unit with long names ("in 1 hour"), and `.offset` gives
+  "1 hour, 20 minutes" or "10 hours, 0 minutes"; neither can say "1 hr 20". To see a format's
+  output without a build, print `SystemFormatStyle.DateReference(...).format(.now)` with `swift` on
+  the Mac.
+- `.fixedSize()` on that live Text renders the whole widget black, with no error in the log. Beside
+  other views in an `HStack` it takes the full width, so join it into one interpolated `Text`
+  instead. Interpolation capitalises it ("In 1 hour · Dancing"); `Text + Text` is deprecated, and
+  CI fails on the warning.
+- Tiles inset inside the widget use `ContainerRelativeShape`, so their corners stay concentric with
+  the widget's on every device; `scripts/check-theme.sh` rejects a fixed `cornerRadius` in
+  `DomaWidget/`.
+
+To look at a widget, run `pnpm convex` and `pnpm --filter @repo/convex seed:home` for a busy
+week of placeholder events, sign the simulator in (see "Checking the UI in the simulator"), then
+place the widget once: long-press an empty part of the Home Screen, press Edit, then Add Widget,
+press the "Doma" cell, swipe to the size, press Add Widget, then Done, and leave that page showing.
+After each change,
+`AGENT_DEVICE=<agent-device command> scripts/widget-shot.sh <bundle id> <out.png>` builds,
+installs, waits for the widgets to redraw and takes a screenshot. `agent-device` cannot lock the
+simulator, so check Lock Screen sizes on a device.
+
 ## List widget
 
 Small, medium and large Home Screen sizes show one list: the default list unless the widget is
@@ -253,6 +278,7 @@ defaults to main-actor isolation, so tests of its types need `@MainActor`.
 ## Review standards
 
 - Screens use `domaFont(_:)` and `DomaColor`; `scripts/check-theme.sh` enforces this in iOS CI.
+- Widget tiles that sit side by side in one row share a height, so their edges line up.
 - Screens under the dark header use `domaHeaderedSheet(title:)`, which draws the large title itself. iOS 27
   draws a bar's large title inside the scrolling content, where the sheet's mask hides it, and that title
   ignores the `UINavigationBar` appearance. A `toolbarBackground` colour resolves in the bar's dark
