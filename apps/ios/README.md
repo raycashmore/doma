@@ -214,7 +214,10 @@ household's phone. Check UI on that simulator too.
 ## Checking the UI in the simulator
 
 Debug simulator builds can reach signed-in screens headlessly; `SimulatorLaunch` is compiled
-out of device and release builds. Start `pnpm convex`, then:
+out of device and release builds. Start `pnpm convex`, then run
+`AGENT_DEVICE=<agent-device command> scripts/app-shot.sh <simulator udid> [out.png]` after each change.
+It builds for that simulator, checks the target, leaves a sign-in ticket, installs, relaunches with the
+app lock skipped and, given a path, saves a screenshot. By hand, the same steps are:
 
 1. Run `scripts/simulator-sign-in.sh`, which leaves a one-use development ticket that the next
    launch consumes when no session exists.
@@ -231,9 +234,15 @@ Property definitions are web-only, so the app cannot make one.
 To exercise the real lock instead, run `agent-device settings faceid enroll` once, then
 `agent-device settings faceid match` after launch.
 
-The bundle ID comes from `DOMA_BUNDLE_ID`; `Device.xcconfig` may override it. Confirm the built
-app uses a local Convex URL and a `pk_test_` key first, because `Device.xcconfig` also applies
-to Debug builds. Reset any changed text size afterwards.
+The bundle ID comes from `DOMA_BUNDLE_ID`; `Device.xcconfig` may override it, so read it from the
+built app's `Info.plist`. `Device.xcconfig` also applies to Debug builds, so
+`scripts/check-simulator-target.sh <Info.plist>` confirms the build uses a local Convex URL and a
+`pk_test_` key without printing either. Reset any changed text size afterwards.
+
+The household iPad is an 11-inch iPad Pro (M1): 1,194 pt wide in landscape and 834 pt in portrait,
+which leaves the Home board 1,130 pt in landscape. The device tools' nearest simulator, the iPad Pro
+11-inch (M5), is 1,210 pt wide, so a layout that only breaks between those widths looks right there.
+Check such widths with a unit test of the layout, as `HomeBoardTests` does for the bento.
 
 `simulator-sign-in.sh` runs `scripts/check-simulator-target.sh`, which refuses a build aimed at
 production. Hold any new sheet open for 2 minutes with unsaved edits: a timed session event once

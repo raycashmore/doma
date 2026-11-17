@@ -1,6 +1,10 @@
 # Git Workflow
 
-Before committing, run all four code checks:
+A change confined to `apps/ios/` runs the iOS checks instead: the tests with strict warnings from
+[the iOS app guide](../../apps/ios/README.md#running-the-tests), the check scripts in
+`.github/workflows/ios.yml`, and `pnpm exec prettier --check` on any changed Markdown.
+
+Otherwise, before committing, run all four code checks:
 
 ```bash
 pnpm format        # writes Prettier formatting (CI runs format:check, which only verifies)
