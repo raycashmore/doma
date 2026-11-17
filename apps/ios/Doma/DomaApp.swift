@@ -25,8 +25,8 @@ struct DomaApp: App {
         }
         .onOpenURL { url in
           if url == DomaCalendarLink.url {
-            UIApplication.shared.open(DomaCalendarLink.app) { opened in
-              if !opened { UIApplication.shared.open(DomaCalendarLink.web) }
+            UIApplication.shared.open(DomaCalendarLink.google) { opened in
+              if !opened { UIApplication.shared.open(DomaCalendarLink.apple) }
             }
             return
           }

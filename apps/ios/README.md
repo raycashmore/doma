@@ -74,7 +74,7 @@ Small, medium and Lock Screen sizes show the Board from `home/widgetSummary`: to
 (clock time first, then a live countdown), the rest of this week as many rows as fit (today's by
 time, later ones by day name, so titles keep the room), the Groceries list's count and the top note. A tile with nothing to say hides and the others
 take its space; with nothing at all it says "All clear". `DomaHomeWidgetBoard` decides which tiles
-show in each size. Next and This week open Google Calendar (a widget link always opens Doma, so it links to `com.doma.app://calendar` and Doma passes that on, or opens the website when the app is missing); the list opens
+show in each size. Next and This week open Google Calendar (a widget link always opens Doma, so it links to `com.doma.app://calendar` and Doma passes that on, or Apple Calendar when it is missing); the list opens
 that list, and the note opens its card on Home (`com.doma.app://home/<board item id>`).
 
 One fetch makes a timeline with an entry at each event's start and end and at each midnight, so
