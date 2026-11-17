@@ -4,6 +4,7 @@ import { query, type QueryCtx } from '../_generated/server';
 import { localDateRangeMs, morningBriefingKey, sourceIdForEvent } from '../briefing/morning';
 import { calendarDateInTimeZone, weekFactsForCalendarDate } from '../calendarDate';
 import { pickLatestSpendingInsight } from '../insights/latest';
+import { displayMembersFromConfig, parseScheduleMembers, type ScheduleDisplayMember } from '../schedule/config';
 import { dueStateFor, dueStateRank, isActiveEmailNotice } from './boardRules';
 
 type ActiveBoardQueryCtx = Pick<QueryCtx, 'auth' | 'db'>;
@@ -12,6 +13,7 @@ type ActiveBoardOptions = {
   now: Date;
   timeZone: string;
   includeArchived?: boolean;
+  members?: ScheduleDisplayMember[];
 };
 
 export async function readActiveBoard(ctx: ActiveBoardQueryCtx, options: ActiveBoardOptions) {
@@ -48,6 +50,10 @@ export async function readActiveBoard(ctx: ActiveBoardQueryCtx, options: ActiveB
     ctx.db.query('boardArchives').collect()
   ]);
 
+  const memberLabels = new Map((options.members ?? []).map((member) => [member.id, member.label]));
+  const whoLabels = (who: string[]) => who.map((id) => memberLabels.get(id) ?? id);
+  const withWhoLabels = <Line extends { who: string[] }>(line: Line) => ({ ...line, who: whoLabels(line.who) });
+
   const eventBySourceId = new Map(events.map((event) => [sourceIdForEvent(event), event]));
   const isCurrentBriefingLine = (line: { sourceIds: string[] }) =>
     line.sourceIds.length === 0 || line.sourceIds.every((sourceId) => eventBySourceId.has(sourceId));
@@ -69,7 +75,7 @@ export async function readActiveBoard(ctx: ActiveBoardQueryCtx, options: ActiveB
         start: Math.min(...linkedEvents.map((event) => event.start)),
         end: Math.max(...linkedEvents.map((event) => event.end)),
         allDay: linkedEvents.every((event) => event.allDay),
-        who: line.who,
+        who: whoLabels(line.who),
         destination: '/schedule'
       }
     ];
@@ -86,7 +92,7 @@ export async function readActiveBoard(ctx: ActiveBoardQueryCtx, options: ActiveB
             start: event.start,
             end: event.end,
             allDay: event.allDay,
-            who: event.who,
+            who: whoLabels(event.who),
             destination: '/schedule'
           }));
 
@@ -200,10 +206,14 @@ export async function readActiveBoard(ctx: ActiveBoardQueryCtx, options: ActiveB
       headline: briefing?.briefing.headline || 'Today',
       generatedAt: briefing?.generatedAt ?? null,
       morning:
-        briefingStatus === 'available' && briefing ? briefing.briefing.morning.filter(isCurrentBriefingLine) : [],
+        briefingStatus === 'available' && briefing
+          ? briefing.briefing.morning.filter(isCurrentBriefingLine).map(withWhoLabels)
+          : [],
       laterToday,
       watchouts:
-        briefingStatus === 'available' && briefing ? briefing.briefing.watchouts.filter(isCurrentBriefingLine) : []
+        briefingStatus === 'available' && briefing
+          ? briefing.briefing.watchouts.filter(isCurrentBriefingLine).map(withWhoLabels)
+          : []
     },
     {
       kind: 'meals' as const,
@@ -232,6 +242,7 @@ export const activeBoard = query({
   handler: async (ctx) =>
     readActiveBoard(ctx, {
       now: new Date(),
-      timeZone: process.env.SCHEDULE_TZ ?? 'Australia/Sydney'
+      timeZone: process.env.SCHEDULE_TZ ?? 'Australia/Sydney',
+      members: displayMembersFromConfig(parseScheduleMembers())
     })
 });

@@ -492,6 +492,39 @@ describe('readActiveBoard', () => {
       laterToday: [{ id: `family-calendar:current:${currentEvent.start}`, title: 'Afternoon appointment' }]
     });
   });
+
+  it('names household members on briefing lines and later-today events instead of their ids', async () => {
+    const members = [
+      { id: 'memberA', label: 'Person A', initials: 'PA' },
+      { id: 'memberB', label: 'Person B', initials: 'PB' }
+    ];
+    const event = scheduleEvent({ googleEventId: 'pickup', who: ['memberB', 'memberUnknown'] });
+    const sourceId = `family-calendar:${event.googleEventId}:${event.start}`;
+    const briefing = morningBriefing({
+      morning: [{ text: 'School 09:00–15:00', who: ['memberB', 'memberA'], sourceIds: [] }],
+      afternoon: [{ text: 'Pickup', who: ['memberA'], sourceIds: [sourceId] }],
+      watchouts: [{ text: 'Form due', who: ['memberA'], sourceIds: [] }]
+    });
+    const now = new Date('2026-07-13T22:00:00.000Z');
+
+    const curated = await readActiveBoard(
+      createActiveBoardCtx({ briefing, events: [event], plan: null, recipes: [] }) as never,
+      { now, timeZone: 'Australia/Sydney', members }
+    );
+    const fallback = await readActiveBoard(
+      createActiveBoardCtx({ briefing: null, events: [event], plan: null, recipes: [] }) as never,
+      { now, timeZone: 'Australia/Sydney', members }
+    );
+
+    expect(curated.items[0]).toMatchObject({
+      morning: [{ text: 'School 09:00–15:00', who: ['Person B', 'Person A'] }],
+      laterToday: [{ title: 'Pickup', who: ['Person A'] }],
+      watchouts: [{ text: 'Form due', who: ['Person A'] }]
+    });
+    expect(fallback.items[0]).toMatchObject({
+      laterToday: [{ title: 'Current event', who: ['Person B', 'memberUnknown'] }]
+    });
+  });
 });
 
 function scheduleEvent(overrides: Record<string, unknown> = {}) {
@@ -513,6 +546,7 @@ function morningBriefing(
   overrides: Partial<{
     morning: { text: string; who: string[]; sourceIds: string[] }[];
     afternoon: { text: string; who: string[]; sourceIds: string[] }[];
+    watchouts: { text: string; who: string[]; sourceIds: string[] }[];
   }> = {}
 ) {
   return {
@@ -527,7 +561,7 @@ function morningBriefing(
       headline: 'Today',
       morning: overrides.morning ?? [],
       afternoon: overrides.afternoon ?? [],
-      watchouts: [],
+      watchouts: overrides.watchouts ?? [],
       sourceIdsIgnored: []
     },
     sourceIds: []
