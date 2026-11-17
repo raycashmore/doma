@@ -41,12 +41,9 @@ public struct DomaHomeWidgetSummary: Codable, Equatable, Sendable {
   public struct Week: Codable, Equatable, Sendable {
     /// The first few events after `next`, in start order.
     public let events: [Event]
-    /// Every event after `next` this week, including those not sent.
-    public let total: Int
 
-    public init(events: [Event], total: Int) {
+    public init(events: [Event]) {
       self.events = events
-      self.total = total
     }
   }
 
@@ -94,8 +91,6 @@ public struct DomaHomeWidgetBoard: Equatable, Sendable {
   public let next: DomaHomeWidgetSummary.Event?
   /// The events after `next`, in start order.
   public let week: [DomaHomeWidgetSummary.Event]
-  /// Events this week the summary counted but did not send.
-  public let unsentWeekCount: Int
   /// Hidden when nothing is on it.
   public let list: DomaHomeWidgetSummary.List?
   public let note: DomaHomeWidgetSummary.Note?
@@ -108,15 +103,11 @@ public struct DomaHomeWidgetBoard: Equatable, Sendable {
     }
     self.next = next
     week = known.filter { $0 != next && (next == nil || $0.start >= next!.start) }
-    unsentWeekCount = max(0, summary.thisWeek.total - summary.thisWeek.events.count)
     list = summary.list.flatMap { $0.activeCount > 0 ? $0 : nil }
     note = summary.note
   }
 
   public var isAllClear: Bool { next == nil && week.isEmpty && list == nil && note == nil }
-
-  /// "+N more" under This week when it shows `shown` rows.
-  public func moreCount(shown: Int) -> Int { max(0, week.count - shown) + unsentWeekCount }
 
   /// Medium: Next and List on the left, This week and Note on the right. With nothing booked, the
   /// note and the list stack across the width. The first tile in a column takes the space the

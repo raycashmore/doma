@@ -48,7 +48,7 @@ private struct HomeBoardView: View {
 
   private func destination(_ tile: DomaHomeWidgetBoard.Tile) -> URL? {
     switch tile {
-    case .next, .week: DomaHomeLink.board.url
+    case .next, .week: DomaCalendarLink.url
     case .list: board.list.flatMap { DomaListLink.url(publicId: $0.publicId) }
     case .note: board.note.flatMap { DomaHomeLink.item($0.boardItemId).url }
     }
@@ -66,10 +66,10 @@ private struct HomeBoardTile: View {
     switch tile {
     case .next:
       if let next = board.next {
-        link(DomaHomeLink.board.url) { HomeNextTile(event: next, now: board.date, showsDetail: !isSmall) }
+        link(DomaCalendarLink.url) { HomeNextTile(event: next, now: board.date, showsDetail: !isSmall) }
       }
     case .week:
-      link(DomaHomeLink.board.url) { HomeWeekTile(board: board) }
+      link(DomaCalendarLink.url) { HomeWeekTile(board: board) }
     case .list:
       if let list = board.list {
         link(DomaListLink.url(publicId: list.publicId)) { HomeListTile(list: list, isLarge: leads) }

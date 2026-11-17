@@ -24,6 +24,12 @@ struct DomaApp: App {
           }
         }
         .onOpenURL { url in
+          if url == DomaCalendarLink.url {
+            UIApplication.shared.open(DomaCalendarLink.app) { opened in
+              if !opened { UIApplication.shared.open(DomaCalendarLink.web) }
+            }
+            return
+          }
           session.openRequest.open(url)
           session.homeOpenRequest.open(url)
         }

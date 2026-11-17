@@ -94,7 +94,7 @@ struct HomeNextTile: View {
   }
 }
 
-/// The events after Next, as many rows as fit; "+N more" beside the label counts the rest.
+/// The events after Next, as many rows as fit.
 struct HomeWeekTile: View {
   let board: DomaHomeWidgetBoard
 
@@ -109,18 +109,8 @@ struct HomeWeekTile: View {
   }
 
   private func rows(shown: Int) -> some View {
-    let more = board.moreCount(shown: shown)
-    return VStack(alignment: .leading, spacing: 3) {
-      HStack(alignment: .firstTextBaseline) {
-        HomeKicker(title: "This week")
-        Spacer(minLength: 4)
-        if more > 0 {
-          Text("+\(more) more")
-            .domaFont(.kicker)
-            .foregroundStyle(DomaColor.warmTextTertiary)
-            .fixedSize()
-        }
-      }
+    VStack(alignment: .leading, spacing: 3) {
+      HomeKicker(title: "This week")
       Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 2) {
         ForEach(board.week.prefix(shown)) { event in
           GridRow(alignment: .firstTextBaseline) {

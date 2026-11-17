@@ -11,7 +11,7 @@ import { type DueState, dueStateFor, dueStateRank, isActiveEmailNotice } from '.
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 /**
  * More This week rows than any widget size shows, so rows still fill the tile after earlier events
- * finish; `total` carries the rest as "+N more".
+ * finish. `total` counts every event after Next this week; the iOS widget no longer reads it.
  */
 const THIS_WEEK_LIMIT = 8;
 

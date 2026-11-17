@@ -30,22 +30,18 @@ struct HomeWidgetBoardTests {
   private static func summary(
     next: DomaHomeWidgetSummary.Event? = pickUp,
     week: [DomaHomeWidgetSummary.Event] = [bins, swimming],
-    total: Int? = nil,
     list: DomaHomeWidgetSummary.List? = shopping,
     note: DomaHomeWidgetSummary.Note? = note
   ) -> DomaHomeWidgetSummary {
-    .init(next: next, thisWeek: .init(events: week, total: total ?? week.count), list: list, note: note)
+    .init(next: next, thisWeek: .init(events: week), list: list, note: note)
   }
 
   @Test func aBusyWeekShowsEveryTileInTheBoardLayout() {
-    let board = DomaHomeWidgetBoard(summary: Self.summary(total: 4), at: Self.now, calendar: Self.calendar)
+    let board = DomaHomeWidgetBoard(summary: Self.summary(), at: Self.now, calendar: Self.calendar)
 
     #expect(board.mediumColumns == [[.next, .list], [.week, .note]])
     #expect(board.smallTiles == [.next, .note])
     #expect(board.lockScreenTiles == [.next, .week, .list])
-    // Both sent events show, so the two not sent are "+2 more".
-    #expect(board.moreCount(shown: 2) == 2)
-    #expect(board.moreCount(shown: 1) == 3)
   }
 
   @Test func tilesWithNothingToSayHide() {

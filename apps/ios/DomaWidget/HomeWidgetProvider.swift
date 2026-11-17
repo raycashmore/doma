@@ -89,8 +89,7 @@ extension DomaHomeWidgetSummary {
         events: [
           Event(id: "sample-2", title: "Bins out", start: now + 3 * hour, end: now + 3.5 * hour),
           Event(id: "sample-3", title: "Swimming", start: now + 26 * hour, end: now + 27 * hour),
-        ],
-        total: 4),
+        ]),
       list: List(publicId: "sample", name: "Shopping", activeCount: 8),
       note: Note(kind: .manualNote, id: "sample", title: "Plumber Thursday morning")
     )
