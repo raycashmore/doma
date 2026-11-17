@@ -10,12 +10,13 @@ nonisolated struct BentoSize {
 }
 
 extension BentoSize {
-  /// The same weights and widths as `.active-board` in `apps/home/src/styles.css`.
+  /// The weights of `.active-board` in `apps/home/src/styles.css`. Today's and spending's widths are
+  /// smaller than the web's, so any two cards share a row on an 11-inch iPad in landscape.
   init(for item: DomaBoardItem) {
     switch item {
-    case .today: (weight, basis, narrowBasis) = (2, 520, 420)
+    case .today: (weight, basis, narrowBasis) = (2, 460, 420)
     case .meals: (weight, basis, narrowBasis) = (1, 280, 220)
-    case .spendingInsight: (weight, basis, narrowBasis) = (2, 600, 480)
+    case .spendingInsight: (weight, basis, narrowBasis) = (2, 520, 480)
     default: (weight, basis, narrowBasis) = item.display == .wide ? (1.35, 390, 340) : (1, 300, 300)
     }
   }

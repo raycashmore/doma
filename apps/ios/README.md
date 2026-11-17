@@ -37,7 +37,8 @@ Today's Meals, shared notes and forwarded-email and spending notices. Each card 
 opens a detail sheet with the rest. Today is hidden when there is no briefing and nothing later
 today, and Meals when neither meal is planned. Notes can be added and edited (they cannot be
 deleted), and any card can be archived, which hides it for the whole household. iPad lays the cards
-out as a bento with the web board's flex weights and its 1120 px breakpoint (`BoardBentoLayout`).
+out as a bento with the web board's flex weights and its 1120 px breakpoint (`BoardBentoLayout`), but with
+narrower Today and spending cards, so any two share a row on an 11-inch iPad in landscape.
 The server reads the clock when the query runs, so the app passes the current minute as `refreshToken` every minute
 and on return to the app, so it never reuses a result cached for an older token. Saving a note replaces its title, detail and due date together, as on the
 web, so two people editing different fields of one note at once keep only the last save.
