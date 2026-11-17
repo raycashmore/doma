@@ -53,7 +53,8 @@ describe('readHomeWidgetSummary', () => {
     expect(summary.thisWeek.events.map((row) => row.title)).toEqual([
       'Event holiday',
       'Event swimming',
-      'Event dentist'
+      'Event dentist',
+      'Event soccer'
     ]);
     expect(summary.thisWeek.total).toBe(4);
     expect(summary.list).toEqual({ publicId: 'list_shopping', name: 'Shopping list', activeCount: 2 });

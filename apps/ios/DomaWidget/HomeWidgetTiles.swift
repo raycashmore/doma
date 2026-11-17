@@ -50,7 +50,7 @@ private struct HomeNoteDot: View {
   }
 }
 
-/// The clock time leads; the countdown is a quiet second line. Another day shows its name instead.
+/// Today's next event: the clock time leads; the countdown is a quiet second line.
 struct HomeNextTile: View {
   let event: DomaHomeWidgetSummary.Event
   let now: Date
@@ -89,23 +89,20 @@ struct HomeNextTile: View {
 
   private var when: Text {
     if event.startDate <= now { return Text("Now") }
-    if let day = format.day(event.startDate, now: now) { return Text(day) }
     // WidgetKit keeps this counting down between timeline entries.
     return Text(.currentDate, format: .reference(to: event.startDate, allowedFields: [.hour, .minute]))
   }
 }
 
-/// The events after Next, time first. "+N more" sits beside the label to leave room for three
-/// rows; fewer show when larger text leaves no room.
+/// The events after Next, as many rows as fit; "+N more" beside the label counts the rest.
 struct HomeWeekTile: View {
   let board: DomaHomeWidgetBoard
 
   private var format: DomaHomeWidgetFormat { DomaHomeWidgetFormat() }
 
   var body: some View {
-    let most = min(board.week.count, DomaHomeWidgetBoard.weekRowLimit)
     ViewThatFits(in: .vertical) {
-      ForEach((1...max(most, 1)).reversed(), id: \.self) { shown in
+      ForEach((1...max(board.week.count, 1)).reversed(), id: \.self) { shown in
         rows(shown: shown)
       }
     }
@@ -127,7 +124,7 @@ struct HomeWeekTile: View {
       Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 2) {
         ForEach(board.week.prefix(shown)) { event in
           GridRow(alignment: .firstTextBaseline) {
-            // The time keeps its width; the title truncates.
+            // The day or time keeps its width; the title truncates.
             Text(format.rowLead(event, now: board.date))
               .domaFont(.detail)
               .foregroundStyle(DomaColor.warmTextSecondary)

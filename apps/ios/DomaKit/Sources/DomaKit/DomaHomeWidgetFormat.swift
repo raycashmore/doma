@@ -20,11 +20,11 @@ public struct DomaHomeWidgetFormat: Sendable {
     calendar.isDate(date, inSameDayAs: now) ? nil : format(date, "EEE")
   }
 
-  /// A This week row's lead: "8:00" today, "Wed 8:00" later, and "Today" or "Wed" for an all-day event.
+  /// A This week row's lead, kept short so the title has the room: "8:00" today, "Wed" on a later
+  /// day, and "Today" for an all-day event today.
   public func rowLead(_ event: DomaHomeWidgetSummary.Event, now: Date) -> String {
-    let day = event.startDate <= now ? nil : day(event.startDate, now: now)
-    if event.allDay { return day ?? "Today" }
-    return [day, format(event.startDate, "h:mm")].compactMap { $0 }.joined(separator: " ")
+    if event.startDate > now, let day = day(event.startDate, now: now) { return day }
+    return event.allDay ? "Today" : format(event.startDate, "h:mm")
   }
 
   private func format(_ date: Date, _ template: String) -> String {

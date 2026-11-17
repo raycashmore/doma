@@ -9,8 +9,11 @@ import { requireSignedIn } from '../signedIn';
 import { type DueState, dueStateFor, dueStateRank, isActiveEmailNotice } from './boardRules';
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
-/** The most This week rows any widget size shows; `total` carries the rest as "+N more". */
-const THIS_WEEK_LIMIT = 3;
+/**
+ * More This week rows than any widget size shows, so rows still fill the tile after earlier events
+ * finish; `total` carries the rest as "+N more".
+ */
+const THIS_WEEK_LIMIT = 8;
 
 type WidgetSummaryOptions = { now: Date; timeZone: string };
 

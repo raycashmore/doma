@@ -90,7 +90,7 @@ public struct DomaHomeWidgetBoard: Equatable, Sendable {
   }
 
   public let date: Date
-  /// The next timed event, which may already have started.
+  /// The next timed event today, which may already have started. Later days wait for This week.
   public let next: DomaHomeWidgetSummary.Event?
   /// The events after `next`, in start order.
   public let week: [DomaHomeWidgetSummary.Event]
@@ -100,13 +100,12 @@ public struct DomaHomeWidgetBoard: Equatable, Sendable {
   public let list: DomaHomeWidgetSummary.List?
   public let note: DomaHomeWidgetSummary.Note?
 
-  /// This week shows up to three rows, then "+N more".
-  public static let weekRowLimit = 3
-
-  public init(summary: DomaHomeWidgetSummary, at date: Date) {
+  public init(summary: DomaHomeWidgetSummary, at date: Date, calendar: Calendar = .current) {
     self.date = date
     let known = ([summary.next].compactMap { $0 } + summary.thisWeek.events).filter { $0.endDate > date }
-    let next = known.first { !$0.allDay }
+    let next = known.first { event in
+      !event.allDay && (event.startDate <= date || calendar.isDate(event.startDate, inSameDayAs: date))
+    }
     self.next = next
     week = known.filter { $0 != next && (next == nil || $0.start >= next!.start) }
     unsentWeekCount = max(0, summary.thisWeek.total - summary.thisWeek.events.count)

@@ -38,13 +38,13 @@ struct HomeWidgetBoardTests {
   }
 
   @Test func aBusyWeekShowsEveryTileInTheBoardLayout() {
-    let board = DomaHomeWidgetBoard(summary: Self.summary(total: 4), at: Self.now)
+    let board = DomaHomeWidgetBoard(summary: Self.summary(total: 4), at: Self.now, calendar: Self.calendar)
 
     #expect(board.mediumColumns == [[.next, .list], [.week, .note]])
     #expect(board.smallTiles == [.next, .note])
     #expect(board.lockScreenTiles == [.next, .week, .list])
     // Both sent events show, so the two not sent are "+2 more".
-    #expect(board.moreCount(shown: DomaHomeWidgetBoard.weekRowLimit) == 2)
+    #expect(board.moreCount(shown: 2) == 2)
     #expect(board.moreCount(shown: 1) == 3)
   }
 
@@ -58,7 +58,7 @@ struct HomeWidgetBoardTests {
   }
 
   @Test func withNothingBookedTheNoteAndListTakeTheSpace() {
-    let board = DomaHomeWidgetBoard(summary: Self.summary(next: nil, week: []), at: Self.now)
+    let board = DomaHomeWidgetBoard(summary: Self.summary(next: nil, week: []), at: Self.now, calendar: Self.calendar)
 
     #expect(board.mediumColumns == [[.note, .list]])
     #expect(board.smallTiles == [.note, .list])
@@ -67,7 +67,7 @@ struct HomeWidgetBoardTests {
   }
 
   @Test func nothingBookedListedOrPinnedIsAllClear() {
-    let board = DomaHomeWidgetBoard(summary: Self.summary(next: nil, week: [], list: nil, note: nil), at: Self.now)
+    let board = DomaHomeWidgetBoard(summary: Self.summary(next: nil, week: [], list: nil, note: nil), at: Self.now, calendar: Self.calendar)
 
     #expect(board.isAllClear)
   }
@@ -75,17 +75,29 @@ struct HomeWidgetBoardTests {
   @Test func aFinishedEventDropsOffAndTheNextMovesUp() {
     let summary = Self.summary()
 
-    let duringPickUp = DomaHomeWidgetBoard(summary: summary, at: Self.at(day: 17, hour: 19, minute: 30))
+    let duringPickUp = DomaHomeWidgetBoard(summary: summary, at: Self.at(day: 17, hour: 19, minute: 30), calendar: Self.calendar)
     #expect(duringPickUp.next == Self.pickUp)
 
-    let afterPickUp = DomaHomeWidgetBoard(summary: summary, at: Self.at(day: 17, hour: 20))
+    let afterPickUp = DomaHomeWidgetBoard(summary: summary, at: Self.at(day: 17, hour: 20), calendar: Self.calendar)
     #expect(afterPickUp.next == Self.bins)
     #expect(afterPickUp.week == [Self.swimming])
   }
 
+  @Test func nextIsOnlyToday() {
+    let board = DomaHomeWidgetBoard(
+      summary: Self.summary(next: Self.swimming, week: []), at: Self.now, calendar: Self.calendar)
+
+    #expect(board.next == nil)
+    #expect(board.week == [Self.swimming])
+
+    let atMidnight = DomaHomeWidgetBoard(
+      summary: Self.summary(next: Self.swimming, week: []), at: Self.at(day: 18, hour: 0), calendar: Self.calendar)
+    #expect(atMidnight.next == Self.swimming)
+  }
+
   @Test func anAllDayEventNeverLeadsAsNext() {
     let holiday = Self.event("Holiday", day: 18, hour: 0, allDay: true)
-    let board = DomaHomeWidgetBoard(summary: Self.summary(next: nil, week: [holiday]), at: Self.now)
+    let board = DomaHomeWidgetBoard(summary: Self.summary(next: nil, week: [holiday]), at: Self.now, calendar: Self.calendar)
 
     #expect(board.next == nil)
     #expect(board.week == [holiday])
@@ -104,11 +116,11 @@ struct HomeWidgetBoardTests {
     ])
   }
 
-  @Test func theDayNameShowsOnlyForAnotherDay() {
+  @Test func aRowLeadsWithTheTimeTodayAndTheDayLater() {
     let format = DomaHomeWidgetFormat(calendar: Self.calendar, locale: Locale(identifier: "en_AU"))
 
     #expect(format.rowLead(Self.bins, now: Self.now) == "8:00")
-    #expect(format.rowLead(Self.swimming, now: Self.now) == "Wed 8:00")
+    #expect(format.rowLead(Self.swimming, now: Self.now) == "Wed")
     // At midnight Wednesday is today.
     #expect(format.rowLead(Self.swimming, now: Self.at(day: 18, hour: 0)) == "8:00")
     #expect(format.rowLead(Self.event("Holiday", day: 18, hour: 0, allDay: true), now: Self.now) == "Wed")
