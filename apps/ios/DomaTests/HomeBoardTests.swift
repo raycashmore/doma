@@ -143,6 +143,18 @@ struct HomeBoardTests {
     #expect(BentoRows.rows(of: [today], width: 358, spacing: 16) == [[BentoRows.Card(index: 0, width: 358)]])
   }
 
+  @Test func anyTwoCardsShareARowOnAnElevenInchIPadInLandscape() throws {
+    // The narrowest 11-inch iPad is 1,180 pt wide in landscape; the board sits 32 pt in from each side.
+    let width: CGFloat = 1_180 - 64
+    let sizes = try board().items.map(BentoSize.init(for:))
+    for first in sizes.indices {
+      for second in sizes.indices where second != first {
+        let rows = BentoRows.rows(of: [sizes[first], sizes[second]], width: width, spacing: 16)
+        #expect(rows.count == 1, "cards \(first) and \(second) wrapped")
+      }
+    }
+  }
+
   @Test func noteDraftKeepsTheSavedDueDay() throws {
     let sydney = TimeZone(identifier: "Australia/Sydney")!
     let board = try board()

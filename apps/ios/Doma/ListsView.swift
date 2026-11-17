@@ -54,6 +54,11 @@ struct ListsView: View {
       detail
     }
     .tint(DomaColor.warmTextPrimary)
+    // On iPad the split view starts below the top tab bar, so the strip above it, behind the status
+    // bar and tabs, needs the header colour too, as Home's navigation bar gives it.
+    .background {
+      if isSplit { DomaColor.warmBgDark.ignoresSafeArea() }
+    }
     .environment(\.isSplitLayout, isSplit)
     .sheet(isPresented: $isShowingPaprika) {
       PaprikaSheet(paprika: session.paprika)
