@@ -23,7 +23,10 @@ struct DomaApp: App {
             PrivacyCover()
           }
         }
-        .onOpenURL { session.openRequest.open($0) }
+        .onOpenURL { url in
+          session.openRequest.open(url)
+          session.homeOpenRequest.open(url)
+        }
         .background {
           SceneCover(
             lock: lock,

@@ -58,15 +58,29 @@ Settings, from the Home header, holds Sign out; Lists keeps its own Sign out and
   `DomaListsClient` (the typed wrappers for the Convex Lists functions), `DomaHomeClient` (the board,
   notes and archive), `DomaConfiguration`
   and `DomaConvexHTTPQuery`, which runs one query over HTTP for the widget.
-- `DomaWidget/`: the Home Screen List widget extension. It shares the app's Clerk session
+- `DomaWidget/`: the widget extension, with the Home and List widgets. It shares the app's Clerk session
   through the keychain access group in `Config/Doma.entitlements`, so it needs no sign-in of its
-  own, and reads lists with `DomaConvexHTTPQuery`. `Config/Signed.xcconfig` applies the
+  own, and reads Convex with `DomaConvexHTTPQuery`. `Config/Signed.xcconfig` applies the
   entitlements to the app and the widget. It compiles `DomaColor`, `DomaFont` and the fonts from
   `Doma/` through a membership exception in the project file.
 - `DomaTests/`: app-hosted tests. They need the app host because Clerk stores its
   session in the keychain, which plain package tests in the simulator cannot reach.
 - `Config/`: build settings. Public client values go in the ignored `Local.xcconfig`
   (simulator) and `Device.xcconfig` (physical devices).
+
+## Home widget
+
+Small, medium and Lock Screen sizes show the Board from `home/widgetSummary`: the next timed event
+(clock time first, then a live countdown, or the day name if it isn't today), the rest of this
+week, the Groceries list's count and the top note. A tile with nothing to say hides and the others
+take its space; with nothing at all it says "All clear". `DomaHomeWidgetBoard` decides which tiles
+show in each size. Next and This week open Home, since the app has no Schedule yet; the list opens
+that list, and the note opens its card on Home (`com.doma.app://home/<board item id>`).
+
+One fetch makes a timeline with an entry at each event's start and end and at each midnight, so
+finished events leave and "Wed" becomes today without another fetch. It refreshes like the List
+widget below. A rejected sign-in shows "Signed out" and forgets the last summary; only a network
+failure reuses it.
 
 ## List widget
 

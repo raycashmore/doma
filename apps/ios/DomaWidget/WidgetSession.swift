@@ -17,7 +17,9 @@ enum WidgetSession {
   private static let logger = Logger(subsystem: "com.doma.app", category: "widget")
   private static var configuration: DomaConfiguration?
 
-  static func run<Value: Decodable & SendableMetatype>(_ path: String, args: [String: String] = [:]) async throws(Failure) -> Value {
+  static func run<Value: Decodable & SendableMetatype, Args: Encodable>(
+    _ path: String, args: Args = [String: String]()
+  ) async throws(Failure) -> Value {
     guard let configuration = configure(), let query = DomaConvexHTTPQuery(deploymentURL: configuration.convexURL) else {
       logger.error("Widget is not configured")
       throw .unreachable

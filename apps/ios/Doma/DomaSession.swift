@@ -32,6 +32,8 @@ final class DomaSession {
   let paprika: DomaPaprikaClient
   /// A list a widget asked to open, kept here so signing out drops it.
   let openRequest = ListOpenRequest()
+  /// A noticeboard card the Home widget asked to open.
+  let homeOpenRequest = HomeOpenRequest()
 
   @ObservationIgnored private let logger = Logger(subsystem: "com.doma.app", category: "session")
   @ObservationIgnored private let convex: ConvexClientWithAuth<String>
@@ -64,6 +66,7 @@ final class DomaSession {
   func signOut() async {
     LastOpenedList().forget()
     openRequest.publicId = nil
+    homeOpenRequest.boardItemId = nil
     await convex.logout()
     WidgetCenter.shared.reloadAllTimelines()
   }
@@ -100,6 +103,7 @@ final class DomaSession {
       // Here rather than on the signed-out phase, which also appears briefly during a normal launch.
       LastOpenedList().forget()
       openRequest.publicId = nil
+    homeOpenRequest.boardItemId = nil
       await convex.logout()
       phase = .signedOut
       // The widgets share this session, so they show the sign-out at once rather than old lists.

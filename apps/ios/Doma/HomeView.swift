@@ -51,6 +51,7 @@ struct HomeView: View {
       } onValue: { value in
         board = value
         loadFailed = false
+        openRequestedItem()
         // Archived elsewhere, or a new day began: its detail has nothing left to show.
         if let open = openItem, !value.items.contains(where: { $0.id == open.id }) { openItem = nil }
       }
@@ -61,6 +62,7 @@ struct HomeView: View {
         refreshToken = Self.currentMinute()
       }
     }
+    .onChange(of: session.homeOpenRequest.boardItemId, initial: true) { openRequestedItem() }
     .onChange(of: scenePhase) { _, phase in
       if phase == .active { refreshToken = Self.currentMinute() }
     }
@@ -155,6 +157,14 @@ struct HomeView: View {
 
   private static func currentMinute() -> Int {
     Int(Date.now.timeIntervalSince1970 / 60)
+  }
+
+  /// Opens the card a widget asked for once the board has loaded. A card no longer on the board,
+  /// archived or past, leaves Home showing.
+  private func openRequestedItem() {
+    guard let board, let id = session.homeOpenRequest.boardItemId else { return }
+    session.homeOpenRequest.boardItemId = nil
+    if let item = board.items.first(where: { $0.id == id }) { openItem = item }
   }
 
   private func openPendingEditor() {
