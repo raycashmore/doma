@@ -23,7 +23,14 @@ struct DomaApp: App {
             PrivacyCover()
           }
         }
-        .onOpenURL { session.openRequest.open($0) }
+        .onOpenURL { url in
+          if url == DomaCalendarLink.url {
+            UIApplication.shared.open(DomaCalendarLink.calendar)
+            return
+          }
+          session.openRequest.open(url)
+          session.homeOpenRequest.open(url)
+        }
         .background {
           SceneCover(
             lock: lock,

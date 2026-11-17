@@ -4,6 +4,7 @@ import WidgetKit
 @main
 struct DomaWidgetBundle: WidgetBundle {
   var body: some Widget {
+    HomeWidget()
     ListWidget()
   }
 }

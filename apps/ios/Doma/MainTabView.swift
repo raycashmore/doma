@@ -20,10 +20,11 @@ struct MainTabView: View {
       }
     }
     .tint(DomaColor.warmTextPrimary)
-    // A widget asks for a list, which Lists opens once it is showing.
+    // A widget asks for a list, which Lists opens once it is showing, or for Home.
     .onAppear {
       if session.openRequest.publicId != nil { selection = .lists }
     }
     .onChange(of: session.openRequest.openCount) { selection = .lists }
+    .onChange(of: session.homeOpenRequest.openCount) { selection = .home }
   }
 }
