@@ -3,17 +3,20 @@ import SwiftUI
 import WidgetKit
 
 /// A soft tile on the widget. A tile that `fills` takes the height its column leaves; the rest
-/// keep their own height.
+/// are one-line tiles of one height, so side-by-side ones line up.
 struct HomeTile<Content: View>: View {
   var fills = true
   @ViewBuilder let content: Content
+  @ScaledMetric(relativeTo: .headline) private var lineTileHeight: CGFloat = 38
 
   var body: some View {
     content
       .padding(.horizontal, 10)
-      .padding(.vertical, 9)
-      .frame(maxWidth: .infinity, maxHeight: fills ? .infinity : nil, alignment: .topLeading)
-      .background(DomaColor.warmBgCardSoft, in: .rect(cornerRadius: 14))
+      .padding(.vertical, fills ? 8 : 0)
+      .frame(maxWidth: .infinity, maxHeight: fills ? .infinity : nil, alignment: fills ? .topLeading : .leading)
+      .frame(height: fills ? nil : lineTileHeight)
+      // Concentric with the widget's corners, whatever the device's radius.
+      .background(DomaColor.warmBgCardSoft, in: ContainerRelativeShape())
   }
 }
 
@@ -92,19 +95,37 @@ struct HomeNextTile: View {
   }
 }
 
-/// The events after Next, time first, then how many more.
+/// The events after Next, time first. "+N more" sits beside the label to leave room for three
+/// rows; fewer show when larger text leaves no room.
 struct HomeWeekTile: View {
   let board: DomaHomeWidgetBoard
 
   private var format: DomaHomeWidgetFormat { DomaHomeWidgetFormat() }
 
   var body: some View {
-    let shown = Array(board.week.prefix(DomaHomeWidgetBoard.weekRowLimit(showsNote: board.note != nil)))
-    let more = board.moreCount(shown: shown.count)
-    VStack(alignment: .leading, spacing: 4) {
-      HomeKicker(title: "This week")
-      Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 3) {
-        ForEach(shown) { event in
+    let most = min(board.week.count, DomaHomeWidgetBoard.weekRowLimit)
+    ViewThatFits(in: .vertical) {
+      ForEach((1...max(most, 1)).reversed(), id: \.self) { shown in
+        rows(shown: shown)
+      }
+    }
+  }
+
+  private func rows(shown: Int) -> some View {
+    let more = board.moreCount(shown: shown)
+    return VStack(alignment: .leading, spacing: 3) {
+      HStack(alignment: .firstTextBaseline) {
+        HomeKicker(title: "This week")
+        Spacer(minLength: 4)
+        if more > 0 {
+          Text("+\(more) more")
+            .domaFont(.kicker)
+            .foregroundStyle(DomaColor.warmTextTertiary)
+            .fixedSize()
+        }
+      }
+      Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 2) {
+        ForEach(board.week.prefix(shown)) { event in
           GridRow(alignment: .firstTextBaseline) {
             // The time keeps its width; the title truncates.
             Text(format.rowLead(event, now: board.date))
@@ -117,11 +138,6 @@ struct HomeWeekTile: View {
           }
           .lineLimit(1)
         }
-      }
-      if more > 0 {
-        Text("+\(more) more")
-          .domaFont(.detail)
-          .foregroundStyle(DomaColor.warmTextTertiary)
       }
     }
   }

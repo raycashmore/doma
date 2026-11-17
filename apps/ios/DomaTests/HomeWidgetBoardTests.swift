@@ -43,8 +43,9 @@ struct HomeWidgetBoardTests {
     #expect(board.mediumColumns == [[.next, .list], [.week, .note]])
     #expect(board.smallTiles == [.next, .note])
     #expect(board.lockScreenTiles == [.next, .week, .list])
-    // Two rows show beside the note, so the two events not sent are "+2 more".
-    #expect(board.moreCount(shown: DomaHomeWidgetBoard.weekRowLimit(showsNote: true)) == 2)
+    // Both sent events show, so the two not sent are "+2 more".
+    #expect(board.moreCount(shown: DomaHomeWidgetBoard.weekRowLimit) == 2)
+    #expect(board.moreCount(shown: 1) == 3)
   }
 
   @Test func tilesWithNothingToSayHide() {

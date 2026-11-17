@@ -100,8 +100,8 @@ public struct DomaHomeWidgetBoard: Equatable, Sendable {
   public let list: DomaHomeWidgetSummary.List?
   public let note: DomaHomeWidgetSummary.Note?
 
-  /// This week shows three rows, or two when the note shows beside it.
-  public static func weekRowLimit(showsNote: Bool) -> Int { showsNote ? 2 : 3 }
+  /// This week shows up to three rows, then "+N more".
+  public static let weekRowLimit = 3
 
   public init(summary: DomaHomeWidgetSummary, at date: Date) {
     self.date = date
