@@ -451,8 +451,10 @@ export const getLatestSpendingInsight = query({
 // BUDGET PAGE SUMMARY — KPI cards with period comparisons
 // ============================================================
 export const getBudgetPageSummary = query({
+  // Reads the clock, so callers pass a changing token; see "Queries that read the clock" in docs/convex-backend.md.
   args: {
-    period: v.union(v.literal('3M'), v.literal('6M'), v.literal('12M'), v.literal('ALL'))
+    period: v.union(v.literal('3M'), v.literal('6M'), v.literal('12M'), v.literal('ALL')),
+    refreshToken: v.optional(v.number())
   },
   handler: async (ctx, args) => {
     await requireSignedIn(ctx);

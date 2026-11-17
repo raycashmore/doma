@@ -1,13 +1,15 @@
 import { useQuery } from 'convex/react';
 import { api } from '@repo/convex';
+import { useRefreshToken } from '@repo/shell';
 import type { TimePeriod } from '@/lib/budget';
 import { periodMonthLimit } from '@/lib/budget';
 import { FIXTURE_MODE } from '@/config/runtime';
 import { fixtureBreakdown, fixtureChart, fixtureDetail, fixtureInsight, fixtureSummary } from '@/lib/budgetFixtures';
 
 function useConvexBudgetData(period: TimePeriod, openMonth: number | null) {
+  const refreshToken = useRefreshToken();
   return {
-    summary: useQuery(api.queries.getBudgetPageSummary, { period }),
+    summary: useQuery(api.queries.getBudgetPageSummary, { period, refreshToken }),
     chartData: useQuery(api.queries.listBudgetChart),
     rows: useQuery(api.queries.getMonthlyBreakdown, { limit: periodMonthLimit(period) }),
     detail: useQuery(api.queries.getMonthlyDetail, openMonth !== null ? { date: openMonth } : 'skip'),

@@ -49,9 +49,9 @@ flag unless sandboxed `pnpm ci:checks` has been verified with the replacement.
 
 ## Local Convex
 
-After adding a Convex module, run `npx convex codegen` in `packages/convex` and commit the
-refreshed `convex/_generated/`. It pushes functions to the deployment named in the root env file,
-which should be the local backend.
+After adding a Convex module, run `pnpm --filter @repo/convex codegen` and commit the
+refreshed `convex/_generated/`. Codegen uploads functions to the deployment it targets, so the
+script refuses unless the root env file names a `local:` deployment.
 
 `pnpm convex` starts `convex-local-backend` on port 3210 and pushes functions to it. Stop it with
 Ctrl-C. Killing only the `convex dev` process leaves the backend running old code, and the next

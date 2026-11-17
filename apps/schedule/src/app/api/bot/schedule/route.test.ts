@@ -141,7 +141,10 @@ describe('schedule bot route', () => {
       text: 'Upcoming events:\n- Sat, 6 June, 11:30 am: School pickup (Main gate)'
     });
     expect(convex.client).toHaveBeenCalledWith('https://convex.example.com');
-    expect(convex.query).toHaveBeenCalledWith('schedule.queries.currentWeekForBot', { serviceToken: 'service-token' });
+    expect(convex.query).toHaveBeenCalledWith('schedule.queries.currentWeekForBot', {
+      serviceToken: 'service-token',
+      refreshToken: expect.any(Number)
+    });
   });
 
   it("replays today's stored morning briefing and records delivery", async () => {

@@ -105,6 +105,8 @@ See `apps/ios/README.md`.
 
 Home is a read model over existing domain owners. The `home/activeBoard` query resolves Today, Meals, forwarded-email notices, spending insights, and manual notes for the signed-in user, then filters expired, superseded, and archived occurrences. It does not copy source payloads into a Home-owned projection. `manualNotes` is the only Home-authored content table; `boardArchives` contains only an occurrence id, source kind, archiving user id, and archive timestamp. This keeps ownership explicit while Convex subscriptions provide cross-client updates.
 
+The iOS Home widget reads a smaller projection, `home/widgetSummary`: the next calendar event and the rest of the next 7 days, the signed-in person's Groceries list count, and one top note. Manual notes and dated forwarded-email notices compete for that note by due date. It shares due-date and notice-lifecycle rules with the board through `home/boardRules.ts`, so the two cannot disagree about what is due or still active.
+
 `apps/api-agent` is the first durable instance of that convention. Its
 `agents/weekly-meals/` module owns a bounded AI SDK `ToolLoopAgent`, strict
 read-only planning tools, typed outcomes, post-generation validation, and

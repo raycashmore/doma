@@ -1,6 +1,7 @@
 'use client';
 
 import { api } from '@repo/convex';
+import { useRefreshToken } from '@repo/shell';
 import { useAction, useQuery } from 'convex/react';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -33,7 +34,8 @@ function getNowMinutes(now: Date): number {
 }
 
 export function ScheduleScreen() {
-  const data = useQuery(api.schedule.queries.currentWeek, USE_DEV_FIXTURE ? 'skip' : {});
+  const refreshToken = useRefreshToken();
+  const data = useQuery(api.schedule.queries.currentWeek, USE_DEV_FIXTURE ? 'skip' : { refreshToken });
   const refresh = useAction(api.schedule.sync.refresh);
   const [selectedEvent, setSelectedEvent] = useState<ScheduleEvent | null>(null);
   const [refreshError, setRefreshError] = useState<string>();

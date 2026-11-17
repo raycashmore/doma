@@ -86,7 +86,9 @@ All monetary values remain integer cents. Rate fields remain floats.
 
 ## Home noticeboard
 
-The `home/` module exposes an authenticated active-board read model. It derives cards at query time from schedule briefing data, weekly meal plans, active forwarded-email notices, monthly spending insights, and shared manual notes. Expired or superseded notices and payload-free archived occurrences are removed before the result reaches the client. An unplanned school lunch or dinner is `null`, and each client words it. The query reads the clock when it runs, so clients pass a changing `refreshToken` to keep today, overdue and later-today current; the web and iOS apps both do.
+The `home/` module exposes an authenticated active-board read model. It derives cards at query time from schedule briefing data, weekly meal plans, active forwarded-email notices, monthly spending insights, and shared manual notes. Expired or superseded notices and payload-free archived occurrences are removed before the result reaches the client. An unplanned school lunch or dinner is `null`, and each client words it. It reads the clock, so clients pass a changing `refreshToken` (see [Queries that read the clock](#queries-that-read-the-clock)).
+
+`home/widgetSummary` is the iOS Home widget's smaller read: the next timed event, the events after it in the next 7 days (up to three, with a total), the person's Groceries list count, and one note. Manual notes and forwarded-email notices with a due date share one ranking for that note: overdue, due today, then upcoming by date, then undated notes; a note wins a same-day tie.
 
 `manualNotes` stores household-authored title, optional detail/due date, author user id, and timestamps; its Convex document id identifies the note. `boardArchives` stores no source payload: only the occurrence id, source kind, archiving user id, and archive timestamp. Archive mutations validate that the requested occurrence is currently visible and are idempotent, so a new source occurrence can appear later without restoring the archived one.
 
@@ -234,6 +236,10 @@ recipients with a sent or skipped attempt for the same reminder candidate.
 ## Helper Functions (`helpers.ts`)
 
 Each table has corresponding helper functions that accept a `Doc<'tableName'>` and return derived values. The `computeTotals()` function aggregates across all tables for the grand total.
+
+## Queries that read the clock
+
+Convex caches a query result until its arguments or the data it read change; time passing does not invalidate it. A query that reads the clock (`Date.now()`, `new Date()`) takes a `refreshToken: v.number()` argument, and its callers change it: web apps pass `useRefreshToken()` from `@repo/shell` (the current minute), iOS passes the current minute, and server callers pass `Date.now()`. Make it optional only while older clients are still deployed. `convex/publicAccess.test.ts` fails for a public query that reads the clock without one. The check is best-effort: it runs each handler on an empty database, so it misses a read that comes after an early return or throw, and it counts only `Date.now()` and `new Date()`. Prefer taking the time as an argument (as `schedule/reminders:dueReminderCandidates` takes `nowMs`) when the caller already knows it.
 
 ## Query Pattern
 

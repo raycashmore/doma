@@ -31,7 +31,7 @@ export async function readClaimedEmailInput(
 }
 
 export const claimedInput = query({
-  args: { serviceToken: v.string(), capturedEmailId: v.id('capturedEmails') },
+  args: { serviceToken: v.string(), capturedEmailId: v.id('capturedEmails'), refreshToken: v.optional(v.number()) },
   handler: (ctx, args) => readClaimedEmailInput(ctx, args, { nowMs: Date.now() })
 });
 

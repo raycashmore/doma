@@ -71,7 +71,8 @@ export const syncMeta = internalQuery({
 // If/when the other queries adopt server-side gating, fold this into a shared
 // helper.
 export const currentWeek = query({
-  args: {},
+  // Reads the clock, so callers pass a changing token; see "Queries that read the clock" in docs/convex-backend.md.
+  args: { refreshToken: v.optional(v.number()) },
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error('Not authenticated');
@@ -85,7 +86,7 @@ export const currentWeek = query({
 });
 
 export const currentWeekForBot = query({
-  args: { serviceToken: v.string() },
+  args: { serviceToken: v.string(), refreshToken: v.optional(v.number()) },
   handler: async (ctx, { serviceToken }) => {
     const expectedToken = process.env.BOT_SERVICE_TOKEN;
     if (!expectedToken || serviceToken !== expectedToken) throw new Error('Unauthorized');

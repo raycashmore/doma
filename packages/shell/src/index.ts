@@ -6,4 +6,5 @@ export { Header } from './Header';
 export { MobileNav } from './MobileNav';
 export { PwaUpdater, usePwaUpdate } from './pwa';
 export { PwaUpdateToast } from './PwaUpdateToast';
+export { useRefreshToken } from './refreshToken';
 export { Sidebar } from './Sidebar';
