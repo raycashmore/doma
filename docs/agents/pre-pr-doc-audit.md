@@ -19,7 +19,7 @@ Use this quick checklist:
 
 1. Run `git diff --stat main...HEAD` and identify changed apps, packages, commands, env vars, routes, and public behavior.
 2. Check whether `README.md` is now stale for setup, local dev, commands, architecture summary, or the repo's visible feature set.
-3. Search existing docs for the changed terms with `rg` before adding new docs.
+3. Search existing docs for the changed terms before adding new docs: `rg -n "<term>" --glob '*.md' .`. A bare `*.md` path glob that matches nothing makes zsh abort the whole command.
 4. Update docs close to the source of truth instead of duplicating long explanations.
 5. Keep private finance data, bot tokens, Telegram IDs, chat IDs, and real institution/account labels out of examples.
 6. Include docs-only verification in the PR notes when the audit finds no doc changes are needed.
