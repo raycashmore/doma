@@ -2,17 +2,36 @@ import Foundation
 
 /// The Home widget's summary, as `packages/convex/convex/home/widgetSummary.ts` returns it.
 public struct DomaHomeWidgetSummary: Codable, Equatable, Sendable {
-  public let next: Event?
+  /// This week's events, in start order. `DomaHomeWidgetBoard` picks Next from them.
   public let thisWeek: Week
+  /// Timed events from the Daily requirements calendar over the next two days, in start order.
+  /// They only ever show as today's Next.
+  public let requirements: [Event]
   /// The Groceries list, or `nil` when none is set up.
   public let list: List?
   public let note: Note?
 
-  public init(next: Event?, thisWeek: Week, list: List?, note: Note?) {
-    self.next = next
+  public init(thisWeek: Week, requirements: [Event] = [], list: List?, note: Note?) {
     self.thisWeek = thisWeek
+    self.requirements = requirements
     self.list = list
     self.note = note
+  }
+
+  /// A server or cached summary from before RAY-305 has no requirements, and sends its first timed
+  /// event apart from the week as `next`, which joins the events here.
+  public init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    let week = try container.decode(Week.self, forKey: .thisWeek)
+    let legacyNext = try decoder.container(keyedBy: LegacyKeys.self).decodeIfPresent(Event.self, forKey: .next)
+    thisWeek = legacyNext.map { next in Week(events: (week.events + [next]).sorted { $0.start < $1.start }) } ?? week
+    requirements = try container.decodeIfPresent([Event].self, forKey: .requirements) ?? []
+    list = try container.decodeIfPresent(List.self, forKey: .list)
+    note = try container.decodeIfPresent(Note.self, forKey: .note)
+  }
+
+  private enum LegacyKeys: String, CodingKey {
+    case next
   }
 
   public struct Event: Codable, Equatable, Identifiable, Sendable {
@@ -39,7 +58,7 @@ public struct DomaHomeWidgetSummary: Codable, Equatable, Sendable {
   }
 
   public struct Week: Codable, Equatable, Sendable {
-    /// The first few events after `next`, in start order.
+    /// The first few events of the week, in start order.
     public let events: [Event]
 
     public init(events: [Event]) {
@@ -86,9 +105,16 @@ public struct DomaHomeWidgetBoard: Equatable, Sendable {
     case next, week, list, note
   }
 
+  /// How long before an event starts it becomes Next. Until then This week holds it.
+  public static let leadTime: TimeInterval = 2 * 60 * 60
+
   public let date: Date
-  /// The next timed event today, which may already have started. Later days wait for This week.
+  /// Today's next timed event, once it is within `leadTime` of starting or has started. When
+  /// daily requirements come first, the first of them, and `requirementRows` lists the group.
   public let next: DomaHomeWidgetSummary.Event?
+  /// When Next is daily requirements: those that overlap the first, one row per person.
+  /// Empty when Next is an ordinary event.
+  public let requirementRows: [RequirementRow]
   /// The events after `next`, in start order.
   public let week: [DomaHomeWidgetSummary.Event]
   /// Hidden when nothing is on it.
@@ -97,9 +123,25 @@ public struct DomaHomeWidgetBoard: Equatable, Sendable {
 
   public init(summary: DomaHomeWidgetSummary, at date: Date, calendar: Calendar = .current) {
     self.date = date
-    let known = ([summary.next].compactMap { $0 } + summary.thisWeek.events).filter { $0.endDate > date }
-    let next = known.first { event in
-      !event.allDay && (event.startDate <= date || calendar.isDate(event.startDate, inSameDayAs: date))
+    let known = summary.thisWeek.events.filter { $0.endDate > date }
+    let isDue = { (event: DomaHomeWidgetSummary.Event) in
+      !event.allDay && event.endDate > date && event.startDate <= date + Self.leadTime
+        && (event.startDate <= date || calendar.isDate(event.startDate, inSameDayAs: date))
+    }
+    let nextEvent = known.first(where: isDue)
+    let firstRequirement = summary.requirements.first(where: isDue)
+    let next: DomaHomeWidgetSummary.Event?
+    // Requirements go first unless an event starts before them; one already under way gives way.
+    if let firstRequirement, nextEvent.map({ firstRequirement.start <= $0.start || $0.startDate <= date }) ?? true {
+      next = firstRequirement
+      requirementRows = RequirementRow.rows(
+        for: summary.requirements.filter { requirement in
+          requirement == firstRequirement
+            || (requirement.endDate > date && requirement.start < firstRequirement.end && requirement.end > firstRequirement.start)
+        })
+    } else {
+      next = nextEvent
+      requirementRows = []
     }
     self.next = next
     week = known.filter { $0 != next && (next == nil || $0.start >= next!.start) }
@@ -146,18 +188,53 @@ public struct DomaHomeWidgetBoard: Equatable, Sendable {
     }
   }
 
-  /// When the board next changes by itself: each event's start and end, and each midnight, so
-  /// finished events leave and "Wed" becomes today.
+  /// When the board next changes by itself: each event's start and end, when it comes within
+  /// `leadTime`, and each midnight, so events become Next in time, finished ones leave and "Wed"
+  /// becomes today.
   public static func changeDates(
     for summary: DomaHomeWidgetSummary, after date: Date, until end: Date, calendar: Calendar
   ) -> [Date] {
-    let events = [summary.next].compactMap { $0 } + summary.thisWeek.events
-    var dates = Set(events.flatMap { [$0.startDate, $0.endDate] })
+    let events = summary.thisWeek.events + summary.requirements
+    var dates = Set(events.flatMap { [$0.startDate - leadTime, $0.startDate, $0.endDate] })
     var midnight = calendar.startOfDay(for: date)
     while let following = calendar.date(byAdding: .day, value: 1, to: midnight), following <= end {
       dates.insert(following)
       midnight = following
     }
     return dates.filter { $0 > date && $0 <= end }.sorted()
+  }
+}
+
+extension DomaHomeWidgetBoard {
+  /// One person's daily requirements, from titles such as "Sam: Sport day".
+  public struct RequirementRow: Equatable, Sendable {
+    /// The name before the colon, or `nil` when the title has none.
+    public let who: String?
+    /// What they need, joined with " · " when they need several things.
+    public let what: String
+
+    public init(who: String?, what: String) {
+      self.who = who
+      self.what = what
+    }
+
+    /// One row per person, in the order they first appear.
+    static func rows(for requirements: [DomaHomeWidgetSummary.Event]) -> [RequirementRow] {
+      var order: [String?] = []
+      var things: [String?: [String]] = [:]
+      for requirement in requirements {
+        let (who, what) = parse(requirement.title)
+        if things[who] == nil { order.append(who) }
+        things[who, default: []].append(what)
+      }
+      return order.map { RequirementRow(who: $0, what: things[$0]!.joined(separator: " · ")) }
+    }
+
+    private static func parse(_ title: String) -> (who: String?, what: String) {
+      guard let colon = title.firstIndex(of: ":") else { return (nil, title) }
+      let who = title[..<colon].trimmingCharacters(in: .whitespaces)
+      let what = title[title.index(after: colon)...].trimmingCharacters(in: .whitespaces)
+      return who.isEmpty || what.isEmpty ? (nil, title) : (who, what)
+    }
   }
 }

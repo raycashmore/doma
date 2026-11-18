@@ -7,8 +7,10 @@ const FIXTURE_CALENDAR_ID = 'noticeboard-fixture';
 const HOUR_MS = 3_600_000;
 const DAY_MS = 86_400_000;
 
-/** A busy week for the Home widget: hours from now, then title and optional detail. */
-const FIXTURE_EVENTS = [
+/** A busy week for the Home widget: hours from now, title, and an optional detail or kind. */
+const FIXTURE_EVENTS: { inHours: number; title: string; detail?: string; kind?: 'dailyRequirements' }[] = [
+  { inHours: 1, title: 'Sam: Sport day', kind: 'dailyRequirements' },
+  { inHours: 1, title: 'Alex: Library bag', kind: 'dailyRequirements' },
   { inHours: 1.5, title: 'Pick up from dancing', detail: 'Dancing' },
   { inHours: 3, title: 'Bins out' },
   { inHours: 26, title: 'Swimming' },
@@ -143,6 +145,7 @@ export const seedNoticeboard = internalMutation({
         allDay: false,
         title: event.title,
         ...(event.detail ? { description: event.detail } : {}),
+        ...(event.kind ? { kind: event.kind } : {}),
         who: [],
         recurring: false,
         htmlLink: 'https://calendar.google.com/'
