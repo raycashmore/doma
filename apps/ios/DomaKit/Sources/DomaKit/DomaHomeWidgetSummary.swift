@@ -2,7 +2,7 @@ import Foundation
 
 /// The Home widget's summary, as `packages/convex/convex/home/widgetSummary.ts` returns it.
 public struct DomaHomeWidgetSummary: Codable, Equatable, Sendable {
-  public let next: Event?
+  /// This week's events, in start order. `DomaHomeWidgetBoard` picks Next from them.
   public let thisWeek: Week
   /// Timed events from the Daily requirements calendar over the next two days, in start order.
   /// They only ever show as today's Next.
@@ -11,8 +11,7 @@ public struct DomaHomeWidgetSummary: Codable, Equatable, Sendable {
   public let list: List?
   public let note: Note?
 
-  public init(next: Event?, thisWeek: Week, requirements: [Event] = [], list: List?, note: Note?) {
-    self.next = next
+  public init(thisWeek: Week, requirements: [Event] = [], list: List?, note: Note?) {
     self.thisWeek = thisWeek
     self.requirements = requirements
     self.list = list
@@ -22,7 +21,6 @@ public struct DomaHomeWidgetSummary: Codable, Equatable, Sendable {
   /// A server or cached summary from before daily requirements has none.
   public init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
-    next = try container.decodeIfPresent(Event.self, forKey: .next)
     thisWeek = try container.decode(Week.self, forKey: .thisWeek)
     requirements = try container.decodeIfPresent([Event].self, forKey: .requirements) ?? []
     list = try container.decodeIfPresent(List.self, forKey: .list)
@@ -53,7 +51,7 @@ public struct DomaHomeWidgetSummary: Codable, Equatable, Sendable {
   }
 
   public struct Week: Codable, Equatable, Sendable {
-    /// The first few events after `next`, in start order.
+    /// The first few events of the week, in start order.
     public let events: [Event]
 
     public init(events: [Event]) {
@@ -118,10 +116,7 @@ public struct DomaHomeWidgetBoard: Equatable, Sendable {
 
   public init(summary: DomaHomeWidgetSummary, at date: Date, calendar: Calendar = .current) {
     self.date = date
-    // The summary's Next can start after today's all-day events, which This week then leads with.
-    let known = ([summary.next].compactMap { $0 } + summary.thisWeek.events)
-      .filter { $0.endDate > date }
-      .sorted { $0.start < $1.start }
+    let known = summary.thisWeek.events.filter { $0.endDate > date }
     let isDue = { (event: DomaHomeWidgetSummary.Event) in
       !event.allDay && event.endDate > date && event.startDate <= date + Self.leadTime
         && (event.startDate <= date || calendar.isDate(event.startDate, inSameDayAs: date))
@@ -192,7 +187,7 @@ public struct DomaHomeWidgetBoard: Equatable, Sendable {
   public static func changeDates(
     for summary: DomaHomeWidgetSummary, after date: Date, until end: Date, calendar: Calendar
   ) -> [Date] {
-    let events = [summary.next].compactMap { $0 } + summary.thisWeek.events + summary.requirements
+    let events = summary.thisWeek.events + summary.requirements
     var dates = Set(events.flatMap { [$0.startDate - leadTime, $0.startDate, $0.endDate] })
     var midnight = calendar.startOfDay(for: date)
     while let following = calendar.date(byAdding: .day, value: 1, to: midnight), following <= end {

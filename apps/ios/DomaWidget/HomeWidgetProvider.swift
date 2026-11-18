@@ -84,9 +84,9 @@ extension DomaHomeWidgetSummary {
   static func sample(now: Date) -> DomaHomeWidgetSummary {
     let hour: TimeInterval = 60 * 60
     return DomaHomeWidgetSummary(
-      next: Event(id: "sample-1", title: "Pick up Sam", detail: "Dancing", start: now + 1.5 * hour, end: now + 2 * hour),
       thisWeek: Week(
         events: [
+          Event(id: "sample-1", title: "Pick up Sam", detail: "Dancing", start: now + 1.5 * hour, end: now + 2 * hour),
           Event(id: "sample-2", title: "Bins out", start: now + 3 * hour, end: now + 3.5 * hour),
           Event(id: "sample-3", title: "Swimming", start: now + 26 * hour, end: now + 27 * hour),
         ]),

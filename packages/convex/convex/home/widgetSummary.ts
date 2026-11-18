@@ -13,18 +13,17 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const WEEK_MS = 7 * DAY_MS;
 /** Daily requirements only ever show as today's Next, so the widget needs them for its timeline's day ahead. */
 const REQUIREMENTS_SPAN_MS = 2 * DAY_MS;
-/**
- * More This week rows than any widget size shows, so rows still fill the tile after earlier events
- * finish. `total` counts every event after Next this week; the iOS widget no longer reads it.
- */
+/** More events than any widget size shows, so rows still fill the tile after earlier events finish. */
 const THIS_WEEK_LIMIT = 8;
 
 type WidgetSummaryOptions = { now: Date; timeZone: string };
 
 /**
- * The Home widget's "Board": the next event, the rest of this week, the coming daily requirements,
- * the Shopping list's count and the top note. Events come with start and end so the widget can drop finished ones on its own
- * timeline. Notes and dated email notices compete for the note tile by how soon they are due.
+ * The Home widget's "Board" data: this week's events in start order, the coming daily requirements,
+ * the Shopping list's count and the top note. The widget decides which event is Next and what This
+ * week shows (`DomaHomeWidgetBoard` in the iOS app), at each moment of its own timeline, so this
+ * read only bounds the time window. Notes and dated email notices compete for the note tile by how
+ * soon they are due.
  */
 export async function readHomeWidgetSummary(ctx: Pick<QueryCtx, 'auth' | 'db'>, options: WidgetSummaryOptions) {
   const identity = await requireSignedIn(ctx);
@@ -53,10 +52,6 @@ export async function readHomeWidgetSummary(ctx: Pick<QueryCtx, 'auth' | 'db'>, 
       (event) => event.kind === 'dailyRequirements' && !event.allDay && event.start < nowMs + REQUIREMENTS_SPAN_MS
     )
     .map(toWidgetEvent);
-  // Next leads with a clock time, so it skips all-day events. The widget shows it as Next only near
-  // its start and drops what comes before it then, so This week keeps everything else.
-  const next = upcoming.find((event) => !event.allDay) ?? null;
-  const rest = upcoming.filter((event) => event !== next);
 
   const archived = new Set(boardArchives.map((archive) => archive.occurrenceId));
   const noteCandidates: NoteCandidate[] = [
@@ -91,8 +86,7 @@ export async function readHomeWidgetSummary(ctx: Pick<QueryCtx, 'auth' | 'db'>, 
 
   return {
     localDate,
-    next,
-    thisWeek: { events: rest.slice(0, THIS_WEEK_LIMIT), total: rest.length },
+    thisWeek: { events: upcoming.slice(0, THIS_WEEK_LIMIT) },
     requirements,
     list: list
       ? {
@@ -159,8 +153,7 @@ export const homeWidgetSummary = query({
   args: { refreshToken: v.number() },
   returns: v.object({
     localDate: v.string(),
-    next: v.union(widgetEvent, v.null()),
-    thisWeek: v.object({ events: v.array(widgetEvent), total: v.number() }),
+    thisWeek: v.object({ events: v.array(widgetEvent) }),
     requirements: v.array(widgetEvent),
     list: v.union(v.object({ publicId: v.string(), name: v.string(), activeCount: v.number() }), v.null()),
     note: v.union(

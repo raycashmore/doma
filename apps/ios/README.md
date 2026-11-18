@@ -100,6 +100,9 @@ Widget gotchas, each learned in the simulator:
   other views in an `HStack` it takes the full width, so join it into one interpolated `Text`
   instead. Interpolation capitalises it ("In 1 hour · Dancing"); `Text + Text` is deprecated, and
   CI fails on the warning.
+- On the iPhone 17e, a Next tile that shares its column with another tile fits the kicker, the large
+  time and two lines of title and detail, but not two `.supporting` bold rows under the large time.
+  Check a new Next layout there with `widget-shot.sh` before settling a mock-up.
 - Tiles inset inside the widget use `ContainerRelativeShape`, so their corners stay concentric with
   the widget's on every device; `scripts/check-theme.sh` rejects a fixed `cornerRadius` in
   `DomaWidget/`.
@@ -294,6 +297,9 @@ defaults to main-actor isolation, so tests of its types need `@MainActor`.
 
 - Screens use `domaFont(_:)` and `DomaColor`; `scripts/check-theme.sh` enforces this in iOS CI.
 - Widget tiles that sit side by side in one row share a height, so their edges line up.
+- The Home widget decides Next, This week and the requirement rows in `DomaHomeWidgetBoard`, at each
+  timeline entry. `home/widgetSummary` sends events in start order and only bounds the time window,
+  so the rule has one copy.
 - Screens under the dark header use `domaHeaderedSheet(title:)`, which draws the large title itself. iOS 27
   draws a bar's large title inside the scrolling content, where the sheet's mask hides it, and that title
   ignores the `UINavigationBar` appearance. A `toolbarBackground` colour resolves in the bar's dark
