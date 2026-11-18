@@ -66,7 +66,7 @@ private struct HomeBoardTile: View {
     switch tile {
     case .next:
       if let next = board.next {
-        link(DomaCalendarLink.url) { HomeNextTile(event: next, requirementRows: board.requirementRows, now: board.date) }
+        link(DomaCalendarLink.url) { HomeNextTile(event: next, end: board.nextEnd ?? next.endDate, requirementRows: board.requirementRows, now: board.date) }
       }
     case .week:
       link(DomaCalendarLink.url) { HomeWeekTile(board: board) }
@@ -122,9 +122,16 @@ private struct HomeLockScreenView: View {
     return board.requirementRows.map { [$0.who, $0.what].compactMap { $0 }.joined(separator: " ") }.joined(separator: " · ")
   }
 
+  /// "4:00", or "until 6:00" once under way.
+  private func nextLead(_ next: DomaHomeWidgetSummary.Event) -> String {
+    guard next.startDate <= board.date else { return format.rowLead(next, now: board.date) }
+    let clock = format.nextClock(start: next.startDate, end: board.nextEnd ?? next.endDate, now: board.date)
+    return [clock.lead, clock.time].compactMap(\.self).joined(separator: " ")
+  }
+
   private func line(_ tile: DomaHomeWidgetBoard.Tile) -> String {
     switch tile {
-    case .next: board.next.map { "\(format.rowLead($0, now: board.date)) \(nextTitle($0))" } ?? ""
+    case .next: board.next.map { "\(nextLead($0)) \(nextTitle($0))" } ?? ""
     case .week: board.week.first.map { "\(format.rowLead($0, now: board.date)) \($0.title)" } ?? ""
     case .list: board.list.map { "\($0.name) · \($0.activeCount)" } ?? ""
     case .note: board.note?.title ?? ""

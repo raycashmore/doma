@@ -123,6 +123,8 @@ struct HomeWidgetBoardTests {
     #expect(board.requirementRows == [
       .init(who: "Sam", what: "Sport day · Hat"), .init(who: "Alex", what: "Library bag"), .init(who: nil, what: "Return form"),
     ])
+    // Next is over when the last row's requirement ends.
+    #expect(board.nextEnd == Self.at(day: 18, hour: 9, minute: 30))
     // Ordinary events are never folded in, and requirements never reach This week.
     #expect(board.week == [dropOff])
   }
@@ -210,6 +212,18 @@ struct HomeWidgetBoardTests {
     #expect(format.rowLead(Self.swimming, now: Self.at(day: 18, hour: 0)) == "8:00")
     #expect(format.rowLead(Self.event("Holiday", day: 18, hour: 0, allDay: true), now: Self.now) == "Wed")
     #expect(format.clock(Self.pickUp.startDate) == ("7:00", "pm"))
+  }
+
+  @Test func nextShowsTheStartUntilTheEventIsUnderWayThenTheEnd() {
+    let format = DomaHomeWidgetFormat(calendar: Self.calendar, locale: Locale(identifier: "en_AU"))
+
+    let (start, end) = (Self.pickUp.startDate, Self.pickUp.endDate)
+
+    #expect(format.nextClock(start: start, end: end, now: Self.now) == (nil, "7:00", "pm"))
+    #expect(format.nextClock(start: start, end: end, now: Self.at(day: 17, hour: 19)) == ("until", "8:00", "pm"))
+    #expect(format.nextClock(start: start, end: end, now: Self.at(day: 17, hour: 19, minute: 30)) == ("until", "8:00", "pm"))
+    // An overnight event names the day it ends.
+    #expect(format.nextClock(start: start, end: Self.at(day: 18, hour: 9), now: Self.at(day: 17, hour: 21)) == ("until Wed", "9:00", "am"))
   }
 }
 
