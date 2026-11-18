@@ -28,3 +28,27 @@ For forwarded-email work, treat sender addresses, subjects, bodies,
 attachments, extracted facts, and due-date evidence as private source data.
 Use generic messages in committed tests and evals. Agent traces may retain
 typed outcome metadata and token usage, but must not copy raw email content.
+
+## Device login secrets
+
+Secret material means device secrets, their hashes, issued device tokens, the device signing key
+(`DEVICE_JWT_PRIVATE_KEY`), `CLERK_SECRET_KEY`, and anything read from the Keychain. These rules bind
+every agent working on device login (see [Auth](../auth.md#device-login)):
+
+1. Never print, log or echo secret material, in code or in the session. In code that covers `print`,
+   `os_log`/`Logger`, `console.log`, error messages, thrown errors, crash text, analytics and test
+   output. Errors say "device not linked" or "token swap failed", with no fragment of the value.
+2. Never put an `Authorization` header, or a request or response body from `devices/login:exchange`
+   or `devices/login:link`, into logs or errors.
+3. Never run commands that reveal secret material in session output: `npx convex env get` or
+   `env list` for these variables (use `pnpm convex:env-names`), `security find-generic-password -w`,
+   dumping the simulator Keychain, or calling the exchange with a real secret and showing the reply.
+4. Set keys only with `pnpm --filter @repo/convex device-login:keys`, which never displays them.
+   Agents set only the local development deployment. The owner sets production; never paste
+   production keys into chat, issues, commits or PRs.
+5. Tests use throwaway keys generated in the test and fake secrets. Never commit real or reusable key
+   material; fixture keys must be obviously test-only.
+6. Convex functions never return `tokenHash` or a secret, except the one-time return from
+   `devices/login:link`.
+7. If secret material appears in output by accident, stop and tell the owner. The fix is to revoke
+   the device or rotate the signing key.

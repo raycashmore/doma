@@ -36,6 +36,12 @@ const publicFunctions = Object.entries(modules).flatMap(([file, exports]) =>
     .map(([name, fn]) => [`${file.slice(2, -3)}:${name}`, fn as RegisteredFunction] as const)
 );
 
+// Public functions a signed-out caller may use on purpose, each with the credential it checks instead.
+// Their own tests cover that check.
+const signedOutByDesign = new Map<string, string>([
+  ['devices/login:exchange', 'takes a device secret instead of a sign-in (devices/login.test.ts)']
+]);
+
 // The smallest value each validator accepts, so handlers that validate arguments first still reach their
 // sign-in check.
 function sampleValue(validator: ExportedValidator): unknown {
@@ -143,12 +149,20 @@ describe('public Convex functions', () => {
     expect(httpActions).toEqual([]);
   });
 
-  it.each(publicFunctions)('%s rejects a signed-out caller', async (_id, fn) => {
-    const args = sampleValue(JSON.parse(fn.exportArgs()) as ExportedValidator);
-    await expect(Promise.resolve().then(() => fn._handler(signedOutCtx(), args))).rejects.toThrow(
-      /^(Not authenticated|Unauthorized)$/
-    );
+  it('lists only existing functions as signed-out by design', () => {
+    const ids = new Set<string>(publicFunctions.map(([id]) => id));
+    expect([...signedOutByDesign.keys()].filter((id) => !ids.has(id))).toEqual([]);
   });
+
+  it.each(publicFunctions.filter(([id]) => !signedOutByDesign.has(id)))(
+    '%s rejects a signed-out caller',
+    async (_id, fn) => {
+      const args = sampleValue(JSON.parse(fn.exportArgs()) as ExportedValidator);
+      await expect(Promise.resolve().then(() => fn._handler(signedOutCtx(), args))).rejects.toThrow(
+        /^(Not authenticated|Unauthorized)$/
+      );
+    }
+  );
 
   // Convex caches a query result until its arguments or the data it read change. A query that reads the
   // clock must take a `refreshToken` that clients change, or it can return a result computed hours ago.

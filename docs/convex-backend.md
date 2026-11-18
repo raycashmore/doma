@@ -11,6 +11,12 @@ member. `convex/publicAccess.test.ts` calls every public function signed out and
 skips its check. Make a function internal when no client calls it. Only the five queries Budget reads
 are public in `convex/queries.ts`.
 
+The one exception is `devices/login:exchange`, which a device calls before it has any sign-in: its
+device secret is the credential (see [device login](auth.md#device-login)). The test lists it as
+signed-out by design. A signed-in identity comes from either a Clerk token or a device token; both
+carry the Clerk user ID as `subject`, so identify people by `identity.subject`, never by
+`tokenIdentifier`.
+
 ## Seeding
 
 Seed scripts run locally and read a local excel spreadsheet, which is

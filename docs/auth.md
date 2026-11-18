@@ -35,6 +35,54 @@ The development Clerk instance allows Google sign-in only and restricts sign-up,
 - `packages/convex/convex/auth.config.ts` declares the JWT issuer so Convex can verify the token server-side. The issuer comes from `CLERK_JWT_ISSUER_DOMAIN` on the Convex side.
 - Sensitive Convex queries should call `ctx.auth.getUserIdentity()` and reject when null.
 
+## Device login
+
+Clerk's free plan ends every session 7 days after sign-in. The native app and its widgets must keep
+working without anyone signing in again, so Clerk is used there only for the first sign-in. After
+that, the device holds a **device login**: a random secret that Convex swaps for a token lasting an
+hour. The web apps stay on Clerk sessions.
+
+- `devices/login:link` (an action) needs a Clerk sign-in. A device token cannot link, so a device
+  login cannot copy itself past its own revocation. It returns `{ deviceId, secret }` once and stores
+  only a SHA-256 hash of the secret in `devices`.
+- `devices/login:exchange` is public: the secret is the credential. It returns
+  `{ status: 'issued', token, expiresAt }` or `{ status: 'rejected' }`. Rejected means the device
+  login is gone and the device must sign in again; a thrown error is a setup or server fault, and
+  the device keeps its secret and retries.
+- Each swap checks Clerk's Backend API. A deleted or banned user deletes the device; a Clerk outage
+  still issues a token, so it never signs anyone out. A rejected `CLERK_SECRET_KEY` stops the swap
+  instead, so it cannot silently skip the check forever.
+- A device unused for 60 days is refused and deleted, and a daily cron deletes any that never ask
+  again.
+- `devices/login:revoke` deletes the caller's own device, with either kind of token. The app calls it
+  on sign-out. Deleting a row in the dashboard signs that device out within an hour.
+- Tokens are ES256 JWTs with `iss` set to the deployment's `CONVEX_SITE_URL`, `aud: convex` and
+  `sub` set to the Clerk user ID, so functions see the same `identity.subject` as with a Clerk
+  token. `tokenIdentifier` differs between the two, so functions must not rely on it.
+
+### Device login keys
+
+| Variable                 | Holds                                                     |
+| ------------------------ | --------------------------------------------------------- |
+| `DEVICE_JWT_PRIVATE_KEY` | The P-256 signing key as a JWK with a `kid`. Secret.      |
+| `DEVICE_JWT_JWKS`        | The public keys, read by `auth.config.ts` at deploy time. |
+| `CLERK_SECRET_KEY`       | Clerk's secret key, for the user check. Secret.           |
+
+Set them with `pnpm --filter @repo/convex device-login:keys`, which never prints a value:
+
+- `setup` makes the first key pair. On the local development deployment it also copies
+  `CLERK_SECRET_KEY` from the root env file. With `--prod` it prints how to pipe Clerk's live
+  secret key in.
+- `rotate` adds a new public key beside the current one and holds the new private key in
+  `DEVICE_JWT_NEXT_PRIVATE_KEY`. Push functions so `auth.config.ts` reads the new public key, then
+  run `activate`, which starts signing with it. Tokens signed with the old key pass for their
+  remaining hour, so rotation signs nobody out. Rotate after any suspected leak of the private key.
+
+Agents set keys only on the local development deployment. The owner runs the script with `--prod`.
+Convex refuses to deploy while `DEVICE_JWT_JWKS` is unset, so set it before merging to `main`.
+Preview deployments need it in the Convex Preview default env vars too; there `{"keys":[]}` is
+enough, since nothing signs in to a preview with a device login.
+
 ## What to do after Clerk is wired
 
 1. Verify on `localhost:3001/` (Budget) you see Clerk's sign-in screen (signed-out state).

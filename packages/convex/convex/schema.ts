@@ -10,6 +10,7 @@ import { defineSchema, defineTable } from 'convex/server';
 import { v } from 'convex/values';
 
 import { briefingDeliveryAttemptsTable, briefingDeliveryScheduleSlotsTable, briefingsTable } from './briefing/schema';
+import { devicesTable } from './devices/schema';
 import {
   capturedEmailsTable,
   emailNoticeDeliveryAttemptsTable,
@@ -205,6 +206,11 @@ export default defineSchema({
   // ============================================================
   manualNotes: manualNotesTable,
   boardArchives: boardArchivesTable,
+
+  // ============================================================
+  // DEVICES — Long-lived device logins for the native apps
+  // ============================================================
+  devices: devicesTable,
 
   // ============================================================
   // MEALS — Shared household cookbook recipes

@@ -12,7 +12,8 @@ const cronMocks = vi.hoisted(() => ({
   spendingInsightDelivery: Symbol('spendingInsightDelivery'),
   mealAgentCleanup: Symbol('mealAgentCleanup'),
   emailAgentCleanup: Symbol('emailAgentCleanup'),
-  emailRetentionCleanup: Symbol('emailRetentionCleanup')
+  emailRetentionCleanup: Symbol('emailRetentionCleanup'),
+  deviceLoginCleanup: Symbol('deviceLoginCleanup')
 }));
 
 vi.mock('convex/server', () => ({
@@ -55,7 +56,8 @@ vi.mock('./_generated/api', () => ({
         runDueSpendingInsightDelivery: cronMocks.spendingInsightDelivery
       }
     },
-    meals: { agentCleanup: { deleteExpiredRuns: cronMocks.mealAgentCleanup } }
+    meals: { agentCleanup: { deleteExpiredRuns: cronMocks.mealAgentCleanup } },
+    devices: { login: { deleteInactiveDevices: cronMocks.deviceLoginCleanup } }
   }
 }));
 
@@ -64,7 +66,7 @@ describe('Convex cron registration', () => {
     await import('./crons');
 
     expect(cronMocks.interval).toHaveBeenCalledTimes(6);
-    expect(cronMocks.daily).toHaveBeenCalledTimes(2);
+    expect(cronMocks.daily).toHaveBeenCalledTimes(3);
     expect(cronMocks.interval).toHaveBeenCalledWith(
       'morning briefing delivery schedule reconciliation',
       { hours: 24 },
@@ -95,6 +97,11 @@ describe('Convex cron registration', () => {
       'forwarded email retention cleanup',
       { hourUTC: 15, minuteUTC: 30 },
       cronMocks.emailRetentionCleanup
+    );
+    expect(cronMocks.daily).toHaveBeenCalledWith(
+      'inactive device login cleanup',
+      { hourUTC: 16, minuteUTC: 0 },
+      cronMocks.deviceLoginCleanup
     );
     expect(cronMocks.interval).toHaveBeenCalledWith(
       'forwarded email reminder delivery',

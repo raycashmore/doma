@@ -29,6 +29,7 @@
     "test": "vitest run",
     "seed": "tsx scripts/seed.ts",
     "seed:clear": "tsx scripts/clearAll.ts",
+    "device-login:keys": "tsx scripts/deviceLoginKeys.ts",
     "seed:home": "dotenv -e ../../.env.local -- convex run home/devFixtures:seedNoticeboard"
   },
   "dependencies": {
