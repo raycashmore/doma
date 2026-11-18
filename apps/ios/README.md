@@ -101,8 +101,8 @@ Widget gotchas, each learned in the simulator:
 
 To look at a widget, run `pnpm convex` and `pnpm --filter @repo/convex seed:home` for a busy
 week of placeholder events, sign the simulator in (see "Checking the UI in the simulator"), then
-place the widget once: long-press an empty part of the Home Screen, press Edit, then Add Widget,
-press the "Doma" cell, swipe to the size, press Add Widget, then Done, and leave that page showing.
+place the widget once with `AGENT_DEVICE=<agent-device command> scripts/add-widget.sh home-medium`
+(or `home-small`, `list-small`, `list-medium`, `list-large`) and leave that page showing.
 After each change,
 `AGENT_DEVICE=<agent-device command> scripts/widget-shot.sh <bundle id> <out.png>` builds,
 installs, waits for the widgets to redraw and takes a screenshot. `agent-device` cannot lock the
@@ -182,15 +182,16 @@ config requires. Tokens are never persisted or logged.
 ## Running the tests
 
 ```sh
-xcodebuild test -project Doma.xcodeproj -scheme Doma \
-  -destination "$(scripts/simulator-destination.sh)" \
-  -skip-testing:DomaTests/LiveListsContractTests -parallel-testing-enabled NO
+scripts/test.sh [-only-testing:DomaTests/<Suite>]
 ```
 
-Run serially: a parallel run can crash the test host and fail unrelated suites, differently each time.
-CI also fails on any Swift warning in Doma's own code. To check locally, prefix the command with
-`DOMA_STRICT_WARNINGS=YES` and add `DOMA_STRICT_WARNINGS=YES` as a build setting too: the variable
-reaches DomaKit, the setting reaches the app targets.
+It runs the suites serially with strict warnings, as CI does, and prints only compile errors and
+warnings, failed tests, test-host crashes and the counts, with the path to the full log. It skips
+`SceneCoverTests`, which crash the test host on the local iOS 27.2 simulator but pass in CI (RAY-289).
+
+It runs serially because a parallel run can crash the test host and fail unrelated suites, differently
+each time. Strict warnings need both the `DOMA_STRICT_WARNINGS=YES` variable, which reaches DomaKit,
+and the build setting, which reaches the app targets; the script sets both.
 A failure in a suite you did not touch: compare with `main` (`git stash -u`) before chasing it.
 
 ## Live contract tests

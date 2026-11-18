@@ -34,7 +34,7 @@ Before designing a UI feature or adopting a shared pattern, read [the local patt
 - [Testing policy](docs/agents/testing-policy.md)
 - [Browser Verification](docs/agents/browser-verification.md)
 - [Repository Map](docs/agents/repo-map.md)
-- [iOS app](apps/ios/README.md): read all of it before iOS builds, simulator checks or review.
+- [iOS app](apps/ios/README.md): read all of it before iOS design or mock-ups, builds, simulator checks or review.
 
 ## Who does what
 
