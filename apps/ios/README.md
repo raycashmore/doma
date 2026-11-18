@@ -194,12 +194,13 @@ config requires. Tokens are never persisted or logged.
 scripts/test.sh [-only-testing:DomaTests/<Suite>]
 ```
 
-It runs the suites serially with strict warnings, as CI does, and prints only compile errors and
-warnings, failed tests, test-host crashes and the counts, with the path to the full log. It skips
-`SceneCoverTests`, which crash the test host on the local iOS 27.2 simulator but pass in CI (RAY-289).
+It runs the suites with strict warnings, as CI does, and prints only compile errors and warnings,
+failed tests, test-host crashes and the counts, with the path to the full log.
 
-It runs serially because a parallel run can crash the test host and fail unrelated suites, differently
-each time. Strict warnings need both the `DOMA_STRICT_WARNINGS=YES` variable, which reaches DomaKit,
+A suite that makes `UIWindow`s should free them on the main thread: make it a `@MainActor final
+class` with an `isolated deinit` that hides them, as `SceneCoverTests` does. As a struct, that suite
+crashed the test host and failed whichever tests were running, likely because it was torn down off
+the main thread (RAY-289). Strict warnings need both the `DOMA_STRICT_WARNINGS=YES` variable, which reaches DomaKit,
 and the build setting, which reaches the app targets; the script sets both.
 A failure in a suite you did not touch: compare with `main` (`git stash -u`) before chasing it.
 

@@ -3,8 +3,12 @@ import UIKit
 
 @testable import Doma
 
+/// A class with an isolated deinit, so the windows are hidden and freed on the main thread. As a
+/// struct, this suite crashed the test host in UIKit's keyboard-shortcut pass, which met a window
+/// already being freed (RAY-289). The likely cause is a teardown off the main thread. Clearing
+/// `windowScene` as well is a precaution.
 @MainActor
-struct SceneCoverTests {
+final class SceneCoverTests {
   private let window: UIWindow
   private let coverWindow: UIWindow
 
@@ -14,6 +18,13 @@ struct SceneCoverTests {
     coverWindow = UIWindow(windowScene: scene)
     window.isHidden = false
     coverWindow.isHidden = true
+  }
+
+  isolated deinit {
+    for testWindow in [window, coverWindow] {
+      testWindow.isHidden = true
+      testWindow.windowScene = nil
+    }
   }
 
   private func apply(isCovered: Bool, isLocked: Bool = false) {
