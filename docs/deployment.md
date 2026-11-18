@@ -48,6 +48,12 @@ pnpm --filter @repo/convex exec convex deploy --cmd 'echo "deployed"'
 
 Create one deployment for staging and one for production. Each command prints a deployment URL (something like `https://<name>.convex.cloud`). Save both — Vite apps use it as `VITE_CONVEX_URL`, and Next.js apps use it as `NEXT_PUBLIC_CONVEX_URL`.
 
+### Convex deploys automatically with Lists
+
+After that one-time setup, nobody deploys Convex by hand. The Lists Vercel project's build command runs `convex deploy` (via `pnpm --dir ../.. --filter @repo/convex exec convex deploy --cmd-url-env-var-name VITE_CONVEX_URL …`) before building the app. So a merge to `main` deploys the Convex functions to production when Lists' production build runs, including merges that touch only `packages/convex` or `apps/ios`.
+
+To confirm a change reached production, check that the Lists production deployment for that commit succeeded (`gh api "repos/<owner>/doma/deployments?environment=Production%20%E2%80%93%20doma-lists"`), and use `pnpm prod:status <module>` for a new function. If the Lists build fails, Convex is not deployed either.
+
 In the Convex dashboard for each cloud deployment:
 
 - **Settings → Environment Variables**: set `CLERK_JWT_ISSUER_DOMAIN` to the Clerk Frontend API URL for that environment.

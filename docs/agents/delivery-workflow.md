@@ -48,8 +48,11 @@ substituting seed-data proof.
 Before pushing or opening a PR, inspect the current workflow events and the
 actual deployment target. `.github/workflows/ci.yml` runs on pull requests to
 and pushes to `main`; it does not establish hosted behavior. Explain material
-automatic effects and apply existing authority to them. Production Convex can
-change independently of a merge, so check gates with `pnpm prod:status`.
+automatic effects and apply existing authority to them. A merge to `main`
+deploys production Convex automatically through the Lists Vercel build (see
+[deployment](../deployment.md#convex-deploys-automatically-with-lists)), so
+merging is the production deploy; there is no separate manual step. Confirm it
+with the Lists production deployment and `pnpm prod:status`.
 
 Run the [Pre-PR Docs Audit](pre-pr-doc-audit.md) and the
 [privacy checks](privacy.md), including commit metadata. A local commit, PR,
