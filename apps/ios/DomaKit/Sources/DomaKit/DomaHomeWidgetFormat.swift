@@ -15,6 +15,17 @@ public struct DomaHomeWidgetFormat: Sendable {
     (format(date, "h:mm"), format(date, "a").lowercased())
   }
 
+  /// Next's time: when it starts, or once it is under way, "until" when it ends, with the day
+  /// when that isn't today.
+  public func nextClock(start: Date, end: Date, now: Date) -> (lead: String?, time: String, period: String) {
+    guard start <= now else {
+      let (time, period) = clock(start)
+      return (nil, time, period)
+    }
+    let (time, period) = clock(end)
+    return (["until", day(end, now: now)].compactMap(\.self).joined(separator: " "), time, period)
+  }
+
   /// "Wed", or `nil` on the same day as `now`.
   public func day(_ date: Date, now: Date) -> String? {
     calendar.isDate(date, inSameDayAs: now) ? nil : format(date, "EEE")

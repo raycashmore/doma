@@ -73,7 +73,8 @@ Settings, from the Home header, holds Sign out; Lists keeps its own Sign out and
 
 Small, medium and Lock Screen sizes show the Board from `home/widgetSummary`: today's next timed event
 once it is within two hours of starting (`DomaHomeWidgetBoard.leadTime`; a live countdown beside the
-Next label, then the clock time), the rest of this week as many rows as fit (today's by
+Next label, then the clock time; once the event is under way, "Now", a countdown to its end and
+"until" its end time), the rest of this week as many rows as fit (today's by
 time, later ones by day name, so titles keep the room), the Groceries list's count and the top note. A tile with nothing to say hides and the others
 take its space; with nothing at all it says "All clear". `DomaHomeWidgetBoard` decides which tiles
 show in each size. Daily requirements (titles such as "Sam: Sport day") show only as today's Next,

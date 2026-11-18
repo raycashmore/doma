@@ -115,6 +115,8 @@ public struct DomaHomeWidgetBoard: Equatable, Sendable {
   /// When Next is daily requirements: those that overlap the first, one row per person.
   /// Empty when Next is an ordinary event.
   public let requirementRows: [RequirementRow]
+  /// When Next is over: its end, or for daily requirements the last end among the rows.
+  public let nextEnd: Date?
   /// The events after `next`, in start order.
   public let week: [DomaHomeWidgetSummary.Event]
   /// Hidden when nothing is on it.
@@ -134,14 +136,16 @@ public struct DomaHomeWidgetBoard: Equatable, Sendable {
     // Requirements go first unless an event starts before them; one already under way gives way.
     if let firstRequirement, nextEvent.map({ firstRequirement.start <= $0.start || $0.startDate <= date }) ?? true {
       next = firstRequirement
-      requirementRows = RequirementRow.rows(
-        for: summary.requirements.filter { requirement in
-          requirement == firstRequirement
-            || (requirement.endDate > date && requirement.start < firstRequirement.end && requirement.end > firstRequirement.start)
-        })
+      let group = summary.requirements.filter { requirement in
+        requirement == firstRequirement
+          || (requirement.endDate > date && requirement.start < firstRequirement.end && requirement.end > firstRequirement.start)
+      }
+      requirementRows = RequirementRow.rows(for: group)
+      nextEnd = group.map(\.endDate).max()
     } else {
       next = nextEvent
       requirementRows = []
+      nextEnd = nextEvent?.endDate
     }
     self.next = next
     week = known.filter { $0 != next && (next == nil || $0.start >= next!.start) }

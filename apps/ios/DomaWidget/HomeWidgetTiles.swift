@@ -51,14 +51,21 @@ private struct HomeNoteDot: View {
 }
 
 /// Today's next event. The countdown sits beside the kicker, the clock time leads, then the title.
+/// Once the event is under way, the kicker counts down to its end and the time is when it ends.
 /// Daily requirements show one row per person under the time instead, and when those rows do not
 /// fit, the time shrinks to one line of text.
 struct HomeNextTile: View {
   let event: DomaHomeWidgetSummary.Event
+  /// The event's end, or the last end among the requirement rows.
+  let end: Date
   let requirementRows: [DomaHomeWidgetBoard.RequirementRow]
   let now: Date
 
-  private var clock: (time: String, period: String) { DomaHomeWidgetFormat().clock(event.startDate) }
+  private var clock: (lead: String?, time: String, period: String) {
+    DomaHomeWidgetFormat().nextClock(start: event.startDate, end: end, now: now)
+  }
+
+  private var isUnderWay: Bool { event.startDate <= now }
 
   var body: some View {
     if requirementRows.isEmpty {
@@ -86,7 +93,7 @@ struct HomeNextTile: View {
         ForEach((1...requirementRows.count).reversed(), id: \.self) { shown in
           VStack(alignment: .leading, spacing: 2) {
             kicker
-            Text("\(clock.time)\(clock.period)")
+            Text([clock.lead, "\(clock.time)\(clock.period)"].compactMap(\.self).joined(separator: " "))
               .domaFont(.displayInline)
               .foregroundStyle(DomaColor.warmAccent)
               .lineLimit(1)
@@ -97,10 +104,10 @@ struct HomeNextTile: View {
     }
   }
 
-  /// "NEXT · in 57 minutes": only the label is tracked, and the line shrinks a little to keep the
-  /// countdown whole in a small widget.
+  /// "NEXT · in 57 minutes", or "NOW · ends in 30 minutes": only the label is tracked, and the
+  /// line shrinks a little to keep the countdown whole in a small widget.
   private var kicker: some View {
-    Text("\(Text("NEXT").tracking(1)) · \(when)")
+    Text("\(Text(isUnderWay ? "NOW" : "NEXT").tracking(1)) · \(when)")
       .domaFont(.kicker)
       .foregroundStyle(DomaColor.warmTextSecondary)
       .lineLimit(1)
@@ -109,6 +116,12 @@ struct HomeNextTile: View {
 
   private var largeClock: some View {
     HStack(alignment: .firstTextBaseline, spacing: 2) {
+      if let lead = clock.lead {
+        Text(lead)
+          .domaFont(.displayInline)
+          .foregroundStyle(DomaColor.warmTextSecondary)
+          .padding(.trailing, 4)
+      }
       Text(clock.time).domaFont(.displaySmall)
       Text(clock.period).domaFont(.displayInline)
     }
@@ -117,11 +130,13 @@ struct HomeNextTile: View {
     .minimumScaleFactor(0.8)
   }
 
-  /// A live countdown, joined into the kicker's one Text: in its own view it takes the whole width.
+  /// A live countdown to the start, or once under way to the end, joined into the kicker's one
+  /// Text: in its own view it takes the whole width.
   private var when: Text {
-    if event.startDate <= now { return Text("Now") }
     // WidgetKit keeps this counting down between timeline entries.
-    return Text(.currentDate, format: .reference(to: event.startDate, allowedFields: [.hour, .minute]))
+    let countdown = Text(
+      .currentDate, format: .reference(to: isUnderWay ? end : event.startDate, allowedFields: [.hour, .minute]))
+    return isUnderWay ? Text("ends \(countdown)") : countdown
   }
 }
 
