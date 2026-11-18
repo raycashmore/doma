@@ -72,14 +72,19 @@ Settings, from the Home header, holds Sign out; Lists keeps its own Sign out and
 ## Home widget
 
 Small, medium and Lock Screen sizes show the Board from `home/widgetSummary`: today's next timed event
-(clock time first, then a live countdown), the rest of this week as many rows as fit (today's by
+once it is within two hours of starting (`DomaHomeWidgetBoard.leadTime`; a live countdown beside the
+Next label, then the clock time), the rest of this week as many rows as fit (today's by
 time, later ones by day name, so titles keep the room), the Groceries list's count and the top note. A tile with nothing to say hides and the others
 take its space; with nothing at all it says "All clear". `DomaHomeWidgetBoard` decides which tiles
-show in each size. Next and This week open Apple Calendar (a widget link always opens Doma, so it links to `com.doma.app://calendar` and Doma passes that on); the list opens
+show in each size. Daily requirements (titles such as "Sam: Sport day") show only as today's Next,
+never in This week: those that overlap the first share the tile, one row per person, and the time
+shrinks to one line when the rows need its room. The summary sends them in their own `requirements`
+field, so they take none of This week's rows. Next and This week open Apple Calendar (a widget link always opens Doma, so it links to `com.doma.app://calendar` and Doma passes that on); the list opens
 that list, and the note opens its card on Home (`com.doma.app://home/<board item id>`).
 
-One fetch makes a timeline with an entry at each event's start and end and at each midnight, so
-finished events leave and tomorrow's first event becomes Next without another fetch. It refreshes like the List
+One fetch makes a timeline with an entry at each event's start and end, two hours before each
+start and at each midnight, so events become Next in time and finished ones leave without another
+fetch. It refreshes like the List
 widget below. A rejected sign-in shows "Signed out" and forgets the last summary; only a network
 failure reuses it.
 

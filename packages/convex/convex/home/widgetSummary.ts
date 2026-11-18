@@ -1,5 +1,6 @@
 import { v } from 'convex/values';
 
+import type { Doc } from '../_generated/dataModel';
 import { query, type QueryCtx } from '../_generated/server';
 import { sourceIdForEvent } from '../briefing/morning';
 import { calendarDateInTimeZone } from '../calendarDate';
@@ -8,7 +9,10 @@ import { readListItems } from '../lists/items';
 import { requireSignedIn } from '../signedIn';
 import { type DueState, dueStateFor, dueStateRank, isActiveEmailNotice } from './boardRules';
 
-const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+const WEEK_MS = 7 * DAY_MS;
+/** Daily requirements only ever show as today's Next, so the widget needs them for its timeline's day ahead. */
+const REQUIREMENTS_SPAN_MS = 2 * DAY_MS;
 /**
  * More This week rows than any widget size shows, so rows still fill the tile after earlier events
  * finish. `total` counts every event after Next this week; the iOS widget no longer reads it.
@@ -18,8 +22,8 @@ const THIS_WEEK_LIMIT = 8;
 type WidgetSummaryOptions = { now: Date; timeZone: string };
 
 /**
- * The Home widget's "Board": the next event, the rest of this week, the Shopping list's count and
- * the top note. Events come with start and end so the widget can drop finished ones on its own
+ * The Home widget's "Board": the next event, the rest of this week, the coming daily requirements,
+ * the Shopping list's count and the top note. Events come with start and end so the widget can drop finished ones on its own
  * timeline. Notes and dated email notices compete for the note tile by how soon they are due.
  */
 export async function readHomeWidgetSummary(ctx: Pick<QueryCtx, 'auth' | 'db'>, options: WidgetSummaryOptions) {
@@ -38,20 +42,21 @@ export async function readHomeWidgetSummary(ctx: Pick<QueryCtx, 'auth' | 'db'>, 
     readGroceriesListForUser(ctx, identity.subject)
   ]);
 
-  const upcoming = events
-    .filter((event) => event.kind !== 'dailyRequirements' && event.end > nowMs && event.start < nowMs + WEEK_MS)
-    .sort((left, right) => left.start - right.start || left.googleEventId.localeCompare(right.googleEventId))
-    .map((event) => ({
-      id: sourceIdForEvent(event),
-      title: event.title,
-      ...(event.description?.trim() ? { detail: event.description.trim().split('\n')[0]!.trim() } : {}),
-      start: event.start,
-      end: event.end,
-      allDay: event.allDay
-    }));
-  // Next leads with a clock time, so it skips all-day events; This week is what comes after it.
+  const current = events
+    .filter((event) => event.end > nowMs)
+    .sort((left, right) => left.start - right.start || left.googleEventId.localeCompare(right.googleEventId));
+  const upcoming = current
+    .filter((event) => event.kind !== 'dailyRequirements' && event.start < nowMs + WEEK_MS)
+    .map(toWidgetEvent);
+  const requirements = current
+    .filter(
+      (event) => event.kind === 'dailyRequirements' && !event.allDay && event.start < nowMs + REQUIREMENTS_SPAN_MS
+    )
+    .map(toWidgetEvent);
+  // Next leads with a clock time, so it skips all-day events. The widget shows it as Next only near
+  // its start and drops what comes before it then, so This week keeps everything else.
   const next = upcoming.find((event) => !event.allDay) ?? null;
-  const rest = upcoming.filter((event) => event !== next && (!next || event.start >= next.start));
+  const rest = upcoming.filter((event) => event !== next);
 
   const archived = new Set(boardArchives.map((archive) => archive.occurrenceId));
   const noteCandidates: NoteCandidate[] = [
@@ -88,6 +93,7 @@ export async function readHomeWidgetSummary(ctx: Pick<QueryCtx, 'auth' | 'db'>, 
     localDate,
     next,
     thisWeek: { events: rest.slice(0, THIS_WEEK_LIMIT), total: rest.length },
+    requirements,
     list: list
       ? {
           publicId: list.publicId,
@@ -104,6 +110,17 @@ export async function readHomeWidgetSummary(ctx: Pick<QueryCtx, 'auth' | 'db'>, 
           dueState: topNote.dueState
         }
       : null
+  };
+}
+
+function toWidgetEvent(event: Doc<'scheduleEvents'>) {
+  return {
+    id: sourceIdForEvent(event),
+    title: event.title,
+    ...(event.description?.trim() ? { detail: event.description.trim().split('\n')[0]!.trim() } : {}),
+    start: event.start,
+    end: event.end,
+    allDay: event.allDay
   };
 }
 
@@ -144,6 +161,7 @@ export const homeWidgetSummary = query({
     localDate: v.string(),
     next: v.union(widgetEvent, v.null()),
     thisWeek: v.object({ events: v.array(widgetEvent), total: v.number() }),
+    requirements: v.array(widgetEvent),
     list: v.union(v.object({ publicId: v.string(), name: v.string(), activeCount: v.number() }), v.null()),
     note: v.union(
       v.object({

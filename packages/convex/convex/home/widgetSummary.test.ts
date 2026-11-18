@@ -61,7 +61,7 @@ describe('readHomeWidgetSummary', () => {
     expect(summary.note).toEqual({ kind: 'manualNote', id: 'note_bins', title: 'Bins out Thursday', dueState: 'none' });
   });
 
-  it('leaves out of This week an all-day event that began before Next', async () => {
+  it('keeps in This week an all-day event that began before Next, while Next is still hours away', async () => {
     const ctx = createCtx({
       events: [
         event('holiday-today', '2026-07-12T14:00:00.000Z', { allDay: true, end: at('2026-07-13T14:00:00.000Z') }),
@@ -72,7 +72,7 @@ describe('readHomeWidgetSummary', () => {
     const summary = await readHomeWidgetSummary(ctx as never, { now, timeZone });
 
     expect(summary.next?.title).toBe('Event pickup');
-    expect(summary.thisWeek).toEqual({ events: [], total: 0 });
+    expect(summary.thisWeek.events.map((row) => row.title)).toEqual(['Event holiday-today']);
   });
 
   it('keeps an event that has started as Next until it finishes', async () => {
@@ -82,6 +82,25 @@ describe('readHomeWidgetSummary', () => {
 
     expect(summary.next?.title).toBe('Event in-progress');
     expect(summary.thisWeek).toEqual({ events: [], total: 0 });
+  });
+
+  it('sends daily requirements for the next two days on their own, never in Next or This week', async () => {
+    const ctx = createCtx({
+      events: [
+        event('done', '2026-07-12T22:00:00.000Z', { kind: 'dailyRequirements' }),
+        event('sport', '2026-07-13T22:00:00.000Z', { kind: 'dailyRequirements', title: 'Child A: Sport day' }),
+        event('library', '2026-07-13T22:00:00.000Z', { kind: 'dailyRequirements', title: 'Child B: Library bag' }),
+        event('all-day', '2026-07-13T14:00:00.000Z', { kind: 'dailyRequirements', allDay: true }),
+        event('later', '2026-07-15T22:00:00.000Z', { kind: 'dailyRequirements' }),
+        event('drop-off', '2026-07-13T22:30:00.000Z')
+      ]
+    });
+
+    const summary = await readHomeWidgetSummary(ctx as never, { now, timeZone });
+
+    expect(summary.requirements.map((row) => row.title)).toEqual(['Child B: Library bag', 'Child A: Sport day']);
+    expect(summary.next?.title).toBe('Event drop-off');
+    expect(summary.thisWeek.events).toEqual([]);
   });
 
   it('shows only Next in a quiet week', async () => {
@@ -125,6 +144,7 @@ describe('readHomeWidgetSummary', () => {
       localDate: '2026-07-13',
       next: null,
       thisWeek: { events: [], total: 0 },
+      requirements: [expect.objectContaining({ title: 'Event requirement' })],
       list: null,
       note: null
     });

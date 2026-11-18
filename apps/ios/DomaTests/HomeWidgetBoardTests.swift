@@ -86,9 +86,90 @@ struct HomeWidgetBoardTests {
     #expect(board.next == nil)
     #expect(board.week == [Self.swimming])
 
-    let atMidnight = DomaHomeWidgetBoard(
-      summary: Self.summary(next: Self.swimming, week: []), at: Self.at(day: 18, hour: 0), calendar: Self.calendar)
-    #expect(atMidnight.next == Self.swimming)
+    let nextMorning = DomaHomeWidgetBoard(
+      summary: Self.summary(next: Self.swimming, week: []), at: Self.at(day: 18, hour: 6), calendar: Self.calendar)
+    #expect(nextMorning.next == Self.swimming)
+  }
+
+  @Test func anEventBecomesNextTwoHoursBeforeItStarts() {
+    let summary = Self.summary(next: nil, week: [Self.pickUp])
+
+    let early = DomaHomeWidgetBoard(summary: summary, at: Self.at(day: 17, hour: 16, minute: 59), calendar: Self.calendar)
+    #expect(early.next == nil)
+    #expect(early.week == [Self.pickUp])
+
+    let due = DomaHomeWidgetBoard(summary: summary, at: Self.at(day: 17, hour: 17), calendar: Self.calendar)
+    #expect(due.next == Self.pickUp)
+    #expect(due.week.isEmpty)
+  }
+
+  private static func requirement(_ title: String, hour: Int = 8, minute: Int = 0) -> DomaHomeWidgetSummary.Event {
+    let start = at(day: 18, hour: hour, minute: minute)
+    return .init(id: title, title: title, start: start, end: start.addingTimeInterval(60 * 60))
+  }
+
+  @Test func overlappingRequirementsShareNextWithOneRowPerPerson() {
+    let dropOff = Self.event("Drop-off", day: 18, hour: 8)
+    let summary = DomaHomeWidgetSummary(
+      next: nil, thisWeek: .init(events: [dropOff]),
+      requirements: [
+        Self.requirement("Sam: Sport day"), Self.requirement("Alex: Library bag"),
+        Self.requirement("Sam: Hat", minute: 30), Self.requirement("Return form"), Self.requirement("Sam: Recorder", hour: 9),
+      ],
+      list: nil, note: nil)
+
+    let board = DomaHomeWidgetBoard(summary: summary, at: Self.at(day: 18, hour: 7, minute: 20), calendar: Self.calendar)
+
+    #expect(board.next?.title == "Sam: Sport day")
+    #expect(board.requirementRows == [
+      .init(who: "Sam", what: "Sport day · Hat"), .init(who: "Alex", what: "Library bag"), .init(who: nil, what: "Return form"),
+    ])
+    // Ordinary events are never folded in, and requirements never reach This week.
+    #expect(board.week == [dropOff])
+  }
+
+  @Test func requirementsWaitForTheLeadTimeAndAnEarlierEventGoesFirst() {
+    let breakfast = Self.event("Breakfast", day: 18, hour: 7)
+    let summary = DomaHomeWidgetSummary(
+      next: nil, thisWeek: .init(events: [breakfast]), requirements: [Self.requirement("Sam: Sport day")], list: nil, note: nil)
+
+    let early = DomaHomeWidgetBoard(summary: summary, at: Self.at(day: 18, hour: 4, minute: 59), calendar: Self.calendar)
+    #expect(early.next == nil)
+    #expect(early.week == [breakfast])
+
+    let atBreakfast = DomaHomeWidgetBoard(summary: summary, at: Self.at(day: 18, hour: 6, minute: 30), calendar: Self.calendar)
+    #expect(atBreakfast.next == breakfast)
+    #expect(atBreakfast.requirementRows.isEmpty)
+
+    let afterBreakfast = DomaHomeWidgetBoard(summary: summary, at: Self.at(day: 18, hour: 8, minute: 10), calendar: Self.calendar)
+    #expect(afterBreakfast.next?.title == "Sam: Sport day")
+    #expect(afterBreakfast.requirementRows == [.init(who: "Sam", what: "Sport day")])
+  }
+
+  @Test func anEventUnderWayGivesWayToRequirements() {
+    let schoolRun = Self.event("School run", day: 18, hour: 7)
+    let summary = DomaHomeWidgetSummary(
+      next: nil, thisWeek: .init(events: [schoolRun]), requirements: [Self.requirement("Sam: Sport day", minute: 30)],
+      list: nil, note: nil)
+
+    let board = DomaHomeWidgetBoard(summary: summary, at: Self.at(day: 18, hour: 7, minute: 10), calendar: Self.calendar)
+
+    #expect(board.next?.title == "Sam: Sport day")
+  }
+
+  @Test func todaysAllDayEventStaysInThisWeekUntilNextIsDue() {
+    let holiday = DomaHomeWidgetSummary.Event(
+      id: "Holiday", title: "Holiday", start: Self.at(day: 17, hour: 0), end: Self.at(day: 18, hour: 0), allDay: true)
+    let board = DomaHomeWidgetBoard(summary: Self.summary(next: Self.pickUp, week: [holiday]), at: Self.at(day: 17, hour: 9), calendar: Self.calendar)
+
+    #expect(board.next == nil)
+    #expect(board.week == [holiday, Self.pickUp])
+  }
+
+  @Test func aSummaryWithoutRequirementsStillDecodes() throws {
+    let json = Data(#"{"next":null,"thisWeek":{"events":[]},"list":null,"note":null}"#.utf8)
+    let summary = try JSONDecoder().decode(DomaHomeWidgetSummary.self, from: json)
+    #expect(summary.requirements.isEmpty)
   }
 
   @Test func anAllDayEventNeverLeadsAsNext() {
@@ -102,13 +183,16 @@ struct HomeWidgetBoardTests {
     #expect(board.smallTiles == [.note, .list])
   }
 
-  @Test func theTimelineChangesAtEachStartEndAndMidnight() {
-    let summary = Self.summary(week: [Self.bins])
+  @Test func theTimelineChangesAtEachLeadTimeStartEndAndMidnight() {
+    let summary = DomaHomeWidgetSummary(
+      next: Self.pickUp, thisWeek: .init(events: [Self.bins]), requirements: [Self.requirement("Sam: Hat", hour: 0)], list: nil, note: nil)
     let dates = DomaHomeWidgetBoard.changeDates(
       for: summary, after: Self.now, until: Self.now.addingTimeInterval(24 * 60 * 60), calendar: Self.calendar)
 
+    // Pick up's lead time, 5 pm, has passed; Bins out's is 6 pm and the midnight requirement's 10 pm.
     #expect(dates == [
-      Self.at(day: 17, hour: 19), Self.at(day: 17, hour: 20), Self.at(day: 17, hour: 21), Self.at(day: 18, hour: 0),
+      Self.at(day: 17, hour: 18), Self.at(day: 17, hour: 19), Self.at(day: 17, hour: 20), Self.at(day: 17, hour: 21),
+      Self.at(day: 17, hour: 22), Self.at(day: 18, hour: 0), Self.at(day: 18, hour: 1),
     ])
   }
 

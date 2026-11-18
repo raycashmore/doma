@@ -50,47 +50,106 @@ private struct HomeNoteDot: View {
   }
 }
 
-/// Today's next event: the clock time leads; the countdown is a quiet second line.
+/// Today's next event. The countdown sits beside the kicker, the clock time leads, then the title.
+/// Daily requirements show one row per person under the time instead, and when those rows do not
+/// fit, the time shrinks to one line of text.
 struct HomeNextTile: View {
   let event: DomaHomeWidgetSummary.Event
+  let requirementRows: [DomaHomeWidgetBoard.RequirementRow]
   let now: Date
-  /// The event's detail after the countdown, where there is room.
-  let showsDetail: Bool
 
-  private var format: DomaHomeWidgetFormat { DomaHomeWidgetFormat() }
+  private var clock: (time: String, period: String) { DomaHomeWidgetFormat().clock(event.startDate) }
 
   var body: some View {
-    let clock = format.clock(event.startDate)
-    VStack(alignment: .leading, spacing: 2) {
-      HomeKicker(title: "Next")
-      HStack(alignment: .firstTextBaseline, spacing: 2) {
-        Text(clock.time).domaFont(.displaySmall)
-        Text(clock.period).domaFont(.displayInline)
+    if requirementRows.isEmpty {
+      VStack(alignment: .leading, spacing: 2) {
+        kicker
+        largeClock
+        Text(event.title)
+          .domaFont(.sectionHeader)
+          .foregroundStyle(DomaColor.warmTextPrimary)
+          .lineLimit(1)
+        if let detail = event.detail {
+          Text(detail)
+            .domaFont(.detail)
+            .foregroundStyle(DomaColor.warmTextSecondary)
+            .lineLimit(1)
+        }
       }
-      .foregroundStyle(DomaColor.warmAccent)
-      .lineLimit(1)
-      .minimumScaleFactor(0.8)
-      Text(event.title)
-        .domaFont(.sectionHeader)
-        .foregroundStyle(DomaColor.warmTextPrimary)
-        .lineLimit(1)
-      whenLine
-        .domaFont(.detail)
-        .foregroundStyle(DomaColor.warmTextSecondary)
-        .lineLimit(1)
+    } else {
+      ViewThatFits(in: .vertical) {
+        VStack(alignment: .leading, spacing: 2) {
+          kicker
+          largeClock
+          HomeRequirementRows(rows: requirementRows)
+        }
+        ForEach((1...requirementRows.count).reversed(), id: \.self) { shown in
+          VStack(alignment: .leading, spacing: 2) {
+            kicker
+            Text("\(clock.time)\(clock.period)")
+              .domaFont(.displayInline)
+              .foregroundStyle(DomaColor.warmAccent)
+              .lineLimit(1)
+            HomeRequirementRows(rows: Array(requirementRows.prefix(shown)))
+          }
+        }
+      }
     }
   }
 
-  /// One interpolated Text: a countdown in its own view next to the detail takes the whole width.
-  private var whenLine: Text {
-    guard showsDetail, let detail = event.detail else { return when }
-    return Text("\(when) · \(detail)")
+  /// "NEXT · in 57 minutes": only the label is tracked, and the line shrinks a little to keep the
+  /// countdown whole in a small widget.
+  private var kicker: some View {
+    Text("\(Text("NEXT").tracking(1)) · \(when)")
+      .domaFont(.kicker)
+      .foregroundStyle(DomaColor.warmTextSecondary)
+      .lineLimit(1)
+      .minimumScaleFactor(0.8)
   }
 
+  private var largeClock: some View {
+    HStack(alignment: .firstTextBaseline, spacing: 2) {
+      Text(clock.time).domaFont(.displaySmall)
+      Text(clock.period).domaFont(.displayInline)
+    }
+    .foregroundStyle(DomaColor.warmAccent)
+    .lineLimit(1)
+    .minimumScaleFactor(0.8)
+  }
+
+  /// A live countdown, joined into the kicker's one Text: in its own view it takes the whole width.
   private var when: Text {
     if event.startDate <= now { return Text("Now") }
     // WidgetKit keeps this counting down between timeline entries.
     return Text(.currentDate, format: .reference(to: event.startDate, allowedFields: [.hour, .minute]))
+  }
+}
+
+/// Who, then what they need: the names line up in one column.
+private struct HomeRequirementRows: View {
+  let rows: [DomaHomeWidgetBoard.RequirementRow]
+
+  var body: some View {
+    Grid(alignment: .leading, horizontalSpacing: 7, verticalSpacing: 0) {
+      ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+        GridRow(alignment: .firstTextBaseline) {
+          if let who = row.who {
+            Text(who)
+              .domaFont(.detail)
+              .bold()
+              .foregroundStyle(DomaColor.warmTextSecondary)
+              .fixedSize()
+          } else {
+            Color.clear.gridCellUnsizedAxes([.horizontal, .vertical])
+          }
+          Text(row.what)
+            .domaFont(.supporting)
+            .bold()
+            .foregroundStyle(DomaColor.warmTextPrimary)
+        }
+        .lineLimit(1)
+      }
+    }
   }
 }
 
