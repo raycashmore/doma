@@ -18,13 +18,20 @@ public struct DomaHomeWidgetSummary: Codable, Equatable, Sendable {
     self.note = note
   }
 
-  /// A server or cached summary from before daily requirements has none.
+  /// A server or cached summary from before RAY-305 has no requirements, and sends its first timed
+  /// event apart from the week as `next`, which joins the events here.
   public init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
-    thisWeek = try container.decode(Week.self, forKey: .thisWeek)
+    let week = try container.decode(Week.self, forKey: .thisWeek)
+    let legacyNext = try decoder.container(keyedBy: LegacyKeys.self).decodeIfPresent(Event.self, forKey: .next)
+    thisWeek = legacyNext.map { next in Week(events: (week.events + [next]).sorted { $0.start < $1.start }) } ?? week
     requirements = try container.decodeIfPresent([Event].self, forKey: .requirements) ?? []
     list = try container.decodeIfPresent(List.self, forKey: .list)
     note = try container.decodeIfPresent(Note.self, forKey: .note)
+  }
+
+  private enum LegacyKeys: String, CodingKey {
+    case next
   }
 
   public struct Event: Codable, Equatable, Identifiable, Sendable {

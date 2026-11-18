@@ -165,10 +165,16 @@ struct HomeWidgetBoardTests {
     #expect(board.week == [holiday, Self.pickUp])
   }
 
-  @Test func aSummaryWithoutRequirementsStillDecodes() throws {
-    let json = Data(#"{"thisWeek":{"events":[]},"list":null,"note":null}"#.utf8)
+  @Test func aSummaryFromBeforeRequirementsStillDecodesWithItsNextInTheWeek() throws {
+    let encoder = JSONEncoder()
+    let next = String(decoding: try encoder.encode(Self.pickUp), as: UTF8.self)
+    let later = String(decoding: try encoder.encode(Self.bins), as: UTF8.self)
+    let json = Data(#"{"next":\#(next),"thisWeek":{"events":[\#(later)],"total":1},"list":null,"note":null}"#.utf8)
+
     let summary = try JSONDecoder().decode(DomaHomeWidgetSummary.self, from: json)
+
     #expect(summary.requirements.isEmpty)
+    #expect(summary.thisWeek.events == [Self.pickUp, Self.bins])
   }
 
   @Test func anAllDayEventNeverLeadsAsNext() {
