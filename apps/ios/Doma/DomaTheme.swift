@@ -39,7 +39,7 @@ extension View {
       .toolbarColorScheme(.dark, for: .navigationBar)
   }
 
-  /// The floating capsule at the foot of a screen: Add an Item, or New List.
+  /// The floating capsule at the foot of a screen, such as Add an Item.
   func domaBottomCapsule() -> some View {
     padding(.leading, 8)
       .padding(.trailing, 16)
