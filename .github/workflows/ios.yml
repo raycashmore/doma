@@ -46,6 +46,8 @@ jobs:
       # arm64 only: ConvexMobile's binary framework has no x86_64 simulator slice.
       # DOMA_STRICT_WARNINGS fails the build on a Swift warning in the app, widget, tests or DomaKit
       # (see Config/Doma.xcconfig); the environment variable reaches DomaKit's Package.swift.
+      # Ad-hoc signed, with no team: an unsigned app has no entitlements, and the simulator's
+      # keychain then refuses the device login tests' writes.
       - name: Test
         working-directory: apps/ios
         env:
@@ -58,7 +60,9 @@ jobs:
             -skip-testing:DomaTests/LiveListsContractTests \
             -resultBundlePath "$RUNNER_TEMP/tests.xcresult" \
             ARCHS=arm64 \
-            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_IDENTITY=- \
+            CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM= \
             DOMA_STRICT_WARNINGS=YES \
             -quiet
           scripts/report-test-results.py "$RUNNER_TEMP/tests.xcresult"
