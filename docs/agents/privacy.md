@@ -29,6 +29,11 @@ attachments, extracted facts, and due-date evidence as private source data.
 Use generic messages in committed tests and evals. Agent traces may retain
 typed outcome metadata and token usage, but must not copy raw email content.
 
+The repository is public, so PR titles, bodies and comments are public too. Describe the code and
+its evidence in generic terms: "a device", "the simulator", "production needs `X` set". Leave out
+which devices the household uses, who uses them, deployment names and URLs, and the current state
+of production configuration.
+
 ## Device login secrets
 
 Secret material means device secrets, their hashes, issued device tokens, the device signing key

@@ -41,28 +41,10 @@ jobs:
       - name: Check live queries resubscribe
         run: apps/ios/scripts/check-live-queries.sh
 
-      # Runs every suite but the live contract, which needs a Convex backend and a Clerk ticket.
-      # Locally, scripts/test-live.sh runs that too.
-      # arm64 only: ConvexMobile's binary framework has no x86_64 simulator slice.
+      # The same script agents and people run locally, so the flags cannot drift apart. It skips
+      # the live contract, which needs a Convex backend and a Clerk ticket (scripts/test-live.sh).
       # DOMA_STRICT_WARNINGS fails the build on a Swift warning in the app, widget, tests or DomaKit
-      # (see Config/Doma.xcconfig); the environment variable reaches DomaKit's Package.swift.
-      # Ad-hoc signed, with no team: an unsigned app has no entitlements, and the simulator's
-      # keychain then refuses the device login tests' writes.
+      # (see Config/Doma.xcconfig); the script sets both the variable and the build setting.
       - name: Test
         working-directory: apps/ios
-        env:
-          DOMA_STRICT_WARNINGS: 'YES'
-        run: |
-          xcodebuild test \
-            -project Doma.xcodeproj \
-            -scheme Doma \
-            -destination "$(scripts/simulator-destination.sh)" \
-            -skip-testing:DomaTests/LiveListsContractTests \
-            -resultBundlePath "$RUNNER_TEMP/tests.xcresult" \
-            ARCHS=arm64 \
-            CODE_SIGN_IDENTITY=- \
-            CODE_SIGN_STYLE=Manual \
-            DEVELOPMENT_TEAM= \
-            DOMA_STRICT_WARNINGS=YES \
-            -quiet
-          scripts/report-test-results.py "$RUNNER_TEMP/tests.xcresult"
+        run: scripts/test.sh
