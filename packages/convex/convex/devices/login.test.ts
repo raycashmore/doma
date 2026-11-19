@@ -124,7 +124,11 @@ function exchangeOptions(overrides: Partial<ExchangeOptions> = {}): ExchangeOpti
 }
 
 async function linkDevice(backend: ReturnType<typeof createBackend>, userId = 'user_a') {
-  return linkHandler({ ...backend.ctx, ...backend.asUser(userId) }, { label: 'iPad' }, { clerkIssuer, now: start });
+  return linkHandler(
+    { ...backend.ctx, ...backend.asUser(userId) },
+    { label: 'iPad' },
+    { deviceIssuer: siteUrl, now: start }
+  );
 }
 
 function decodePart(part: string) {
@@ -146,14 +150,14 @@ describe('device login link', () => {
     const backend = createBackend();
     const signedOut = { ...backend.ctx, auth: { getUserIdentity: async () => null } };
 
-    await expect(linkHandler(signedOut, { label: 'iPad' }, { clerkIssuer, now: start })).rejects.toThrow(
+    await expect(linkHandler(signedOut, { label: 'iPad' }, { deviceIssuer: siteUrl, now: start })).rejects.toThrow(
       'Not authenticated'
     );
     await expect(
       linkHandler(
-        { ...backend.ctx, ...backend.asUser('user_a', siteUrl) },
+        { ...backend.ctx, ...backend.asUser('user_a', `${siteUrl}/`) },
         { label: 'iPad' },
-        { clerkIssuer, now: start }
+        { deviceIssuer: siteUrl, now: start }
       )
     ).rejects.toThrow('Clerk sign-in');
     expect(backend.devices.size).toBe(0);

@@ -60,12 +60,14 @@ const deviceRefs: DeviceRefs = (internal as unknown as { devices: { login: Devic
 export async function linkHandler(
   ctx: Pick<ActionCtx, 'auth' | 'runMutation'>,
   { label }: { label: string },
-  options: { clerkIssuer: string | undefined; now: number }
+  options: { deviceIssuer: string | undefined; now: number }
 ) {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) throw new Error('Not authenticated');
-  // Only a Clerk sign-in can link, so a device login cannot copy itself past its own revocation.
-  if (!options.clerkIssuer || identity.issuer !== options.clerkIssuer) {
+  // auth.config.ts accepts only Clerk and device tokens, so refusing device tokens leaves Clerk
+  // sign-ins: a device login cannot copy itself past its own revocation.
+  if (!options.deviceIssuer) throw new DeviceLoginSetupError('CONVEX_SITE_URL is missing');
+  if (withoutTrailingSlash(identity.issuer) === withoutTrailingSlash(options.deviceIssuer)) {
     throw new Error('A device can only be linked from a Clerk sign-in');
   }
   const secret = createDeviceSecret();
@@ -78,11 +80,15 @@ export async function linkHandler(
   return { deviceId, secret };
 }
 
+function withoutTrailingSlash(url: string) {
+  return url.replace(/\/+$/, '');
+}
+
 /** Links this device to the signed-in Clerk user. The secret is returned here once and never again. */
 export const link = action({
   args: { label: v.string() },
   returns: v.object({ deviceId: v.id('devices'), secret: v.string() }),
-  handler: (ctx, args) => linkHandler(ctx, args, { clerkIssuer: process.env.CLERK_JWT_ISSUER_DOMAIN, now: Date.now() })
+  handler: (ctx, args) => linkHandler(ctx, args, { deviceIssuer: process.env.CONVEX_SITE_URL, now: Date.now() })
 });
 
 export const insertDevice = internalMutation({
