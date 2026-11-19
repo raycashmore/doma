@@ -98,6 +98,8 @@ Clerk's model: one application contains both a development environment (what you
 
 Use Convex Preview deployments for Vercel Preview so each preview can deploy the current Convex functions and get a generated backend URL during the frontend build.
 
+Every Vercel project that runs `convex deploy` for previews must use a preview deploy key from the **same** Convex project. Convex keeps one preview per branch per project, so a key from another project sends that zone's preview to a separate backend with its own Preview defaults. Check a preview build's `Deploying to https://….convex.cloud` line: every zone that deploys should name the same deployment for a branch.
+
 For Vercel Preview on Budget, set:
 
 | Name                          | Value                          |
@@ -116,7 +118,7 @@ For Vercel Preview on Home, set:
 | `CLERK_SECRET_KEY`            | Clerk preview secret key       |
 | `VITE_CLERK_FRONTEND_API_URL` | Clerk preview Frontend API URL |
 
-Configure Home's Preview build command to deploy the current Convex functions and inject the generated URL:
+Home's Preview build runs `vite build` only; it does not deploy Convex, so a passing Home preview says nothing about the Convex deploy. To have it deploy and inject the generated URL, set its Preview build command to:
 
 ```bash
 pnpm --dir ../.. --filter @repo/convex exec convex deploy --cmd-url-env-var-name VITE_CONVEX_URL --cmd 'pnpm --dir ../.. --filter home build'
@@ -732,23 +734,25 @@ The pattern repeats:
 
 ## Environment-variable reference
 
-| Variable                                                                 | Where it lives                                         | Used by                        | Notes                                                                           |
-| ------------------------------------------------------------------------ | ------------------------------------------------------ | ------------------------------ | ------------------------------------------------------------------------------- |
-| `VITE_CONVEX_URL`                                                        | Vercel Vite apps, `.env.local`                         | Browser-side Convex client     | Static for stable deployments; injected by `convex deploy --cmd` for previews   |
-| `NEXT_PUBLIC_CONVEX_URL`                                                 | Vercel Next.js apps, `.env.local`                      | Browser-side Convex client     | Static for stable deployments; injected by `convex deploy --cmd` for previews   |
-| `CONVEX_DEPLOY_KEY`                                                      | Vercel Preview env                                     | Convex CLI during Vercel build | Preview deploy key; must exist on each Vercel project that runs `convex deploy` |
-| `VITE_CLERK_PUBLISHABLE_KEY`                                             | Vercel (every app), `.env.local`                       | Browser-side Clerk SDK         | `pk_test_…` in dev, `pk_live_…` in prod                                         |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`                                      | Vercel Next.js apps, `.env.local`                      | Browser-side Clerk SDK         | Next.js public name for Schedule                                                |
-| `CLERK_SECRET_KEY`                                                       | Vercel (every app), `.env.local`                       | Server-side Clerk operations   | Never expose to the browser                                                     |
-| `VITE_CLERK_FRONTEND_API_URL`                                            | Vercel (every app), `.env.local`                       | Clerk JWT issuer URL           | Same in every app; one per Clerk env                                            |
-| `CLERK_JWT_ISSUER_DOMAIN`                                                | Convex dashboard (deployment env and preview defaults) | Convex auth.config.ts          | Same value as the Clerk Frontend API URL                                        |
-| `FIREBASE_SERVICE_ACCOUNT_JSON`                                          | Convex dashboard (deployment env and preview defaults) | Android widget FCM delivery    | Secret; never place in source control, Vercel, or a mobile build                |
-| `GOOGLE_SA_KEY`, `SCHEDULE_CALENDARS`, `SCHEDULE_MEMBERS`, `SCHEDULE_TZ` | Convex dashboard (deployment env and preview defaults) | Schedule sync actions          | Private calendar ingestion config; never put in git                             |
+| Variable                                                                 | Where it lives                                                   | Used by                                     | Notes                                                                                        |
+| ------------------------------------------------------------------------ | ---------------------------------------------------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `VITE_CONVEX_URL`                                                        | Vercel Vite apps, `.env.local`                                   | Browser-side Convex client                  | Static for stable deployments; injected by `convex deploy --cmd` for previews                |
+| `NEXT_PUBLIC_CONVEX_URL`                                                 | Vercel Next.js apps, `.env.local`                                | Browser-side Convex client                  | Static for stable deployments; injected by `convex deploy --cmd` for previews                |
+| `CONVEX_DEPLOY_KEY`                                                      | Vercel Preview env                                               | Convex CLI during Vercel build              | Preview deploy key; must exist on each Vercel project that runs `convex deploy`              |
+| `VITE_CLERK_PUBLISHABLE_KEY`                                             | Vercel (every app), `.env.local`                                 | Browser-side Clerk SDK                      | `pk_test_…` in dev, `pk_live_…` in prod                                                      |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`                                      | Vercel Next.js apps, `.env.local`                                | Browser-side Clerk SDK                      | Next.js public name for Schedule                                                             |
+| `CLERK_SECRET_KEY`                                                       | Vercel (every app), `.env.local`                                 | Server-side Clerk operations                | Never expose to the browser                                                                  |
+| `VITE_CLERK_FRONTEND_API_URL`                                            | Vercel (every app), `.env.local`                                 | Clerk JWT issuer URL                        | Same in every app; one per Clerk env                                                         |
+| `CLERK_JWT_ISSUER_DOMAIN`                                                | Convex dashboard (deployment env and preview defaults)           | Convex auth.config.ts                       | Same value as the Clerk Frontend API URL                                                     |
+| `DEVICE_JWT_JWKS`, `DEVICE_JWT_PRIVATE_KEY`, `CLERK_SECRET_KEY`          | Convex dashboard (deployment env; JWKS also in preview defaults) | Device login ([auth](auth.md#device-login)) | Set with `device-login:keys`; never print them. Preview defaults need only `DEVICE_JWT_JWKS` |
+| `FIREBASE_SERVICE_ACCOUNT_JSON`                                          | Convex dashboard (deployment env and preview defaults)           | Android widget FCM delivery                 | Secret; never place in source control, Vercel, or a mobile build                             |
+| `GOOGLE_SA_KEY`, `SCHEDULE_CALENDARS`, `SCHEDULE_MEMBERS`, `SCHEDULE_TZ` | Convex dashboard (deployment env and preview defaults)           | Schedule sync actions                       | Private calendar ingestion config; never put in git                                          |
 
 ## Common pitfalls
 
 - **Forgetting to update `apps/home/vercel.json` rewrites** after deploying Budget. The rewrite points at a placeholder URL by default; until you change it, `/budget` returns Vercel's "no such project" error.
 - **Pointing rewrites at the hashed deployment URL** (`doma-budget-<git-sha>.vercel.app`). That URL changes per deploy. Use the project's stable alias (`doma-budget.vercel.app`) or a custom subdomain instead.
+- **Convex env var `DEVICE_JWT_JWKS` not set**: the same deploy failure as below. Set it with `pnpm --filter @repo/convex device-login:keys setup` (add `--prod` for production), and `{"keys":[]}` in the Convex Preview default env vars. If one zone's preview still fails while another deploys the same branch, its `CONVEX_DEPLOY_KEY` belongs to a different Convex project. See [device login keys](auth.md#device-login-keys).
 - **Convex env var `CLERK_JWT_ISSUER_DOMAIN` not set** in the target Convex deployment. Symptoms: `convex deploy` fails with "used in auth config file but its value was not set", or browser queries return 401. Fix the deployment env var and the Convex Preview default env vars in the Convex dashboard.
 - **Setting backend env vars only in Vercel**. Vercel env vars are available to the frontend build; Convex functions read Convex deployment env vars. Schedule previews need `CLERK_JWT_ISSUER_DOMAIN` and the Google Calendar service account variables in Convex Preview defaults.
 - **Clerk cookie scoped to the wrong domain**. The production Clerk env needs your apex added under **Domains**. Without it, the cookie is set on Clerk's own subdomain and zones can't see it.

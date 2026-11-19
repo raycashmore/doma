@@ -66,20 +66,24 @@ struct DomaListLinkTests {
   }
 }
 
-struct DomaConvexHTTPQueryErrorTests {
-  @Test func treatsARejectedTokenAsSignedOut() {
-    #expect(DomaConvexHTTPQueryError(status: 400, message: nil) == .unauthenticated)
-    #expect(DomaConvexHTTPQueryError(status: 401, message: nil) == .unauthenticated)
+struct DomaConvexHTTPErrorTests {
+  @Test func treatsARejectedTokenAsUnauthenticated() {
+    #expect(DomaConvexHTTPError(status: 401, message: nil) == .unauthenticated)
+    #expect(DomaConvexHTTPError(status: 403, message: nil) == .unauthenticated)
+  }
+
+  @Test func keepsABadRequestApartFromARefusal() {
+    #expect(DomaConvexHTTPError(status: 400, message: nil) == .badRequest)
   }
 
   @Test func treatsAMissingIdentityAsSignedOut() {
     let message = "[Request ID: 1] Server Error\nUncaught Error: Not authenticated\n    at requireUserId"
-    #expect(DomaConvexHTTPQueryError(status: 200, message: message) == .unauthenticated)
+    #expect(DomaConvexHTTPError(status: 200, message: message) == .unauthenticated)
   }
 
   @Test func treatsAServerErrorAsPassing() {
-    #expect(DomaConvexHTTPQueryError(status: 503, message: nil) == .failed(status: 503))
-    #expect(DomaConvexHTTPQueryError(status: 200, message: "List unavailable") == .failed(status: 200))
+    #expect(DomaConvexHTTPError(status: 503, message: nil) == .failed(status: 503))
+    #expect(DomaConvexHTTPError(status: 200, message: "List unavailable") == .failed(status: 200))
   }
 }
 

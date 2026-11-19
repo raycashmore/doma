@@ -36,6 +36,12 @@ type EmailRetentionCleanupRefs = {
   clearExpiredContent: FunctionReference<'mutation', 'internal', Record<string, never>, unknown>;
 };
 
+type DeviceLoginRefs = {
+  deleteInactiveDevices: FunctionReference<'mutation', 'internal', Record<string, never>, unknown>;
+};
+
+const deviceLogin: DeviceLoginRefs = (internal as unknown as { devices: { login: DeviceLoginRefs } }).devices.login;
+
 const briefingDeliveryScheduleStore: BriefingDeliveryScheduleStoreRefs = (
   internal as unknown as { briefing: { deliveryScheduleStore: BriefingDeliveryScheduleStoreRefs } }
 ).briefing.deliveryScheduleStore;
@@ -100,5 +106,6 @@ crons.daily(
   emailRetentionCleanup.clearExpiredContent
 );
 crons.interval('forwarded email reminder delivery', { minutes: 15 }, emailDeliveryRunner.runDueEmailReminderDelivery);
+crons.daily('inactive device login cleanup', { hourUTC: 16, minuteUTC: 0 }, deviceLogin.deleteInactiveDevices);
 
 export default crons;

@@ -19,7 +19,7 @@ and ticks one to add it again. Property definitions and AI
 categorisation setup are still managed on the web. Destructive actions ask for confirmation, unlike the web app, because the
 app writes to the household's real lists. Face ID (or the device passcode) unlocks it on
 every cold launch and after 5 minutes in the background. The lock covers the
-interface only: the Clerk session stays stored while locked, and after the first unlock the
+interface only: the device login stays stored while locked, and after the first unlock the
 app stays alive underneath, so an open sheet keeps its unsaved edits. Those edits are lost if iOS
 closes the app or its window; they are never written to disk. The lock and the app switcher cover
 sit in their own window (`SceneCover`) because sheets present above the app's view tree. While
@@ -46,7 +46,8 @@ Settings, from the Home header, holds Sign out; Lists keeps its own Sign out and
 
 ## Layout
 
-- `Doma/`: the app target (SwiftUI views and the session that links Clerk to Convex).
+- `Doma/`: the app target (SwiftUI views and `DomaSession`, which links the device once with Clerk
+  and then signs Convex in with the device login).
   `DomaColor` names each colour role and reads its light and dark values from `DomaTokens`,
   generated from `packages/tokens` (`pnpm --filter @repo/tokens generate`) and compiled into the app
   and the widget from `packages/tokens/generated/ios/`. `DomaFont` and `DomaTheme` are hand-written.
@@ -55,13 +56,13 @@ Settings, from the Home header, holds Sign out; Lists keeps its own Sign out and
   cannot bundle `.woff2`. They are Latin subsets, so other scripts fall back to the system
   font. Merriweather is unpacked unchanged because the OFL reserves its name, so
   `DomaFont` uses its original PostScript names.
-- `DomaKit/`: local Swift package with `DomaClerkConvexAuthProvider`,
-  `DomaListsClient` (the typed wrappers for the Convex Lists functions), `DomaHomeClient` (the board,
-  notes and archive), `DomaConfiguration`
-  and `DomaConvexHTTPQuery`, which runs one query over HTTP for the widget.
-- `DomaWidget/`: the widget extension, with the Home and List widgets. It shares the app's Clerk session
+- `DomaKit/`: local Swift package with `DomaDeviceLogin` and `DomaDeviceConvexAuthProvider` (see
+  Authentication), `DomaListsClient` (the typed wrappers for the Convex Lists functions), `DomaHomeClient`
+  (the board, notes and archive), `DomaConfiguration` and `DomaConvexHTTPFunction`, which runs one
+  Convex function over HTTP for the widget and the device login.
+- `DomaWidget/`: the widget extension, with the Home and List widgets. It shares the app's device login
   through the keychain access group in `Config/Doma.entitlements`, so it needs no sign-in of its
-  own, and reads Convex with `DomaConvexHTTPQuery`. `Config/Signed.xcconfig` applies the
+  own, and reads Convex with `DomaConvexHTTPFunction`. `Config/Signed.xcconfig` applies the
   entitlements to the app and the widget. It compiles `DomaColor`, `DomaFont` and the fonts from
   `Doma/` through a membership exception in the project file.
 - `DomaTests/`: app-hosted tests. They need the app host because Clerk stores its
@@ -86,7 +87,7 @@ that list, and the note opens its card on Home (`com.doma.app://home/<board item
 One fetch makes a timeline with an entry at each event's start and end, two hours before each
 start and at each midnight, so events become Next in time and finished ones leave without another
 fetch. It refreshes like the List
-widget below. A rejected sign-in shows "Signed out" and forgets the last summary; only a network
+widget below. A rejected device login shows "Signed out" and forgets the last summary; only a network
 failure reuses it.
 
 Widget gotchas, each learned in the simulator:
@@ -123,8 +124,9 @@ Small, medium and large Home Screen sizes show one list: the default list unless
 edited to choose another. Widgets cannot scroll, so it shows as many active items as fit and then
 how many more there are; tapping opens the list in the app (`com.doma.app://lists/<publicId>`).
 
-`DomaWidgetContent` decides what it shows. A sign-in that Clerk or Convex rejects shows "Signed
-out" and forgets every list the widgets showed, so an old list never returns. Only a network
+`DomaWidgetContent` decides what it shows. A device login the server rejects, or none at all, shows
+"Signed out" and forgets every list the widgets showed, so an old list never returns. A token Convex
+refuses is swapped once more before the widget gives up, and then counts as a network failure. Only a network
 failure keeps the last list, marked "Updated … ago"; a list also marks its age once 30 minutes pass
 without a refresh.
 
@@ -178,15 +180,30 @@ the save-failure alert. Check each new call with `pnpm prod:status <module>.js:<
 installing.
 
 The widget extension needs a second App ID (`<DOMA_BUNDLE_ID>.widget`) under the personal team,
-which Xcode registers on the first device build. Builds before the shared keychain group kept the
-Clerk session in the app's private keychain, so the first install with it asks for sign-in once.
+which Xcode registers on the first device build. A build from before device login links the device
+from its Clerk session on the first launch after the update, with no new sign-in if that session
+is still active. Until the app has opened once, the widgets show "Signed out".
+
+A branch that adds device login fails on a device until production Convex has the device login
+keys (`docs/auth.md#device-login-keys`) and the functions are deployed.
 
 ## Authentication
 
-`DomaClerkConvexAuthProvider` requests tokens from Doma's explicit `convex` Clerk
-JWT template, as Android does. `clerk-convex-swift` is not used: it requests the
-default session token, which lacks the `aud: convex` claim Doma's Convex auth
-config requires. Tokens are never persisted or logged.
+Clerk's free plan ends sessions after 7 days, so Clerk is used only to sign in. `DomaSession` then
+links the device (`devices/login:link`) and signs the Clerk session out. The **device login** it
+keeps is a secret in the shared keychain group (`DomaDeviceKeychain`, `AfterFirstUnlockThisDeviceOnly`:
+never backed up or synced), which `DomaDeviceLogin` swaps for an hour-long Convex token
+(`devices/login:exchange`). The app and the widget stay signed in until Sign out, or until the server
+rejects the login: revoked, unused for 60 days, or the Clerk account deleted or banned. A network
+failure never signs out. Server side: [device login](../../docs/auth.md#device-login).
+
+The link uses Doma's explicit `convex` Clerk JWT template, as Android does. `clerk-convex-swift` is
+not used: it requests the default session token, which lacks the `aud: convex` claim Doma's Convex
+auth config requires. `DomaDeviceConvexAuthProvider` hands ConvexMobile the device token. ConvexMobile
+calls its `loginFromCache` only after Convex refused a token, so that always swaps for a new one.
+
+Device secrets, tokens and anything read from the keychain are never logged, put in an error or shown
+in a session: follow [device login secrets](../../docs/agents/privacy.md#device-login-secrets).
 
 ## Running the tests
 
@@ -319,10 +336,11 @@ defaults to main-actor isolation, so tests of its types need `@MainActor`.
 - The iPad sidebar uses the system sidebar list style and draws no row background, so the system shows
   selection and hardware-keyboard focus as one highlight. A custom row background brings back a separate
   focus ring around the whole cell.
-- Session phases pass through `.signedOut` briefly on launch, so sign-out side effects belong
+- Session phases can pass through `.signedOut` on launch, so sign-out side effects belong
   in `DomaSession`, not on phase changes.
-- Clerk reports a session change about once a minute. Anything that rebuilds `ListsView` on
-  that event loses open sheets, so `DomaSession.Phase` stays `.signedIn` through a re-login.
+- `DomaSession.Phase` follows the device login, not ConvexMobile's auth state or Clerk: it stays
+  `.signedIn` through token swaps and network failures, so open sheets survive. Only the server's
+  rejection of the device login, or Sign out, ends it, and only that deletes the keychain item.
 - The edit sheet saves one mutation per changed field and only sends what changed there, so a
   failed save can be retried and another person's edit to a different field survives.
 - Live queries go through `followLiveQuery`, which logs a failed subscription and resubscribes;

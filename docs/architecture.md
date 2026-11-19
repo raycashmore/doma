@@ -93,13 +93,13 @@ lists. A 15-minute WorkManager refresh is the delivery fallback.
 ### Native iOS app
 
 `apps/ios` is an independent Xcode project, not a Vercel zone or pnpm workspace
-package. `DomaKit` (a local Swift package) holds the Clerk-to-Convex auth adapter
-and typed wrappers for the Convex functions the app calls. Like Android, it uses
-the explicit Clerk `convex` JWT template; `clerk-convex-swift` is not used because
-it requests the default session token. Simulator builds target a development
-backend; device builds target production through an ignored `Device.xcconfig`.
-A Face ID lock gates the interface only; the Clerk session stays in the keychain.
-See `apps/ios/README.md`.
+package. `DomaKit` (a local Swift package) holds the device login and typed wrappers
+for the Convex functions the app calls. Clerk is used only for the first sign-in,
+with the explicit Clerk `convex` JWT template, as on Android; the app then links a
+[device login](auth.md#device-login) so it and its widgets outlive Clerk's 7-day
+session. Simulator builds target a development backend; device builds target
+production through an ignored `Device.xcconfig`. A Face ID lock gates the interface
+only; the device login stays in the keychain. See `apps/ios/README.md`.
 
 ### Home noticeboard composition
 
@@ -135,7 +135,7 @@ Vite apps use `vite-plugin-pwa` with `scope` set to their mount path; each is in
 
 ## Auth
 
-Clerk per zone, restricted-mode allowlist. The Clerk cookie is set on the apex domain, so every zone shares the session. React apps own an `AuthGate` adapter that composes `@repo/shell`; Home uses `@clerk/vue` in its native Vue gate, and Lists uses Clerk's browser SDK in its Svelte layout. Gates are a passthrough only in the apps' explicit local no-auth modes. See `docs/auth.md`.
+Clerk per zone, restricted-mode allowlist. The Clerk cookie is set on the apex domain, so every zone shares the session. React apps own an `AuthGate` adapter that composes `@repo/shell`; Home uses `@clerk/vue` in its native Vue gate, and Lists uses Clerk's browser SDK in its Svelte layout. Gates are a passthrough only in the apps' explicit local no-auth modes. See `docs/auth.md`. The native iOS app signs in with Clerk once and then uses a Doma device login, which Convex accepts beside Clerk tokens.
 
 ## Path aliases
 

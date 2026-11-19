@@ -25,6 +25,8 @@ import type * as budgetDisplayMonth from "../budgetDisplayMonth.js";
 import type * as budgetSummary from "../budgetSummary.js";
 import type * as calendarDate from "../calendarDate.js";
 import type * as crons from "../crons.js";
+import type * as devices_login from "../devices/login.js";
+import type * as devices_model from "../devices/model.js";
 import type * as email_agentCleanup from "../email/agentCleanup.js";
 import type * as email_agentContext from "../email/agentContext.js";
 import type * as email_agentResult from "../email/agentResult.js";
@@ -125,6 +127,8 @@ declare const fullApi: ApiFromModules<{
   budgetSummary: typeof budgetSummary;
   calendarDate: typeof calendarDate;
   crons: typeof crons;
+  "devices/login": typeof devices_login;
+  "devices/model": typeof devices_model;
   "email/agentCleanup": typeof email_agentCleanup;
   "email/agentContext": typeof email_agentContext;
   "email/agentResult": typeof email_agentResult;
