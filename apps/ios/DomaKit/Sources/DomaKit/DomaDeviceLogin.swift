@@ -17,7 +17,7 @@ public actor DomaDeviceLogin {
     case unreachable
   }
 
-  public struct Issued: Decodable, Sendable {
+  public struct Issued: Decodable, Sendable, CustomStringConvertible, CustomDebugStringConvertible {
     public let token: String
     /// Milliseconds since 1970, as Convex sends it.
     public let expiresAt: Double
@@ -26,6 +26,10 @@ public actor DomaDeviceLogin {
       self.token = token
       self.expiresAt = expiresAt
     }
+
+    /// Never the token, so printing one by mistake reveals nothing.
+    public var description: String { "Issued(token: <redacted>)" }
+    public var debugDescription: String { description }
   }
 
   public enum ExchangeResult: Sendable {
@@ -91,9 +95,11 @@ public actor DomaDeviceLogin {
   private let keychain: DomaDeviceKeychain
   private let transport: Transport
   private let now: @Sendable () -> Date
-  private var cached: Issued?
-  private var exchanging: Task<Issued, any Error>?
-  /// Bumped by `forget()`, so an exchange that started before it cannot bring the login back.
+  /// The current token, the login it was issued for and the swap that issued it.
+  private var cached: (issued: Issued, credential: DomaDeviceKeychain.Credential, exchangeId: Int)?
+  private var exchanging: (id: Int, credential: DomaDeviceKeychain.Credential, task: Task<Issued, any Error>)?
+  private var exchangeCount = 0
+  /// Bumped when the login is forgotten, so an exchange that started before cannot bring it back.
   private var generation = 0
 
   public init(keychain: DomaDeviceKeychain, transport: Transport, now: @escaping @Sendable () -> Date = { .now }) {
@@ -104,11 +110,7 @@ public actor DomaDeviceLogin {
 
   /// Whether this device has a login. A locked keychain counts as unreachable, not signed out.
   public func isLinked() throws(Failure) -> Bool {
-    do {
-      return try keychain.read() != nil
-    } catch {
-      throw .unreachable
-    }
+    try storedCredential() != nil
   }
 
   /// Links this device with a Clerk `convex` token, replacing any previous login.
@@ -117,6 +119,7 @@ public actor DomaDeviceLogin {
     do {
       credential = try await transport.link(clerkToken, label)
     } catch DomaConvexHTTPError.unauthenticated {
+      // Only a definite refusal: anything else, such as a function not deployed yet, may pass.
       throw .rejected
     } catch {
       throw .unreachable
@@ -132,45 +135,54 @@ public actor DomaDeviceLogin {
   /// A Convex token for this device. Reuses the current one unless `forceRefresh` is set, which a
   /// caller does after Convex refused it.
   public func token(forceRefresh: Bool = false) async throws(Failure) -> String {
-    if !forceRefresh, let cached, Date(timeIntervalSince1970: cached.expiresAt / 1000) > now().addingTimeInterval(Self.refreshMargin) {
-      return cached.token
+    // Read every time: the app or the widget may have forgotten the login since the token was
+    // issued, and a long-lived widget process must not keep using it.
+    guard let credential = try storedCredential() else {
+      // Memory only: the other process may be mid-link, about to save a new login.
+      dropMemory()
+      throw .notLinked
     }
-    let credential: DomaDeviceKeychain.Credential
-    do {
-      guard let stored = try keychain.read() else { throw Failure.notLinked }
-      credential = stored
-    } catch let failure as Failure {
-      throw failure
-    } catch {
-      throw .unreachable
+    if !forceRefresh, let cached, cached.credential == credential,
+       Date(timeIntervalSince1970: cached.issued.expiresAt / 1000) > now().addingTimeInterval(Self.refreshMargin) {
+      return cached.issued.token
     }
 
-    let task: Task<Issued, any Error>
-    if let exchanging {
-      task = exchanging
+    let exchange: (id: Int, credential: DomaDeviceKeychain.Credential, task: Task<Issued, any Error>)
+    if let exchanging, !forceRefresh, exchanging.credential == credential {
+      exchange = exchanging
     } else {
+      exchangeCount += 1
       let transport = transport
-      task = Task { () throws -> Issued in
+      exchange = (exchangeCount, credential, Task { () throws -> Issued in
         switch try await transport.exchange(credential.secret) {
         case .issued(let issued): return issued
         case .rejected: throw Failure.rejected
         }
-      }
-      exchanging = task
+      })
+      exchanging = exchange
     }
     let started = generation
-    defer { if started == generation { exchanging = nil } }
+    defer { if exchanging?.id == exchange.id { exchanging = nil } }
     do {
-      let issued = try await task.value
+      let issued = try await exchange.task.value
       guard started == generation else { throw Failure.notLinked }
-      cached = issued
+      // A later swap's token wins, whichever finishes first.
+      if exchange.id > (cached?.exchangeId ?? 0) { cached = (issued, exchange.credential, exchange.id) }
       return issued.token
     } catch Failure.rejected {
       // Only forget the login the server refused, not one linked since.
-      if started == generation, (try? keychain.read()) == credential { forget() }
+      if started == generation, (try? keychain.read()) == exchange.credential { forget() }
       throw .rejected
     } catch Failure.notLinked {
       throw .notLinked
+    } catch {
+      throw .unreachable
+    }
+  }
+
+  private func storedCredential() throws(Failure) -> DomaDeviceKeychain.Credential? {
+    do {
+      return try keychain.read()
     } catch {
       throw .unreachable
     }
@@ -186,9 +198,13 @@ public actor DomaDeviceLogin {
 
   /// Forgets the login on this device only.
   public func forget() {
+    dropMemory()
+    keychain.delete()
+  }
+
+  private func dropMemory() {
     generation += 1
     cached = nil
     exchanging = nil
-    keychain.delete()
   }
 }

@@ -28,9 +28,20 @@ struct LiveListsContractTests {
       authProvider: DomaDeviceConvexAuthProvider(deviceLogin: deviceLogin) {}
     )
     let login = await convex.login()
-    _ = try login.get()
+    do {
+      _ = try login.get()
+    } catch {
+      await deviceLogin.signOut()
+      throw error
+    }
 
-    let fixture = try await ListFixture.create(on: convex)
+    let fixture: ListFixture
+    do {
+      fixture = try await ListFixture.create(on: convex)
+    } catch {
+      await deviceLogin.signOut()
+      throw error
+    }
     do {
       let lists = DomaListsClient(convex: convex)
 

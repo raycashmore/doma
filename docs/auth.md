@@ -52,10 +52,13 @@ hour. The web apps stay on Clerk sessions.
 - Each swap checks Clerk's Backend API. A deleted or banned user deletes the device; a Clerk outage
   still issues a token, so it never signs anyone out. A rejected `CLERK_SECRET_KEY` stops the swap
   instead, so it cannot silently skip the check forever.
-- A device unused for 60 days is refused and deleted, and a daily cron deletes any that never ask
-  again.
+- A device unused for 60 days is refused and deleted when it next asks. A daily cron deletes any
+  that never ask again, but only once the owner sets `DEVICE_LOGIN_CLEANUP=on` on the deployment:
+  a job that deletes rows ships disabled.
 - `devices/login:revoke` deletes the caller's own device, with either kind of token. The app calls it
-  on sign-out. Deleting a row in the dashboard signs that device out within an hour.
+  on sign-out. Offline, the device forgets its secret anyway; the row, now unusable, stays until the
+  clean-up cron removes it.
+  Deleting a row in the dashboard signs that device out within an hour.
 - Tokens are ES256 JWTs with `iss` set to the deployment's `CONVEX_SITE_URL`, `aud: convex` and
   `sub` set to the Clerk user ID, so functions see the same `identity.subject` as with a Clerk
   token. `tokenIdentifier` differs between the two, so functions must not rely on it.

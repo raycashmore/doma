@@ -18,9 +18,12 @@ struct DomaDeviceLoginTests {
     let exchanges = Mutex(0)
     let revoked = Mutex<[String]>([])
     let expiresIn: TimeInterval
+    /// How long the first swap takes, so a test can overtake it.
+    let firstDelay: Int
 
-    init(expiresIn: TimeInterval = 3600) {
+    init(expiresIn: TimeInterval = 3600, firstDelay: Int = 20) {
       self.expiresIn = expiresIn
+      self.firstDelay = firstDelay
     }
 
     var transport: DomaDeviceLogin.Transport {
@@ -31,7 +34,7 @@ struct DomaDeviceLoginTests {
             count += 1
             return count
           }
-          try await Task.sleep(for: .milliseconds(20))
+          try await Task.sleep(for: .milliseconds(count == 1 ? firstDelay : 20))
           switch answer.withLock({ $0 }) {
           case .issue:
             let expiresAt = Date.now.addingTimeInterval(expiresIn).timeIntervalSince1970 * 1000
@@ -83,6 +86,20 @@ struct DomaDeviceLoginTests {
     #expect(server.exchanges.withLock { $0 } == 1)
   }
 
+  @Test func aLaterSwapsTokenWinsWhenAnEarlierOneFinishesLast() async throws {
+    let server = FakeServer(firstDelay: 300)
+    let login = try await linked(server)
+    defer { keychain.delete() }
+
+    async let earlier = login.token()
+    try await Task.sleep(for: .milliseconds(50))
+    // Convex refused a token meanwhile, so a forced swap overtakes the first.
+    async let later = login.token(forceRefresh: true)
+    _ = try await [earlier, later]
+
+    #expect(try await login.token() == "fake-token-2")
+  }
+
   @Test func aRejectedSwapForgetsTheLogin() async throws {
     let server = FakeServer()
     let login = try await linked(server)
@@ -132,6 +149,40 @@ struct DomaDeviceLoginTests {
     let attributes = try #require(storedAttributes())
     #expect(attributes[kSecAttrAccessible as String] as? String == kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly as String)
     #expect((attributes[kSecAttrSynchronizable as String] as? NSNumber)?.boolValue != true)
+  }
+
+  @Test func aCachedTokenIsNotUsedOnceTheLoginIsForgottenElsewhere() async throws {
+    let server = FakeServer()
+    let login = try await linked(server)
+    defer { keychain.delete() }
+    _ = try await login.token()
+
+    // The app signed out, or the widget saw a rejection, in another process.
+    keychain.delete()
+
+    await #expect(throws: DomaDeviceLogin.Failure.notLinked) { try await login.token() }
+  }
+
+  @Test func onlyADefiniteRefusalRejectsALink() async throws {
+    func linkFailing(with error: DomaConvexHTTPError) async -> DomaDeviceLogin.Failure? {
+      let transport = DomaDeviceLogin.Transport(
+        link: { _, _ in throw error },
+        exchange: { _ in .rejected },
+        revoke: { _, _ in }
+      )
+      let login = DomaDeviceLogin(keychain: keychain, transport: transport)
+      do {
+        try await login.link(clerkToken: "fake-clerk-token", label: "iPhone")
+        return nil
+      } catch {
+        return error
+      }
+    }
+
+    #expect(await linkFailing(with: .unauthenticated) == .rejected)
+    // A function not deployed yet, or a malformed request: retry, keeping the Clerk session.
+    #expect(await linkFailing(with: .badRequest) == .unreachable)
+    #expect(await linkFailing(with: .failed(status: 500)) == .unreachable)
   }
 
   @Test func theAuthProviderAlwaysSwapsWhenConvexRefusesAToken() async throws {

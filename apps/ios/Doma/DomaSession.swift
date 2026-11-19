@@ -159,7 +159,8 @@ final class DomaSession {
       case .success:
         phase = .signedIn
         return
-      case .failure(let error) where (error as? DomaDeviceLogin.Failure) != .unreachable:
+      case .failure(let error)
+      where [.rejected, .notLinked].contains(error as? DomaDeviceLogin.Failure):
         // Rejected or gone: the provider has started `endDeviceLogin`.
         phase = .signedOut
         return

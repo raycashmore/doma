@@ -25,7 +25,7 @@ enum WidgetSession {
     }
     do {
       return try await query.run(path, args: args, token: try await token(deviceLogin, forceRefresh: false))
-    } catch DomaConvexHTTPError.unauthenticated {
+    } catch DomaConvexHTTPError.unauthenticated, DomaConvexHTTPError.badRequest {
       // A refused token is not a sign-out: only the device login's own rejection is. Swap once more.
       logger.info("Convex refused the widget's token; swapping for a new one")
     } catch let failure as Failure {

@@ -3,6 +3,7 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 import type { Id } from '../_generated/dataModel';
 import type { ActionCtx } from '../_generated/server';
 import {
+  deleteInactiveDevices,
   deleteInactiveDevicesHandler,
   exchangeHandler,
   type ExchangeOptions,
@@ -328,5 +329,25 @@ describe('device revoke and clean-up', () => {
     expect(deleted).toBe(1);
     expect(backend.devices.has(old.deviceId)).toBe(false);
     expect(backend.devices.has(recent.deviceId)).toBe(true);
+  });
+
+  it('runs the daily clean-up only once the owner turns it on', async () => {
+    const backend = createBackend();
+    const old = await linkDevice(backend);
+    await backend.db.patch(old.deviceId, { lastUsedAt: Date.now() - deviceInactivityLimitMs - day });
+    const run = (
+      deleteInactiveDevices as unknown as { _handler: (ctx: unknown, args: object) => Promise<number> | number }
+    )._handler;
+
+    expect(await run({ db: backend.db }, {})).toBe(0);
+    expect(backend.devices.has(old.deviceId)).toBe(true);
+
+    vi.stubEnv('DEVICE_LOGIN_CLEANUP', 'on');
+    try {
+      expect(await run({ db: backend.db }, {})).toBe(1);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+    expect(backend.devices.has(old.deviceId)).toBe(false);
   });
 });

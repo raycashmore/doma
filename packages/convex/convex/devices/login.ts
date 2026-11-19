@@ -254,9 +254,13 @@ export async function deleteInactiveDevicesHandler(ctx: Pick<MutationCtx, 'db'>,
   return inactive.length;
 }
 
-/** Daily: devices that went quiet are deleted even if they never ask for a token again. */
+/**
+ * Daily: devices that went quiet are deleted even if they never ask for a token again. Off until the
+ * owner turns it on with DEVICE_LOGIN_CLEANUP=on (a job that deletes rows ships disabled; see
+ * docs/agents/delivery-workflow.md). The exchange refuses and deletes such devices either way.
+ */
 export const deleteInactiveDevices = internalMutation({
   args: {},
   returns: v.number(),
-  handler: (ctx) => deleteInactiveDevicesHandler(ctx)
+  handler: (ctx) => (process.env.DEVICE_LOGIN_CLEANUP === 'on' ? deleteInactiveDevicesHandler(ctx) : 0)
 });

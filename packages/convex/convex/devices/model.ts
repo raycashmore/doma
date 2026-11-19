@@ -48,8 +48,9 @@ export type DeviceSigningKey = { kid: string; key: CryptoKey };
 type PublicJwks = { keys: Array<{ kid?: unknown }> };
 
 /**
- * Reads the private signing key and checks the public key set holds its `kid`, so a token is never
- * issued that Convex's auth config would reject.
+ * Reads the private signing key and checks DEVICE_JWT_JWKS holds its `kid`. That catches a missing
+ * or mismatched key set, but not one changed since the last push: auth.config.ts reads it at deploy
+ * time, which is why rotation pushes between `rotate` and `activate`.
  */
 export async function importDeviceSigningKey(
   privateJwk: string | undefined,

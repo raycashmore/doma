@@ -61,15 +61,20 @@ public struct DomaConvexHTTPFunction: Sendable {
 }
 
 public enum DomaConvexHTTPError: Error, Equatable {
-  /// Convex rejected the token, or the function found no signed-in user.
+  /// Convex refused the token (401 or 403), or the function found no signed-in user.
   case unauthenticated
+  /// A 400: Convex could not verify the token, or the request was malformed or names a function the
+  /// deployment lacks. Not a definite refusal.
+  case badRequest
   case failed(status: Int)
 
-  /// Convex answers a token it cannot verify with 400 or 401, and a function that finds no
-  /// identity with a 200 error naming it (`requireUserId` in `lists/items.ts`).
+  /// A function that finds no identity answers with a 200 error naming it (`requireUserId` in
+  /// `lists/items.ts`).
   public init(status: Int, message: String?) {
-    if [400, 401, 403].contains(status) || message?.contains("Not authenticated") == true {
+    if [401, 403].contains(status) || message?.contains("Not authenticated") == true {
       self = .unauthenticated
+    } else if status == 400 {
+      self = .badRequest
     } else {
       self = .failed(status: status)
     }

@@ -6,7 +6,7 @@ import Security
 /// `AfterFirstUnlockThisDeviceOnly`: the widget can read it while the device is locked, and it never
 /// goes to backups, iCloud Keychain or a new device. Never log what this reads.
 public struct DomaDeviceKeychain: Sendable {
-  public struct Credential: Codable, Equatable, Sendable {
+  public struct Credential: Codable, Equatable, Sendable, CustomStringConvertible, CustomDebugStringConvertible {
     public let deviceId: String
     public let secret: String
 
@@ -14,6 +14,10 @@ public struct DomaDeviceKeychain: Sendable {
       self.deviceId = deviceId
       self.secret = secret
     }
+
+    /// Never the secret, so printing one by mistake reveals nothing.
+    public var description: String { "Credential(secret: <redacted>)" }
+    public var debugDescription: String { description }
   }
 
   public enum Failure: Error, Equatable {

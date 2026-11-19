@@ -67,9 +67,13 @@ struct DomaListLinkTests {
 }
 
 struct DomaConvexHTTPErrorTests {
-  @Test func treatsARejectedTokenAsSignedOut() {
-    #expect(DomaConvexHTTPError(status: 400, message: nil) == .unauthenticated)
+  @Test func treatsARejectedTokenAsUnauthenticated() {
     #expect(DomaConvexHTTPError(status: 401, message: nil) == .unauthenticated)
+    #expect(DomaConvexHTTPError(status: 403, message: nil) == .unauthenticated)
+  }
+
+  @Test func keepsABadRequestApartFromARefusal() {
+    #expect(DomaConvexHTTPError(status: 400, message: nil) == .badRequest)
   }
 
   @Test func treatsAMissingIdentityAsSignedOut() {

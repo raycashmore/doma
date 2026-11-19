@@ -58,12 +58,15 @@ function convex(args: string[], options: { prod: boolean; input?: string }) {
 }
 
 function readEnv(name: string, prod: boolean) {
+  let value: string;
   try {
-    const value = convex(['env', 'get', name], { prod }).trim();
-    return value || undefined;
+    // The CLI prints nothing and exits 0 for an unset variable, so a failure is a real one: treating
+    // it as unset could drop the current public key or overwrite a signing key.
+    value = convex(['env', 'get', name], { prod }).trim();
   } catch {
-    return undefined;
+    throw new KeyScriptError(`Could not read ${name}. Check the Convex CLI login and deployment.`);
   }
+  return value || undefined;
 }
 
 function setEnv(name: string, value: string, prod: boolean) {
