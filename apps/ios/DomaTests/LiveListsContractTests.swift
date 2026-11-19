@@ -15,8 +15,19 @@ struct LiveListsContractTests {
     let environment = try #require(LiveEnvironment.current)
     try await signIn(with: environment)
 
-    let convex = ConvexClientWithAuth(deploymentUrl: environment.convexURL, authProvider: DomaClerkConvexAuthProvider())
-    let login = await convex.loginFromCache()
+    // Links a device from the Clerk sign-in and runs on its device token, as the app does.
+    let deviceLogin = DomaDeviceLogin(
+      keychain: DomaDeviceKeychain(service: "com.doma.tests.live-device-login", accessGroup: nil),
+      transport: try #require(DomaDeviceLogin.Transport.convex(deploymentURL: environment.convexURL))
+    )
+    let clerkToken = try #require(try await Clerk.shared.session?.getToken(.init(template: "convex", skipCache: true)))
+    try await deviceLogin.link(clerkToken: clerkToken, label: "Live contract test")
+    try await Clerk.shared.auth.signOut()
+    let convex = ConvexClientWithAuth(
+      deploymentUrl: environment.convexURL,
+      authProvider: DomaDeviceConvexAuthProvider(deviceLogin: deviceLogin) {}
+    )
+    let login = await convex.login()
     _ = try login.get()
 
     let fixture = try await ListFixture.create(on: convex)
@@ -60,10 +71,14 @@ struct LiveListsContractTests {
       try await checkNoticeboardNote(on: convex)
     } catch {
       try? await fixture.delete(on: convex)
+      await deviceLogin.signOut()
       throw error
     }
     try await fixture.delete(on: convex)
+    // Revokes the test's device on the server.
+    await deviceLogin.signOut()
     await convex.logout()
+    await #expect(throws: DomaDeviceLogin.Failure.notLinked) { try await deviceLogin.token() }
   }
 
   /// Returns the fixture's property IDs, in property order.

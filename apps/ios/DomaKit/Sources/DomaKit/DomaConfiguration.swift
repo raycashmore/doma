@@ -6,7 +6,7 @@ import Foundation
 public struct DomaConfiguration: Sendable {
   public let convexURL: String
   public let clerkPublishableKey: String
-  /// The keychain access group the app and the widget share the Clerk session through.
+  /// The keychain access group the app and the widget share the device login through.
   public let keychainAccessGroup: String?
 
   public static func fromBundle(_ bundle: Bundle = .main) -> DomaConfiguration? {
@@ -20,8 +20,14 @@ public struct DomaConfiguration: Sendable {
     return DomaConfiguration(convexURL: convexURL, clerkPublishableKey: key, keychainAccessGroup: group)
   }
 
-  /// One service name for both bundles, so the app and the widget find the same session.
+  /// Only the app uses Clerk now, but the session stays in the shared group, where installs from
+  /// before device login keep it, so they can link without signing in again.
   public var clerkKeychain: Clerk.Options.KeychainConfig {
     .init(service: "com.doma.app", accessGroup: keychainAccessGroup)
+  }
+
+  /// The device login, shared by the app and the widget.
+  public var deviceKeychain: DomaDeviceKeychain {
+    DomaDeviceKeychain(accessGroup: keychainAccessGroup)
   }
 }

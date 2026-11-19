@@ -1,68 +1,70 @@
-import ClerkKit
 import DomaKit
 import Foundation
 import OSLog
 
-/// Runs Convex queries in the widget process with the app's Clerk session, which the two
-/// bundles share through the keychain access group in `Config/Doma.entitlements`.
+/// Runs Convex queries in the widget process with the device login the app stores in the keychain
+/// access group the two bundles share (`Config/Doma.entitlements`).
 @MainActor
 enum WidgetSession {
   enum Failure: Error {
-    /// No session, or Clerk or Convex rejected it. The widget must not show list data.
+    /// No device login, or the server refused it. The widget must not show list data.
     case signedOut
-    /// Anything that may pass: no connection, Clerk not loaded yet, a server error.
+    /// Anything that may pass: no connection, a locked keychain, a server error.
     case unreachable
   }
 
   private static let logger = Logger(subsystem: "com.doma.app", category: "widget")
-  private static var configuration: DomaConfiguration?
+  private static var connection: (query: DomaConvexHTTPFunction, deviceLogin: DomaDeviceLogin)?
 
   static func run<Value: Decodable & SendableMetatype, Args: Encodable>(
     _ path: String, args: Args = [String: String]()
   ) async throws(Failure) -> Value {
-    guard let configuration = configure(), let query = DomaConvexHTTPQuery(deploymentURL: configuration.convexURL) else {
+    guard let (query, deviceLogin) = connect() else {
       logger.error("Widget is not configured")
       throw .unreachable
     }
-    let token = try await convexToken()
     do {
-      return try await query.run(path, args: args, token: token)
-    } catch DomaConvexHTTPQueryError.unauthenticated {
-      logger.info("Convex rejected the widget's session")
-      throw .signedOut
+      return try await query.run(path, args: args, token: try await token(deviceLogin, forceRefresh: false))
+    } catch DomaConvexHTTPError.unauthenticated {
+      // A refused token is not a sign-out: only the device login's own rejection is. Swap once more.
+      logger.info("Convex refused the widget's token; swapping for a new one")
+    } catch let failure as Failure {
+      throw failure
     } catch {
       logger.error("\(path, privacy: .public) failed: \(String(describing: error), privacy: .public)")
       throw .unreachable
     }
-  }
-
-  private static func configure() -> DomaConfiguration? {
-    if let configuration { return configuration }
-    guard let loaded = DomaConfiguration.fromBundle() else { return nil }
-    Clerk.configure(
-      publishableKey: loaded.clerkPublishableKey,
-      options: .init(telemetryEnabled: false, keychainConfig: loaded.clerkKeychain)
-    )
-    configuration = loaded
-    return loaded
-  }
-
-  private static func convexToken() async throws(Failure) -> String {
-    for _ in 0..<50 where !Clerk.shared.isLoaded {
-      try? await Task.sleep(for: .milliseconds(100))
-    }
-    guard Clerk.shared.isLoaded else { throw .unreachable }
-    guard let session = Clerk.shared.session, session.status == .active else { throw .signedOut }
-    let token: String?
     do {
-      // Skips Clerk's minute-long token cache, so a widget process still running after the app
-      // signs out cannot reuse a token the session no longer backs.
-      token = try await session.getToken(.init(template: "convex", skipCache: true))
+      return try await query.run(path, args: args, token: try await token(deviceLogin, forceRefresh: true))
+    } catch let failure as Failure {
+      throw failure
     } catch {
-      logger.info("Clerk gave no token: \(String(describing: error), privacy: .public)")
-      throw DomaClerkTokenFailure(error) == .signedOut ? .signedOut : .unreachable
+      logger.error("\(path, privacy: .public) failed after a new token: \(String(describing: error), privacy: .public)")
+      throw .unreachable
     }
-    guard let token else { throw .signedOut }
-    return token
+  }
+
+  private static func connect() -> (query: DomaConvexHTTPFunction, deviceLogin: DomaDeviceLogin)? {
+    if let connection { return connection }
+    guard
+      let configuration = DomaConfiguration.fromBundle(),
+      let query = DomaConvexHTTPFunction(deploymentURL: configuration.convexURL, kind: .query),
+      let transport = DomaDeviceLogin.Transport.convex(deploymentURL: configuration.convexURL)
+    else { return nil }
+    let deviceLogin = DomaDeviceLogin(keychain: configuration.deviceKeychain, transport: transport)
+    connection = (query, deviceLogin)
+    return connection
+  }
+
+  private static func token(_ deviceLogin: DomaDeviceLogin, forceRefresh: Bool) async throws(Failure) -> String {
+    do {
+      return try await deviceLogin.token(forceRefresh: forceRefresh)
+    } catch .unreachable {
+      logger.info("Device token swap failed")
+      throw .unreachable
+    } catch {
+      logger.info("Widget has no device login")
+      throw .signedOut
+    }
   }
 }

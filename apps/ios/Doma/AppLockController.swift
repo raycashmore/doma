@@ -3,7 +3,7 @@ import Observation
 import SwiftUI
 
 /// Applies `AppLock` to the scene lifecycle and asks for Face ID with a passcode fallback.
-/// It gates the interface only: the Clerk session stays stored, and after the first unlock the
+/// It gates the interface only: the device login stays stored, and after the first unlock the
 /// app stays alive under the lock screen.
 @Observable
 final class AppLockController {
