@@ -10,7 +10,6 @@ struct ListsSidebar: View {
   let isSidebar: Bool
   /// Saves a list's new position in its tab.
   let onReorder: (_ publicId: String, _ targetIndex: Int) async throws -> Void
-  let onNewList: () -> Void
   /// Each tab's dragged order, held until the live list confirms it.
   @State private var sharedOrder = HeldOrder()
   @State private var personalOrder = HeldOrder()
@@ -27,7 +26,7 @@ struct ListsSidebar: View {
         }
         .pickerStyle(.segmented)
         .listRowBackground(Color.clear)
-        // In the sidebar, the switch spans the same width as the selection and the New list capsule.
+        // In the sidebar, the switch spans the same width as the selection.
         .listRowInsets(EdgeInsets(top: isSidebar ? 16 : 4, leading: isSidebar ? 0 : 16, bottom: 4, trailing: isSidebar ? 0 : 16))
       }
       Section {
@@ -53,21 +52,6 @@ struct ListsSidebar: View {
       personalOrder.serverChanged(to: tab(.personal).map(\.id))
     }
     .domaSaveFailureAlert(isPresented: $saveFailed)
-    .safeAreaBar(edge: .bottom) {
-      Button(action: onNewList) {
-        HStack(spacing: 10) {
-          DomaPlusBadge()
-          Text("New list")
-            .domaFont(.body)
-            .foregroundStyle(DomaColor.warmTextTertiary)
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .padding(.vertical, 6)
-        .contentShape(.capsule)
-      }
-      .buttonStyle(.plain)
-      .domaBottomCapsule()
-    }
   }
 
   private func heldOrder(_ visibility: DomaListSummary.Visibility) -> HeldOrder {

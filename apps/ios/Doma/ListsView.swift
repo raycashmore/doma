@@ -43,10 +43,13 @@ struct ListsView: View {
       sidebar
         .navigationTitle("Lists")
         .toolbar {
-          Menu("More", systemImage: "ellipsis") {
-            Button("Paprika", systemImage: "basket") { isShowingPaprika = true }
-            Button("Sign out") {
-              Task { await session.signOut() }
+          ToolbarItemGroup(placement: .topBarTrailing) {
+            Button("New list", systemImage: "plus") { isCreatingList = true }
+            Menu("More", systemImage: "ellipsis") {
+              Button("Paprika", systemImage: "basket") { isShowingPaprika = true }
+              Button("Sign out") {
+                Task { await session.signOut() }
+              }
             }
           }
         }
@@ -150,7 +153,7 @@ struct ListsView: View {
         selectedListId: $selectedListId,
         isSidebar: isSplit,
         onReorder: { try await session.lists.reorderList(publicId: $0, targetIndex: $1) }
-      ) { isCreatingList = true }
+      )
     } else if loadFailed {
       DomaStateView(title: "Lists are unavailable", systemImage: "exclamationmark.triangle")
     } else {
