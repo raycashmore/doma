@@ -80,6 +80,7 @@ struct LiveListsContractTests {
       try await manageItems(on: lists, items: items, listPublicId: fixture.publicId)
       try await manageLists(on: lists, visibleLists: visibleLists, fixturePublicId: fixture.publicId)
       try await checkNoticeboardNote(on: convex)
+      try await checkSpending(on: convex)
     } catch {
       try? await fixture.delete(on: convex)
       await deviceLogin.signOut()

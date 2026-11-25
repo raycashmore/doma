@@ -2,7 +2,7 @@
 
 A native SwiftUI app for iPhone and iPad (iOS 27 or newer). It is an independent
 Xcode project, not a pnpm workspace package or a Vercel deployment zone. So far it
-covers sign-in, the Home noticeboard and Lists, in two tabs; it opens on Home. Lists covers: create, rename, delete and reorder lists (each person keeps their own
+covers sign-in, the Home noticeboard, Spending and Lists, in three tabs; it opens on Home. Lists covers: create, rename, delete and reorder lists (each person keeps their own
 order), set the default list and the Groceries list (where recipe ingredients and Paprika items go; until one is
 chosen, the shared list named "Shopping list"), add, check off, reorder and delete items, clear completed ones, and edit an item's title, notes
 and property values, with changes arriving live from Convex. Active items can be grouped by a
@@ -44,6 +44,21 @@ and on return to the app, so it never reuses a result cached for an older token.
 web, so two people editing different fields of one note at once keep only the last save.
 Settings, from the Home header, holds Sign out; Lists keeps its own Sign out and Paprika.
 
+## Spending
+
+Spending ports the web Budget's figures for a chosen run of months, read-only, for the whole household.
+`spending:getSpending` returns the range's averages, their changes against the same number of months
+just before it, and its months; `spending:listMonths` returns every month's net. The server owns the
+income, spend and net definitions (`packages/convex/convex/spendingModel.ts`); the app only formats
+cents and basis points (`SpendingFormat`). The range starts as the latest 6 months with data. The Time
+range sheet's chips (`SpendingRangePreset`) resolve against the months with data, as the web's tabs do,
+and financial years run July to June. On the sheet's net strip, the nearer end within 22 pt of a touch
+moves, the middle moves the whole range, and it ticks as the range changes (`SpendingRangeDrag`). One unusual
+month is clipped so the rest stay readable. VoiceOver skips the strip; the chips and month grid set the
+same range. Changes are green when they help and coral when they hurt, so a fall in spend is green; the
+web colours them by direction. The card chart and month detail come with RAY-312, the insight and iPad
+layout with RAY-313.
+
 ## Layout
 
 - `Doma/`: the app target (SwiftUI views and `DomaSession`, which links the device once with Clerk
@@ -58,7 +73,7 @@ Settings, from the Home header, holds Sign out; Lists keeps its own Sign out and
   `DomaFont` uses its original PostScript names.
 - `DomaKit/`: local Swift package with `DomaDeviceLogin` and `DomaDeviceConvexAuthProvider` (see
   Authentication), `DomaListsClient` (the typed wrappers for the Convex Lists functions), `DomaHomeClient`
-  (the board, notes and archive), `DomaConfiguration` and `DomaConvexHTTPFunction`, which runs one
+  (the board, notes and archive), `DomaSpendingClient` (Spending's months and ranges), `DomaConfiguration` and `DomaConvexHTTPFunction`, which runs one
   Convex function over HTTP for the widget and the device login.
 - `DomaWidget/`: the widget extension, with the Home and List widgets. It shares the app's device login
   through the keychain access group in `Config/Doma.entitlements`, so it needs no sign-in of its

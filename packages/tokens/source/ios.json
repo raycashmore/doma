@@ -212,6 +212,120 @@
           "alpha": 1
         }
       }
+    },
+    "warmPositive": {
+      "light": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.37254901960784315, 0.5803921568627451, 0.4],
+          "alpha": 1
+        },
+        "$description": "Gains and good changes; the web's --warm-positive in light."
+      },
+      "dark": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.4980392156862745, 0.7058823529411765, 0.5294117647058824],
+          "alpha": 1
+        }
+      }
+    },
+    "warmPositiveSoft": {
+      "light": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.8901960784313725, 0.9254901960784314, 0.8941176470588236],
+          "alpha": 1
+        },
+        "$description": "Behind months inside a chosen range."
+      },
+      "dark": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.1411764705882353, 0.20392156862745098, 0.16470588235294117],
+          "alpha": 1
+        }
+      }
+    },
+    "warmPositiveOnSoft": {
+      "light": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.1843137254901961, 0.35294117647058826, 0.21176470588235294],
+          "alpha": 1
+        },
+        "$description": "Text on warmPositiveSoft."
+      },
+      "dark": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.7254901960784313, 0.8431372549019608, 0.7450980392156863],
+          "alpha": 1
+        }
+      }
+    },
+    "warmChip": {
+      "light": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.9529411764705882, 0.9176470588235294, 0.8666666666666667],
+          "alpha": 1
+        },
+        "$description": "A quiet filled control on a card, such as the Spending range button."
+      },
+      "dark": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.22745098039215686, 0.18823529411764706, 0.15294117647058825],
+          "alpha": 1
+        }
+      }
+    },
+    "warmPositiveText": {
+      "light": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.24705882352941178, 0.47843137254901963, 0.2823529411764706],
+          "alpha": 1
+        },
+        "$description": "Positive text and small fills, at 4.5:1 or better on cards."
+      },
+      "dark": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.4980392156862745, 0.7058823529411765, 0.5294117647058824],
+          "alpha": 1
+        }
+      }
+    },
+    "warmNegativeText": {
+      "light": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.7215686274509804, 0.2901960784313726, 0.16470588235294117],
+          "alpha": 1
+        },
+        "$description": "Negative text, at 4.5:1 or better on cards where coral is not."
+      },
+      "dark": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.9568627450980393, 0.4549019607843137, 0.2901960784313726],
+          "alpha": 1
+        }
+      }
     }
   }
 }

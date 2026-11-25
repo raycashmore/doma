@@ -25,6 +25,7 @@ final class DomaSession {
   let lists: DomaListsClient
   let home: DomaHomeClient
   let paprika: DomaPaprikaClient
+  let spending: DomaSpendingClient
   /// A list a widget asked to open, kept here so signing out drops it.
   let openRequest = ListOpenRequest()
   /// A noticeboard card the Home widget asked to open.
@@ -60,6 +61,7 @@ final class DomaSession {
     lists = DomaListsClient(convex: convex)
     home = DomaHomeClient(convex: convex)
     paprika = DomaPaprikaClient(convex: convex)
+    spending = DomaSpendingClient(convex: convex)
     ending.handler = { [weak self] in await self?.endDeviceLogin() }
     sessionSync = Task { [weak self] in await self?.start() }
   }
