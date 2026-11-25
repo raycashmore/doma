@@ -33,7 +33,13 @@
       "color.warmTextTertiary",
       "color.onDarkHighlight",
       "color.checkRing",
-      "color.sheetBackground"
+      "color.sheetBackground",
+      "color.warmPositive",
+      "color.warmPositiveSoft",
+      "color.warmPositiveOnSoft",
+      "color.warmChip",
+      "color.warmPositiveText",
+      "color.warmNegativeText"
     ]
   },
   "roles": [

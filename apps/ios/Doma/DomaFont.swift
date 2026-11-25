@@ -20,6 +20,18 @@ enum DomaFont {
   /// A serif title at body size: a noticeboard card's title, or the navigation bar title once
   /// its large title has scrolled away.
   case displayInline
+  /// A Spending headline figure, such as the average monthly gain.
+  case figure
+  /// A smaller Spending figure beside others, such as average income.
+  case figureSmall
+  /// An amount at the end of a row, such as a month's net.
+  case amount
+  /// A row's title with a little more weight than body text.
+  case rowTitle
+  /// Supporting text that leads, such as a selected chip or a range button's range.
+  case supportingEmphasis
+  /// A change under a figure, such as "▲ 2.1%".
+  case detailEmphasis
 
   private struct Face {
     let name: String
@@ -49,6 +61,14 @@ enum DomaFont {
     case .kicker: Face(name: "DMSans-SemiBold", boldName: "DMSans-Bold", size: 12, textStyle: .caption)
     case .displayInline:
       Face(name: Self.merriweatherBold, boldName: Self.merriweatherExtraBold, size: 17, textStyle: .headline)
+    case .figure:
+      Face(name: Self.merriweatherBold, boldName: Self.merriweatherExtraBold, size: 44, textStyle: .largeTitle)
+    case .figureSmall: Face(name: "DMSans-SemiBold", boldName: "DMSans-Bold", size: 19, textStyle: .title3)
+    case .amount: Face(name: "DMSans-SemiBold", boldName: "DMSans-Bold", size: 17, textStyle: .headline)
+    case .rowTitle: Face(name: "DMSans-Medium", boldName: "DMSans-Bold", size: 17, textStyle: .body)
+    case .supportingEmphasis:
+      Face(name: "DMSans-SemiBold", boldName: "DMSans-Bold", size: 15, textStyle: .subheadline)
+    case .detailEmphasis: Face(name: "DMSans-Medium", boldName: "DMSans-Bold", size: 13, textStyle: .footnote)
     }
   }
 

@@ -2,10 +2,11 @@ import SwiftUI
 
 enum AppTab: Hashable {
   case home
+  case spending
   case lists
 }
 
-/// Home and Lists. iPhone shows the tabs at the foot; iPad at the top, as iPadOS does.
+/// Home, Spending and Lists. iPhone shows the tabs at the foot; iPad at the top, as iPadOS does.
 struct MainTabView: View {
   let session: DomaSession
   @Binding var selection: AppTab
@@ -14,6 +15,9 @@ struct MainTabView: View {
     TabView(selection: $selection) {
       Tab("Home", systemImage: "house", value: AppTab.home) {
         HomeView(session: session)
+      }
+      Tab("Spending", systemImage: "dollarsign.circle", value: AppTab.spending) {
+        SpendingView(session: session)
       }
       Tab("Lists", systemImage: "checklist", value: AppTab.lists) {
         ListsView(session: session)

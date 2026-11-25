@@ -32,6 +32,12 @@ extension View {
       .background(DomaColor.warmBgCardSoft.ignoresSafeArea())
   }
 
+  /// A white card with the warm border, raised off the sheet.
+  func domaCardSurface() -> some View {
+    background(DomaColor.warmBgCard, in: .rect(cornerRadius: 16))
+      .overlay { RoundedRectangle(cornerRadius: 16).strokeBorder(DomaColor.warmBorder) }
+  }
+
   /// The dark header: the bar stays clear over the header colour, with light controls in either
   /// appearance. A bar background would resolve the colour in the bar's dark appearance instead.
   func domaDarkHeader() -> some View {
