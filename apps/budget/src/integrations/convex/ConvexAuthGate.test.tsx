@@ -3,9 +3,19 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ConvexAuthGate } from './ConvexAuthGate';
 
-const auth = vi.hoisted(() => ({ isLoading: true, isAuthenticated: false }));
+const auth = vi.hoisted(() => ({ isLoading: true, isAuthenticated: false, hasProvider: true }));
 
-vi.mock('convex/react', () => ({ useConvexAuth: () => auth }));
+vi.mock('convex/react', () => ({
+  useConvexAuth: () => {
+    // Like the real hook, it throws outside a Convex auth provider, which fixture mode does not mount.
+    if (!auth.hasProvider) throw new Error('No Convex auth provider');
+    return auth;
+  }
+}));
+
+afterEach(() => {
+  auth.hasProvider = true;
+});
 
 afterEach(cleanup);
 
@@ -37,8 +47,8 @@ describe('ConvexAuthGate', () => {
     expect(screen.queryByText('Budget overview')).toBeNull();
   });
 
-  it('shows the page straight away in fixture mode', () => {
-    Object.assign(auth, { isLoading: true, isAuthenticated: false });
+  it('shows the page straight away in fixture mode, without reading Convex auth', () => {
+    Object.assign(auth, { isLoading: true, isAuthenticated: false, hasProvider: false });
     renderGate(false);
     expect(screen.getByText('Budget overview')).toBeTruthy();
   });

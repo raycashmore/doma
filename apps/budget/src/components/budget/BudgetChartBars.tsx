@@ -1,13 +1,13 @@
 import { Bar } from '@visx/shape';
 import type { ScaleBand, ScaleLinear } from 'd3-scale';
-import type { BudgetDataPoint } from '@/lib/budget';
+import type { ChartMonth } from '@repo/convex/spendingModel';
 
 type BudgetChartBarsProps = {
-  data: Array<BudgetDataPoint>;
+  data: Array<ChartMonth>;
   xScale: ScaleBand<number>;
   yScale: ScaleLinear<number, number>;
   height: number;
-  onMouseMove: (event: React.MouseEvent<SVGRectElement>, datum: BudgetDataPoint) => void;
+  onMouseMove: (event: React.MouseEvent<SVGRectElement>, datum: ChartMonth) => void;
   onMouseLeave: () => void;
   onBarClick?: (date: number) => void;
 };
@@ -35,7 +35,7 @@ export function BudgetChartBars({
       {data.map((d) => {
         const x = xScale(d.date);
         if (x === undefined) return null;
-        const y = yScale(d.sinkOrSwim);
+        const y = yScale(d.income);
         return (
           <Bar
             key={`income-${d.date}`}
@@ -75,11 +75,11 @@ export function BudgetChartBars({
         );
       })}
 
-      {/* Discretionary — stacked on top of mortgage, tops out at (mortgage + spend) */}
+      {/* Spend before the mortgage, stacked on top of it: tops out at total spend */}
       {data.map((d) => {
         const x = xScale(d.date);
         if (x === undefined) return null;
-        const yTop = yScale(d.mortgage + d.spend);
+        const yTop = yScale(d.spend);
         const yMortgageTop = yScale(d.mortgage);
         return (
           <Bar

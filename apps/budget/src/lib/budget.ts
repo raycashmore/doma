@@ -1,38 +1,24 @@
+import { shiftMonth } from '@repo/convex/spendingModel';
+import type { MonthKey, MonthRange, SpendingSummary } from '@repo/convex/spendingModel';
+
 export type TimePeriod = '3M' | '6M' | '12M' | 'ALL';
 
-export function periodMonthLimit(period: TimePeriod): number | undefined {
-  return period === '3M' ? 3 : period === '6M' ? 6 : period === '12M' ? 12 : undefined;
+/** Resolves a period tab against the months that have data: the last N months, or all of them. */
+export function periodRange(period: TimePeriod, months: ReadonlyArray<{ monthKey: MonthKey }>): MonthRange | null {
+  if (months.length === 0) return null;
+  const first = months[0];
+  const last = months[months.length - 1];
+  if (period === 'ALL') return { from: first.monthKey, to: last.monthKey };
+  const count = period === '3M' ? 3 : period === '6M' ? 6 : 12;
+  return { from: shiftMonth(last.monthKey, -(count - 1)), to: last.monthKey };
 }
 
-export type BudgetDataPoint = {
-  date: number;
-  spend: number; // discretionary spend (excludes mortgage)
-  sinkOrSwim: number; // income proxy used for the income trend
-  mortgage: number; // monthly mortgage contribution (carry-forward from latest mortgage row)
-};
-
-export function computeMovingAverage(values: Array<number>, window: number): Array<number> {
-  const result: Array<number> = [];
-  let sum = 0;
-
-  for (let i = 0; i < values.length; i++) {
-    sum += values[i];
-    if (i >= window) {
-      sum -= values[i - window];
-      result.push(sum / window);
-    } else {
-      result.push(sum / (i + 1));
-    }
-  }
-
-  return result;
+export function periodLabel(period: TimePeriod): string {
+  return period === 'ALL' ? 'All time' : `Last ${period.replace('M', '')} months`;
 }
 
-export function filterByTimePeriod<T extends { date: number }>(data: Array<T>, period: TimePeriod): Array<T> {
-  if (period === 'ALL') return data;
-  const months = period === '3M' ? 3 : period === '6M' ? 6 : 12;
-  const cutoff = Date.now() - months * 30 * 24 * 60 * 60 * 1000;
-  return data.filter((d) => d.date >= cutoff);
+export function comparisonLabel(summary: SpendingSummary): string {
+  return summary.comparison ? `vs prior ${summary.comparison.monthCount} mo` : 'No earlier months';
 }
 
 export function formatDateLabel(timestamp: number): string {

@@ -7,6 +7,7 @@ import {
   mortgagePaymentTotal,
   mortgageTotalDebt
 } from './helpers';
+import { spendingMonth } from './spendingModel';
 
 export type BudgetRow = Doc<'budget'>;
 export type MortgageRow = Doc<'mortgage'>;
@@ -21,6 +22,10 @@ export type MonthDetailTrend = {
 
 export type MonthDetail = {
   date: number;
+  /** Shared outgoings, which count towards spend but are not card or one-off spend. */
+  shared: number;
+  /** The month's net under the Spending definition (see spendingModel). */
+  net: number;
   income: {
     primary: number;
     secondary: number;
@@ -86,6 +91,7 @@ export function computeTrend(current: number, prior: number | null | undefined):
   return { pct: rounded, direction };
 }
 
+/** `mortgage` and `priorMortgage` are each month's own mortgage row, as in the months list. */
 export function shapeMonthDetail(
   budget: BudgetRow | null,
   mortgage: MortgageRow | null,
@@ -105,8 +111,12 @@ export function shapeMonthDetail(
   const priorSpend = priorBudget ? spendTotal(priorBudget) : null;
   const priorMortgagePayment = priorMortgage ? mortgagePaymentTotal(priorMortgage) : null;
 
+  const month = spendingMonth(budget, mortgage);
+
   return {
     date: budget.date,
+    shared: month.shared,
+    net: month.net,
     income: {
       primary: budget.incomePrimary,
       secondary: budget.incomeSecondary,

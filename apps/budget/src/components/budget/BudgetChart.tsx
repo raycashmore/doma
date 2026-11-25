@@ -8,12 +8,11 @@ import { useTooltip } from '@visx/tooltip';
 import { BudgetChartBars } from './BudgetChartBars';
 import { BudgetChartLines } from './BudgetChartLines';
 import { BudgetChartTooltip } from './BudgetChartTooltip';
-import type { BudgetDataPoint, TimePeriod } from '@/lib/budget';
-import { computeMovingAverage, filterByTimePeriod, formatCurrency } from '@/lib/budget';
+import type { ChartMonth } from '@repo/convex/spendingModel';
+import { formatCurrency } from '@/lib/budget';
 
 const BASE_MARGIN = { top: 14, right: 16, bottom: 28, left: 66 };
 const COMPACT_MARGIN = { top: 14, right: 8, bottom: 28, left: 44 };
-const MA_WINDOW = 6;
 const AXIS_FONT_SIZE = 11;
 const COMPACT_AXIS_WIDTH = 420;
 const PARENT_SIZE_STYLES = {
@@ -26,8 +25,8 @@ export const BUDGET_CHART_CARD_CLASS =
   'flex min-h-[16rem] min-w-0 flex-1 flex-col rounded-3xl bg-warm-bg-card-soft border border-warm-border p-5 lg:min-h-0 md:p-6';
 
 type BudgetChartProps = {
-  data: Array<BudgetDataPoint>;
-  period: TimePeriod;
+  /** The range's months, oldest first, with the server's 6-month averages; undefined while loading. */
+  data: Array<ChartMonth> | undefined;
   onBarClick?: (date: number) => void;
 };
 
@@ -82,15 +81,12 @@ function ChartHeader() {
 }
 
 function BudgetChartSvg({
-  data,
-  period,
+  data: filtered,
   width,
   height,
   onBarClick
-}: BudgetChartProps & { width: number; height: number }) {
-  const { tooltipData, tooltipLeft, tooltipTop, tooltipOpen, showTooltip, hideTooltip } = useTooltip<BudgetDataPoint>();
-
-  const filtered = filterByTimePeriod(data, period);
+}: Omit<BudgetChartProps, 'data'> & { data: Array<ChartMonth>; width: number; height: number }) {
+  const { tooltipData, tooltipLeft, tooltipTop, tooltipOpen, showTooltip, hideTooltip } = useTooltip<ChartMonth>();
 
   const { margin, innerWidth, innerHeight, compactYAxis } = getBudgetChartLayout(width, height);
 
@@ -102,7 +98,7 @@ function BudgetChartSvg({
     padding: 0.04
   });
 
-  const maxVal = Math.max(...filtered.map((d) => Math.max(d.sinkOrSwim, d.spend + d.mortgage)));
+  const maxVal = Math.max(...filtered.map((d) => Math.max(d.income, d.spend)));
 
   const yScale = scaleLinear<number>({
     domain: [0, maxVal * 1.1],
@@ -110,25 +106,10 @@ function BudgetChartSvg({
     nice: true
   });
 
-  const spendMA = computeMovingAverage(
-    filtered.map((d) => d.spend + d.mortgage),
-    MA_WINDOW
-  );
-  const sosMA = computeMovingAverage(
-    filtered.map((d) => d.sinkOrSwim),
-    MA_WINDOW
-  );
+  const spendTrend = filtered.map((d) => ({ date: d.date, value: d.spendAverage }));
+  const incomeTrend = filtered.map((d) => ({ date: d.date, value: d.incomeAverage }));
 
-  const spendTrend = filtered.map((d, i) => ({
-    date: d.date,
-    value: spendMA[i]
-  }));
-  const sinkOrSwimTrend = filtered.map((d, i) => ({
-    date: d.date,
-    value: sosMA[i]
-  }));
-
-  const handleMouseMove = (event: React.MouseEvent<SVGRectElement>, datum: BudgetDataPoint) => {
+  const handleMouseMove = (event: React.MouseEvent<SVGRectElement>, datum: ChartMonth) => {
     const svgRect = event.currentTarget.closest('svg')?.getBoundingClientRect();
     if (!svgRect) return;
     showTooltip({
@@ -163,7 +144,7 @@ function BudgetChartSvg({
             onBarClick={onBarClick}
           />
 
-          <BudgetChartLines spendTrend={spendTrend} sinkOrSwimTrend={sinkOrSwimTrend} xScale={xScale} yScale={yScale} />
+          <BudgetChartLines spendTrend={spendTrend} incomeTrend={incomeTrend} xScale={xScale} yScale={yScale} />
 
           <AxisBottom
             top={innerHeight}
@@ -206,8 +187,8 @@ function BudgetChartSvg({
       {tooltipOpen && tooltipData && (
         <BudgetChartTooltip
           date={tooltipData.date}
-          spend={tooltipData.spend}
-          sinkOrSwim={tooltipData.sinkOrSwim}
+          income={tooltipData.income}
+          spend={tooltipData.spend - tooltipData.mortgage}
           mortgage={tooltipData.mortgage}
           top={tooltipTop ?? 0}
           left={tooltipLeft ?? 0}
@@ -217,9 +198,8 @@ function BudgetChartSvg({
   );
 }
 
-export function BudgetChart({ data, period, onBarClick }: BudgetChartProps) {
-  const filtered = filterByTimePeriod(data, period);
-  const isEmpty = filtered.length === 0;
+export function BudgetChart({ data, onBarClick }: BudgetChartProps) {
+  const isEmpty = data?.length === 0;
 
   return (
     <div className={BUDGET_CHART_CARD_CLASS}>
@@ -230,11 +210,11 @@ export function BudgetChart({ data, period, onBarClick }: BudgetChartProps) {
             <p className="text-sm font-medium">No budget data</p>
             <p className="text-sm text-warm-text-tertiary">Seed the budget table to render the chart.</p>
           </div>
-        ) : (
+        ) : data === undefined ? null : (
           <ParentSize debounceTime={50} parentSizeStyles={PARENT_SIZE_STYLES}>
             {({ width, height }) =>
               width > 0 && height > 0 ? (
-                <BudgetChartSvg data={data} period={period} width={width} height={height} onBarClick={onBarClick} />
+                <BudgetChartSvg data={data} width={width} height={height} onBarClick={onBarClick} />
               ) : null
             }
           </ParentSize>

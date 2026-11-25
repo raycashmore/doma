@@ -170,6 +170,24 @@ describe('shapeMonthDetail', () => {
   });
 });
 
+describe('shapeMonthDetail net', () => {
+  const withShared: BudgetRow = { ...budgetRow, sharedOut: 50_000 };
+  const income = budgetRow.incomePrimary + budgetRow.incomeSecondary + budgetRow.billContrib;
+  const dayToDay = 90_000 + 60_000 + 80_000 + 34_000;
+
+  it('counts shared outgoings and the mortgage in net', () => {
+    const r = shapeMonthDetail(withShared, mortgageRow, mortgageConfig)!;
+    expect(r.shared).toBe(50_000);
+    expect(r.net).toBe(income - dayToDay - 50_000 - (240_000 + 150_000));
+  });
+
+  it('leaves the mortgage out of net when the month has no mortgage row', () => {
+    const r = shapeMonthDetail(withShared, null, mortgageConfig)!;
+    expect(r.mortgage).toBeNull();
+    expect(r.net).toBe(income - dayToDay - 50_000);
+  });
+});
+
 describe('computeTrend', () => {
   it('returns null when prior is null', () => {
     expect(computeTrend(100, null)).toBeNull();

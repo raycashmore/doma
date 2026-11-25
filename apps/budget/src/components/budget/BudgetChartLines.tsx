@@ -9,18 +9,18 @@ type TrendPoint = {
 
 type BudgetChartLinesProps = {
   spendTrend: Array<TrendPoint>;
-  sinkOrSwimTrend: Array<TrendPoint>;
+  incomeTrend: Array<TrendPoint>;
   xScale: ScaleBand<number>;
   yScale: ScaleLinear<number, number>;
 };
 
-export function BudgetChartLines({ spendTrend, sinkOrSwimTrend, xScale, yScale }: BudgetChartLinesProps) {
+export function BudgetChartLines({ spendTrend, incomeTrend, xScale, yScale }: BudgetChartLinesProps) {
   const halfBand = xScale.bandwidth() / 2;
 
   return (
     <>
       <LinePath
-        data={sinkOrSwimTrend}
+        data={incomeTrend}
         x={(d) => (xScale(d.date) ?? 0) + halfBand}
         y={(d) => yScale(d.value)}
         stroke="#5F9466"

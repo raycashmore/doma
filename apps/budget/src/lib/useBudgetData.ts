@@ -1,27 +1,26 @@
 import { useQuery } from 'convex/react';
 import { api } from '@repo/convex';
-import { useRefreshToken } from '@repo/shell';
 import type { TimePeriod } from '@/lib/budget';
-import { periodMonthLimit } from '@/lib/budget';
+import { periodRange } from '@/lib/budget';
 import { FIXTURE_MODE } from '@/config/runtime';
-import { fixtureBreakdown, fixtureChart, fixtureDetail, fixtureInsight, fixtureSummary } from '@/lib/budgetFixtures';
+import { fixtureDetail, fixtureInsight, fixtureMonths, fixtureSpending } from '@/lib/budgetFixtures';
 
 function useConvexBudgetData(period: TimePeriod, openMonth: number | null) {
-  const refreshToken = useRefreshToken();
+  const months = useQuery(api.spending.listMonths);
+  const range = months ? periodRange(period, months) : null;
   return {
-    summary: useQuery(api.queries.getBudgetPageSummary, { period, refreshToken }),
-    chartData: useQuery(api.queries.listBudgetChart),
-    rows: useQuery(api.queries.getMonthlyBreakdown, { limit: periodMonthLimit(period) }),
+    spending: useQuery(api.spending.getSpending, range ?? 'skip'),
+    hasMonths: months === undefined ? undefined : months.length > 0,
     detail: useQuery(api.queries.getMonthlyDetail, openMonth !== null ? { date: openMonth } : 'skip'),
     insight: useQuery(api.queries.getLatestSpendingInsight)
   };
 }
 
 function useFixtureBudgetData(period: TimePeriod, openMonth: number | null): ReturnType<typeof useConvexBudgetData> {
+  const range = periodRange(period, fixtureMonths);
   return {
-    summary: fixtureSummary(period),
-    chartData: fixtureChart,
-    rows: fixtureBreakdown(periodMonthLimit(period)),
+    spending: range ? fixtureSpending(range) : undefined,
+    hasMonths: fixtureMonths.length > 0,
     detail: openMonth !== null ? fixtureDetail(openMonth) : undefined,
     insight: fixtureInsight
   };

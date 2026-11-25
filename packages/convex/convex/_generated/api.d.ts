@@ -101,6 +101,8 @@ import type * as schedule_syncPolicy from "../schedule/syncPolicy.js";
 import type * as schedule_week from "../schedule/week.js";
 import type * as seed from "../seed.js";
 import type * as signedIn from "../signedIn.js";
+import type * as spending from "../spending.js";
+import type * as spendingModel from "../spendingModel.js";
 import type * as spendingSummary from "../spendingSummary.js";
 
 import type {
@@ -203,6 +205,8 @@ declare const fullApi: ApiFromModules<{
   "schedule/week": typeof schedule_week;
   seed: typeof seed;
   signedIn: typeof signedIn;
+  spending: typeof spending;
+  spendingModel: typeof spendingModel;
   spendingSummary: typeof spendingSummary;
 }>;
 

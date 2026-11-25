@@ -23,7 +23,7 @@ describe('BudgetChart responsive layout', () => {
   });
 
   it('shows legend labels in Income, Spend, Mortgage order', () => {
-    const { container } = render(<BudgetChart data={[]} period="6M" />);
+    const { container } = render(<BudgetChart data={[]} />);
 
     expect(screen.getByText('Income')).toBeDefined();
     expect(screen.getByText('Spend')).toBeDefined();

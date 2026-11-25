@@ -17,7 +17,8 @@
     "./auth": "./convex/auth.config.ts",
     "./helpers": "./convex/helpers.ts",
     "./budgetSummary": "./convex/budgetSummary.ts",
-    "./monthDetail": "./convex/monthDetail.ts"
+    "./monthDetail": "./convex/monthDetail.ts",
+    "./spendingModel": "./convex/spendingModel.ts"
   },
   "scripts": {
     "dev": "dotenv -e ../../.env.local -- convex dev",
