@@ -148,6 +148,19 @@ describe('summarizeRange', () => {
     expect(summary.savingsRate.value).toBe(8_000);
   });
 
+  it('never sends -0, which Convex encodes as a float the apps cannot read as a whole number', () => {
+    // Nets of -1, +1 and -1 cents: the average and the savings rate both round to -0.
+    const nearZero = buildSpendingMonths(
+      [1, 2, 3].map((m) =>
+        budget(monthEnd(2026, m), { incomePrimary: 1_000_00, credit1: m === 2 ? 999_99 : 1_000_01 })
+      ),
+      []
+    );
+    const summary = summarizeRange(nearZero, { from: '2026-01', to: '2026-03' });
+    expect(Object.is(summary.avgNet.value, 0)).toBe(true);
+    expect(Object.is(summary.savingsRate.value, 0)).toBe(true);
+  });
+
   it('returns zeros for a range with no months', () => {
     const summary = summarizeRange(months, { from: '2030-01', to: '2030-06' });
     expect(summary.monthCount).toBe(0);

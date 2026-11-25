@@ -152,14 +152,14 @@ function totals(months: SpendingMonth[]) {
     avgIncome: average(months.map((m) => m.income)),
     avgSpend: average(months.map((m) => m.spend)),
     avgNet: average(months.map((m) => m.net)),
-    savingsRate: income === 0 ? 0 : Math.round((net / income) * 10_000)
+    savingsRate: income === 0 ? 0 : noNegativeZero(Math.round((net / income) * 10_000))
   };
 }
 
 function metric(value: number, previous: number | undefined): SummaryMetric {
   if (previous === undefined) return { value, delta: null, deltaPct: null };
   const delta = value - previous;
-  return { value, delta, deltaPct: previous === 0 ? null : (delta / Math.abs(previous)) * 100 };
+  return { value, delta, deltaPct: previous === 0 ? null : noNegativeZero((delta / Math.abs(previous)) * 100) };
 }
 
 function sum(values: number[]): number {
@@ -167,5 +167,10 @@ function sum(values: number[]): number {
 }
 
 function average(values: number[]): number {
-  return values.length === 0 ? 0 : Math.round(sum(values) / values.length);
+  return values.length === 0 ? 0 : noNegativeZero(Math.round(sum(values) / values.length));
+}
+
+/** Convex sends -0 as a special float, which clients reading whole numbers cannot decode. */
+function noNegativeZero(value: number): number {
+  return value === 0 ? 0 : value;
 }
