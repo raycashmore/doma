@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import type { TimePeriod } from '@/lib/budget';
+import { breakdownRows } from '@/lib/breakdownRows';
 import { useBudgetData } from '@/lib/useBudgetData';
 import { BudgetBreakdownTable } from '@/components/budget/BudgetBreakdownTable';
 import { BudgetChart } from '@/components/budget/BudgetChart';
@@ -31,7 +32,11 @@ function BudgetPage() {
 
   useBudgetHeaderActions(headerActions);
 
-  const { summary, chartData, rows, detail, insight } = useBudgetData(period, openMonth);
+  const { spending, hasMonths, detail, insight } = useBudgetData(period, openMonth);
+  const rows = useMemo(
+    () => (spending ? breakdownRows(spending.months) : hasMonths === false ? [] : undefined),
+    [spending, hasMonths]
+  );
   const adjacentMonths = useMemo(() => {
     if (!rows || openMonth === null) {
       return { previous: null, next: null };
@@ -55,8 +60,8 @@ function BudgetPage() {
       <div className="flex flex-col gap-5 rounded-[28px] bg-warm-bg-card p-5 md:p-6 lg:h-full lg:min-h-0 lg:flex-row lg:gap-5 lg:overflow-hidden">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
           <h2 className="sr-only">Budget overview</h2>
-          <BudgetKpiCards summary={summary} />
-          <BudgetChart data={chartData ?? []} period={period} onBarClick={(date) => setOpenMonth(date)} />
+          <BudgetKpiCards summary={spending?.summary} period={period} />
+          <BudgetChart data={hasMonths === false ? [] : spending?.months} onBarClick={(date) => setOpenMonth(date)} />
           <BudgetBreakdownTable rows={rows} onRowClick={(date) => setOpenMonth(date)} />
         </div>
 

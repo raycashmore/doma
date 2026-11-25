@@ -1,59 +1,23 @@
 import { describe, expect, it } from 'vitest';
-import { computeMovingAverage, filterByTimePeriod, formatCurrency, formatDateLabel } from './budget';
+import { formatCurrency, formatDateLabel, periodRange } from './budget';
 
-describe('computeMovingAverage', () => {
-  it('returns same values for window=1', () => {
-    expect(computeMovingAverage([10, 20, 30], 1)).toEqual([10, 20, 30]);
+describe('periodRange', () => {
+  const months = ['2025-09', '2025-10', '2025-11', '2025-12', '2026-01', '2026-02', '2026-03'].map((monthKey) => ({
+    monthKey
+  }));
+
+  it('ends at the latest month with data and spans exactly N months (RAY-57)', () => {
+    expect(periodRange('3M', months)).toEqual({ from: '2026-01', to: '2026-03' });
+    expect(periodRange('6M', months)).toEqual({ from: '2025-10', to: '2026-03' });
   });
 
-  it('computes expanding window for early points', () => {
-    const result = computeMovingAverage([10, 20, 30, 40], 3);
-    expect(result[0]).toBeCloseTo(10); // avg of [10]
-    expect(result[1]).toBeCloseTo(15); // avg of [10, 20]
-    expect(result[2]).toBeCloseTo(20); // avg of [10, 20, 30]
-    expect(result[3]).toBeCloseTo(30); // avg of [20, 30, 40]
+  it('crosses year boundaries', () => {
+    expect(periodRange('12M', months)).toEqual({ from: '2025-04', to: '2026-03' });
   });
 
-  it('returns empty array for empty input', () => {
-    expect(computeMovingAverage([], 3)).toEqual([]);
-  });
-
-  it('handles window larger than data', () => {
-    const result = computeMovingAverage([10, 20], 5);
-    expect(result[0]).toBeCloseTo(10);
-    expect(result[1]).toBeCloseTo(15);
-  });
-});
-
-describe('filterByTimePeriod', () => {
-  const now = Date.now();
-  const msPerMonth = 30 * 24 * 60 * 60 * 1000;
-
-  const data = [
-    { date: now - 24 * msPerMonth, value: 1 },
-    { date: now - 9 * msPerMonth, value: 2 },
-    { date: now - 4 * msPerMonth, value: 3 },
-    { date: now - 1 * msPerMonth, value: 4 }
-  ];
-
-  it('returns all data for ALL', () => {
-    expect(filterByTimePeriod(data, 'ALL')).toHaveLength(4);
-  });
-
-  it('filters to last 3 months', () => {
-    const r = filterByTimePeriod(data, '3M');
-    expect(r).toHaveLength(1);
-    expect(r[0].value).toBe(4);
-  });
-
-  it('filters to last 6 months', () => {
-    const r = filterByTimePeriod(data, '6M');
-    expect(r).toHaveLength(2);
-  });
-
-  it('filters to last 12 months', () => {
-    const r = filterByTimePeriod(data, '12M');
-    expect(r).toHaveLength(3);
+  it('covers every month for All, and nothing without data', () => {
+    expect(periodRange('ALL', months)).toEqual({ from: '2025-09', to: '2026-03' });
+    expect(periodRange('6M', [])).toBeNull();
   });
 });
 

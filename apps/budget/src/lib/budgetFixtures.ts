@@ -1,20 +1,20 @@
+import { monthsInRange, summarizeRange } from '@repo/convex/spendingModel';
+import type { MonthRange } from '@repo/convex/spendingModel';
 import type { FunctionReturnType } from 'convex/server';
 import type { api } from '@repo/convex';
-import type { TimePeriod } from '@/lib/budget';
-import { periodMonthLimit } from '@/lib/budget';
 
-type Summary = FunctionReturnType<typeof api.queries.getBudgetPageSummary>;
-type ChartPoint = FunctionReturnType<typeof api.queries.listBudgetChart>[number];
-type BreakdownRow = FunctionReturnType<typeof api.queries.getMonthlyBreakdown>[number];
+type MonthNet = FunctionReturnType<typeof api.spending.listMonths>[number];
+type Spending = FunctionReturnType<typeof api.spending.getSpending>;
+type ChartMonth = Spending['months'][number];
 type MonthDetail = NonNullable<FunctionReturnType<typeof api.queries.getMonthlyDetail>>;
 type Insight = NonNullable<FunctionReturnType<typeof api.queries.getLatestSpendingInsight>>;
 
 // Generic sample household, in cents. Never real finance data.
 const FIXTURE_MONTHS = 18;
 
-function monthStarts(now: Date): Array<number> {
+function monthEnds(now: Date): Array<number> {
   return Array.from({ length: FIXTURE_MONTHS }, (_, index) =>
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - FIXTURE_MONTHS + index, 1)
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - FIXTURE_MONTHS + index + 1, 0)
   );
 }
 
@@ -27,50 +27,57 @@ function sampleMonth(date: number, index: number) {
   const credit2 = 120_000 - wobble * 4_000;
   const credit3 = 45_000;
   const oneOffs = index % 4 === 0 ? 80_000 : 15_000;
+  const sharedOut = 90_000;
   const fixedPayment = 260_000;
   const variablePayment = 140_000;
-  return { date, primary, secondary, billContrib, credit1, credit2, credit3, oneOffs, fixedPayment, variablePayment };
-}
-
-const months = monthStarts(new Date()).map(sampleMonth);
-
-function breakdownRow(month: (typeof months)[number]): BreakdownRow {
-  const income = month.primary + month.secondary + month.billContrib;
-  const spend = month.credit1 + month.credit2 + month.credit3 + month.oneOffs;
-  const mortgage = month.fixedPayment + month.variablePayment;
-  return { date: month.date, income, spend, mortgage, net: income - spend - mortgage };
-}
-
-const breakdownNewestFirst = months.map(breakdownRow).reverse();
-
-export const fixtureChart: Array<ChartPoint> = breakdownNewestFirst
-  .map((row) => ({ date: row.date, spend: row.spend, sinkOrSwim: row.net, mortgage: row.mortgage }))
-  .reverse();
-
-export function fixtureBreakdown(limit: number | undefined): Array<BreakdownRow> {
-  return breakdownNewestFirst.slice(0, limit);
-}
-
-function average(values: Array<number>) {
-  return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
-}
-
-export function fixtureSummary(period: TimePeriod): Summary {
-  const rows = fixtureBreakdown(periodMonthLimit(period));
-  const [latest, prior] = breakdownNewestFirst;
-  const metric = (value: number, pick: (row: BreakdownRow) => number) => {
-    const delta = pick(latest) - pick(prior);
-    return { value, delta, deltaPct: Math.round((delta / pick(prior)) * 100) };
-  };
-  const savings = (row: BreakdownRow) => Math.round((row.net / row.income) * 10_000);
   return {
-    avgSpend: metric(average(rows.map((row) => row.spend)), (row) => row.spend),
-    avgIncome: metric(average(rows.map((row) => row.income)), (row) => row.income),
-    savingsRate: metric(average(rows.map(savings)), savings),
-    netGain: metric(average(rows.map((row) => row.net)), (row) => row.net),
-    periodLabel: period === 'ALL' ? 'All time' : `Trailing ${period.replace('M', '')} months`,
-    comparisonLabel: 'vs prior month'
+    date,
+    primary,
+    secondary,
+    billContrib,
+    credit1,
+    credit2,
+    credit3,
+    oneOffs,
+    sharedOut,
+    fixedPayment,
+    variablePayment
   };
+}
+
+const months = monthEnds(new Date()).map(sampleMonth);
+
+const spendingMonths = months.map((month) => {
+  const income = month.primary + month.secondary + month.billContrib;
+  const dayToDay = month.credit1 + month.credit2 + month.credit3 + month.oneOffs;
+  const mortgage = month.fixedPayment + month.variablePayment;
+  const spend = dayToDay + month.sharedOut + mortgage;
+  return {
+    monthKey: new Date(month.date).toISOString().slice(0, 7),
+    date: month.date,
+    income,
+    dayToDay,
+    shared: month.sharedOut,
+    mortgage,
+    spend,
+    net: income - spend
+  };
+});
+
+const chartMonths: Array<ChartMonth> = spendingMonths.map((month, index) => {
+  const window = spendingMonths.slice(Math.max(0, index - 5), index + 1);
+  const average = (values: Array<number>) => Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
+  return {
+    ...month,
+    incomeAverage: average(window.map((m) => m.income)),
+    spendAverage: average(window.map((m) => m.spend))
+  };
+});
+
+export const fixtureMonths: Array<MonthNet> = chartMonths.map(({ monthKey, date, net }) => ({ monthKey, date, net }));
+
+export function fixtureSpending(range: MonthRange): Spending {
+  return { ...range, months: monthsInRange(chartMonths, range), summary: summarizeRange(chartMonths, range) };
 }
 
 export function fixtureDetail(date: number): MonthDetail | null {
@@ -78,8 +85,11 @@ export function fixtureDetail(date: number): MonthDetail | null {
   if (!month) return null;
   const cardSubtotal = month.credit1 + month.credit2 + month.credit3;
   const paymentTotal = month.fixedPayment + month.variablePayment;
+  const spending = spendingMonths.find((candidate) => candidate.date === date);
   return {
     date,
+    shared: month.sharedOut,
+    net: spending?.net ?? 0,
     income: {
       primary: month.primary,
       secondary: month.secondary,
@@ -125,9 +135,9 @@ export function fixtureDetail(date: number): MonthDetail | null {
 }
 
 export const fixtureInsight: Insight = {
-  monthKey: new Date(breakdownNewestFirst[0].date).toISOString().slice(0, 7),
+  monthKey: spendingMonths[spendingMonths.length - 1].monthKey,
   headline: 'Sample insight: spending held steady',
   observations: ['Groceries were the largest category.', 'One-off costs were lower than usual.'],
   prediction: 'Next month should look similar.',
-  generatedAt: breakdownNewestFirst[0].date
+  generatedAt: spendingMonths[spendingMonths.length - 1].date
 };

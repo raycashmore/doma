@@ -1,8 +1,11 @@
 import { KpiCard } from './KpiCard';
-import type { BudgetPageSummary } from '@repo/convex/budgetSummary';
+import type { SpendingSummary } from '@repo/convex/spendingModel';
+import type { TimePeriod } from '@/lib/budget';
+import { comparisonLabel, periodLabel } from '@/lib/budget';
 
 type Props = {
-  summary: BudgetPageSummary | undefined;
+  summary: SpendingSummary | undefined;
+  period: TimePeriod;
 };
 
 function SkeletonRow() {
@@ -15,8 +18,9 @@ function SkeletonRow() {
   );
 }
 
-export function BudgetKpiCards({ summary }: Props) {
+export function BudgetKpiCards({ summary, period }: Props) {
   if (!summary) return <SkeletonRow />;
+  const labels = { periodLabel: periodLabel(period), comparisonLabel: comparisonLabel(summary) };
 
   return (
     <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4 md:gap-3.5">
@@ -26,8 +30,7 @@ export function BudgetKpiCards({ summary }: Props) {
         delta={summary.avgSpend.delta}
         deltaPct={summary.avgSpend.deltaPct}
         kind="money"
-        periodLabel={summary.periodLabel}
-        comparisonLabel={summary.comparisonLabel}
+        {...labels}
       />
       <KpiCard
         label="Avg income"
@@ -35,8 +38,7 @@ export function BudgetKpiCards({ summary }: Props) {
         delta={summary.avgIncome.delta}
         deltaPct={summary.avgIncome.deltaPct}
         kind="money"
-        periodLabel={summary.periodLabel}
-        comparisonLabel={summary.comparisonLabel}
+        {...labels}
       />
       <KpiCard
         label="Savings rate"
@@ -44,17 +46,15 @@ export function BudgetKpiCards({ summary }: Props) {
         delta={summary.savingsRate.delta}
         deltaPct={summary.savingsRate.deltaPct}
         kind="rate"
-        periodLabel={summary.periodLabel}
-        comparisonLabel={summary.comparisonLabel}
+        {...labels}
       />
       <KpiCard
         label="Avg gain"
-        value={summary.netGain.value}
-        delta={summary.netGain.delta}
-        deltaPct={summary.netGain.deltaPct}
+        value={summary.avgNet.value}
+        delta={summary.avgNet.delta}
+        deltaPct={summary.avgNet.deltaPct}
         kind="money"
-        periodLabel={summary.periodLabel}
-        comparisonLabel={summary.comparisonLabel}
+        {...labels}
       />
     </div>
   );

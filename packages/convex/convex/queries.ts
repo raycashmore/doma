@@ -31,6 +31,10 @@ import { buildMonthlyBreakdown, buildMortgageByMonth, utcYearMonthKey } from './
 import { requireSignedIn } from './signedIn';
 import { monthKeyFromTimestamp } from './spendingSummary';
 
+function sameMonth<T extends { date: number }>(row: T | null, date: number): T | null {
+  return row && utcYearMonthKey(row.date) === utcYearMonthKey(date) ? row : null;
+}
+
 async function getDefaultMortgageConfig(ctx: QueryCtx) {
   return ctx.db
     .query('mortgageConfig')
@@ -400,12 +404,15 @@ export const getMonthlyDetail = query({
         .collect()
     ]);
 
-    // Carry-forward mortgage lookup: most recent at-or-before args.date
-    const mortgage = await ctx.db
-      .query('mortgage')
-      .withIndex('by_date', (q) => q.lte('date', args.date))
-      .order('desc')
-      .first();
+    // Each month's own mortgage row (the latest in that month), as the months list uses.
+    const mortgage = sameMonth(
+      await ctx.db
+        .query('mortgage')
+        .withIndex('by_date', (q) => q.lte('date', args.date))
+        .order('desc')
+        .first(),
+      args.date
+    );
 
     // Prior-month budget row (most recent strictly before args.date)
     const priorBudget = await ctx.db
@@ -414,13 +421,15 @@ export const getMonthlyDetail = query({
       .order('desc')
       .first();
 
-    // Prior mortgage carry-forward: most recent at-or-before priorBudget.date
     const priorMortgage = priorBudget
-      ? await ctx.db
-          .query('mortgage')
-          .withIndex('by_date', (q) => q.lte('date', priorBudget.date))
-          .order('desc')
-          .first()
+      ? sameMonth(
+          await ctx.db
+            .query('mortgage')
+            .withIndex('by_date', (q) => q.lte('date', priorBudget.date))
+            .order('desc')
+            .first(),
+          priorBudget.date
+        )
       : null;
 
     return shapeMonthDetail(budget, mortgage, mortgageConfig, priorBudget, priorMortgage, spendCategories);

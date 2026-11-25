@@ -8,8 +8,12 @@ Every public query, mutation and action rejects a signed-out caller before it re
 anything. User functions throw `Not authenticated`. Bot functions throw `Unauthorized` without
 their service token. Clerk runs in restricted mode, so a signed-in identity is an approved household
 member. `convex/publicAccess.test.ts` calls every public function signed out and fails on one that
-skips its check. Make a function internal when no client calls it. Only the five queries Budget reads
-are public in `convex/queries.ts`.
+skips its check. Make a function internal when no client calls it. The Spending queries
+(`convex/spending.ts`: `listMonths` and `getSpending`, by inclusive `YYYY-MM` month range) are public
+for the web Budget and the iOS Spending tab; `convex/spendingModel.ts` holds the one definition of
+income, spend and net they use. In `convex/queries.ts`, Budget reads `getMonthlyDetail` and
+`getLatestSpendingInsight`; `getBudgetPageSummary`, `listBudgetChart` and `getMonthlyBreakdown` stay
+public for one release so an older Budget build keeps working, then go (RAY-310).
 
 The one exception is `devices/login:exchange`, which a device calls before it has any sign-in: its
 device secret is the credential (see [device login](auth.md#device-login)). The test lists it as

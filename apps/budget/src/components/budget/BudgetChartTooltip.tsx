@@ -3,8 +3,9 @@ import { formatCurrency } from '@/lib/budget';
 
 type BudgetChartTooltipProps = {
   date: number;
-  spend: number; // discretionary
-  sinkOrSwim: number; // income proxy
+  income: number;
+  /** Spend before the mortgage. */
+  spend: number;
   mortgage: number;
   top: number;
   left: number;
@@ -17,7 +18,7 @@ function monthYear(date: number) {
   });
 }
 
-export function BudgetChartTooltip({ date, spend, sinkOrSwim, mortgage, top, left }: BudgetChartTooltipProps) {
+export function BudgetChartTooltip({ date, income, spend, mortgage, top, left }: BudgetChartTooltipProps) {
   return (
     <TooltipWithBounds
       top={top}
@@ -39,7 +40,7 @@ export function BudgetChartTooltip({ date, spend, sinkOrSwim, mortgage, top, lef
       <div className="font-bold text-[12px] mb-1">{monthYear(date)}</div>
       <div className="flex items-center justify-between gap-3 font-semibold" style={{ color: '#5F9466' }}>
         <span>Income</span>
-        <span>{formatCurrency(sinkOrSwim)}</span>
+        <span>{formatCurrency(income)}</span>
       </div>
       <div className="flex items-center justify-between gap-3 font-semibold">
         <span>Mortgage</span>
