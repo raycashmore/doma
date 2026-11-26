@@ -42,6 +42,7 @@ narrower Today and spending cards, so any two share a row on an 11-inch iPad in 
 The server reads the clock when the query runs, so the app passes the current minute as `refreshToken` every minute
 and on return to the app, so it never reuses a result cached for an older token. Saving a note replaces its title, detail and due date together, as on the
 web, so two people editing different fields of one note at once keep only the last save.
+The spending insight's sheet has Open Spending, which moves to the Spending tab.
 Settings, from the Home header, holds Sign out; Lists keeps its own Sign out and Paprika.
 
 ## Spending
