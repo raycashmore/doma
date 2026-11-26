@@ -2,49 +2,26 @@ import DomaKit
 import SwiftUI
 
 /// The range button, the average monthly gain and the income, spend and saved figures, each with
-/// its change against the same number of months just before the range.
+/// its change against the same number of months just before the range, then Income vs Spending.
 struct SpendingOverviewCard: View {
   let spending: DomaSpending
   let range: DomaMonthRange
   let onChooseRange: () -> Void
+  let onExpandChart: () -> Void
+  let onOpenMonth: (DomaMonth) -> Void
 
   private var summary: DomaSpending.Summary { spending.summary }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 16) {
-      rangeButton
+      SpendingRangeButton(range: range, action: onChooseRange)
       hero
+      Rectangle().fill(DomaColor.warmBorder).frame(height: 1)
+      SpendingChartSection(months: spending.months, onExpand: onExpandChart, onOpen: onOpenMonth)
     }
     .padding(16)
     .frame(maxWidth: .infinity, alignment: .leading)
     .domaCardSurface()
-  }
-
-  private var rangeButton: some View {
-    Button(action: onChooseRange) {
-      HStack(spacing: 8) {
-        Image(systemName: "calendar")
-          .domaFont(.detailEmphasis)
-        Text(SpendingFormat.rangeTitle(range))
-          .domaFont(.supportingEmphasis)
-        Text("· \(SpendingFormat.monthCount(range.monthCount))")
-          .domaFont(.supporting)
-          .foregroundStyle(DomaColor.warmTextSecondary)
-        Image(systemName: "chevron.down")
-          .domaFont(.detailEmphasis)
-          .foregroundStyle(DomaColor.warmTextSecondary)
-      }
-      .foregroundStyle(DomaColor.warmTextPrimary)
-      .padding(.leading, 10)
-      .padding(.trailing, 12)
-      .frame(minHeight: 36)
-      .background(DomaColor.warmChip, in: .capsule)
-      .frame(minHeight: 44)
-      .contentShape(.rect)
-    }
-    .buttonStyle(.plain)
-    .accessibilityLabel("Time range, \(SpendingFormat.rangeTitle(range)), \(SpendingFormat.monthCountLong(range.monthCount))")
-    .accessibilityHint("Choose the months to show")
   }
 
   private var hero: some View {

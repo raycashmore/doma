@@ -135,6 +135,71 @@ public struct DomaSpending: Decodable, Equatable, Sendable {
   }
 }
 
+/// One month's breakdown, from `queries:getMonthlyDetail`. Money is in cents. `net` uses the
+/// Spending definition; the income, spend and mortgage totals are the web's month detail sections,
+/// so spend here is cards and one-offs, and shared outgoings are separate.
+public struct DomaSpendingMonthDetail: Decodable, Equatable, Sendable {
+  public let date: Double
+  public let net: Int
+  /// Shared outgoings: counted in the month's net but in none of the sections.
+  public let shared: Int
+  public let income: Income
+  public let spend: Spend
+  /// `nil` when the month has no mortgage row.
+  public let mortgage: Mortgage?
+  public let trends: Trends
+
+  public struct Income: Decodable, Equatable, Sendable {
+    public let primary: Int
+    public let secondary: Int
+    public let billContrib: Int
+    public let total: Int
+  }
+
+  public struct Spend: Decodable, Equatable, Sendable {
+    /// Largest first.
+    public let categories: [Category]
+    public let oneOffs: Int
+    /// Cards and one-offs.
+    public let total: Int
+  }
+
+  public struct Category: Decodable, Equatable, Sendable {
+    public let category: String
+    public let amount: Int
+
+    public init(category: String, amount: Int) {
+      self.category = category
+      self.amount = amount
+    }
+  }
+
+  public struct Mortgage: Decodable, Equatable, Sendable {
+    public let fixedPayment: Int
+    public let variablePayment: Int
+    public let paymentTotal: Int
+  }
+
+  /// Changes against the month with data before this one.
+  public struct Trends: Decodable, Equatable, Sendable {
+    public let income: Trend?
+    public let spend: Trend?
+  }
+
+  public struct Trend: Decodable, Equatable, Sendable {
+    /// Rounded to one decimal place: 4.1 is 4.1%.
+    public let pct: Double
+    public let direction: Direction
+
+    public init(pct: Double, direction: Direction) {
+      self.pct = pct
+      self.direction = direction
+    }
+  }
+
+  public enum Direction: String, Decodable, Sendable { case up, down, flat }
+}
+
 /// Spending reads. Anyone signed in to the household can read them; there are no writes.
 public struct DomaSpendingClient: Sendable {
   private let convex: ConvexClient
@@ -150,5 +215,10 @@ public struct DomaSpendingClient: Sendable {
 
   public func spending(in range: DomaMonthRange) -> AnyPublisher<DomaSpending, ClientError> {
     convex.subscribe(to: "spending:getSpending", with: ["from": range.from.key, "to": range.to.key])
+  }
+
+  /// The month whose budget row has this `date` (from `months()`), or `nil` when there is none.
+  public func monthDetail(date: Double) -> AnyPublisher<DomaSpendingMonthDetail?, ClientError> {
+    convex.subscribe(to: "queries:getMonthlyDetail", with: ["date": date])
   }
 }

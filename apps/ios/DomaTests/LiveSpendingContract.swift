@@ -27,5 +27,11 @@ extension LiveListsContractTests {
       #expect(comparison.from == range.from.adding(months: -3))
       #expect(comparison.to == range.from.adding(months: -1))
     }
+
+    // The latest month's detail decodes and belongs to its budget row.
+    if let latestMonth = months.last {
+      let detail = try await LiveValues(spending.monthDetail(date: latestMonth.date)).next("month detail") { _ in true }
+      #expect(detail?.date == latestMonth.date)
+    }
   }
 }

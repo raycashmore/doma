@@ -56,8 +56,20 @@ and financial years run July to June. On the sheet's net strip, the nearer end w
 moves, the middle moves the whole range, and it ticks as the range changes (`SpendingRangeDrag`). One unusual
 month is clipped so the rest stay readable. VoiceOver skips the strip; the chips and month grid set the
 same range. Changes are green when they help and coral when they hurt, so a fall in spend is green; the
-web colours them by direction. The card chart and month detail come with RAY-312, the insight and iPad
-layout with RAY-313.
+web colours them by direction.
+
+The overview card's Income vs Spending chart (`SpendingChartModel`) draws each month's income beside
+its spend, with the mortgage picked out at the foot of spend, and dashed six-month averages from the
+server. Spend is everything that leaves, so the spend bar's top stays the month's spend when Mortgage
+is hidden. On the card a tap picks a month and a short hold then a drag reads across, so a swipe still
+scrolls; the callout's rows match the month detail (spend is cards and one-offs; shared outgoings,
+when there are any, and the mortgage have their own rows), add up to the net, and Open month opens it. The expand button opens the chart full screen, held in landscape on iPhone
+(`OrientationLock`), where any touch reads, chips hide series and the range button opens the Time range
+sheet. Turning the phone does not open it. The month detail sheet reads `queries:getMonthlyDetail`, the
+web's month detail: income, spend (cards and one-offs, the five largest categories until Show all) and
+the mortgage payments, with shared outgoings as their own line when the month has any, so the sections
+add up to the net. Previous and next step through every month with data, whatever the range. A fall in
+spend shows green; other changes stay quiet. The insight and iPad layout come with RAY-313.
 
 ## Layout
 
@@ -73,7 +85,7 @@ layout with RAY-313.
   `DomaFont` uses its original PostScript names.
 - `DomaKit/`: local Swift package with `DomaDeviceLogin` and `DomaDeviceConvexAuthProvider` (see
   Authentication), `DomaListsClient` (the typed wrappers for the Convex Lists functions), `DomaHomeClient`
-  (the board, notes and archive), `DomaSpendingClient` (Spending's months and ranges), `DomaConfiguration` and `DomaConvexHTTPFunction`, which runs one
+  (the board, notes and archive), `DomaSpendingClient` (Spending's months, ranges and month detail), `DomaConfiguration` and `DomaConvexHTTPFunction`, which runs one
   Convex function over HTTP for the widget and the device login.
 - `DomaWidget/`: the widget extension, with the Home and List widgets. It shares the app's device login
   through the keychain access group in `Config/Doma.entitlements`, so it needs no sign-in of its
