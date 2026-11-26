@@ -171,6 +171,6 @@ function average(values: number[]): number {
 }
 
 /** Convex sends -0 as a special float, which clients reading whole numbers cannot decode. */
-function noNegativeZero(value: number): number {
+export function noNegativeZero(value: number): number {
   return value === 0 ? 0 : value;
 }

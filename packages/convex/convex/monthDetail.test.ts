@@ -206,4 +206,10 @@ describe('computeTrend', () => {
     // 0.04% rounds to 0.0 → flat
     expect(computeTrend(100.04, 100)).toEqual({ pct: 0, direction: 'flat' });
   });
+
+  it('never sends -0, which clients reading numbers cannot decode', () => {
+    // A fall under 0.05%, and no change on a negative month, both give -0.
+    expect(Object.is(computeTrend(939_600, 940_000)?.pct, 0)).toBe(true);
+    expect(Object.is(computeTrend(-500, -500)?.pct, 0)).toBe(true);
+  });
 });

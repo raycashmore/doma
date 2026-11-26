@@ -7,7 +7,7 @@ import {
   mortgagePaymentTotal,
   mortgageTotalDebt
 } from './helpers';
-import { spendingMonth } from './spendingModel';
+import { noNegativeZero, spendingMonth } from './spendingModel';
 
 export type BudgetRow = Doc<'budget'>;
 export type MortgageRow = Doc<'mortgage'>;
@@ -83,7 +83,7 @@ function cardSubtotal(b: BudgetRow): number {
 export function computeTrend(current: number, prior: number | null | undefined): MonthDetailTrend | null {
   if (prior == null || prior === 0) return null;
   const pct = ((current - prior) / prior) * 100;
-  const rounded = Math.round(pct * 10) / 10;
+  const rounded = noNegativeZero(Math.round(pct * 10) / 10);
   let direction: TrendDirection;
   if (rounded > 0) direction = 'up';
   else if (rounded < 0) direction = 'down';
