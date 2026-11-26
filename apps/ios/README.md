@@ -47,6 +47,7 @@ Settings, from the Home header, holds Sign out; Lists keeps its own Sign out and
 ## Spending
 
 Spending ports the web Budget's figures for a chosen run of months, read-only, for the whole household.
+The overview card leads with the average monthly spend; income, gain and saved sit beneath it.
 `spending:getSpending` returns the range's averages, their changes against the same number of months
 just before it, and its months; `spending:listMonths` returns every month's net. The server owns the
 income, spend and net definitions (`packages/convex/convex/spendingModel.ts`); the app only formats

@@ -1,14 +1,17 @@
 import SwiftUI
 
-/// One month's figures over the chart: the net, then the rows that add up to it, and Open month.
+/// One month's figures over the chart: the net, then the rows that add up to it, Open month and a
+/// close button.
 struct SpendingChartCallout: View {
   let reading: SpendingChartReading
   let onOpen: () -> Void
+  let onClose: () -> Void
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
       HStack(alignment: .firstTextBaseline, spacing: 8) {
         Text(reading.title)
+          .accessibilityHidden(true)
           .domaFont(.sectionHeader)
           .foregroundStyle(DomaColor.warmTextPrimary)
           .frame(maxWidth: .infinity, alignment: .leading)
@@ -16,8 +19,20 @@ struct SpendingChartCallout: View {
           .domaFont(.amount)
           .monospacedDigit()
           .foregroundStyle(reading.net < 0 ? DomaColor.warmNegativeText : DomaColor.warmPositiveText)
+          .accessibilityLabel("\(reading.title), net \(SpendingFormat.signedMoney(reading.net))")
+        Button(action: onClose) {
+          Image(systemName: "xmark")
+            .domaFont(.detailEmphasis)
+            .foregroundStyle(DomaColor.warmTextSecondary)
+            // A full tap target that does not push the title row taller.
+            .frame(width: 44, height: 44)
+            .contentShape(.rect)
+            .padding(.vertical, -12)
+            .padding(.trailing, -12)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Close")
       }
-      .accessibilityElement(children: .combine)
       VStack(spacing: 4) {
         row("Income", color: SpendingChartSeries.income.color, amount: reading.income)
         row("Spend", color: SpendingChartSeries.spend.color, amount: reading.spend)

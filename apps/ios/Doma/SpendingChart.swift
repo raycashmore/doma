@@ -20,7 +20,7 @@ struct SpendingChart: View {
   let maximumLabels: Int
   @Binding var selected: DomaMonth?
   let onOpen: (DomaMonth) -> Void
-  @ScaledMetric(relativeTo: .footnote) private var calloutWidth: CGFloat = 220
+  @ScaledMetric(relativeTo: .footnote) private var calloutWidth: CGFloat = 240
   /// When a hold last moved or lifted, so its closing lift is not also taken as a tap.
   @State private var heldUntil: Date?
 
@@ -132,7 +132,11 @@ struct SpendingChart: View {
     let gap = plot.width / CGFloat(max(model.months.count, 1)) / 2 + 4
     let fitsRight = x + gap + width <= plot.maxX
     let left = fitsRight ? x + gap : max(plot.minX, x - gap - width)
-    return SpendingChartCallout(reading: SpendingChartReading(month)) { onOpen(month.month) }
+    return SpendingChartCallout(reading: SpendingChartReading(month)) {
+      onOpen(month.month)
+    } onClose: {
+      selected = nil
+    }
       // Larger sizes would outgrow the plot; the month detail carries the same figures at any size.
       .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
       .frame(width: width)

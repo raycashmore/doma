@@ -17,8 +17,8 @@ struct SpendingMonthDetailContent: View {
         trend: SpendingMonthTrend(detail.trends.income, before: prior)
       ) {
         SpendingDetailRows(rows: [
-          ("Primary income", detail.income.primary),
-          ("Secondary income", detail.income.secondary),
+          ("Income 1", detail.income.primary),
+          ("Income 2", detail.income.secondary),
           ("Bill contributions", detail.income.billContrib),
         ])
       }
