@@ -1,62 +1,39 @@
 import DomaKit
 import SwiftUI
 
-/// The range button, the average monthly gain and the income, spend and saved figures, each with
-/// its change against the same number of months just before the range.
+/// The range button, the average monthly spend and the income, gain and saved figures, each with
+/// its change against the same number of months just before the range, then Income vs Spending.
 struct SpendingOverviewCard: View {
   let spending: DomaSpending
   let range: DomaMonthRange
   let onChooseRange: () -> Void
+  let onExpandChart: () -> Void
+  let onOpenMonth: (DomaMonth) -> Void
 
   private var summary: DomaSpending.Summary { spending.summary }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 16) {
-      rangeButton
+      SpendingRangeButton(range: range, action: onChooseRange)
       hero
+      Rectangle().fill(DomaColor.warmBorder).frame(height: 1)
+      SpendingChartSection(months: spending.months, onExpand: onExpandChart, onOpen: onOpenMonth)
     }
     .padding(16)
     .frame(maxWidth: .infinity, alignment: .leading)
     .domaCardSurface()
   }
 
-  private var rangeButton: some View {
-    Button(action: onChooseRange) {
-      HStack(spacing: 8) {
-        Image(systemName: "calendar")
-          .domaFont(.detailEmphasis)
-        Text(SpendingFormat.rangeTitle(range))
-          .domaFont(.supportingEmphasis)
-        Text("· \(SpendingFormat.monthCount(range.monthCount))")
-          .domaFont(.supporting)
-          .foregroundStyle(DomaColor.warmTextSecondary)
-        Image(systemName: "chevron.down")
-          .domaFont(.detailEmphasis)
-          .foregroundStyle(DomaColor.warmTextSecondary)
-      }
-      .foregroundStyle(DomaColor.warmTextPrimary)
-      .padding(.leading, 10)
-      .padding(.trailing, 12)
-      .frame(minHeight: 36)
-      .background(DomaColor.warmChip, in: .capsule)
-      .frame(minHeight: 44)
-      .contentShape(.rect)
-    }
-    .buttonStyle(.plain)
-    .accessibilityLabel("Time range, \(SpendingFormat.rangeTitle(range)), \(SpendingFormat.monthCountLong(range.monthCount))")
-    .accessibilityHint("Choose the months to show")
-  }
-
   private var hero: some View {
     VStack(alignment: .leading, spacing: 4) {
-      Text("Average monthly gain")
+      Text("Average monthly spend")
         .domaFont(.kicker)
         .tracking(1)
         .textCase(.uppercase)
         .foregroundStyle(DomaColor.warmTextSecondary)
       ViewThatFits(in: .horizontal) {
-        HStack(alignment: .firstTextBaseline, spacing: 10) { gainFigure; gainChange }
-        VStack(alignment: .leading, spacing: 2) { gainFigure; gainChange }
+        HStack(alignment: .firstTextBaseline, spacing: 10) { spendFigure; spendChange }
+        VStack(alignment: .leading, spacing: 2) { spendFigure; spendChange }
       }
       .accessibilityElement(children: .combine)
       HStack(alignment: .top, spacing: 0) {
@@ -65,8 +42,8 @@ struct SpendingOverviewCard: View {
           change: SpendingChange(summary.avgIncome, kind: .percent))
         divider
         SpendingFigure(
-          label: "Avg spend", value: SpendingFormat.money(summary.avgSpend.value),
-          change: SpendingChange(summary.avgSpend, kind: .percent, lowerIsBetter: true))
+          label: "Avg gain", value: SpendingFormat.money(summary.avgNet.value),
+          change: SpendingChange(summary.avgNet, kind: .money))
         divider
         SpendingFigure(
           label: "Saved", value: SpendingFormat.percent(basisPoints: summary.savingsRate.value),
@@ -77,8 +54,8 @@ struct SpendingOverviewCard: View {
     }
   }
 
-  private var gainFigure: some View {
-    Text(SpendingFormat.money(summary.avgNet.value))
+  private var spendFigure: some View {
+    Text(SpendingFormat.money(summary.avgSpend.value))
       .domaFont(.figure)
       .monospacedDigit()
       .foregroundStyle(DomaColor.warmTextPrimary)
@@ -87,8 +64,10 @@ struct SpendingOverviewCard: View {
   }
 
   @ViewBuilder
-  private var gainChange: some View {
-    if let change = SpendingChange(summary.avgNet, kind: .money), let comparison = summary.comparison {
+  private var spendChange: some View {
+    if let change = SpendingChange(summary.avgSpend, kind: .money, lowerIsBetter: true),
+      let comparison = summary.comparison
+    {
       Text("\(change.text) vs prior \(SpendingFormat.monthCount(comparison.monthCount))")
         .domaFont(.supportingEmphasis)
         .foregroundStyle(change.tone.color)

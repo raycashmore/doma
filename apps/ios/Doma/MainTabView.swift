@@ -6,6 +6,12 @@ enum AppTab: Hashable {
   case lists
 }
 
+extension EnvironmentValues {
+  /// The selected tab, for a view that moves to another one, such as Spending from the
+  /// noticeboard's spending insight. `nil` outside the tab view.
+  @Entry var appTab: Binding<AppTab>?
+}
+
 /// Home, Spending and Lists. iPhone shows the tabs at the foot; iPad at the top, as iPadOS does.
 struct MainTabView: View {
   let session: DomaSession
@@ -24,6 +30,7 @@ struct MainTabView: View {
       }
     }
     .tint(DomaColor.warmTextPrimary)
+    .environment(\.appTab, $selection)
     // A widget asks for a list, which Lists opens once it is showing, or for Home.
     .onAppear {
       if session.openRequest.publicId != nil { selection = .lists }

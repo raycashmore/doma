@@ -1,7 +1,8 @@
 import DomaKit
 import SwiftUI
 
-/// The household's spending over a chosen run of months: the overview card and the months.
+/// The household's spending over a chosen run of months: the overview card with its chart, and the
+/// months, each opening its detail.
 /// The server does all the maths (`packages/convex/convex/spending.ts`); this only shows it.
 struct SpendingView: View {
   let session: DomaSession
@@ -13,7 +14,10 @@ struct SpendingView: View {
   /// Moves on with Retry, so both subscriptions start again.
   @State private var attempt = 0
   @State private var isChoosingRange = false
-  @State private var openMonth: DomaSpending.Month?
+  @State private var openMonth: OpenMonth?
+  @State private var isChartFullScreen = false
+  /// Open month from the full-screen chart, opened once the chart has closed.
+  @State private var monthAfterChart: DomaMonth?
   @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
   private var available: DomaMonthRange? {
@@ -54,8 +58,23 @@ struct SpendingView: View {
         SpendingRangeSheet(months: months, available: available, initial: choice) { choice = $0 }
       }
     }
-    .sheet(item: $openMonth) { month in
-      SpendingMonthPlaceholderSheet(month: month)
+    .sheet(item: $openMonth) { open in
+      if let months {
+        SpendingMonthDetailSheet(session: session, months: months, month: open.month)
+      }
+    }
+    .fullScreenCover(isPresented: $isChartFullScreen) {
+      if let month = monthAfterChart { openMonth = OpenMonth(month: month) }
+      monthAfterChart = nil
+    } content: {
+      if let months, let available, let spending {
+        SpendingFullScreenChart(
+          spending: spending, months: months, available: available, choice: $choice
+        ) { month in
+          monthAfterChart = month
+          isChartFullScreen = false
+        }
+      }
     }
   }
 
@@ -68,8 +87,12 @@ struct SpendingView: View {
     } else if let spending, let range {
       ScrollView {
         VStack(alignment: .leading, spacing: 20) {
-          SpendingOverviewCard(spending: spending, range: range) { isChoosingRange = true }
-          SpendingMonthsSection(months: spending.months) { openMonth = $0 }
+          SpendingOverviewCard(
+            spending: spending, range: range,
+            onChooseRange: { isChoosingRange = true },
+            onExpandChart: { isChartFullScreen = true },
+            onOpenMonth: { openMonth = OpenMonth(month: $0) })
+          SpendingMonthsSection(months: spending.months) { openMonth = OpenMonth(month: $0.month) }
         }
         // A new range keeps the last figures, faded, until its own arrive.
         .opacity(spending.from == range.from && spending.to == range.to ? 1 : 0.5)
@@ -97,6 +120,11 @@ struct SpendingView: View {
       ProgressView()
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
+  }
+
+  private struct OpenMonth: Identifiable {
+    let month: DomaMonth
+    var id: DomaMonth { month }
   }
 
   private struct RangeLoad: Equatable {

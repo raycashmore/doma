@@ -52,6 +52,14 @@ enum SpendingFormat {
     return "Updated \(Date(timeIntervalSince1970: date / 1000).formatted(style))"
   }
 
+  /// A chart axis value in dollars: "0", "500", "5k", "12k", "2.5k".
+  static func axisAmount(_ dollars: Double) -> String {
+    guard abs(dollars) >= 1000 else { return dollars.formatted(.number.precision(.fractionLength(0)).locale(locale)) }
+    let thousands = dollars / 1000
+    let digits = thousands.formatted(.number.precision(.fractionLength(0...1)).locale(locale))
+    return "\(digits)k"
+  }
+
   static func oneDecimal(_ value: Double) -> String {
     value.formatted(.number.precision(.fractionLength(1)).locale(locale))
   }

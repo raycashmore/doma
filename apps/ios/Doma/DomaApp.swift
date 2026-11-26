@@ -4,6 +4,7 @@ import WidgetKit
 
 @main
 struct DomaApp: App {
+  @UIApplicationDelegateAdaptor private var appDelegate: DomaAppDelegate
   @State private var session: DomaSession? = DomaApp.makeSession()
   @State private var lock = AppLockController()
   @Environment(\.scenePhase) private var scenePhase

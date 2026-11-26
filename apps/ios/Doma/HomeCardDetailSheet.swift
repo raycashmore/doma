@@ -1,13 +1,14 @@
 import DomaKit
 import SwiftUI
 
-/// Everything a card holds, with Archive (and Edit for a note).
+/// Everything a card holds, with Archive (Edit for a note, and Open Spending for a spending insight).
 struct HomeCardDetailSheet: View {
   let item: DomaBoardItem
   let presentation: HomeBoardPresentation
   let home: DomaHomeClient
   let onEdit: (DomaBoardNote) -> Void
   @Environment(\.dismiss) private var dismiss
+  @Environment(\.appTab) private var appTab
   @State private var isConfirmingArchive = false
   @State private var isArchiving = false
   @State private var archiveFailed = false
@@ -145,6 +146,16 @@ struct HomeCardDetailSheet: View {
       if case .note(let note) = item {
         Button { onEdit(note) } label: { actionLabel("Edit note") }
           .disabled(isArchiving)
+      }
+      if case .spendingInsight = item, let appTab {
+        Button {
+          dismiss()
+          appTab.wrappedValue = .spending
+        } label: {
+          actionLabel("Open Spending")
+        }
+        .disabled(isArchiving)
+        .accessibilityHint("Shows the Spending tab")
       }
       Button { isConfirmingArchive = true } label: { actionLabel(isArchiving ? "Archiving…" : "Archive") }
         .disabled(isArchiving)
